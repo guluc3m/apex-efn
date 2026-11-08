@@ -45,6 +45,7 @@ dev = [
     "fakeredis>=2.26.0",
     "apex-llm-stub",
     "types-PyYAML>=6.0.12",
+    "jsonschema>=4.26.0",
 ]
 
 [tool.uv.sources]
