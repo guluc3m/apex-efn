@@ -26,6 +26,7 @@
 /docs/security/ @z4na14
 /packages/eslint-config/ @z4na14
 /packages/tsconfig/ @z4na14
+/packages/redaction/ @z4na14
 
 # ---------- Contracts and generated types (DEV-2) ----------
 /contracts/ @gdethan11yoshi
@@ -47,6 +48,7 @@
 /apps/web/src/server/auth/ @z4na14
 /apps/web/src/middleware.ts @z4na14
 /apps/web/instrumentation.ts @z4na14
+/apps/web/src/instrumentation.ts @z4na14
 
 # ---------- Browser worker and mock marketplace (DEV-5, exception DEV-1) ----------
 /apps/browser-worker/ @Rotlerxd
