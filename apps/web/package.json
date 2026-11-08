@@ -18,21 +18,21 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^6.1.0",
+    "@prisma/client": "^7.10.1",
     "@tanstack/react-query": "^5.62.0",
-    "@tanstack/react-table": "^8.20.0",
+    "@tanstack/react-table": "^9.3.1",
     "@apex/crypto-client": "workspace:*",
     "@apex/money": "workspace:*",
     "@apex/scoring": "workspace:*",
     "@apex/shared-types": "workspace:*",
     "@apex/ui": "workspace:*",
-    "next": "^15.1.0",
-    "next-intl": "^3.25.0",
+    "next": "^16.4.5",
+    "next-intl": "^4.14.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.0",
-    "recharts": "^2.15.0",
-    "zod": "^3.24.0",
+    "recharts": "^3.10.1",
+    "zod": "^4.6.7",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
