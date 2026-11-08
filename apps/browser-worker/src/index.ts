@@ -1,3 +1,5 @@
+import './platform/bootstrap.js'
+
 /**
  * Browser Worker - Scraping and chat automation
  *

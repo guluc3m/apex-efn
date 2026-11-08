@@ -1,0 +1,167 @@
+[
+  {
+    "name": "plain text is unchanged",
+    "input": "mission m-123 found 3 offers",
+    "expected": "mission m-123 found 3 offers"
+  },
+  {
+    "name": "bearer token in free text",
+    "input": "Bearer abc.def-ghi_123",
+    "expected": "[REDACTED]"
+  },
+  {
+    "name": "authorization header line keeps its label",
+    "input": "authorization: Basic dXNlcjpwYXNz",
+    "expected": "authorization: [REDACTED]"
+  },
+  {
+    "name": "set-cookie header line keeps its label",
+    "input": "Set-Cookie: sid=abc123; Path=/",
+    "expected": "Set-Cookie: [REDACTED]"
+  },
+  {
+    "name": "jwt in free text",
+    "input": "token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJl",
+    "expected": "token [REDACTED]"
+  },
+  {
+    "name": "vault service token",
+    "input": "hvs.CAESIJ0123456789abcdefGHIJ",
+    "expected": "[REDACTED]"
+  },
+  {
+    "name": "age secret key",
+    "input": "AGE-SECRET-KEY-1QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L",
+    "expected": "[REDACTED]"
+  },
+  {
+    "name": "pem private key block",
+    "input": "key follows\n-----BEGIN PRIVATE KEY-----\nMIIBVQIBADANBgkqhkiG\n-----END PRIVATE KEY-----\nend",
+    "expected": "key follows\n[REDACTED]\nend"
+  },
+  {
+    "name": "sk-style api key",
+    "input": "using sk-proj-abcdefghijklmnop1234 for llm",
+    "expected": "using [REDACTED] for llm"
+  },
+  {
+    "name": "iban with spaces",
+    "input": "transfer to ES91 2100 0418 4502 0005 1332 today",
+    "expected": "transfer to [REDACTED] today"
+  },
+  {
+    "name": "url userinfo",
+    "input": "postgres://trato:s3cr3t@db:5432/trato",
+    "expected": "postgres://[REDACTED]@db:5432/trato"
+  },
+  {
+    "name": "keyword=value pair in text",
+    "input": "password=hunter2 user=ana",
+    "expected": "password=[REDACTED] user=ana"
+  },
+  {
+    "name": "json-like keyword pair in text",
+    "input": "{\"api_key\": \"CANARY-SECRET-1\"}",
+    "expected": "{\"api_key\": \"[REDACTED]\"}"
+  },
+  {
+    "name": "financial metric pair in text",
+    "input": "cash_balance=123456789",
+    "expected": "cash_balance=[REDACTED]"
+  },
+  {
+    "name": "token pair in an error message",
+    "input": "failed: token=abc123 at step 4",
+    "expected": "failed: token=[REDACTED] at step 4"
+  },
+  {
+    "name": "nested dict with sensitive keys",
+    "input": {
+      "mission_id": "m1",
+      "password": "x",
+      "nested": { "Authorization": "Bearer q" },
+      "rows": [{ "cash_balance": 5 }]
+    },
+    "expected": {
+      "mission_id": "m1",
+      "password": "[REDACTED]",
+      "nested": { "Authorization": "[REDACTED]" },
+      "rows": [{ "cash_balance": "[REDACTED]" }]
+    }
+  },
+  {
+    "name": "null under a sensitive key is still replaced",
+    "input": { "password": null },
+    "expected": { "password": "[REDACTED]" }
+  },
+  {
+    "name": "signature keys: bare is redacted, status/hash/id are allowed",
+    "input": {
+      "signature": "c2ln",
+      "signature_status": "valid",
+      "signature_hash": "ab12",
+      "signingKeyId": "k1"
+    },
+    "expected": {
+      "signature": "[REDACTED]",
+      "signature_status": "valid",
+      "signature_hash": "ab12",
+      "signingKeyId": "k1"
+    }
+  },
+  {
+    "name": "token keys: secrets are redacted, counts and types are allowed",
+    "input": {
+      "access_token": "zz",
+      "accessToken": "zz",
+      "tokenType": "Bearer",
+      "token_count": 5,
+      "total_tokens": 9,
+      "llm.usage.input_tokens": 12
+    },
+    "expected": {
+      "access_token": "[REDACTED]",
+      "accessToken": "[REDACTED]",
+      "tokenType": "Bearer",
+      "token_count": 5,
+      "total_tokens": 9,
+      "llm.usage.input_tokens": 12
+    }
+  },
+  {
+    "name": "financial csv row",
+    "input": {
+      "metric": "cash_balance",
+      "period": "2026-01",
+      "value_minor": 123456789,
+      "currency": "EUR",
+      "row": 3
+    },
+    "expected": {
+      "metric": "cash_balance",
+      "period": "2026-01",
+      "value_minor": "[REDACTED]",
+      "currency": "EUR",
+      "row": 3
+    }
+  },
+  {
+    "name": "camelCase financial keys",
+    "input": { "creditLineLimit": 5000, "safetyBufferPct": 10, "paymentTermDays": 30 },
+    "expected": {
+      "creditLineLimit": "[REDACTED]",
+      "safetyBufferPct": "[REDACTED]",
+      "paymentTermDays": "[REDACTED]"
+    }
+  },
+  {
+    "name": "span attribute key for an authorization header",
+    "input": { "http.request.header.authorization": "Bearer abc" },
+    "expected": { "http.request.header.authorization": "[REDACTED]" }
+  },
+  {
+    "name": "non-sensitive attributes pass through",
+    "input": { "mission_id": "m-1", "offer_count": 3, "platform": "marketplace-a" },
+    "expected": { "mission_id": "m-1", "offer_count": 3, "platform": "marketplace-a" }
+  }
+]

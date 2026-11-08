@@ -1,0 +1,15 @@
+# Dashboards as code (D1-07). Los JSON viven en infra/grafana/dashboards y se montan en
+# /var/lib/grafana/dashboards. Los cambios se hacen en el repo, no en la UI (editable: false).
+apiVersion: 1
+
+providers:
+  - name: trato
+    orgId: 1
+    folder: TRATO
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
