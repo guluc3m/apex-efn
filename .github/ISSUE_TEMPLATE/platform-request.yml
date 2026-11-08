@@ -3,6 +3,9 @@ description: Ask DEV-1 for a root or tooling change (root package.json, turbo, C
 title: '[platform-request] '
 labels: ['platform-request']
 body:
+  - type: markdown
+    attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
   - type: input
     id: task
     attributes:

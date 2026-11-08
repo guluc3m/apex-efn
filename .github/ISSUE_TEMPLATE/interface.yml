@@ -5,6 +5,9 @@ labels: ['interface']
 body:
   - type: markdown
     attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
+  - type: markdown
+    attributes:
       value: |
         The provider lane adds a stub with this exact signature (raising `NotImplementedError` in Python or throwing in TypeScript) in a tiny PR. The consumer codes against the stub.
   - type: dropdown

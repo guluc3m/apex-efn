@@ -5,6 +5,9 @@ labels: ['schema-change']
 body:
   - type: markdown
     attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
+  - type: markdown
+    attributes:
       value: |
         Only DEV-2 writes migrations. Give the exact Prisma snippet. DEV-2 ships it as its own task `D2-SC-<issue#>`.
   - type: input

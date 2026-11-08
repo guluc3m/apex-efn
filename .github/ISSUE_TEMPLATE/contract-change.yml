@@ -5,6 +5,9 @@ labels: ['contract-change']
 body:
   - type: markdown
     attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
+  - type: markdown
+    attributes:
       value: |
         Open the contract change as a PR that only edits `/contracts/**`, titled `<TASK-ID>-contract: ...`. Link that PR here.
   - type: input

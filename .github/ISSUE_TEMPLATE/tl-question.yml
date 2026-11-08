@@ -5,6 +5,9 @@ labels: ['tl-question']
 body:
   - type: markdown
     attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
+  - type: markdown
+    attributes:
       value: |
         Implement the mechanism with the value injected from config or fixtures. Keep the PR in Draft until this is answered.
   - type: dropdown
