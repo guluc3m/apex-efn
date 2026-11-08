@@ -49,7 +49,34 @@ _ISO_CODES = (
     "THB",
     "VND",
 )
-_CURRENCY = r"US\$|RMB|" + "|".join(_ISO_CODES) + r"|€|\$|¥|元|£|円"
+# Spelled-out currency words. Longest first so "us dollars" wins over "dollars".
+_WORDS: dict[str, str] = {
+    "us dollars": "USD",
+    "dollars": "USD",
+    "dollar": "USD",
+    "dólares": "USD",
+    "dolares": "USD",
+    "dólar": "USD",
+    "dolar": "USD",
+    "usd": "USD",
+    "euros": "EUR",
+    "euro": "EUR",
+    "eur": "EUR",
+    "yuan": "CNY",
+    "renminbi": "CNY",
+    "yuanes": "CNY",
+    "pounds": "GBP",
+    "pound": "GBP",
+    "libras": "GBP",
+    "libra": "GBP",
+    "美元": "USD",
+    "欧元": "EUR",
+    "人民币": "CNY",
+    "块": "CNY",
+    "英镑": "GBP",
+}
+_WORD_ALT = "|".join(re.escape(w) for w in sorted(_WORDS, key=len, reverse=True))
+_CURRENCY = r"US\$|RMB|" + "|".join(_ISO_CODES) + r"|€|\$|¥|元|£|円|" + _WORD_ALT
 _AMOUNT = r"\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?"
 _PRICE_RE = re.compile(
     rf"(?:(?P<c1>{_CURRENCY})\s?(?P<a1>{_AMOUNT}))|(?:(?P<a2>{_AMOUNT})\s?(?P<c2>{_CURRENCY}))",
@@ -72,6 +99,9 @@ class TextPrice:
 
 
 def _currency_code(token: str) -> str:
+    word = _WORDS.get(token.lower())
+    if word is not None:
+        return word
     upper = token.upper()
     return _SYMBOLS.get(token, _SYMBOLS.get(upper, upper))
 
@@ -99,6 +129,30 @@ def find_prices(text: str) -> list[TextPrice]:
             continue
         prices.append(TextPrice(amount_to_minor(amount), _currency_code(token), m.group(0)))
     return prices
+
+
+_PERCENT_RE = re.compile(
+    r"(?P<n>\d{1,3}(?:[.,]\d{1,2})?)\s?(?:%|percent\b|per\s?cent\b|por\s?ciento\b)", re.IGNORECASE
+)
+_PERCENT_ZH_RE = re.compile(r"(?:百分之(?P<a>\d{1,3})|(?P<b>\d{1,2})\s?折)")
+
+
+def find_percentages(text: str) -> list[int]:
+    """Every percentage in the text, in basis points (``12.5%`` -> 1250).
+
+    ``N折`` (Chinese "N tenths of the price") is read as a ``100 - 10*N`` percent discount.
+    """
+    found: list[int] = []
+    for m in _PERCENT_RE.finditer(text):
+        found.append(amount_to_minor(m.group("n")))
+    for m in _PERCENT_ZH_RE.finditer(text):
+        if m.group("a"):
+            found.append(int(m.group("a")) * 100)
+        elif m.group("b"):
+            tenths = int(m.group("b"))
+            if 1 <= tenths <= 9:
+                found.append((100 - tenths * 10) * 100)
+    return found
 
 
 def find_quantities(text: str) -> list[int]:

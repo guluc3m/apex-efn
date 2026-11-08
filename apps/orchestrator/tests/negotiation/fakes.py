@@ -33,6 +33,7 @@ from apex.negotiation.text import find_prices
 
 NOW = datetime(2026, 11, 1, 9, 0, tzinfo=UTC)
 SUPPORTED = frozenset({"EUR", "USD", "CNY"})
+T = "tenant-a"
 
 SellerTurn = Callable[[str, int], str | None]
 """(agent's last message, agent message count) -> seller reply, or None for silence."""
@@ -192,7 +193,7 @@ async def run_autonomous(
 ) -> NegotiationSession:
     for _ in range(steps):
         h.clock.advance(timedelta(minutes=1))
-        session = await h.engine.advance(session.id)
+        session = await h.engine.advance(session.id, tenant_id=T)
         if session.terminal:
             break
     return session
@@ -204,8 +205,10 @@ async def run_semi_automatic(
     for _ in range(steps):
         h.clock.advance(timedelta(minutes=1))
         if session.pending is not None:
-            session = await h.engine.approve(session.id, session.pending.id, approver="buyer-1")
-        session = await h.engine.advance(session.id)
+            session = await h.engine.approve(
+                session.id, session.pending.id, approver="buyer-1", tenant_id=T
+            )
+        session = await h.engine.advance(session.id, tenant_id=T)
         if session.terminal:
             break
     return session

@@ -87,9 +87,6 @@ def decide(session: NegotiationSession, verdict: IncomingVerdict, quote: Quote |
         return Stop(
             NegotiationOutcome.ESCALATED, ",".join(sorted(h.code.value for h in verdict.hits))
         )
-    if session.summary_sent:
-        return Stop(NegotiationOutcome.AGREED, "summary_sent")
-
     target = target_price_minor(p.reference_price_minor, p.target_discount_bp)
     if (
         quote is not None

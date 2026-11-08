@@ -14,6 +14,7 @@ from apex.negotiation.text import find_prices
 from tests.negotiation.fakes import (
     BandSanity,
     RegexExtractor,
+    T,
     TemplateDrafter,
     cooperative_seller,
     harness,
@@ -98,7 +99,7 @@ class TestAutonomousFlow:
     async def test_waits_for_the_seller(self) -> None:
         h = harness(lambda agent, n: None)
         session = await h.engine.start(request(AUTO), idempotency_key="k")
-        session = await h.engine.advance(session.id)
+        session = await h.engine.advance(session.id, tenant_id=T)
         assert session.status is NegotiationOutcome.AWAITING_SELLER
         assert len(h.chat.sent) == 1
 
@@ -128,10 +129,10 @@ class TestStopsAndEscalations:
 
     async def test_unsupported_currency_asks_for_the_negotiation_currency(self) -> None:
         def seller(agent: str, n: int) -> str:
+            if "confirm" in agent.lower():
+                return "Confirmed: EUR 4.20 per unit for 5000 units."
             return (
-                "No problem, in EUR: EUR 4.20 per unit."
-                if "EUR" in agent
-                else "Unit price is GBP 3.98."
+                "Sure, in EUR: EUR 4.20 per unit." if "EUR" in agent else "Unit price is GBP 3.98."
             )
 
         h = harness(seller)
@@ -176,7 +177,7 @@ class TestLLMIsUntrusted:
             sanity=BandSanity(floor=300),
         )
         session = await h.engine.start(request(AUTO), idempotency_key="k")
-        session = await h.engine.advance(session.id)
+        session = await h.engine.advance(session.id, tenant_id=T)
         assert session.quotes[-1].unit_price_minor == 440
         assert "extraction_not_grounded" in session.guardrail_hits
 
@@ -188,7 +189,7 @@ class TestSemiAutomatic:
         assert session.status is NegotiationOutcome.AWAITING_HUMAN_APPROVAL
         assert session.pending is not None
         assert h.chat.sent == []
-        session = await h.engine.advance(session.id)
+        session = await h.engine.advance(session.id, tenant_id=T)
         assert h.chat.sent == []
 
     async def test_approved_messages_flow_to_agreement(self) -> None:
@@ -201,7 +202,7 @@ class TestSemiAutomatic:
         h = harness(cooperative_seller())
         session = await h.engine.start(request(), idempotency_key="k")
         with pytest.raises(NegotiationError) as err:
-            await h.engine.approve(session.id, "nope", approver="buyer-1")
+            await h.engine.approve(session.id, "nope", approver="buyer-1", tenant_id=T)
         assert err.value.code == "draft_not_pending"
 
     async def test_reject_replaces_the_draft_with_the_template(self) -> None:
@@ -211,7 +212,7 @@ class TestSemiAutomatic:
         )
         session = await h.engine.start(request(), idempotency_key="k")
         assert session.pending is not None and session.pending.source == "llm"
-        session = await h.engine.reject(session.id, session.pending.id)
+        session = await h.engine.reject(session.id, session.pending.id, tenant_id=T)
         assert session.pending is not None and session.pending.source == "template"
 
 
@@ -221,24 +222,24 @@ class TestHumanControl:
         session = await h.engine.start(request(), idempotency_key="k")
         assert session.pending is not None
         draft_id = session.pending.id
-        session = await h.engine.take_over(session.id)
+        session = await h.engine.take_over(session.id, tenant_id=T)
         assert session.pending is None
         with pytest.raises(NegotiationError):
-            await h.engine.approve(session.id, draft_id, approver="buyer-1")
-        session = await h.engine.advance(session.id)
+            await h.engine.approve(session.id, draft_id, approver="buyer-1", tenant_id=T)
+        session = await h.engine.advance(session.id, tenant_id=T)
         assert h.chat.sent == []
-        session = await h.engine.resume(session.id)
+        session = await h.engine.resume(session.id, tenant_id=T)
         assert not session.human_in_control
 
     async def test_abort_is_terminal_and_idempotent(self) -> None:
         h = harness(cooperative_seller())
         session = await h.engine.start(request(), idempotency_key="k")
-        session = await h.engine.abort(session.id, reason="buyer_cancelled")
+        session = await h.engine.abort(session.id, reason="buyer_cancelled", tenant_id=T)
         assert session.status is NegotiationOutcome.ABORTED
-        again = await h.engine.abort(session.id, reason="other")
+        again = await h.engine.abort(session.id, reason="other", tenant_id=T)
         assert again.stop_reason == "buyer_cancelled"
         with pytest.raises(NegotiationError):
-            await h.engine.resume(session.id)
+            await h.engine.resume(session.id, tenant_id=T)
 
 
 class TestRateLimit:
@@ -247,11 +248,11 @@ class TestRateLimit:
         p = params(semi_automatic=False, max_messages_per_hour=1)
         session = await h.engine.start(request(p), idempotency_key="k")
         assert len(h.chat.sent) == 1
-        session = await h.engine.advance(session.id)
+        session = await h.engine.advance(session.id, tenant_id=T)
         assert len(h.chat.sent) == 1  # second message parked by the hourly limit
         assert session.pending is not None
         h.clock.advance(timedelta(minutes=61))
-        session = await h.engine.advance(session.id)
+        session = await h.engine.advance(session.id, tenant_id=T)
         assert len(h.chat.sent) == 2
 
 

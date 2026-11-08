@@ -32,7 +32,7 @@ def resolver(p: NegotiationParams):  # type: ignore[no-untyped-def]
 
 async def test_result_is_non_terminal_until_agreed_and_price_only_when_agreed() -> None:
     h = harness(cooperative_seller())
-    port = EngineNegotiationPort(h.engine, resolver(params(semi_automatic=False)))
+    port = EngineNegotiationPort(h.engine, h.store, resolver(params(semi_automatic=False)))
     key = "negotiate:offer:m1:o-1:1"
 
     first = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key=key)
@@ -56,7 +56,7 @@ async def test_result_is_non_terminal_until_agreed_and_price_only_when_agreed() 
 
 async def test_semi_automatic_reports_awaiting_human_approval() -> None:
     h = harness(cooperative_seller())
-    port = EngineNegotiationPort(h.engine, resolver(params()))
+    port = EngineNegotiationPort(h.engine, h.store, resolver(params()))
     result = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="k")
     assert result.outcome is NegotiationOutcome.AWAITING_HUMAN_APPROVAL
     assert h.chat.sent == []
@@ -64,7 +64,7 @@ async def test_semi_automatic_reports_awaiting_human_approval() -> None:
 
 async def test_new_attempt_key_starts_a_new_negotiation() -> None:
     h = harness(cooperative_seller())
-    port = EngineNegotiationPort(h.engine, resolver(params()))
+    port = EngineNegotiationPort(h.engine, h.store, resolver(params()))
     a = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="negotiate:x:1")
     b = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="negotiate:x:2")
     assert a.negotiation_id != b.negotiation_id
@@ -72,7 +72,7 @@ async def test_new_attempt_key_starts_a_new_negotiation() -> None:
 
 async def test_escalation_carries_the_reason_and_no_price() -> None:
     h = harness(lambda agent, n: "Add me on WhatsApp for a better price.")
-    port = EngineNegotiationPort(h.engine, resolver(params(semi_automatic=False)))
+    port = EngineNegotiationPort(h.engine, h.store, resolver(params(semi_automatic=False)))
     await port.negotiate(OFFER, tenant_id="t", idempotency_key="k")
     result = await port.negotiate(OFFER, tenant_id="t", idempotency_key="k")
     assert result.outcome is NegotiationOutcome.ESCALATED

@@ -23,6 +23,7 @@ from apex.negotiation.text import (
     TextPrice,
     asks_for_sensitive_data,
     find_counterparts,
+    find_percentages,
     find_prices,
     find_quantities,
     has_binding_commitment,
@@ -67,6 +68,7 @@ class HitCode(StrEnum):
     OFFER_BELOW_FLOOR = "offer_below_floor"
     OFFER_ABOVE_CEILING = "offer_above_ceiling"
     MAX_DISCOUNT_EXCEEDED = "max_discount_exceeded"
+    PERCENT_DISCOUNT_EXCEEDED = "percent_discount_exceeded"
     WRONG_CURRENCY = "wrong_currency"
     VOLUME_EXCEEDED = "volume_exceeded"
     UNAUTHORIZED_COUNTERPART = "unauthorized_counterpart"
@@ -103,7 +105,7 @@ class GuardrailLimits:
     """
 
     reference_price_minor: int
-    """Unit price the discount is measured against: the seller's opening quote in ``currency``."""
+    """Unit price the discount is measured against: the listed unit price in ``currency``."""
     currency: str
     max_discount_bp: int
     """``neg.max_discount``: the buyer never asks for more than this discount."""
@@ -298,6 +300,14 @@ def check_outgoing(
                 HitCode.OFFER_ABOVE_CEILING,
                 Severity.BLOCK,
                 f"{p.raw} is above the reference {ceiling}",
+            )
+
+    for bp in find_percentages(text):
+        if bp > limits.max_discount_bp:
+            hit(
+                HitCode.PERCENT_DISCOUNT_EXCEEDED,
+                Severity.BLOCK,
+                f"{bp} bp mentioned > {limits.max_discount_bp} bp max discount",
             )
 
     quantities = tuple(find_quantities(text))
