@@ -1,25 +1,28 @@
 ---
 name: TRATO
-description: Sistema visual claro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo preciso con un único acento índigo; mezcla de la sobriedad de Vercel, el acento único de Render y las cifras grandes de la app de Revolut.
+description: Sistema visual oscuro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo preciso con un único acento índigo; mezcla de la sobriedad de Vercel, el acento único de Render y las cifras grandes de la app de Revolut.
 colors:
+  background: "#0b0b0d"
+  surface: "#131316"
+  surface-raised: "#1b1b20"
+  line: "#26262c"
+  line-strong: "#36363e"
+  ink: "#ededf0"
+  ink-soft: "#b4b4be"
+  ink-muted: "#8e8e9a"
+  on-ink: "#0b0b0d"
+  accent: "#8b7cff"
+  accent-deep: "#a497ff"
+  accent-subtle: "#221d45"
+  success: "#3fbf74"
+  success-subtle: "#0f2419"
+  warning: "#e5a03b"
+  warning-subtle: "#2a1e0a"
+  danger: "#f26b61"
+  danger-solid: "#c4271f"
+  danger-solid-hover: "#a31f18"
+  danger-subtle: "#2c1312"
   white: "#ffffff"
-  surface: "#f7f7f8"
-  surface-sunken: "#f1f1f3"
-  line: "#e6e6ea"
-  line-strong: "#d4d4da"
-  ink: "#111114"
-  ink-soft: "#3f3f46"
-  ink-muted: "#5c5c66"
-  accent: "#5b3df5"
-  accent-deep: "#4a2fd6"
-  accent-subtle: "#efecfe"
-  success: "#157f3c"
-  success-subtle: "#e8f5ec"
-  warning: "#a15c00"
-  warning-subtle: "#fdf3e2"
-  danger: "#c4271f"
-  danger-deep: "#a31f18"
-  danger-subtle: "#fdecea"
 typography:
   display:
     fontFamily: "Geist, sans-serif"
@@ -108,7 +111,7 @@ spacing:
   prose: "68ch"
 shadows:
   none: "none"
-  overlay: "0 8px 24px rgba(17, 17, 20, 0.08), 0 0 0 1px rgba(17, 17, 20, 0.06)"
+  overlay: "0 12px 32px rgba(0, 0, 0, 0.5)"
 motion:
   fast: "120ms"
   base: "180ms"
@@ -117,7 +120,7 @@ motion:
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.white}"
+    textColor: "{colors.on-ink}"
     rounded: "{rounded.control}"
     padding: "0 14px"
     height: "{spacing.control-height}"
@@ -125,14 +128,14 @@ components:
   button-primary-hover:
     backgroundColor: "{colors.ink-soft}"
   button-secondary:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     borderColor: "{colors.line-strong}"
     rounded: "{rounded.control}"
     padding: "0 14px"
     height: "{spacing.control-height}"
   button-secondary-hover:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.surface-raised}"
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.ink-soft}"
@@ -140,15 +143,15 @@ components:
     padding: "0 10px"
     height: "{spacing.control-height}"
   button-ghost-hover:
-    backgroundColor: "{colors.surface-sunken}"
+    backgroundColor: "{colors.surface-raised}"
   button-destructive:
-    backgroundColor: "{colors.danger}"
+    backgroundColor: "{colors.danger-solid}"
     textColor: "{colors.white}"
     rounded: "{rounded.control}"
     padding: "0 14px"
     height: "{spacing.control-height}"
   button-destructive-hover:
-    backgroundColor: "{colors.danger-deep}"
+    backgroundColor: "{colors.danger-solid-hover}"
   link:
     textColor: "{colors.accent}"
     textDecoration: "underline"
@@ -159,7 +162,7 @@ components:
     outline: "2px solid {colors.accent}"
     outlineOffset: "2px"
   input:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.background}"
     textColor: "{colors.ink}"
     placeholderColor: "{colors.ink-muted}"
     borderColor: "{colors.line-strong}"
@@ -171,17 +174,18 @@ components:
   input-error:
     borderColor: "{colors.danger}"
   panel:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.surface}"
     borderColor: "{colors.line}"
     rounded: "{rounded.panel}"
     padding: "{spacing.panel-padding}"
     shadow: "{shadows.none}"
   overlay:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.surface-raised}"
+    borderColor: "{colors.line-strong}"
     rounded: "{rounded.panel}"
     shadow: "{shadows.overlay}"
   table-header:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.surface-raised}"
     textColor: "{colors.ink-muted}"
     typography: "{typography.small}"
     height: "{spacing.row-height-dense}"
@@ -189,7 +193,7 @@ components:
     borderColor: "{colors.line}"
     height: "{spacing.row-height}"
   table-row-hover:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.surface-raised}"
   table-row-selected:
     backgroundColor: "{colors.accent-subtle}"
   badge-success:
@@ -211,22 +215,22 @@ components:
     padding: "2px 8px"
     typography: "{typography.small}"
   badge-neutral:
-    backgroundColor: "{colors.surface-sunken}"
+    backgroundColor: "{colors.surface-raised}"
     textColor: "{colors.ink-soft}"
     rounded: "{rounded.badge}"
     padding: "2px 8px"
     typography: "{typography.small}"
   filter-chip:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-soft}"
     borderColor: "{colors.line-strong}"
     rounded: "{rounded.pill}"
     height: "32px"
   filter-chip-active:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.white}"
+    textColor: "{colors.on-ink}"
   dither:
-    inkColor: "{colors.ink}"
+    inkColor: "{colors.ink-muted}"
     backgroundColor: "transparent"
     cellSize: "3px"
     bayerMatrix: 8
@@ -244,18 +248,19 @@ components:
 TRATO es una herramienta donde alguien **firma compras con dinero real**. Tiene que parecer un
 instrumento preciso, no una demo.
 
-- **Vercel:** monocromo, tipografía Geist, bordes finos, botones casi negros, cero adorno.
-- **Render:** fondo blanco y **un solo** acento con personalidad (índigo `accent`), usado con cuentagotas.
+- **Vercel:** monocromo sobre casi negro, tipografía Geist, bordes finos, botón principal claro, cero adorno.
+- **Render:** fondo oscuro neutro y **un solo** acento con personalidad (índigo `accent`), usado con cuentagotas.
 - **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios y redondeados, la cantidad como
   protagonista.
 
-Solo modo claro. No hay tema oscuro.
+Solo modo oscuro. No hay tema claro: un único tema evita mantener dos paletas y que una de las dos quede descuidada.
 
 ## 2. Lo que no hacemos
 
 Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 
-- Fondos oscuros o modo oscuro.
+- Modo claro o un segundo tema. TRATO es solo oscuro.
+- Negro puro (`#000`) de fondo o blanco puro para texto: cansan la vista y hacen vibrar el contraste.
 - Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color.
 - Titulares que entran con desenfoque, elementos que flotan o «respiran» en bucle. No hay excepciones.
 - Una paleta paralela de grises o tonos casi iguales definidos elemento a elemento. Todo gris sale de
@@ -296,7 +301,7 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
 14. **Radio interior = radio exterior − padding.** Un panel de 12 px con 8 px de padding lleva hijos de
     4 px (`rounded.inner`). Nunca el mismo radio dentro que fuera.
 15. **Contraste de texto alto.** `ink` para texto principal, `ink-soft` para secundario, `ink-muted` como
-    mínimo (6.6:1 sobre blanco). Nunca grises más claros para texto.
+    mínimo (≥ 5.3:1 sobre cualquier superficie). Nunca grises más oscuros para texto.
 16. **Titulares bien partidos.** `text-wrap: balance` en titulares, `pretty` en párrafos; sin viudas.
 17. **Alinear a ojo, no a píxel.** Ajustar ópticamente iconos junto a texto, triángulos de «play»,
     cifras grandes con su divisa.
@@ -310,8 +315,12 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
 
 - Todo color se consume por token semántico (`bg-surface`, `text-ink-muted`, `border-line`…). Prohibidos
   hex literales, paleta cruda de Tailwind (`bg-red-100`) y valores arbitrarios en componentes.
-- Jerarquía de superficie: `white` (página y paneles) → `surface` (cabeceras, hover) → `surface-sunken`
-  (zonas hundidas, badge neutro). Las capas se separan con `line`, no con sombra.
+- Jerarquía de superficie: en oscuro, **más elevado = más claro**. `background` (página e inputs) →
+  `surface` (paneles) → `surface-raised` (cabeceras de tabla, hover, popovers, badge neutro). Las capas se
+  separan con `line` y con ese paso de luminosidad, no con sombra.
+- El botón principal es claro (`ink`) con texto `on-ink`; el destructivo usa `danger-solid` con texto
+  `white`. `danger` (más claro) es solo para texto e iconos de error.
+- Los fondos `*-subtle` son tintes muy oscuros: en badges el texto va en el color de estado, nunca en blanco.
 - `line-strong` solo para el borde de controles interactivos (inputs, botón secundario).
 - El color nunca es la única señal: todo estado lleva texto e icono.
 
@@ -375,7 +384,8 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
   padding lateral de 24 px.
 - Escritorio primero (uso profesional), pero ninguna vista se rompe a 360 px.
 - Densidad: `row-height` por defecto, `row-height-dense` en comparativas, elegida por prop.
-- Sombras solo en capas flotantes (`overlay`: popovers, menús, diálogos). Paneles con borde y sin sombra.
+- En oscuro la sombra apenas se ve: las capas flotantes (`overlay`) se distinguen por `surface-raised` +
+  `line-strong` y una sombra negra difusa. Paneles con borde y sin sombra.
 
 ## 8. Movimiento
 
@@ -390,7 +400,8 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 
 Único recurso gráfico del sistema. Usa el componente `DitherSpheres` (token `components.dither`).
 
-- 1 bit y una sola tinta (`ink`) sobre fondo transparente; patrón Bayer 8×8 visible con
+- 1 bit y una sola tinta (`ink-muted` por defecto, `ink` solo si es el único elemento visual) sobre fondo
+  transparente, es decir, píxeles claros sobre el oscuro; patrón Bayer 8×8 visible con
   `image-rendering: pixelated`. Sin color, sin degradados, sin desenfoque.
 - Sombreado lambertiano con **una** dirección de luz compartida por todas las esferas.
 - Composición: 2–3 esferas de tamaños distintos, asimétricas, recortadas por el borde. Nunca centradas.
@@ -421,7 +432,7 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 
 ```text
 Eres DEV-6. Construye <componente/vista> para TRATO siguiendo packages/ui/DESIGN.md al pie de la letra:
-los valores del YAML son los únicos permitidos y las secciones 2 y 3 son obligatorias. Solo modo claro.
+los valores del YAML son los únicos permitidos y las secciones 2 y 3 son obligatorias. Solo modo oscuro.
 Usa componentes de @trato/ui, iconos lucide y textos vía next-intl (es/en/zh). La UI no calcula dinero ni
 bandas: muestra lo que devuelve la API. Usa datos reales de los fixtures del contrato.
 Implementa carga/vacío/error/datos. Entrega componente + story + test axe. Después renderiza, haz una
@@ -432,7 +443,7 @@ terminar. Indica qué reglas comprobaste.
 ## 12. Checklist de PR
 
 - [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
-- [ ] Nada de la sección 2 (oscuro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
+- [ ] Nada de la sección 2 (tema claro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
 - [ ] Sin badges de relleno ni etiquetas redundantes; mono solo en IDs/hashes.
 - [ ] Un elemento dominante y un único CTA primario por zona; titular concreto y con `balance`.
 - [ ] Radios anidados = exterior − padding.
