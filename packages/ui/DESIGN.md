@@ -1,6 +1,6 @@
 ---
 name: TRATO
-description: Sistema visual oscuro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo preciso, esquinas rectas y un único acento arena; mezcla de la sobriedad de Vercel, la geometría recta y el acento único de Render y las cifras grandes de la app de Revolut.
+description: Sistema visual oscuro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo puro y esquinas rectas, sin color de acento; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
 colors:
   background: "#0b0b0d"
   surface: "#131316"
@@ -11,9 +11,9 @@ colors:
   ink-soft: "#b4b4be"
   ink-muted: "#8e8e9a"
   on-ink: "#0b0b0d"
-  accent: "#d9c9a3"
-  accent-deep: "#e8dcc0"
-  accent-subtle: "#24211b"
+  accent: "#ededf0"
+  accent-deep: "#ffffff"
+  accent-subtle: "#1b1b20"
   on-accent: "#0b0b0d"
   success: "#3fbf74"
   success-subtle: "#0f2419"
@@ -267,24 +267,21 @@ components:
   dither:
     algorithm: "atkinson"
     dotShape: "{rounded.dot}"
-    inkColor: "{colors.ink-muted}"
     backgroundColor: "transparent"
     cellSize: "8px"
     dotDiameter: "5px"
-    dotTransition: "150ms"
+    dotRamp: "{colors.background} → {colors.ink-muted}"
+    dotLevels: 8
+    dotTransition: "120ms"
     recomputeFps: 12
     rotationPeriod: "40s"
     revealDuration: "800ms"
   loader-spheres:
     count: 4
-    algorithm: "atkinson"
-    dotShape: "{rounded.dot}"
-    inkColor: "{colors.ink-muted}"
-    activeColor: "{colors.accent}"
-    sphereDiameter: "36px"
-    cellSize: "3px"
-    dotDiameter: "2.3px"
-    gap: "24px"
+    fill: "{colors.ink}"
+    shading: "none"
+    sphereDiameter: "20px"
+    gap: "28px"
     arcHeight: "0.31 × distancia"
     swapDuration: "650ms"
     swapPause: "150ms"
@@ -305,8 +302,10 @@ TRATO es una herramienta donde alguien **firma compras con dinero real**. Tiene 
 instrumento preciso, no una demo.
 
 - **Vercel:** monocromo sobre casi negro, tipografía Geist, bordes finos, botón principal claro, cero adorno.
-- **Render:** esquinas rectas (radio 0 en todo), bordes de 1 px y **un solo** acento con personalidad (arena
-  `accent`), usado con cuentagotas.
+- **Render:** esquinas rectas (radio 0 en todo) y bordes de 1 px.
+- **Sin color de acento:** `accent` es el mismo blanco roto que `ink`. Lo que destaca (foco, selección,
+  enlaces, serie principal) lo hace por luminosidad, subrayado o borde, nunca por un tono propio. Así el
+  único color de la interfaz es el de estado, y cuando aparece significa algo.
 - **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios, la cantidad como protagonista.
 
 Solo modo oscuro. No hay tema claro: un único tema evita mantener dos paletas y que una de las dos quede descuidada.
@@ -351,8 +350,8 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
    separados por `group-gap`; secciones por `section`. No añadir bordes o paneles para agrupar.
 9. **Titulares concretos.** «3 ofertas esperan tu firma», no «Compras inteligentes, simplificadas».
 10. **Destacar el CTA.** Un solo `button-primary` por zona; el resto `secondary` o `ghost`.
-11. **Un color de acento.** `accent` solo para enlaces, foco, selección y la serie principal de
-    gráficas. Los colores de estado no son acentos: solo significan estado.
+11. **Monocromo.** No hay color de acento: foco, selección, enlaces y serie principal usan `accent` (= `ink`).
+    Los enlaces se distinguen por subrayado. Los colores de estado no son acentos: solo significan estado.
 12. **Iconos coherentes.** Solo lucide, mismo trazo (1.75) y tamaño (16 px en texto, 20 px en
     navegación), y solo cuando aportan significado.
 13. **Quitar adornos.** Si algo se puede eliminar sin perder información, se elimina.
@@ -455,47 +454,41 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - Los bucles solo existen en el dithering (§9) y en el indicador de carga (§9.2); nunca en la interfaz.
 - `prefers-reduced-motion`: se reduce todo a cambios de opacidad instantáneos.
 
-## 9. Esferas con dithering
+## 9. Campo de puntos y carga
 
-Único recurso gráfico del sistema. Dos componentes: `DitherSpheres` (token `components.dither`) y
-`SphereLoader` (token `components.loader-spheres`).
+Único recurso gráfico del sistema. Dos componentes: `DotField` (token `components.dither`) y `SphereLoader`
+(token `components.loader-spheres`).
 
-### 9.1 Campo de esferas (`DitherSpheres`)
+### 9.1 Campo de puntos (`DotField`)
 
-- **Rejilla de puntos:** toda la zona es una rejilla regular de `cellSize`; cada celda es un **círculo**
-  encendido o apagado, en una sola tinta (`ink-muted`) sobre transparente. Nada de cuadrados ni
-  `image-rendering: pixelated`.
-- **Atkinson:** la imagen fuente (esferas con sombreado lambertiano, una dirección de luz compartida) se
-  convierte a 1 bit con difusión de error Atkinson (6/8 del error a seis vecinos, umbral 0.5).
-- **Estabilidad:** Atkinson reordena muchos puntos ante cambios pequeños. Para que la rejilla no
-  «hierva», el patrón se recalcula a `recomputeFps` y cada punto escala su radio de 0 a `dotDiameter` en
-  `dotTransition`, nunca salta.
-- **Composición:** 2–3 esferas de tamaños distintos, asimétricas, recortadas por el borde, nunca centradas.
-- **Animaciones** (todas deterministas, sin `Math.random`):
-  1. **Revelado al cargar**, una vez: todos los puntos encendidos que se resuelven al patrón final en
-     `revealDuration`.
-  2. **Estado del sistema:** en reposo la rotación es lenta; mientras algo trabaja (inicio de sesión,
-     misión en curso) gira más rápido; al terminar con éxito, una onda recorre la rejilla desde la acción.
-  3. **Rotación con textura** (bucle): las esferas tienen bandas sutiles de albedo que giran, una vuelta
-     cada `rotationPeriod`.
-  4. **Reacción al CTA:** al pasar por el botón principal, la luz se intensifica y se orienta hacia él;
-     al salir vuelve con inercia.
-- `prefers-reduced-motion`: un único fotograma estático, sin bucles.
-- `aria-hidden`, `pointer-events: none`, sin desplazar el layout.
-- **Dónde:** de momento solo en el login, junto a un extracto real del producto. Nunca detrás de
-  importes, tablas o el gate.
+- **Rejilla:** toda la zona es una rejilla regular de `cellSize`; cada celda es un **círculo** de diámetro
+  fijo (`dotDiameter`). Nada de cuadrados ni `image-rendering: pixelated`.
+- **Atkinson:** la imagen fuente se convierte a 1 bit con difusión de error Atkinson (6/8 del error a seis
+  vecinos, umbral 0.5). El algoritmo puede cambiar si visualmente no convence.
+- **Los puntos cambian de intensidad, no de tamaño.** Al encenderse o apagarse, cada punto recorre una
+  rampa de grises (`dotRamp`, en `dotLevels` pasos) en `dotTransition`. Escalar el radio deforma la
+  rejilla y se lee como «burbujeo»; la intensidad mantiene la retícula intacta.
+- **Estabilidad:** Atkinson reordena muchos puntos ante cambios pequeños, así que el patrón se recalcula a
+  `recomputeFps` y la transición de intensidad suaviza el resto.
+- **Motivo:** pendiente de decidir (las esferas quedan descartadas). Lo que se dibuje debe ser determinista
+  y, a ser posible, decir algo del producto.
+- **Animaciones** acordadas, independientes del motivo:
+  1. **Revelado al cargar**, una vez, en `revealDuration`.
+  2. **Estado del sistema:** más movimiento mientras algo trabaja; una onda al terminar con éxito.
+  3. **Bucle lento** del motivo, en `rotationPeriod`.
+  4. **Reacción al CTA:** el campo responde al hover o foco del botón principal.
+- `prefers-reduced-motion`: un único fotograma estático. `aria-hidden`, `pointer-events: none`.
+- **Dónde:** de momento solo en el login. Nunca detrás de importes, tablas o el gate.
 
 ### 9.2 Indicador de carga (`SphereLoader`)
 
-- Cuatro esferas pequeñas en línea horizontal, dibujadas con la misma rejilla de puntos Atkinson. Una de
-  ellas en `accent`, el resto en `ink-muted`, para que el intercambio se lea.
-- Se intercambian por parejas de posiciones contiguas: una viaja por un **arco por encima** y la otra por
-  un **arco por debajo**, como las transiciones de un autómata finito. La altura del arco es proporcional
-  a la distancia recorrida.
-- Cada intercambio dura `swapDuration` con `motion.easing`, pausa `swapPause`, y la secuencia de parejas
-  se repite en bucle.
+- Cuatro bolas **lisas, blancas (`ink`) e idénticas**, sin sombreado ni dithering, en línea horizontal.
+- Se intercambian por parejas contiguas: una viaja por un **arco por encima** y la otra por un **arco por
+  debajo**, como las transiciones de un autómata finito. La altura del arco es proporcional a la distancia.
+- Cada intercambio dura `swapDuration`, pausa `swapPause`; la secuencia de parejas (1–2, 2–3, 3–4, 2–3) se
+  repite en bucle.
 - Uso: modales de carga y esperas de más de 400 ms. Siempre con texto que diga qué se espera
-  («Firmando decisión…») y `role="status"`. Con reduced motion: esferas quietas y el texto.
+  («Firmando decisión…») y `role="status"`. Con reduced motion: bolas quietas y el texto.
 
 ## 10. Accesibilidad e internacionalización
 
