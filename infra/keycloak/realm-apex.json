@@ -1,0 +1,364 @@
+{
+  "realm": "apex",
+  "enabled": true,
+  "displayName": "APEX-EFN (dev)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      {
+        "name": "owner",
+        "description": "Responsable principal del tenant. Puede firmar."
+      },
+      {
+        "name": "admin",
+        "description": "Administra configuración y usuarios del tenant. Puede firmar."
+      },
+      {
+        "name": "buyer",
+        "description": "Compras: sourcing, negociación y decisiones de gate. Puede firmar."
+      },
+      {
+        "name": "finance",
+        "description": "Finanzas: CSV financiero y snapshots. Puede firmar."
+      },
+      {
+        "name": "viewer",
+        "description": "Solo lectura. Nunca firma."
+      }
+    ]
+  },
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10,
+      "config": {}
+    }
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"tenant_id\",\"displayName\":\"Tenant\",\"validations\":{\"length\":{\"min\":1,\"max\":64}},\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "tenant-a",
+      "path": "/tenant-a",
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
+    },
+    {
+      "name": "tenant-b",
+      "path": "/tenant-b",
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "apex-web",
+      "name": "APEX-EFN web (BFF Next.js)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "apex-dev-web-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience-apex-orchestrator",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "apex-orchestrator",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "apex-orchestrator",
+      "name": "APEX-EFN orchestrator (resource server)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "apex-dev-orchestrator-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ],
+  "users": [
+    {
+      "username": "owner-a@apex.local",
+      "email": "owner-a@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Owner",
+      "lastName": "Tenant A",
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["owner"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin-a@apex.local",
+      "email": "admin-a@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "Tenant A",
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["admin"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "buyer-a@apex.local",
+      "email": "buyer-a@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Buyer",
+      "lastName": "Tenant A",
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["buyer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "finance-a@apex.local",
+      "email": "finance-a@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Finance",
+      "lastName": "Tenant A",
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["finance"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "viewer-a@apex.local",
+      "email": "viewer-a@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Viewer",
+      "lastName": "Tenant A",
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["viewer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "owner-b@apex.local",
+      "email": "owner-b@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Owner",
+      "lastName": "Tenant B",
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["owner"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin-b@apex.local",
+      "email": "admin-b@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "Tenant B",
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["admin"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "buyer-b@apex.local",
+      "email": "buyer-b@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Buyer",
+      "lastName": "Tenant B",
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["buyer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "finance-b@apex.local",
+      "email": "finance-b@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Finance",
+      "lastName": "Tenant B",
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["finance"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "viewer-b@apex.local",
+      "email": "viewer-b@apex.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Viewer",
+      "lastName": "Tenant B",
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["viewer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "apex-dev",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

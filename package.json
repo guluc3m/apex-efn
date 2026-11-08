@@ -24,6 +24,9 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
+    "dev:up": "docker compose up -d --wait",
+    "dev:down": "docker compose down",
+    "dev:reset": "bash infra/scripts/dev-reset.sh",
     "prepare": "husky",
     "postinstall": "turbo run build --filter=./packages/* || true"
   },
