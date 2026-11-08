@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Python job (D1-04): ruff, mypy and unit tests with the coverage gate (80%, per target that exists).
-# Integration tests (Testcontainers) are excluded here and run by integration.sh.
+# Integration tests (Testcontainers, marker integration) and real-Vault tests (marker vault_integration) are
+# excluded here and run by integration.sh.
 # Coverage targets are added only when their code exists, so the gate switches on by itself.
 set -euo pipefail
 # shellcheck source=common.sh
@@ -35,7 +36,9 @@ for target in "${TARGETS[@]}"; do
   fi
 done
 
-pytest_args=(-m "not integration" -o markers=integration)
+# One -o per run: a second "-o markers=" would replace the first, not add to it.
+markers_ini=$'markers=\n  integration: Testcontainers, needs Docker\n  vault_integration: real Vault dev server, no Docker'
+pytest_args=(-m "not integration and not vault_integration" -o "${markers_ini}")
 if [ "${#cov_args[@]}" -gt 0 ]; then
   pytest_args+=("${cov_args[@]}" --cov-report=term-missing "--cov-fail-under=${THRESHOLD}")
 else

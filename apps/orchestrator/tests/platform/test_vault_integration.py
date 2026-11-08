@@ -1,8 +1,10 @@
 """Integration tests against a real Vault (dev server, bootstrapped by infra/vault/init.sh).
 
-Skipped unless VAULT_INTEGRATION_ADDR is set. Run with:
+Marked vault_integration (not integration: that marker means Testcontainers and needs Docker). Needs no Docker.
+Skipped unless VAULT_INTEGRATION_ADDR is set, so a plain pytest run stays hermetic. CI and `pnpm ci:local --job
+integration` start a pinned dev Vault (.github/scripts/ci/integration.sh). Run by hand with:
     VAULT_INTEGRATION_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=apex-dev-root-token \
-        uv run pytest -q -m integration -o markers=integration
+        uv run pytest -q -m vault_integration -o markers=vault_integration
 """
 
 from __future__ import annotations
@@ -22,7 +24,7 @@ ADDR = os.environ.get("VAULT_INTEGRATION_ADDR")
 ROOT_TOKEN = os.environ.get("VAULT_INTEGRATION_TOKEN") or os.environ.get("VAULT_TOKEN", "")
 
 pytestmark = [
-    pytest.mark.integration,
+    pytest.mark.vault_integration,
     pytest.mark.skipif(not ADDR, reason="set VAULT_INTEGRATION_ADDR to run against a real Vault"),
 ]
 
