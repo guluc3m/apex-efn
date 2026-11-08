@@ -148,7 +148,10 @@ ensure_tool() {
   mkdir -p "$dir"
   echo "downloading ${tool} ${version} (${platform}) from ${url}" >&2
   curl -fsSL --retry 3 -o "$part" "$url" || _tools_fail "download failed: $url"
-  verify_sha256 "$part" "$sha" || _tools_fail "refusing to unpack ${archive}"
+  if ! verify_sha256 "$part" "$sha"; then
+    rm -f "$part"
+    _tools_fail "refusing to unpack ${archive}"
+  fi
 
   rm -rf "$extract"
   mkdir -p "$extract"
