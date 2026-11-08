@@ -1,7 +1,6 @@
-"""Tenant configuration service owned by DEV-4 (ADR-400, spec §7).
+"""Tenant configuration service (ADR-400, spec §7).
 
-This package is built in stacked steps. This module exports only the pure domain (models, errors,
-resolver, ports, repository); the service and the API arrive in later stacked branches.
+Public surface: ``effective``, ``propose_change``, ``apply_signed_change`` via ``TenantConfigService``.
 """
 
 from apex.tenant_config.errors import (
@@ -12,7 +11,9 @@ from apex.tenant_config.errors import (
     TenantConfigError,
 )
 from apex.tenant_config.models import SUPPORTED_CURRENCIES, Band, TenantConfig
+from apex.tenant_config.repository import InMemoryConfigRepository
 from apex.tenant_config.resolver import EffectiveConfig, Layer, ResolvedValue
+from apex.tenant_config.service import TenantConfigService
 
 __all__ = [
     "SUPPORTED_CURRENCIES",
@@ -20,10 +21,12 @@ __all__ = [
     "ConfigKeyUnset",
     "ConfigValidationError",
     "EffectiveConfig",
+    "InMemoryConfigRepository",
     "Layer",
     "NonConfigurableKeyError",
     "ResolvedValue",
     "StaleBaseVersionError",
     "TenantConfig",
     "TenantConfigError",
+    "TenantConfigService",
 ]
