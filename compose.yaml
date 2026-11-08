@@ -1,6 +1,6 @@
 # Entry point for `docker compose` from the repo root.
 # Service definitions live in infra/; relative paths there resolve against infra/.
-name: trato
+name: apex
 
 include:
   - path: infra/docker-compose.yml
