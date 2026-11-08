@@ -1,4 +1,4 @@
 # apex-afn
-Apex Platform Entresprise Excahnge - Element Fintech Network
+Apex Platform Entresprise Xcahnge - Element Fintech Network
 ![macarrones](macarrones.jpg)
 # Macarrones
