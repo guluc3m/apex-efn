@@ -53,10 +53,13 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Secrets (never commit)
+# Secrets (never commit). Only sops-encrypted files may be committed: see docs/security/secrets.md
 *.pem
 *.key
-secrets/
+*.agekey
+keys.txt
+secrets/*
+!secrets/*.enc.*
 
 # Generated
 *.generated.ts

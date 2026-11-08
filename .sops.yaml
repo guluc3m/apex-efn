@@ -1,0 +1,18 @@
+# sops configuration (D1-06). Encrypts repository secrets for age recipients.
+# Workflow, key generation and rotation: docs/security/secrets.md
+#
+# !! PLACEHOLDER RECIPIENTS !! The values below are not real keys. sops refuses to encrypt
+# with them on purpose. Replace each placeholder with the PUBLIC key (age1...) of every
+# person or CI runner that must decrypt, then run `sops updatekeys` on existing files.
+# Public keys only. Private keys (AGE-SECRET-KEY-1...) never go in this file or in the repo.
+#
+# TODO(TL): list the real recipients, one per developer (DEV-1..DEV-6) plus CI and the TL.
+creation_rules:
+  - path_regex: (^|/)secrets/.*\.enc\.(ya?ml|json|env)$
+    age: >-
+      age1REPLACE_WITH_PUBLIC_KEY_OF_DEVELOPER_1,
+      age1REPLACE_WITH_PUBLIC_KEY_OF_DEVELOPER_2
+  - path_regex: (^|/)infra/.*\.enc\.(ya?ml|json|env)$
+    age: >-
+      age1REPLACE_WITH_PUBLIC_KEY_OF_DEVELOPER_1,
+      age1REPLACE_WITH_PUBLIC_KEY_OF_DEVELOPER_2
