@@ -1,13 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "globalEnv": [
-    "NODE_ENV",
-    "DATABASE_URL",
-    "REDIS_URL",
-    "S3_ENDPOINT",
-    "LLM_GATEWAY_URL"
-  ],
+  "globalEnv": ["NODE_ENV", "DATABASE_URL", "REDIS_URL", "S3_ENDPOINT", "LLM_GATEWAY_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -27,6 +21,10 @@
     },
     "typecheck": {
       "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "@apex/web#typecheck": {
+      "dependsOn": ["^build", "@apex/web#build"],
       "outputs": []
     },
     "test": {
