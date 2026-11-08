@@ -47,6 +47,8 @@ dev = [
     "fakeredis>=2.26.0",
     "apex-llm-stub",
     "types-PyYAML>=6.0.12",
+    "jsonschema>=4.26.0",
+    "hypothesis>=6.170.15",
 ]
 
 [tool.uv.sources]
@@ -99,3 +101,4 @@ markers = [
     "vault_integration: real Vault dev server, no Docker",
 ]
 filterwarnings = ["ignore:Module already imported so cannot be rewritten:pytest.PytestAssertRewriteWarning"]
+pythonpath = ["tests/tenant_config"]

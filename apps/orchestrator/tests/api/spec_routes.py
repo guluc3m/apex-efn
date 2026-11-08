@@ -48,4 +48,6 @@ CONFIG_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
+# The exact-set check covers both. The 501 stub check covers only SPEC_ROUTES: the config routes
+# are implemented by D4-03 and answer real responses (see tests/tenant_config/test_api.py).
 EXPECTED_ROUTES: frozenset[tuple[str, str]] = SPEC_ROUTES | CONFIG_ROUTES

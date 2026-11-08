@@ -1,0 +1,286 @@
+{
+  "$schema": "./tenant-config.schema.json",
+  "config_format": 1,
+  "config_version": 1,
+  "source": "PROMPT-IMPLEMENTACION.md §7 + ADR-900",
+  "values": {
+    "money": {
+      "supported_currencies": {
+        "value": [
+          "EUR",
+          "USD",
+          "CNY"
+        ],
+        "scope": "global",
+        "non_configurable": true
+      }
+    },
+    "fx": {
+      "pivot": {
+        "value": "EUR",
+        "scope": "global"
+      },
+      "max_age_hours": {
+        "value": 36,
+        "scope": "tenant"
+      }
+    },
+    "sanity": {
+      "min_sample": {
+        "value": 5,
+        "scope": "tenant_category"
+      },
+      "z_ok": {
+        "value": "3.5",
+        "scope": "tenant_category"
+      },
+      "z_gate": {
+        "value": "6.0",
+        "scope": "tenant_category"
+      },
+      "low_side_factor": {
+        "value": "0.8",
+        "scope": "tenant"
+      },
+      "max_relative_rise": {
+        "value": "0.40",
+        "scope": "tenant_category"
+      },
+      "max_relative_drop": {
+        "value": "0.30",
+        "scope": "tenant_category"
+      },
+      "floor_per_unit": {
+        "value": null,
+        "scope": "category",
+        "status": "unset"
+      },
+      "ceiling_per_unit": {
+        "value": null,
+        "scope": "category",
+        "status": "unset"
+      },
+      "on_insufficient_reference": {
+        "value": "gate",
+        "scope": "tenant",
+        "allowed": [
+          "gate"
+        ]
+      },
+      "reference_weights": {
+        "value": {
+          "mission": "0.5",
+          "history": "0.3",
+          "benchmark": "0.2"
+        },
+        "scope": "tenant"
+      }
+    },
+    "seller": {
+      "weights": {
+        "value": null,
+        "scope": "tenant_category",
+        "status": "unset",
+        "pending": "ADR-304"
+      },
+      "rating_prior_weight": {
+        "value": 25,
+        "scope": "tenant"
+      },
+      "age_saturation_days": {
+        "value": 730,
+        "scope": "tenant"
+      },
+      "min_signals": {
+        "value": 3,
+        "scope": "tenant"
+      },
+      "band_high": {
+        "value": "75",
+        "scope": "tenant"
+      },
+      "band_medium": {
+        "value": "50",
+        "scope": "tenant"
+      },
+      "band_low": {
+        "value": "25",
+        "scope": "tenant"
+      },
+      "hard_block_below": {
+        "value": "20",
+        "scope": "tenant"
+      },
+      "min_accepted_band": {
+        "value": "medium",
+        "scope": "tenant",
+        "allowed": [
+          "high",
+          "medium",
+          "low"
+        ]
+      },
+      "review_burst_z": {
+        "value": "3.0",
+        "scope": "tenant"
+      },
+      "max_dispute_rate": {
+        "value": "0.05",
+        "scope": "tenant"
+      },
+      "snapshot_max_age_days": {
+        "value": 30,
+        "scope": "tenant"
+      },
+      "escalate_cheap_low_confidence": {
+        "value": true,
+        "scope": "tenant"
+      }
+    },
+    "finance": {
+      "safety_buffer_pct": {
+        "value": "15",
+        "scope": "tenant"
+      },
+      "stale_after_days": {
+        "value": 45,
+        "scope": "tenant"
+      },
+      "cost_of_capital_rate": {
+        "value": null,
+        "scope": "tenant",
+        "status": "unset"
+      }
+    },
+    "neg": {
+      "target_discount": {
+        "value": null,
+        "scope": "category",
+        "status": "unset"
+      },
+      "max_discount": {
+        "value": null,
+        "scope": "category",
+        "status": "unset"
+      },
+      "max_rounds": {
+        "value": 6,
+        "scope": "tenant"
+      },
+      "max_tokens_per_conversation": {
+        "value": 20000,
+        "scope": "tenant"
+      },
+      "max_messages_per_hour_per_account": {
+        "value": 20,
+        "scope": "tenant"
+      },
+      "max_message_chars": {
+        "value": 1200,
+        "scope": "tenant"
+      },
+      "allowed_counterparts": {
+        "value": [],
+        "scope": "tenant"
+      }
+    },
+    "gate": {
+      "sla_hours": {
+        "value": 24,
+        "scope": "tenant"
+      },
+      "max_renegotiations": {
+        "value": 1,
+        "scope": "tenant"
+      }
+    },
+    "approval": {
+      "threshold": {
+        "value": null,
+        "scope": "tenant",
+        "status": "unset"
+      },
+      "dual_control_above": {
+        "value": null,
+        "scope": "tenant",
+        "status": "unset"
+      }
+    },
+    "signing": {
+      "session_minutes": {
+        "value": 15,
+        "scope": "tenant"
+      },
+      "max_decisions_per_session": {
+        "value": 10,
+        "scope": "tenant"
+      },
+      "high_value_reauth_above": {
+        "value": null,
+        "scope": "tenant",
+        "status": "unset"
+      }
+    },
+    "llm": {
+      "roles": {
+        "value": {
+          "planner": {
+            "base_url": "http://localhost:8001/v1",
+            "model": "stub-model",
+            "capabilities": []
+          },
+          "negotiator": {
+            "base_url": "http://localhost:8001/v1",
+            "model": "stub-model",
+            "capabilities": []
+          },
+          "extractor": {
+            "base_url": "http://localhost:8001/v1",
+            "model": "stub-model",
+            "capabilities": []
+          },
+          "narrator": {
+            "base_url": "http://localhost:8001/v1",
+            "model": "stub-model",
+            "capabilities": []
+          },
+          "embedder": {
+            "base_url": "http://localhost:8001/v1",
+            "model": "stub-model",
+            "capabilities": []
+          }
+        },
+        "scope": "tenant",
+        "note": "ADR-900 Q7 option B: dev default points every role at the LLM stub"
+      }
+    },
+    "landed": {
+      "duty_rate": {
+        "value": null,
+        "scope": "category",
+        "status": "unset"
+      },
+      "import_vat_rate": {
+        "value": null,
+        "scope": "tenant",
+        "status": "unset"
+      }
+    },
+    "constraints": {
+      "require_escrow": {
+        "value": false,
+        "scope": "tenant"
+      }
+    },
+    "supervisor": {
+      "stuck_after_minutes": {
+        "value": 30,
+        "scope": "tenant"
+      },
+      "degrade_on_budget_exhausted": {
+        "value": true,
+        "scope": "tenant"
+      }
+    }
+  }
+}
