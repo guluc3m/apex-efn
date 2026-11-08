@@ -1,0 +1,10 @@
+# Operational runbooks
+# Required by section 9.31:
+# - session-invalidated.md
+# - captcha-persistent.md
+# - dom-change.md
+# - key-loss.md
+# - signing-session-blocked.md
+# - audit-chain-broken.md
+# - financial-snapshot-stale.md
+# - platform-signals-missing.md

@@ -1,0 +1,128 @@
+version: "3.9"
+
+services:
+  # =============================================================================
+  # PostgreSQL 16
+  # =============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: trato-postgres
+    environment:
+      POSTGRES_USER: trato
+      POSTGRES_PASSWORD: trato
+      POSTGRES_DB: trato
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trato"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # Redis
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: trato-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # MinIO (S3-compatible storage)
+  # =============================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: trato-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # Keycloak (Authentication)
+  # =============================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: trato-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/trato
+      KC_DB_USERNAME: trato
+      KC_DB_PASSWORD: trato
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =============================================================================
+  # Langfuse (LLM Observability)
+  # =============================================================================
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: trato-langfuse
+    environment:
+      DATABASE_URL: postgresql://trato:trato@postgres:5432/trato
+      NEXTAUTH_SECRET: langfuse-secret-change-me
+      NEXTAUTH_URL: http://localhost:3001
+      SALT: langfuse-salt-change-me
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =============================================================================
+  # LLM Stub (OpenAI-compatible mock for testing)
+  # =============================================================================
+  llm-stub:
+    image: ghcr.io/mockoon/cli:latest
+    container_name: trato-llm-stub
+    command: --data /data/openai-stub.json --port 8001
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./mocks:/data:ro
+
+  # =============================================================================
+  # Grafana + Loki + Tempo (Observability)
+  # =============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: trato-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  grafana_data:

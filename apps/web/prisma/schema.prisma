@@ -1,0 +1,670 @@
+// TRATO Database Schema
+// Single source of truth for migrations
+// Both Prisma (web) and SQLAlchemy (orchestrator) read from this schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Multi-tenancy
+// =============================================================================
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  vatNumber String?  @map("vat_number")
+  country   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users             Membership[]
+  companyProfile    CompanyProfile?
+  financialSnapshots FinancialsSnapshot[]
+  sourcingRequests  SourcingRequest[]
+  missions          Mission[]
+  config            TenantConfig?
+  signingKeys       SigningKey[]
+  decisions         Decision[]
+  auditEvents       AuditEvent[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships     Membership[]
+  signingKeys     SigningKey[]
+  signingSessions SigningSession[]
+  signatures      Signature[]
+  decisions       Decision[]
+
+  @@map("users")
+}
+
+enum Role {
+  owner
+  admin
+  buyer
+  finance
+  viewer
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  role      Role
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@map("memberships")
+}
+
+// =============================================================================
+// Company Profile & Financials
+// =============================================================================
+
+model CompanyProfile {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique @map("tenant_id")
+  legalName        String   @map("legal_name")
+  vatNumber        String   @map("vat_number")
+  country          String
+  shippingAddress  Json     @map("shipping_address")
+  billingAddress   Json     @map("billing_address")
+  sector           String?
+  cnae             String?
+  baseCurrency     String   @default("EUR") @map("base_currency")
+  buyingPowerScore Int?     @map("buying_power_score")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("company_profiles")
+}
+
+enum FinancialSnapshotStatus {
+  draft
+  active
+  superseded
+  stale
+}
+
+model FinancialsSnapshot {
+  id           String                  @id @default(cuid())
+  tenantId     String                  @map("tenant_id")
+  status       FinancialSnapshotStatus @default(draft)
+  csvRef       String                  @map("csv_ref")
+  importReport Json                    @map("import_report")
+  baseCurrency String                  @map("base_currency")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  activatedAt  DateTime?               @map("activated_at")
+  activatedBy  String?                 @map("activated_by")
+  supersededAt DateTime?               @map("superseded_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@map("financials_snapshots")
+}
+
+// =============================================================================
+// Sourcing & Missions
+// =============================================================================
+
+model SourcingRequest {
+  id                 String    @id @default(cuid())
+  tenantId           String    @map("tenant_id")
+  createdBy          String    @map("created_by")
+  spec               Json
+  quantityTiers      Json      @map("quantity_tiers")
+  maxBudgetMinor     Int?      @map("max_budget_minor")
+  maxBudgetCurrency  String?   @map("max_budget_currency")
+  targetDeliveryDate DateTime? @map("target_delivery_date")
+  deliveryCountry    String    @map("delivery_country")
+  deliveryAddress    String?   @map("delivery_address")
+  excludedPlatforms  String[]  @map("excluded_platforms")
+  excludedCountries  String[]  @map("excluded_countries")
+  excludedSellers    String[]  @map("excluded_sellers")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  missions Mission[]
+
+  @@index([tenantId])
+  @@map("sourcing_requests")
+}
+
+enum MissionState {
+  created
+  planning
+  sourcing
+  enriching
+  evaluating
+  negotiating
+  awaiting_decision
+  completed
+  cancelled
+  failed
+}
+
+model Mission {
+  id                String       @id @default(cuid())
+  tenantId          String       @map("tenant_id")
+  requestId         String       @map("request_id")
+  planId            String?      @map("plan_id")
+  state             MissionState @default(created)
+  offersDiscovered  Int          @default(0) @map("offers_discovered")
+  offersNegotiated  Int          @default(0) @map("offers_negotiated")
+  offersInGate      Int          @default(0) @map("offers_in_gate")
+  tokensUsed        Int          @default(0) @map("tokens_used")
+  tokenBudget       Int          @map("token_budget")
+  startedAt         DateTime     @default(now()) @map("started_at")
+  completedAt       DateTime?    @map("completed_at")
+  error             String?
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  request SourcingRequest @relation(fields: [requestId], references: [id])
+  offers  Offer[]
+
+  @@index([tenantId, state])
+  @@map("missions")
+}
+
+// =============================================================================
+// Offers & Sellers
+// =============================================================================
+
+model Seller {
+  id           String   @id @default(cuid())
+  canonicalId  String   @unique @map("canonical_id")
+  platformIds  Json     @map("platform_ids")
+  name         String
+  country      String?
+  riskFlags    String[] @map("risk_flags")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  signalSnapshots SellerSignalSnapshot[]
+  confidences     SellerConfidence[]
+  offers          Offer[]
+
+  @@map("sellers")
+}
+
+model SellerSignalSnapshot {
+  id         String   @id @default(cuid())
+  sellerId   String   @map("seller_id")
+  signals    Json
+  capturedAt DateTime @map("captured_at")
+
+  seller       Seller             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  confidences  SellerConfidence[]
+
+  @@index([sellerId, capturedAt])
+  @@map("seller_signal_snapshots")
+}
+
+model SellerConfidence {
+  id                String   @id @default(cuid())
+  sellerId          String   @map("seller_id")
+  score             Int
+  band              String
+  signalsNormalized Json     @map("signals_normalized")
+  penalties         String[]
+  flags             Json
+  modelVersion      String   @map("model_version")
+  computedAt        DateTime @map("computed_at")
+  snapshotId        String   @map("snapshot_id")
+
+  seller   Seller               @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  snapshot SellerSignalSnapshot @relation(fields: [snapshotId], references: [id])
+
+  @@index([sellerId, computedAt])
+  @@map("seller_confidences")
+}
+
+enum OfferState {
+  discovered
+  enriched
+  trust_scored
+  sanity_checked
+  gate_pending
+  gate_approved
+  gate_rejected
+  financially_checked
+  negotiating
+  negotiated
+  sanity_rechecked
+  scored
+  awaiting_human
+  signed
+  approved
+  rejected
+  purchased
+}
+
+model Offer {
+  id               String     @id @default(cuid())
+  missionId        String     @map("mission_id")
+  platform         String
+  platformOfferId  String     @map("platform_offer_id")
+  productUrl       String     @map("product_url")
+  productKey       String     @map("product_key")
+  title            String
+  description      String?
+  specifications   Json?
+  certifications   String[]
+  imageUrls        String[]   @map("image_urls")
+  sellerId         String     @map("seller_id")
+  sellerName       String     @map("seller_name")
+  sellerCountry    String?    @map("seller_country")
+  unitPriceMinor   Int        @map("unit_price_minor")
+  currency         String
+  originalAmount   Int?       @map("original_amount")
+  originalCurrency String?    @map("original_currency")
+  fxRate           Float?     @map("fx_rate")
+  fxAsOf           DateTime?  @map("fx_as_of")
+  fxSource         String?    @map("fx_source")
+  converted        Boolean    @default(false)
+  moq              Int
+  priceTiers       Json?      @map("price_tiers")
+  shipping         Json?
+  leadTimeDays     Int?       @map("lead_time_days")
+  state            OfferState @default(discovered)
+  discoveredAt     DateTime   @default(now()) @map("discovered_at")
+  expiresAt        DateTime?  @map("expires_at")
+
+  mission            Mission              @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  seller             Seller               @relation(fields: [sellerId], references: [id])
+  priceSanityChecks  PriceSanityCheck[]
+  financialFits      FinancialFit[]
+  negotiations       Negotiation[]
+  scores             Score[]
+  gateQueueItems     GateQueueItem[]
+
+  @@unique([missionId, platform, platformOfferId])
+  @@index([missionId, state])
+  @@map("offers")
+}
+
+// =============================================================================
+// Price Sanity & Financial Fit
+// =============================================================================
+
+model PriceSanityCheck {
+  id                String   @id @default(cuid())
+  offerId           String   @map("offer_id")
+  referencePriceEur Int      @map("reference_price_eur")
+  median            Int
+  dispersionMeasure String   @map("dispersion_measure")
+  dispersionValue   Float    @map("dispersion_value")
+  sampleSize        Int      @map("sample_size")
+  indexScore        Float?   @map("index_score")
+  relativeDeviation Float    @map("relative_deviation")
+  band              String
+  decision          String
+  explanations      Json
+  configVersion     String   @map("config_version")
+  checkedAt         DateTime @map("checked_at")
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@map("price_sanity_checks")
+}
+
+model PriceHistory {
+  id                 String   @id @default(cuid())
+  productKey         String   @map("product_key")
+  sellerId           String   @map("seller_id")
+  landedUnitCostEur  Int      @map("landed_unit_cost_eur")
+  date               DateTime
+  missionId          String?  @map("mission_id")
+
+  @@index([productKey, date])
+  @@map("price_history")
+}
+
+model FinancialFit {
+  id                   String   @id @default(cuid())
+  offerId              String   @map("offer_id")
+  landedCost           Json     @map("landed_cost")
+  verdict              String
+  reasons              String[]
+  budgetUtilizationPct Float    @map("budget_utilization_pct")
+  treasuryImpactMinor  Int      @map("treasury_impact_minor")
+  financialsStale      Boolean  @map("financials_stale")
+  computedAt           DateTime @map("computed_at")
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@map("financial_fits")
+}
+
+// =============================================================================
+// Negotiations
+// =============================================================================
+
+model Negotiation {
+  id            String   @id @default(cuid())
+  offerId       String   @map("offer_id")
+  strategy      Json
+  state         String
+  rounds        Int      @default(0)
+  guardrailHits String[] @map("guardrail_hits")
+  startedAt     DateTime @default(now()) @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+
+  offer    Offer                @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  messages NegotiationMessage[]
+  outcome  NegotiationOutcome?
+
+  @@index([offerId])
+  @@map("negotiations")
+}
+
+model NegotiationMessage {
+  id            String   @id @default(cuid())
+  negotiationId String   @map("negotiation_id")
+  role          String
+  content       String
+  timestamp     DateTime
+  screenshotRef String?  @map("screenshot_ref")
+  redactions    Json?
+
+  negotiation Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+
+  @@index([negotiationId])
+  @@map("negotiation_messages")
+}
+
+model NegotiationOutcome {
+  id             String   @id @default(cuid())
+  negotiationId  String   @unique @map("negotiation_id")
+  initialPrice   Int      @map("initial_price")
+  finalPrice     Int      @map("final_price")
+  discountPct    Float    @map("discount_pct")
+  concessions    Json
+  terms          Json
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  negotiation Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+
+  @@map("negotiation_outcomes")
+}
+
+// =============================================================================
+// Scoring & Recommendations
+// =============================================================================
+
+model Score {
+  id         String   @id @default(cuid())
+  offerId    String   @map("offer_id")
+  totalScore Float    @map("total_score")
+  breakdown  Json
+  rank       Int
+  computedAt DateTime @map("computed_at")
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@map("scores")
+}
+
+// =============================================================================
+// Gate Queue
+// =============================================================================
+
+enum GateQueueItemType {
+  price_atypical
+  price_insufficient
+  seller_low_confidence
+  seller_insufficient_data
+  out_of_budget
+  stretch_budget
+  negotiator_escalation
+  override_request
+  dual_control
+  financials_stale
+}
+
+enum GateQueueItemStatus {
+  pending
+  assigned
+  approved
+  rejected
+  expired
+}
+
+model GateQueueItem {
+  id         String              @id @default(cuid())
+  offerId    String              @map("offer_id")
+  type       GateQueueItemType
+  priority   Int
+  slaDueAt   DateTime            @map("sla_due_at")
+  status     GateQueueItemStatus @default(pending)
+  assignedTo String?             @map("assigned_to")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  resolvedAt DateTime?           @map("resolved_at")
+
+  offer    Offer      @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  decision Decision?
+
+  @@index([status, slaDueAt])
+  @@map("gate_queue_items")
+}
+
+// =============================================================================
+// Signing & Decisions
+// =============================================================================
+
+enum SigningKeyOwnerType {
+  human
+  service
+}
+
+model SigningKey {
+  id         String              @id @default(cuid())
+  ownerId    String              @map("owner_id")
+  ownerType  SigningKeyOwnerType @map("owner_type")
+  tenantId   String?             @map("tenant_id")
+  publicKey  String              @map("public_key")
+  alg        String              @default("Ed25519")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  rotatedAt  DateTime?           @map("rotated_at")
+  revokedAt  DateTime?           @map("revoked_at")
+
+  owner    User?            @relation(fields: [ownerId], references: [id])
+  tenant   Tenant?          @relation(fields: [tenantId], references: [id])
+  sessions SigningSession[]
+  signatures Signature[]
+
+  @@index([ownerId, revokedAt])
+  @@map("signing_keys")
+}
+
+enum SigningSessionStatus {
+  active
+  expired
+  revoked
+  exhausted
+}
+
+model SigningSession {
+  id                   String               @id @default(cuid())
+  userId               String               @map("user_id")
+  keyId                String               @map("key_id")
+  authMethod           String               @map("auth_method")
+  authAt               DateTime             @map("auth_at")
+  expiresAt            DateTime             @map("expires_at")
+  deviceFingerprintRef String               @map("device_fingerprint_ref")
+  decisionsSigned      String[]             @map("decisions_signed")
+  maxDecisions         Int                  @map("max_decisions")
+  status               SigningSessionStatus @default(active)
+  revokedReason        String?              @map("revoked_reason")
+
+  user       User       @relation(fields: [userId], references: [id])
+  key        SigningKey @relation(fields: [keyId], references: [id])
+  signatures Signature[]
+
+  @@index([userId, status])
+  @@map("signing_sessions")
+}
+
+enum DecisionType {
+  follow
+  renegotiate
+  takeover
+  hold
+  discard
+  approve_purchase
+  activate_financial_snapshot
+  override_discard
+  change_pricing_threshold
+  change_confidence_weights
+  change_scoring_weights
+  rotate_key
+  revoke_key
+}
+
+enum DecisionStatus {
+  pending_signature
+  signed
+  rejected
+}
+
+model Decision {
+  id               String         @id @default(cuid())
+  tenantId         String         @map("tenant_id")
+  type             DecisionType
+  subjectRef       String         @map("subject_ref")
+  payloadCanonical String         @map("payload_canonical")
+  payloadHash      String         @map("payload_hash")
+  decidedBy        String         @map("decided_by")
+  status           DecisionStatus @default(pending_signature)
+  gateQueueItemId  String?        @unique @map("gate_queue_item_id")
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  user          User           @relation(fields: [decidedBy], references: [id])
+  gateQueueItem GateQueueItem? @relation(fields: [gateQueueItemId], references: [id])
+  signatures    Signature[]
+
+  @@index([tenantId, status])
+  @@map("decisions")
+}
+
+model Signature {
+  id                String   @id @default(cuid())
+  decisionId        String   @map("decision_id")
+  signerId          String   @map("signer_id")
+  keyId             String   @map("key_id")
+  alg               String   @default("Ed25519")
+  payloadHash       String   @map("payload_hash")
+  signature         String
+  signedAt          DateTime @map("signed_at")
+  signingSessionId  String   @map("signing_session_id")
+  authAt            DateTime @map("auth_at")
+  prevSignatureHash String?  @map("prev_signature_hash")
+  clientAttestation String?  @map("client_attestation")
+
+  decision Decision       @relation(fields: [decisionId], references: [id])
+  signer   User           @relation(fields: [signerId], references: [id])
+  key      SigningKey     @relation(fields: [keyId], references: [id])
+  session  SigningSession @relation(fields: [signingSessionId], references: [id])
+
+  @@index([decisionId])
+  @@map("signatures")
+}
+
+// =============================================================================
+// Configuration
+// =============================================================================
+
+model TenantConfig {
+  id           String   @id @default(cuid())
+  tenantId     String   @unique @map("tenant_id")
+  version      String
+  sanity       Json
+  seller       Json
+  finance      Json
+  fx           Json
+  negotiation  Json
+  gate         Json
+  approval     Json
+  signing      Json
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedBy    String   @map("updated_by")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_configs")
+}
+
+model FxRate {
+  id     String   @id @default(cuid())
+  base   String
+  quote  String
+  rate   Float
+  asOf   DateTime @map("as_of")
+  source String
+
+  @@unique([base, quote, asOf])
+  @@index([base, quote, asOf])
+  @@map("fx_rates")
+}
+
+// =============================================================================
+// Audit
+// =============================================================================
+
+model AuditEvent {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  actorId      String   @map("actor_id")
+  actorType    String   @map("actor_type")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  payload      Json
+  prevHash     String?  @map("prev_hash")
+  hash         String
+  timestamp    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, timestamp])
+  @@map("audit_events")
+}
+
+model LlmEvent {
+  id        String   @id @default(cuid())
+  endpoint  String
+  model     String
+  role      String
+  tokens    Int
+  latencyMs Int      @map("latency_ms")
+  cost      Float?
+  missionId String?  @map("mission_id")
+  timestamp DateTime @default(now())
+
+  @@index([missionId])
+  @@map("llm_events")
+}
