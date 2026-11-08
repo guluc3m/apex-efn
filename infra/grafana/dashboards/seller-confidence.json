@@ -1,8 +1,8 @@
 {
-  "uid": "trato-seller-confidence",
-  "title": "TRATO · Seller confidence distribution",
+  "uid": "apex-seller-confidence",
+  "title": "APEX-EFN · Seller confidence distribution",
   "description": "Seller confidence bands, low and insufficient-data shares, and manipulation flags per platform (metrics.md §3).",
-  "tags": ["trato", "observability"],
+  "tags": ["apex", "observability"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -23,10 +23,10 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(trato_seller_confidence_assessments_total, platform)",
+        "definition": "label_values(apex_seller_confidence_assessments_total, platform)",
         "query": {
           "qryType": 1,
-          "query": "label_values(trato_seller_confidence_assessments_total, platform)",
+          "query": "label_values(apex_seller_confidence_assessments_total, platform)",
           "refId": "PromVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -136,7 +136,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform, band) (increase(trato_seller_confidence_assessments_total{platform=~\"$platform\"}[1d])) / on(platform) group_left sum by (platform) (increase(trato_seller_confidence_assessments_total{platform=~\"$platform\"}[1d]))",
+          "expr": "sum by (platform, band) (increase(apex_seller_confidence_assessments_total{platform=~\"$platform\"}[1d])) / on(platform) group_left sum by (platform) (increase(apex_seller_confidence_assessments_total{platform=~\"$platform\"}[1d]))",
           "legendFormat": "{{platform}} {{band}}",
           "range": true
         }
@@ -186,7 +186,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (increase(trato_seller_confidence_assessments_total{platform=~\"$platform\",band=\"low\"}[1d])) / sum by (platform) (increase(trato_seller_confidence_assessments_total{platform=~\"$platform\"}[1d]))",
+          "expr": "sum by (platform) (increase(apex_seller_confidence_assessments_total{platform=~\"$platform\",band=\"low\"}[1d])) / sum by (platform) (increase(apex_seller_confidence_assessments_total{platform=~\"$platform\"}[1d]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -236,7 +236,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (increase(trato_seller_confidence_assessments_total{platform=~\"$platform\",band=\"insufficient_data\"}[1d])) / sum by (platform) (increase(trato_seller_confidence_assessments_total{platform=~\"$platform\"}[1d]))",
+          "expr": "sum by (platform) (increase(apex_seller_confidence_assessments_total{platform=~\"$platform\",band=\"insufficient_data\"}[1d])) / sum by (platform) (increase(apex_seller_confidence_assessments_total{platform=~\"$platform\"}[1d]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -286,7 +286,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform, flag) (increase(trato_seller_confidence_manipulation_flags_total{platform=~\"$platform\"}[1d]))",
+          "expr": "sum by (platform, flag) (increase(apex_seller_confidence_manipulation_flags_total{platform=~\"$platform\"}[1d]))",
           "legendFormat": "{{platform}} {{flag}}",
           "range": true
         }
@@ -336,7 +336,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.5, sum by (le, platform) (rate(trato_seller_confidence_score_bucket{platform=~\"$platform\"}[1h])))",
+          "expr": "histogram_quantile(0.5, sum by (le, platform) (rate(apex_seller_confidence_score_bucket{platform=~\"$platform\"}[1h])))",
           "legendFormat": "{{platform}} p50",
           "range": true
         },
@@ -346,7 +346,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.1, sum by (le, platform) (rate(trato_seller_confidence_score_bucket{platform=~\"$platform\"}[1h])))",
+          "expr": "histogram_quantile(0.1, sum by (le, platform) (rate(apex_seller_confidence_score_bucket{platform=~\"$platform\"}[1h])))",
           "legendFormat": "{{platform}} p10",
           "range": true
         }
@@ -383,7 +383,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"trato-orchestrator\"} |= \"seller_confidence\"",
+          "expr": "{service_name=\"apex-orchestrator\"} |= \"seller_confidence\"",
           "queryType": "range"
         }
       ]

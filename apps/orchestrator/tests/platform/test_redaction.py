@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 
-from trato.platform import redaction
-from trato.platform.redaction import REDACTED, is_sensitive_key, redact_attributes, redact_value
+from apex.platform import redaction
+from apex.platform.redaction import REDACTED, is_sensitive_key, redact_attributes, redact_value
 
 VECTORS_PATH = (
     Path(__file__).resolve().parents[4] / "docs" / "observability" / "redaction-vectors.json"

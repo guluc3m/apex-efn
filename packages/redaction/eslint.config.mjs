@@ -1,1 +1,1 @@
-export { default } from '@trato/eslint-config/library.js'
+export { default } from '@apex/eslint-config/library.js'

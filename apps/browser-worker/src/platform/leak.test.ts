@@ -72,11 +72,11 @@ async function runScenario(handle: TelemetryHandle) {
     },
     'mission.step'
   )
-  logger.warn(`connect postgres://trato:${CANARY_PASSWORD}@db:5432/trato`)
+  logger.warn(`connect postgres://apex:${CANARY_PASSWORD}@db:5432/apex`)
   logger.info(`paid through ${CANARY_IBAN}`)
   logger.error({ err: new Error(`login failed password=${CANARY_PASSWORD}`) }, 'login.failed')
 
-  const tracer = trace.getTracer('trato.leak')
+  const tracer = trace.getTracer('apex.leak')
   const span = tracer.startSpan('negotiation.send')
   span.setAttribute('http.request.header.authorization', `Bearer ${CANARY_TOKEN}`)
   span.setAttribute('mission.id', CONTROL_MISSION)
@@ -106,7 +106,7 @@ let handle: TelemetryHandle
 beforeAll(() => {
   handle = startTelemetry(
     {
-      serviceName: 'trato-browser-worker',
+      serviceName: 'apex-browser-worker',
       environment: 'test',
       enabled: true,
       otlpEndpoint: 'http://127.0.0.1:9',

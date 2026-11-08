@@ -4,11 +4,12 @@
  * - Traces and metrics go over OTLP/HTTP to the collector. Exporters run in the background, so an
  *   unreachable collector never blocks the worker.
  * - Spans are redacted by `RedactingSpanExporter` before export. Log lines are redacted by the pino
- *   `logMethod` hook. Sentry events are redacted in `beforeSend`. All three use `@trato/redaction`,
+ *   `logMethod` hook. Sentry events are redacted in `beforeSend`. All three use `@apex/redaction`,
  *   the same rules as the orchestrator.
  * - `OTEL_SDK_DISABLED=true` turns exporters off. Logs are still redacted.
  */
 
+import { isSensitiveKey, REDACTED, redactText, redactValue } from '@apex/redaction'
 import { isSpanContextValid, trace } from '@opentelemetry/api'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
@@ -16,7 +17,6 @@ import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { BatchSpanProcessor, type ReadableSpan, type SpanExporter } from '@opentelemetry/sdk-trace'
 import * as Sentry from '@sentry/node'
-import { isSensitiveKey, REDACTED, redactText, redactValue } from '@trato/redaction'
 import pino, { type DestinationStream, type Logger } from 'pino'
 
 const DEFAULT_OTLP_ENDPOINT = 'http://localhost:4318'
@@ -135,11 +135,11 @@ export function createLogger(options: {
 export function configFromEnv(env: NodeJS.ProcessEnv): TelemetryConfig {
   const sampleRate = env.SENTRY_TRACES_SAMPLE_RATE
   return {
-    serviceName: 'trato-browser-worker',
-    environment: env.TRATO_ENVIRONMENT ?? 'local',
+    serviceName: 'apex-browser-worker',
+    environment: env.APEX_ENVIRONMENT ?? 'local',
     enabled: env.OTEL_SDK_DISABLED?.trim().toLowerCase() !== 'true',
     otlpEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT ?? DEFAULT_OTLP_ENDPOINT,
-    logLevel: env.TRATO_LOG_LEVEL ?? 'info',
+    logLevel: env.APEX_LOG_LEVEL ?? 'info',
     sentryDsn: env.SENTRY_DSN || undefined,
     sentryTracesSampleRate: sampleRate ? Number(sampleRate) : 0,
   }

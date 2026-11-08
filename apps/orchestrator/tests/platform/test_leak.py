@@ -18,7 +18,7 @@ from opentelemetry import trace
 from opentelemetry.sdk._logs.export import InMemoryLogRecordExporter
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from trato.platform.telemetry import (
+from apex.platform.telemetry import (
     TelemetryConfig,
     TelemetryHandle,
     build_telemetry,
@@ -49,7 +49,7 @@ CANARIES = [
 
 def run_scenario(handle: TelemetryHandle, buffer: io.StringIO) -> dict[str, Any]:
     """Emit realistic events carrying canaries through every channel. Returns the Sentry payload."""
-    log = structlog.get_logger("trato.leak")
+    log = structlog.get_logger("apex.leak")
     log.info(
         "mission.step",
         mission_id=CONTROL_MISSION,
@@ -65,7 +65,7 @@ def run_scenario(handle: TelemetryHandle, buffer: io.StringIO) -> dict[str, Any]
         },
         jwt=CANARY_JWT,
     )
-    log.warning("db.connect", url=f"postgres://trato:{CANARY_PASSWORD}@db:5432/trato")
+    log.warning("db.connect", url=f"postgres://apex:{CANARY_PASSWORD}@db:5432/apex")
     log.info(f"paid through {CANARY_IBAN}")
 
     stdlib_log = logging.getLogger("uvicorn.error")
@@ -76,7 +76,7 @@ def run_scenario(handle: TelemetryHandle, buffer: io.StringIO) -> dict[str, Any]
     except ValueError:
         log.exception("login.failed", attempt=1)
 
-    tracer = handle.tracer_provider.get_tracer("trato.leak")
+    tracer = handle.tracer_provider.get_tracer("apex.leak")
     with tracer.start_as_current_span("negotiation.send") as span:
         span.set_attribute("http.request.header.authorization", f"Bearer {CANARY_TOKEN}")
         span.set_attribute("mission.id", CONTROL_MISSION)
@@ -111,7 +111,7 @@ def captured(
     logs = InMemoryLogRecordExporter()
     buffer = io.StringIO()
     handle = build_telemetry(
-        TelemetryConfig(service_name="trato-leak-test", enabled=True),
+        TelemetryConfig(service_name="apex-leak-test", enabled=True),
         span_exporter=spans,
         log_exporter=logs,
         log_stream=buffer,

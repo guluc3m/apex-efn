@@ -6,7 +6,7 @@ describe('configFromEnv', () => {
   it('defaults to local exporters and the standard collector port', () => {
     const config = configFromEnv({})
     expect(config).toMatchObject({
-      serviceName: 'trato-browser-worker',
+      serviceName: 'apex-browser-worker',
       enabled: true,
       otlpEndpoint: 'http://localhost:4318',
       sentryDsn: undefined,

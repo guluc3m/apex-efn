@@ -51,8 +51,8 @@
   },
   {
     "name": "url userinfo",
-    "input": "postgres://trato:s3cr3t@db:5432/trato",
-    "expected": "postgres://[REDACTED]@db:5432/trato"
+    "input": "postgres://apex:s3cr3t@db:5432/apex",
+    "expected": "postgres://[REDACTED]@db:5432/apex"
   },
   {
     "name": "keyword=value pair in text",

@@ -1,8 +1,8 @@
 {
-  "uid": "trato-llm-health",
-  "title": "TRATO · LLM health",
+  "uid": "apex-llm-health",
+  "title": "APEX-EFN · LLM health",
   "description": "LLM latency, error and JSON repair rates, token use, cost per mission and circuit state (metrics.md §5).",
-  "tags": ["trato", "observability"],
+  "tags": ["apex", "observability"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -23,10 +23,10 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(trato_llm_requests_total, role)",
+        "definition": "label_values(apex_llm_requests_total, role)",
         "query": {
           "qryType": 1,
-          "query": "label_values(trato_llm_requests_total, role)",
+          "query": "label_values(apex_llm_requests_total, role)",
           "refId": "PromVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -136,7 +136,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.5, sum by (le, role) (rate(trato_llm_request_duration_seconds_bucket{role=~\"$role\"}[5m])))",
+          "expr": "histogram_quantile(0.5, sum by (le, role) (rate(apex_llm_request_duration_seconds_bucket{role=~\"$role\"}[5m])))",
           "legendFormat": "{{role}} p50",
           "range": true
         },
@@ -146,7 +146,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, role) (rate(trato_llm_request_duration_seconds_bucket{role=~\"$role\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, role) (rate(apex_llm_request_duration_seconds_bucket{role=~\"$role\"}[5m])))",
           "legendFormat": "{{role}} p95",
           "range": true
         }
@@ -196,7 +196,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (role) (rate(trato_llm_requests_total{role=~\"$role\",outcome!=\"ok\"}[5m])) / sum by (role) (rate(trato_llm_requests_total{role=~\"$role\"}[5m]))",
+          "expr": "sum by (role) (rate(apex_llm_requests_total{role=~\"$role\",outcome!=\"ok\"}[5m])) / sum by (role) (rate(apex_llm_requests_total{role=~\"$role\"}[5m]))",
           "legendFormat": "{{role}}",
           "range": true
         }
@@ -246,7 +246,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (role) (rate(trato_llm_json_repairs_total{role=~\"$role\"}[1h])) / sum by (role) (rate(trato_llm_requests_total{role=~\"$role\",outcome=\"ok\"}[1h]))",
+          "expr": "sum by (role) (rate(apex_llm_json_repairs_total{role=~\"$role\"}[1h])) / sum by (role) (rate(apex_llm_requests_total{role=~\"$role\",outcome=\"ok\"}[1h]))",
           "legendFormat": "{{role}}",
           "range": true
         }
@@ -296,7 +296,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (role, direction) (increase(trato_llm_tokens_total{role=~\"$role\"}[1h]))",
+          "expr": "sum by (role, direction) (increase(apex_llm_tokens_total{role=~\"$role\"}[1h]))",
           "legendFormat": "{{role}} {{direction}}",
           "range": true
         }
@@ -342,7 +342,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(trato_mission_llm_cost_usd_sum[1d])) / sum(increase(trato_mission_llm_cost_usd_count[1d]))",
+          "expr": "sum(increase(apex_mission_llm_cost_usd_sum[1d])) / sum(increase(apex_mission_llm_cost_usd_count[1d]))",
           "instant": true,
           "range": false
         }
@@ -392,7 +392,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (endpoint) (increase(trato_llm_gpu_seconds_total[1h]))",
+          "expr": "sum by (endpoint) (increase(apex_llm_gpu_seconds_total[1h]))",
           "legendFormat": "{{endpoint}}",
           "range": true
         }
@@ -442,7 +442,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max by (endpoint) (trato_llm_circuit_state)",
+          "expr": "max by (endpoint) (apex_llm_circuit_state)",
           "legendFormat": "{{endpoint}}",
           "range": true
         }
@@ -479,7 +479,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"trato-orchestrator\"} |~ \"(?i)llm.*(error|timeout|schema)\"",
+          "expr": "{service_name=\"apex-orchestrator\"} |~ \"(?i)llm.*(error|timeout|schema)\"",
           "queryType": "range"
         }
       ]

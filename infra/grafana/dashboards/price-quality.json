@@ -1,8 +1,8 @@
 {
-  "uid": "trato-price-quality",
-  "title": "TRATO · Price quality",
+  "uid": "apex-price-quality",
+  "title": "APEX-EFN · Price quality",
   "description": "Distribution of price-sanity bands and relative deviation per platform (metrics.md §2).",
-  "tags": ["trato", "observability"],
+  "tags": ["apex", "observability"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -23,10 +23,10 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(trato_price_sanity_checks_total, platform)",
+        "definition": "label_values(apex_price_sanity_checks_total, platform)",
         "query": {
           "qryType": 1,
-          "query": "label_values(trato_price_sanity_checks_total, platform)",
+          "query": "label_values(apex_price_sanity_checks_total, platform)",
           "refId": "PromVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -136,7 +136,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (band) (increase(trato_price_sanity_checks_total{platform=~\"$platform\"}[1h])) / scalar(sum(increase(trato_price_sanity_checks_total{platform=~\"$platform\"}[1h])))",
+          "expr": "sum by (band) (increase(apex_price_sanity_checks_total{platform=~\"$platform\"}[1h])) / scalar(sum(increase(apex_price_sanity_checks_total{platform=~\"$platform\"}[1h])))",
           "legendFormat": "{{band}}",
           "range": true
         }
@@ -186,7 +186,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (increase(trato_price_sanity_checks_total{platform=~\"$platform\",band=~\"atypical|implausible\"}[1h])) / sum by (platform) (increase(trato_price_sanity_checks_total{platform=~\"$platform\"}[1h]))",
+          "expr": "sum by (platform) (increase(apex_price_sanity_checks_total{platform=~\"$platform\",band=~\"atypical|implausible\"}[1h])) / sum by (platform) (increase(apex_price_sanity_checks_total{platform=~\"$platform\"}[1h]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -236,7 +236,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (increase(trato_price_sanity_checks_total{platform=~\"$platform\",band=\"insufficient_reference\"}[1h])) / sum by (platform) (increase(trato_price_sanity_checks_total{platform=~\"$platform\"}[1h]))",
+          "expr": "sum by (platform) (increase(apex_price_sanity_checks_total{platform=~\"$platform\",band=\"insufficient_reference\"}[1h])) / sum by (platform) (increase(apex_price_sanity_checks_total{platform=~\"$platform\"}[1h]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -286,7 +286,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.9, sum by (le, platform) (rate(trato_price_sanity_relative_deviation_ratio_bucket{platform=~\"$platform\"}[1h])))",
+          "expr": "histogram_quantile(0.9, sum by (le, platform) (rate(apex_price_sanity_relative_deviation_ratio_bucket{platform=~\"$platform\"}[1h])))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -323,7 +323,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"trato-orchestrator\"} |= \"price_sanity\"",
+          "expr": "{service_name=\"apex-orchestrator\"} |= \"price_sanity\"",
           "queryType": "range"
         }
       ]

@@ -4,7 +4,7 @@
   default `http://localhost:4318`). Exporters run on background threads: an unreachable collector
   never blocks or fails startup.
 - Every exported span, span event and log record passes through the shared redactor
-  (`trato.platform.redaction`) before leaving the process. Sentry events go through the same redactor
+  (`apex.platform.redaction`) before leaving the process. Sentry events go through the same redactor
   in `before_send`.
 - `OTEL_SDK_DISABLED=true` turns off exporters. Logs are still redacted and written to stdout.
 - `setup_telemetry` is idempotent: the first call configures the process, later calls only reuse the
@@ -39,14 +39,14 @@ from opentelemetry.sdk.trace import Event, ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
 from opentelemetry.trace.status import Status
 
-from trato.platform.redaction import REDACTED, redact_attributes, redact_text, redact_value, stats
+from apex.platform.redaction import REDACTED, redact_attributes, redact_text, redact_value, stats
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 _DEFAULT_OTLP_ENDPOINT = "http://localhost:4318"
 _FLUSH_TIMEOUT_MS = 5000
-_HANDLER_TAG = "_trato_telemetry"
+_HANDLER_TAG = "_apex_telemetry"
 _UVICORN_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access")
 _STANDARD_RECORD_ATTRS = frozenset(
     set(logging.LogRecord("", 0, "", 0, "", (), None).__dict__) | {"message", "asctime", "taskName"}
@@ -320,10 +320,10 @@ def config_from_env(service_name: str) -> TelemetryConfig:
     sample_rate = os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "")
     return TelemetryConfig(
         service_name=service_name,
-        environment=os.environ.get("TRATO_ENVIRONMENT", "local"),
+        environment=os.environ.get("APEX_ENVIRONMENT", "local"),
         enabled=not disabled,
         otlp_endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", _DEFAULT_OTLP_ENDPOINT),
-        log_level=os.environ.get("TRATO_LOG_LEVEL", "INFO"),
+        log_level=os.environ.get("APEX_LOG_LEVEL", "INFO"),
         sentry_dsn=os.environ.get("SENTRY_DSN") or None,
         sentry_traces_sample_rate=float(sample_rate) if sample_rate else 0.0,
     )

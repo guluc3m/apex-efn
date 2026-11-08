@@ -1,13 +1,13 @@
 /**
- * Next.js instrumentation hook (Next 15 `register`): OpenTelemetry (service `trato-web`) and Sentry.
+ * Next.js instrumentation hook (Next 15 `register`): OpenTelemetry (service `apex-web`) and Sentry.
  *
  * Only the Node.js server runtime is set up. The edge runtime is skipped on purpose: the web app
  * runs no edge routes, and Sentry's edge setup is not needed for the BFF.
  * Sentry is initialised here, not through `withSentryConfig`, so `next.config.ts` stays unchanged.
- * Sentry events go through the shared redactor (`@trato/redaction`), like the orchestrator.
+ * Sentry events go through the shared redactor (`@apex/redaction`), like the orchestrator.
  */
 
-import { redactValue } from '@trato/redaction'
+import { redactValue } from '@apex/redaction'
 import type { Instrumentation } from 'next'
 
 export async function register(): Promise<void> {
@@ -16,14 +16,14 @@ export async function register(): Promise<void> {
   }
 
   const { registerOTel } = await import('@vercel/otel')
-  registerOTel({ serviceName: 'trato-web' })
+  registerOTel({ serviceName: 'apex-web' })
 
   const dsn = process.env.SENTRY_DSN
   if (dsn) {
     const Sentry = await import('@sentry/nextjs')
     Sentry.init({
       dsn,
-      environment: process.env.TRATO_ENVIRONMENT ?? 'local',
+      environment: process.env.APEX_ENVIRONMENT ?? 'local',
       tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0),
       beforeSend: (event) => redactValue(event) as typeof event,
       beforeSendTransaction: (event) => redactValue(event) as typeof event,

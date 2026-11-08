@@ -1,8 +1,8 @@
 {
-  "uid": "trato-gate-health",
-  "title": "TRATO · Gate health",
+  "uid": "apex-gate-health",
+  "title": "APEX-EFN · Gate health",
   "description": "Gate queue depth, missed SLAs, pending signatures and signing outcomes (metrics.md §4).",
-  "tags": ["trato", "observability"],
+  "tags": ["apex", "observability"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -111,7 +111,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (cause) (trato_gate_queue_depth)",
+          "expr": "sum by (cause) (apex_gate_queue_depth)",
           "legendFormat": "{{cause}}",
           "range": true
         }
@@ -161,7 +161,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max by (cause) (trato_gate_oldest_item_age_seconds) / 3600",
+          "expr": "max by (cause) (apex_gate_oldest_item_age_seconds) / 3600",
           "legendFormat": "{{cause}}",
           "range": true
         }
@@ -211,7 +211,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (cause) (increase(trato_gate_sla_missed_total[1h]))",
+          "expr": "sum by (cause) (increase(apex_gate_sla_missed_total[1h]))",
           "legendFormat": "{{cause}}",
           "range": true
         }
@@ -261,7 +261,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (decision_type) (trato_signing_pending_decisions)",
+          "expr": "sum by (decision_type) (apex_signing_pending_decisions)",
           "legendFormat": "{{decision_type}}",
           "range": true
         }
@@ -311,7 +311,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (outcome) (rate(trato_signing_decisions_total[15m]))",
+          "expr": "sum by (outcome) (rate(apex_signing_decisions_total[15m]))",
           "legendFormat": "{{outcome}}",
           "range": true
         }
@@ -361,7 +361,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (action) (increase(trato_gate_items_resolved_total[1d]))",
+          "expr": "sum by (action) (increase(apex_gate_items_resolved_total[1d]))",
           "legendFormat": "{{action}}",
           "range": true
         }
@@ -398,7 +398,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"trato-orchestrator\"} |= \"gate\"",
+          "expr": "{service_name=\"apex-orchestrator\"} |= \"gate\"",
           "queryType": "range"
         }
       ]

@@ -1,8 +1,8 @@
 {
-  "uid": "trato-scraping-health",
-  "title": "TRATO · Scraping health",
+  "uid": "apex-scraping-health",
+  "title": "APEX-EFN · Scraping health",
   "description": "Blocks, CAPTCHAs, invalidated sessions and scraping latency per platform (metrics.md §1).",
-  "tags": ["trato", "observability"],
+  "tags": ["apex", "observability"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -23,10 +23,10 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(trato_scraping_requests_total, platform)",
+        "definition": "label_values(apex_scraping_requests_total, platform)",
         "query": {
           "qryType": 1,
-          "query": "label_values(trato_scraping_requests_total, platform)",
+          "query": "label_values(apex_scraping_requests_total, platform)",
           "refId": "PromVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -136,7 +136,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (outcome) (rate(trato_scraping_requests_total{platform=~\"$platform\"}[5m]))",
+          "expr": "sum by (outcome) (rate(apex_scraping_requests_total{platform=~\"$platform\"}[5m]))",
           "legendFormat": "{{outcome}}",
           "range": true
         }
@@ -186,7 +186,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (rate(trato_scraping_requests_total{platform=~\"$platform\",outcome=~\"blocked|captcha\"}[15m])) / sum by (platform) (rate(trato_scraping_requests_total{platform=~\"$platform\"}[15m]))",
+          "expr": "sum by (platform) (rate(apex_scraping_requests_total{platform=~\"$platform\",outcome=~\"blocked|captcha\"}[15m])) / sum by (platform) (rate(apex_scraping_requests_total{platform=~\"$platform\"}[15m]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -236,7 +236,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, platform) (rate(trato_scraping_request_duration_seconds_bucket{platform=~\"$platform\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, platform) (rate(apex_scraping_request_duration_seconds_bucket{platform=~\"$platform\"}[5m])))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -286,7 +286,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (increase(trato_scraping_session_invalidations_total{platform=~\"$platform\"}[1h]))",
+          "expr": "sum by (platform) (increase(apex_scraping_session_invalidations_total{platform=~\"$platform\"}[1h]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -336,7 +336,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform) (increase(trato_scraping_captchas_total{platform=~\"$platform\"}[1h]))",
+          "expr": "sum by (platform) (increase(apex_scraping_captchas_total{platform=~\"$platform\"}[1h]))",
           "legendFormat": "{{platform}}",
           "range": true
         }
@@ -386,7 +386,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (platform, signal) (increase(trato_scraping_signals_missing_total{platform=~\"$platform\"}[1h]))",
+          "expr": "sum by (platform, signal) (increase(apex_scraping_signals_missing_total{platform=~\"$platform\"}[1h]))",
           "legendFormat": "{{platform}} {{signal}}",
           "range": true
         }
@@ -436,7 +436,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max by (queue) (trato_scraping_queue_depth)",
+          "expr": "max by (queue) (apex_scraping_queue_depth)",
           "legendFormat": "{{queue}}",
           "range": true
         }
@@ -473,7 +473,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"trato-browser-worker\"} |~ \"(?i)error|captcha|blocked\"",
+          "expr": "{service_name=\"apex-browser-worker\"} |~ \"(?i)error|captcha|blocked\"",
           "queryType": "range"
         }
       ]

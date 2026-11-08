@@ -1,5 +1,5 @@
 /**
- * Shared redaction rules (TypeScript mirror of apps/orchestrator/src/trato/platform/redaction.py).
+ * Shared redaction rules (TypeScript mirror of apps/orchestrator/src/apex/platform/redaction.py).
  *
  * Both implementations must agree on docs/observability/redaction-vectors.json. Change the rules in
  * both places and in the vectors in the same PR.

@@ -1,4 +1,4 @@
-# Observabilidad de TRATO
+# Observabilidad de APEX-EFN
 
 Guía corta. El catálogo de métricas está en [`metrics.md`](./metrics.md). Los dashboards están en
 `infra/grafana/dashboards/` y se cargan solos en Grafana (`http://localhost:3002`, usuario `admin`).
@@ -9,14 +9,14 @@ Guía corta. El catálogo de métricas está en [`metrics.md`](./metrics.md). Lo
 | --------------------------- | ----------------------------------------- | ------------------------------ | -------------------------- |
 | Orchestrator (Python)       | OTLP/HTTP → colector → Tempo / Prometheus | OTLP → Loki (y JSON en stdout) | Sentry si hay `SENTRY_DSN` |
 | Browser worker (Node)       | OTLP/HTTP → colector → Tempo / Prometheus | pino JSON en stdout            | Sentry si hay `SENTRY_DSN` |
-| Web (Next.js, runtime Node) | OTLP/HTTP (`@vercel/otel`, `trato-web`)   | —                              | Sentry si hay `SENTRY_DSN` |
+| Web (Next.js, runtime Node) | OTLP/HTTP (`@vercel/otel`, `apex-web`)    | —                              | Sentry si hay `SENTRY_DSN` |
 
 Variables de entorno (estándar OTel donde existe):
 
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: base del colector. Por defecto `http://localhost:4318`.
 - `OTEL_SDK_DISABLED=true`: apaga exportadores. Los logs siguen redactados y salen por stdout.
 - `OTEL_RESOURCE_ATTRIBUTES=deployment.environment=<entorno>`: etiqueta de entorno (el worker la lee de aquí).
-- `TRATO_ENVIRONMENT`, `TRATO_LOG_LEVEL`.
+- `APEX_ENVIRONMENT`, `APEX_LOG_LEVEL`.
 - `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE` (por defecto `0`). Sentry se desactiva si no hay DSN.
 
 El exportador nunca bloquea el arranque. Si el colector no responde, los lotes se reintentan en segundo plano.
@@ -25,10 +25,10 @@ Un `flush` o `shutdown` sí puede esperar al tiempo de espera del exportador mie
 ## Cómo ver la telemetría
 
 1. `pnpm dev:up` (levanta el stack con el colector, Prometheus, Loki, Tempo y Grafana).
-2. Grafana → carpeta **TRATO**: cinco dashboards (scraping, calidad de precios, confianza de vendedores,
+2. Grafana → carpeta **APEX-EFN**: cinco dashboards (scraping, calidad de precios, confianza de vendedores,
    gate y LLM). Cada uno tiene un panel sobre `up{job="otel-collector"}` que ya funciona. El resto muestra
    «No data» hasta que el lane correspondiente emita sus métricas.
-3. Trazas: Grafana → Explore → Tempo. Logs: Explore → Loki con `{service_name="trato-orchestrator"}`.
+3. Trazas: Grafana → Explore → Tempo. Logs: Explore → Loki con `{service_name="apex-orchestrator"}`.
 
 ## Contrato de redacción
 
@@ -36,7 +36,7 @@ La redacción se aplica **antes** de que un dato salga del proceso: en logs, en 
 (al exportar), y en los eventos de Sentry. Las reglas están implementadas dos veces, con el mismo
 comportamiento, y las dos suites comparten [`redaction-vectors.json`](./redaction-vectors.json):
 
-- Python: `apps/orchestrator/src/trato/platform/redaction.py`
+- Python: `apps/orchestrator/src/apex/platform/redaction.py`
 - TypeScript: `packages/redaction/src/redaction.ts` (lo reutilizan el worker y la web)
 
 ### Reglas por clave
@@ -81,7 +81,7 @@ con una palabra sensible o una métrica financiera.
 1. Añade la fila en [`metrics.md`](./metrics.md): nombre OTel, nombre Prometheus, tipo, unidad, etiquetas y quién la emite.
    Las etiquetas deben ser conjuntos cerrados.
 2. Emite el instrumento con el nombre OTel (con puntos) y la unidad de la tabla.
-   Python: `metrics.get_meter("trato").create_counter(...)`. TypeScript: `metrics.getMeter(...)`.
+   Python: `metrics.get_meter("apex").create_counter(...)`. TypeScript: `metrics.getMeter(...)`.
 3. Si el dashboard debe mostrarla, añade el panel en `infra/grafana/dashboards/*.json`.
    Los paneles de Prometheus solo pueden referirse a métricas del catálogo o a métricas que existan hoy.
 4. Comprueba que el panel renderiza con datos locales (`pnpm dev:up` y un script de prueba).
@@ -89,5 +89,5 @@ con una palabra sensible o una métrica financiera.
 ## Verificación
 
 - Python: `cd apps/orchestrator && uv run pytest -q tests/platform` (incluye la prueba de fuga, criterio 29).
-- TypeScript: `pnpm --filter @trato/browser-worker exec vitest run` y `pnpm --filter @trato/redaction test`.
+- TypeScript: `pnpm --filter @apex/browser-worker exec vitest run` y `pnpm --filter @apex/redaction test`.
 - Los vectores son la fuente de verdad. Si cambias una regla, cambia primero el vector.
