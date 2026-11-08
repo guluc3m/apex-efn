@@ -1,0 +1,526 @@
+{
+  "products": [
+    {
+      "id": "a-gloves-01",
+      "platform": "mock-a",
+      "sellerId": "a-solid-veteran",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Examination Grade",
+      "description": "Powder-free nitrile examination gloves, size M, sold per box of 100. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/a-gloves-01.png"],
+      "unitPriceMinor": 445,
+      "currency": "EUR",
+      "moq": 500,
+      "priceTiers": [
+        { "minQuantity": 500, "maxQuantity": 1999, "unitPriceMinor": 445 },
+        { "minQuantity": 2000, "maxQuantity": null, "unitPriceMinor": 415 }
+      ],
+      "shipping": { "costMinor": 1200, "minDays": 5, "maxDays": 10 },
+      "incoterm": "DAP",
+      "leadTimeDays": 10,
+      "tags": []
+    },
+    {
+      "id": "a-gloves-02",
+      "platform": "mock-a",
+      "sellerId": "a-solid-veteran",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, 100 pcs per Box, Latex-Free",
+      "description": "Latex-free nitrile gloves, size M, second listing of the same seller. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "3.5 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/a-gloves-02.png"],
+      "unitPriceMinor": 489,
+      "currency": "USD",
+      "moq": 1000,
+      "priceTiers": [
+        { "minQuantity": 1000, "maxQuantity": 2999, "unitPriceMinor": 489 },
+        { "minQuantity": 3000, "maxQuantity": null, "unitPriceMinor": 459 }
+      ],
+      "shipping": { "costMinor": 1500, "minDays": 7, "maxDays": 14 },
+      "incoterm": "FOB",
+      "leadTimeDays": 14,
+      "tags": []
+    },
+    {
+      "id": "a-gloves-03",
+      "platform": "mock-a",
+      "sellerId": "a-single-review",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Medical Use",
+      "description": "Nitrile medical examination gloves, size M, box of 100. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["CE"],
+      "imageUrls": ["/static/img/a-gloves-03.png"],
+      "unitPriceMinor": 430,
+      "currency": "EUR",
+      "moq": 200,
+      "priceTiers": [
+        { "minQuantity": 200, "maxQuantity": 999, "unitPriceMinor": 430 },
+        { "minQuantity": 1000, "maxQuantity": null, "unitPriceMinor": 405 }
+      ],
+      "shipping": { "costMinor": 1000, "minDays": 6, "maxDays": 12 },
+      "incoterm": "DAP",
+      "leadTimeDays": 12,
+      "tags": []
+    },
+    {
+      "id": "a-gloves-04",
+      "platform": "mock-a",
+      "sellerId": "a-review-burst",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Bulk Deal",
+      "description": "Bulk nitrile gloves, size M, box of 100, priced far below the market. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": [],
+      "imageUrls": ["/static/img/a-gloves-04.png"],
+      "unitPriceMinor": 45,
+      "currency": "EUR",
+      "moq": 1000,
+      "priceTiers": [{ "minQuantity": 1000, "maxQuantity": null, "unitPriceMinor": 45 }],
+      "shipping": { "costMinor": 900, "minDays": 5, "maxDays": 10 },
+      "incoterm": "EXW",
+      "leadTimeDays": 7,
+      "tags": ["outlier_low"]
+    },
+    {
+      "id": "a-gloves-05",
+      "platform": "mock-a",
+      "sellerId": "a-new-shop",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 New Shop Listing",
+      "description": "Nitrile gloves, size M, box of 100, from a recently opened shop. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": [],
+      "imageUrls": ["/static/img/a-gloves-05.png"],
+      "unitPriceMinor": 470,
+      "currency": "EUR",
+      "moq": 100,
+      "priceTiers": [
+        { "minQuantity": 100, "maxQuantity": 499, "unitPriceMinor": 470 },
+        { "minQuantity": 500, "maxQuantity": null, "unitPriceMinor": 440 }
+      ],
+      "shipping": { "costMinor": 800, "minDays": 3, "maxDays": 7 },
+      "incoterm": null,
+      "leadTimeDays": null,
+      "tags": []
+    },
+    {
+      "id": "a-gloves-06",
+      "platform": "mock-a",
+      "sellerId": "a-standard-offplatform",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, 100 per Box, Export Packing",
+      "description": "Export-packed nitrile gloves, size M, box of 100, priced in CNY. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/a-gloves-06.png"],
+      "unitPriceMinor": 3450,
+      "currency": "CNY",
+      "moq": 2000,
+      "priceTiers": [
+        { "minQuantity": 2000, "maxQuantity": 4999, "unitPriceMinor": 3450 },
+        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 3300 }
+      ],
+      "shipping": null,
+      "incoterm": "FOB",
+      "leadTimeDays": 20,
+      "tags": []
+    },
+    {
+      "id": "a-gloves-07",
+      "platform": "mock-a",
+      "sellerId": "a-standard-gbp",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 UK Stock",
+      "description": "Nitrile gloves, size M, box of 100, quoted in GBP. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/a-gloves-07.png"],
+      "unitPriceMinor": 390,
+      "currency": "GBP",
+      "moq": 500,
+      "priceTiers": [
+        { "minQuantity": 500, "maxQuantity": 1999, "unitPriceMinor": 390 },
+        { "minQuantity": 2000, "maxQuantity": null, "unitPriceMinor": 365 }
+      ],
+      "shipping": { "costMinor": 1100, "minDays": 5, "maxDays": 9 },
+      "incoterm": "DAP",
+      "leadTimeDays": 9,
+      "tags": ["unsupported_currency"]
+    },
+    {
+      "id": "a-gloves-08",
+      "platform": "mock-a",
+      "sellerId": "a-standard-offplatform",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Premium Edition",
+      "description": "Premium nitrile gloves, size M, box of 100, priced far above the market. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": [],
+      "imageUrls": ["/static/img/a-gloves-08.png"],
+      "unitPriceMinor": 1350,
+      "currency": "EUR",
+      "moq": 100,
+      "priceTiers": [{ "minQuantity": 100, "maxQuantity": null, "unitPriceMinor": 1350 }],
+      "shipping": { "costMinor": 1000, "minDays": 5, "maxDays": 10 },
+      "incoterm": "EXW",
+      "leadTimeDays": 10,
+      "tags": ["outlier_high"]
+    },
+    {
+      "id": "b-gloves-01",
+      "platform": "mock-b",
+      "sellerId": "b-solid-factory",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Factory Direct",
+      "description": "Factory-direct nitrile gloves, size M, box of 100, minimum order 5000. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "3.8 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/b-gloves-01.png"],
+      "unitPriceMinor": 3380,
+      "currency": "CNY",
+      "moq": 5000,
+      "priceTiers": [
+        { "minQuantity": 5000, "maxQuantity": 19999, "unitPriceMinor": 3380 },
+        { "minQuantity": 20000, "maxQuantity": null, "unitPriceMinor": 3150 }
+      ],
+      "shipping": { "costMinor": 4000, "minDays": 15, "maxDays": 25 },
+      "incoterm": "FOB",
+      "leadTimeDays": 25,
+      "tags": []
+    },
+    {
+      "id": "b-gloves-02",
+      "platform": "mock-b",
+      "sellerId": "b-solid-factory",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, 100 pcs per Box, OEM Available",
+      "description": "OEM nitrile gloves, size M, box of 100, from the same factory. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/b-gloves-02.png"],
+      "unitPriceMinor": 3520,
+      "currency": "CNY",
+      "moq": 1000,
+      "priceTiers": [
+        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 3520 },
+        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 3380 }
+      ],
+      "shipping": { "costMinor": 3000, "minDays": 15, "maxDays": 25 },
+      "incoterm": "FOB",
+      "leadTimeDays": 20,
+      "tags": []
+    },
+    {
+      "id": "b-gloves-03",
+      "platform": "mock-b",
+      "sellerId": "b-standard-coop",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Cooperative Supply",
+      "description": "Nitrile gloves, size M, box of 100, supplied through a buyers cooperative. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/b-gloves-03.png"],
+      "unitPriceMinor": 465,
+      "currency": "EUR",
+      "moq": 300,
+      "priceTiers": [
+        { "minQuantity": 300, "maxQuantity": 999, "unitPriceMinor": 465 },
+        { "minQuantity": 1000, "maxQuantity": null, "unitPriceMinor": 440 }
+      ],
+      "shipping": { "costMinor": 1000, "minDays": 4, "maxDays": 8 },
+      "incoterm": "DAP",
+      "leadTimeDays": 8,
+      "tags": []
+    },
+    {
+      "id": "b-gloves-04",
+      "platform": "mock-b",
+      "sellerId": "b-standard-sensitive",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Clinic Pack",
+      "description": "Nitrile clinic gloves, size M, box of 100, delivered duty paid. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/b-gloves-04.png"],
+      "unitPriceMinor": 455,
+      "currency": "EUR",
+      "moq": 1000,
+      "priceTiers": [
+        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 455 },
+        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 430 }
+      ],
+      "shipping": { "costMinor": 900, "minDays": 5, "maxDays": 9 },
+      "incoterm": "DDP",
+      "leadTimeDays": 12,
+      "tags": []
+    },
+    {
+      "id": "b-gloves-05",
+      "platform": "mock-b",
+      "sellerId": "b-high-disputes",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Economy Line",
+      "description": "Economy nitrile gloves, size M, box of 100, sold through a marketplace with a high dispute rate. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "3.5 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["CE"],
+      "imageUrls": ["/static/img/b-gloves-05.png"],
+      "unitPriceMinor": 410,
+      "currency": "EUR",
+      "moq": 1000,
+      "priceTiers": [
+        { "minQuantity": 1000, "maxQuantity": 2999, "unitPriceMinor": 410 },
+        { "minQuantity": 3000, "maxQuantity": null, "unitPriceMinor": 395 }
+      ],
+      "shipping": { "costMinor": 1000, "minDays": 7, "maxDays": 14 },
+      "incoterm": "CIF",
+      "leadTimeDays": 14,
+      "tags": []
+    },
+    {
+      "id": "b-gloves-06",
+      "platform": "mock-b",
+      "sellerId": "b-standard-aggressive",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Wholesale Lot",
+      "description": "Wholesale nitrile gloves, size M, box of 100, quoted in USD. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/b-gloves-06.png"],
+      "unitPriceMinor": 495,
+      "currency": "USD",
+      "moq": 500,
+      "priceTiers": [
+        { "minQuantity": 500, "maxQuantity": 1999, "unitPriceMinor": 495 },
+        { "minQuantity": 2000, "maxQuantity": null, "unitPriceMinor": 470 }
+      ],
+      "shipping": { "costMinor": 1400, "minDays": 7, "maxDays": 12 },
+      "incoterm": "FOB",
+      "leadTimeDays": 12,
+      "tags": []
+    },
+    {
+      "id": "b-gloves-07",
+      "platform": "mock-b",
+      "sellerId": "b-standard-coop",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Size M, Box of 100 Bulk Cooperative",
+      "description": "Bulk nitrile gloves, size M, box of 100, from a buyers cooperative, ex works. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "thickness": "4 mil",
+        "powder": "powder-free",
+        "pieces_per_box": "100"
+      },
+      "certifications": ["EN 455", "CE"],
+      "imageUrls": ["/static/img/b-gloves-07.png"],
+      "unitPriceMinor": 460,
+      "currency": "EUR",
+      "moq": 1000,
+      "priceTiers": [
+        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 460 },
+        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 438 }
+      ],
+      "shipping": null,
+      "incoterm": "EXW",
+      "leadTimeDays": 18,
+      "tags": []
+    },
+    {
+      "id": "a-kraft-01",
+      "platform": "mock-a",
+      "sellerId": "a-solid-veteran",
+      "productKey": "kraft-box-30x20x15",
+      "title": "Corrugated Kraft Box 30x20x15 cm, Single Wall",
+      "description": "Single-wall corrugated kraft shipping box, 30x20x15 cm, sold per unit. Synthetic fixture data.",
+      "specifications": {
+        "material": "corrugated kraft",
+        "dimensions_cm": "30x20x15",
+        "wall": "single",
+        "units_per_bundle": "25"
+      },
+      "certifications": ["FSC"],
+      "imageUrls": ["/static/img/a-kraft-01.png"],
+      "unitPriceMinor": 37,
+      "currency": "EUR",
+      "moq": 2000,
+      "priceTiers": [
+        { "minQuantity": 2000, "maxQuantity": 9999, "unitPriceMinor": 37 },
+        { "minQuantity": 10000, "maxQuantity": null, "unitPriceMinor": 34 }
+      ],
+      "shipping": { "costMinor": 1500, "minDays": 5, "maxDays": 9 },
+      "incoterm": "DAP",
+      "leadTimeDays": 9,
+      "tags": []
+    },
+    {
+      "id": "a-kraft-02",
+      "platform": "mock-a",
+      "sellerId": "a-standard-offplatform",
+      "productKey": "kraft-box-30x20x15",
+      "title": "Corrugated Kraft Box 30x20x15 cm, Export Carton",
+      "description": "Export corrugated kraft box, 30x20x15 cm, priced in CNY per unit. Synthetic fixture data.",
+      "specifications": {
+        "material": "corrugated kraft",
+        "dimensions_cm": "30x20x15",
+        "wall": "single",
+        "units_per_bundle": "20"
+      },
+      "certifications": [],
+      "imageUrls": ["/static/img/a-kraft-02.png"],
+      "unitPriceMinor": 290,
+      "currency": "CNY",
+      "moq": 5000,
+      "priceTiers": [
+        { "minQuantity": 5000, "maxQuantity": 19999, "unitPriceMinor": 290 },
+        { "minQuantity": 20000, "maxQuantity": null, "unitPriceMinor": 265 }
+      ],
+      "shipping": null,
+      "incoterm": "FOB",
+      "leadTimeDays": 20,
+      "tags": []
+    },
+    {
+      "id": "b-kraft-01",
+      "platform": "mock-b",
+      "sellerId": "b-solid-factory",
+      "productKey": "kraft-box-30x20x15",
+      "title": "Corrugated Kraft Box 30x20x15 cm, Factory Run",
+      "description": "Factory-run corrugated kraft box, 30x20x15 cm, minimum order 10000 units. Synthetic fixture data.",
+      "specifications": {
+        "material": "corrugated kraft",
+        "dimensions_cm": "30x20x15",
+        "wall": "single",
+        "units_per_bundle": "25"
+      },
+      "certifications": ["FSC"],
+      "imageUrls": ["/static/img/b-kraft-01.png"],
+      "unitPriceMinor": 275,
+      "currency": "CNY",
+      "moq": 10000,
+      "priceTiers": [
+        { "minQuantity": 10000, "maxQuantity": 49999, "unitPriceMinor": 275 },
+        { "minQuantity": 50000, "maxQuantity": null, "unitPriceMinor": 250 }
+      ],
+      "shipping": { "costMinor": 2500, "minDays": 15, "maxDays": 25 },
+      "incoterm": "FOB",
+      "leadTimeDays": 25,
+      "tags": []
+    },
+    {
+      "id": "b-kraft-02",
+      "platform": "mock-b",
+      "sellerId": "b-standard-coop",
+      "productKey": "kraft-box-30x20x15",
+      "title": "Corrugated Kraft Box 30x20x15 cm, Cooperative Pack",
+      "description": "Corrugated kraft box, 30x20x15 cm, from a buyers cooperative, sold per unit. Synthetic fixture data.",
+      "specifications": {
+        "material": "corrugated kraft",
+        "dimensions_cm": "30x20x15",
+        "wall": "single",
+        "units_per_bundle": "20"
+      },
+      "certifications": [],
+      "imageUrls": ["/static/img/b-kraft-02.png"],
+      "unitPriceMinor": 40,
+      "currency": "EUR",
+      "moq": 1000,
+      "priceTiers": [
+        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 40 },
+        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 36 }
+      ],
+      "shipping": { "costMinor": 900, "minDays": 6, "maxDays": 12 },
+      "incoterm": "DAP",
+      "leadTimeDays": 10,
+      "tags": []
+    }
+  ]
+}
