@@ -56,6 +56,14 @@ export function judge(name, measured, baseline) {
         hints.push(`${m}: raise baseline to ${floor2(measured[m])}`)
       }
     }
+    // Graduation is mandatory. With a stale baseline below 80, a package that reached 80% on every metric
+    // could later fall back to its old baseline without failing, so the hard gate must be locked in once.
+    if (graduated && METRICS.some((m) => hundredths(baseline[m]) < HARD_GATE * 100)) {
+      problems.push(
+        `reached ${HARD_GATE}% on every metric but its baseline is still lower: run ` +
+          '`node .github/scripts/ci/ts-coverage.mjs --update-baseline` and commit the file to graduate it'
+      )
+    }
   }
   const status = graduated
     ? 'graduated (hard 80%)'

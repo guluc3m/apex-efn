@@ -91,6 +91,12 @@ Each job can also run alone: `bash .github/scripts/ci/<job>.sh`.
 - A package whose four metrics are all at least 80% is held to the hard 80% gate. A package with no baseline
   entry is held to it too.
 - When a metric rises above its baseline, the output prints `hint: ... raise baseline to X`. That does not fail.
+- **Graduation is mandatory.** The moment all four metrics reach 80% while the baseline is still lower, the check
+  fails until you run `--update-baseline` and commit the file. Without this, a package could reach 85%, keep its old
+  baseline of 71%, and later fall back to 75% unnoticed. After graduation the hard 80% gate applies for good.
+
+The baseline file lives under `.github/`, which belongs to DEV-1, but any lane may commit a **raise** to it in the same
+PR as the tests that earned it. Lowering a value is never allowed (second rule above).
 
 Raise the baseline after you add tests:
 
