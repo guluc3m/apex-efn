@@ -157,11 +157,11 @@ def test_get_requests_bypass_the_store(store: InMemoryIdempotencyStore) -> None:
 def test_redis_store_replays_and_mismatches() -> None:
     redis = fakeredis.FakeAsyncRedis()
     app, counter = _build(RedisIdempotencyStore(redis))
-    client = TestClient(app)
-
-    first = client.post("/items", json={"a": 1}, headers={"Idempotency-Key": "r-1"})
-    replay = client.post("/items", json={"a": 1}, headers={"Idempotency-Key": "r-1"})
-    mismatch = client.post("/items", json={"a": 9}, headers={"Idempotency-Key": "r-1"})
+    # One client context = one event loop; fakeredis queues bind to the loop of the first call.
+    with TestClient(app) as client:
+        first = client.post("/items", json={"a": 1}, headers={"Idempotency-Key": "r-1"})
+        replay = client.post("/items", json={"a": 1}, headers={"Idempotency-Key": "r-1"})
+        mismatch = client.post("/items", json={"a": 9}, headers={"Idempotency-Key": "r-1"})
 
     assert first.json() == replay.json()
     assert replay.headers["idempotent-replayed"] == "true"
