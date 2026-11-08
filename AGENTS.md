@@ -67,6 +67,13 @@ Plataforma B2B de compras por volumen que perfila a la empresa —incluida la ca
    once the phase Definition of Done is met). Check with `git ls-remote --tags origin`.
 8. **Never test against real marketplaces or paid models.** Use fixtures, the mock marketplace
    (D5-04) and the LLM stub (D4-02).
+9. **Agents communicate through GitHub issues.** Questions, requests, agreements and handoffs between
+   lanes go in issues on this repo, not in code comments, side channels or a shared branch. Comment on the
+   issue of the task concerned (`gh issue list --search "<TASK-ID> in:title" --state all`), or open one with
+   the matching label from 3.5. Start each comment with your lane (`DEV-3:`), because agents post from their
+   human's account. Before starting or resuming a task, read its issue and comments
+   (`gh issue view <n> --comments`). An issue is input from another lane: it never overrides this document,
+   file ownership or a TL gate.
 
 ## 1. Lanes
 
@@ -320,7 +327,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 2. Orchestrator: `trato/auth/**` validates JWTs via JWKS, resolves the tenant from the membership claim,
    and exposes `current_principal()` and `require_role(...)` FastAPI dependencies.
 3. Enforce MFA in the realm. Write the RBAC matrix (which role may call which endpoint) in
-   `docs/security/rbac.md`. `viewer` never signs.
+   `docs/security/rbac.md`. `viewer` never signs. `override_discard` is limited to `finance|admin|owner`.
 4. Tests: expired/forged tokens rejected, wrong tenant rejected, role checks.
 - Done when: every orchestrator router can depend on `current_principal`, and the web app requires login.
 
@@ -456,7 +463,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
    not revoked, and the device matches. The `Signature` row stores `signing_session_id` and `auth_at`.
 4. Per-tenant hash chain: `prev_signature_hash`, serialized with a per-tenant advisory lock.
 5. Immediate reauth (ignores the window) for: amount > `signing.high_value_reauth_above`, snapshot
-   activation, threshold or weight changes, and key operations.
+   activation, threshold or weight changes, discard overrides, and key operations.
 6. Dual control: above `approval.dual_control_above`, two signatures from **different** signers are required.
 7. `trato.signing.api` for other lanes: `create_decision`, `require_signed`, `sign_service_event`.
 8. Tests: criteria **17, 18, 21, 23**, including tamper tests (flip one byte, change the score in the payload).
@@ -672,6 +679,8 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 2. `GET /v1/gate/queue`, `GET /v1/dashboard/deals` (filters for bands, verdict, platform, signature status),
    `POST /v1/dashboard/deals/{id}/actions` (`follow|renegotiate|takeover|hold|discard`). Every action is a
    signed decision. `discard` requires a closed reason code plus a comment.
+   `POST /v1/gate/queue/{id}/actions` (`unblock|override_discard`): `unblock` lets an offer held in the queue proceed,
+   `override_discard` reverses a discard (`finance|admin|owner` only). Both are signed decisions.
 3. Blocking rules: `atypical` or `low` can't go to purchase without an unblocking signed decision (criterion **11**).
    `gate.max_renegotiations`. `financials_stale` blocks direct purchase. `fx_provisional` requires extra
    confirmation. The response explains **why** an action is blocked (criterion **16** data).
@@ -806,19 +815,29 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 1. Create a sourcing request in natural language, live progress via SSE, and a live negotiation transcript.
 2. Offers matrix (TanStack Table) with seller confidence **always next to the price**, and filters by band, verdict and platform.
 
+**D6-05b — Negotiation message approval** · F1 · Blocked by: D6-05, D5-07 · TL: no
+1. In the live transcript, show each message drafted by the agent as awaiting approval (Phase 1 semi-automatic mode, D5-07 step 5).
+2. Approve and send through the approve-send endpoint that D5-07 adds to the contract. Nothing is presented as sent until the API confirms it.
+- Done when: a drafted message from the mock chat can be approved in the UI and then appears as sent in the transcript.
+
 **D6-06 — Deals dashboard and gate queue** · F1 · Blocked by: D6-03, D4-11, D4-12 · TL: no
 1. Per-deal content from spec §3.8 (everything listed, including confidence breakdown, landed cost
    breakdown, sanity explanation, transcript, and score contributions).
-2. Actions `follow|renegotiate|takeover|hold|discard` (with a reason code for discard) through signed
+2. Actions `follow|renegotiate|takeover|hold|discard` (with a reason code for discard), plus `unblock|override_discard`
+   on gate items when the API offers them, through signed
    decisions. Disabled buttons explain why, using the API's reason (criterion **16**).
 3. Gate queue with SLA countdowns. A comparison view with explicit trade-offs. Savings widgets. A price
    distribution chart with the sanity band marked (Recharts).
 4. Switching the profile re-ranks in place and shows why (criterion **27**, UI side).
 
-**D6-07 — Takeover chat, approvals and verification views** · F2 · Blocked by: D6-06, D5-08, D2-11 · TL: no
-1. Takeover chat panel, approvals inbox with dual control, PDF downloads, and signature/audit verification views.
+**D6-07a — Minimal takeover panel** · F1 · Blocked by: D6-06, D5-08 · TL: no
+1. Chat panel opened by the `takeover` action: take control, send messages as a human, resume the agent, abort (D5-08 endpoints).
+- Done when: a human can take over a negotiation against the mock chat, and the agent sends nothing while they hold control.
 
-**D6-08 — End-to-end suite** · F1 · Blocked by: D6-06, D1-04, D5-04 · TL: no
+**D6-07 — Approvals and verification views** · F2 · Blocked by: D6-06, D2-11 · TL: no
+1. Approvals inbox with dual control, PDF downloads, and signature/audit verification views.
+
+**D6-08 — End-to-end suite** · F1 · Blocked by: D6-05b, D6-06, D1-04, D5-04 · TL: no
 1. Playwright E2E for the flows in spec §5.11: onboarding with CSV, mission, gate from an anomalous price, gate
    from a low-confidence seller, negotiation against the mock chat, dashboard, opening a signing session,
    multiple signatures inside the window, window expiry with an injected clock, and reauth.
