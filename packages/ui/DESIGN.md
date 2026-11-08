@@ -284,7 +284,10 @@ components:
     gap: "12px"
     arcHeight: "0.31 × distancia"
     swapDuration: "650ms"
-    swapPause: "150ms"
+    bounceDuration: "420ms"
+    bounceStagger: "90ms"
+    bounceHeight: "16px"
+    pause: "150ms"
     easing: "cubic-bezier(0.65, 0, 0.35, 1)"
 ---
 
@@ -490,8 +493,9 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - Cuatro bolas **lisas, blancas (`ink`) e idénticas**, sin sombreado ni dithering, en línea horizontal.
 - Se intercambian por parejas contiguas: una viaja por un **arco por encima** y la otra por un **arco por
   debajo**, como las transiciones de un autómata finito. La altura del arco es proporcional a la distancia.
-- Cada intercambio dura `swapDuration`, pausa `swapPause`; la secuencia de parejas (1–2, 2–3, 3–4, 2–3) se
-  repite en bucle.
+- **Alterna dos movimientos:** un intercambio y después una **ola**: las cuatro bolas botan una tras otra de
+  izquierda a derecha (`bounceDuration`, desfase `bounceStagger`, altura `bounceHeight`, trayectoria
+  parabólica). Pausa `pause` entre movimientos. Las parejas de intercambio rotan: 1–2, 3–4, 2–3.
 - Uso: modales de carga y esperas de más de 400 ms. Siempre con texto que diga qué se espera
   («Firmando decisión…») y `role="status"`. Con reduced motion: bolas quietas y el texto.
 
