@@ -70,6 +70,14 @@ class NegotiationNotCleared(Exception):
     """The negotiate node was entered without clearance. Indicates a broken graph, never a data issue."""
 
 
+class UnknownNegotiationOutcome(Exception):
+    """The negotiator returned an outcome outside the closed set agreed in ADR-900."""
+
+    def __init__(self, value: str) -> None:
+        super().__init__(f"unknown negotiation outcome {value!r}; see ADR-900 / ADR-403")
+        self.value = value
+
+
 class InvalidSignedDecision(Exception):
     """A signed decision does not match the offer or action it is supposed to authorize."""
 
@@ -338,6 +346,18 @@ def build_offer_graph(
             raise NegotiationNotCleared(subject_ref(state))
         return await move(state, OfferStatus.NEGOTIATING)
 
+    def _outcome(result: Any) -> NegotiationOutcomeKind:
+        """Coerce the port's outcome into this module's enum.
+
+        DEV-5's negotiator returns its own ``NegotiationOutcome`` class (same values, different type). Two
+        ``StrEnum`` members with the same value compare equal, but relying on that would break the day a value
+        is renamed on one side. Coercing here makes the boundary explicit and fails loudly on an unknown value.
+        """
+        try:
+            return NegotiationOutcomeKind(result.outcome)
+        except ValueError as exc:
+            raise UnknownNegotiationOutcome(str(result.outcome)) from exc
+
     async def negotiate(state: OfferState) -> dict[str, Any]:
         """Poll the negotiator once. Non-terminal results go to ``wait_negotiation`` and come back here.
 
@@ -354,10 +374,10 @@ def build_offer_graph(
                 state["offer"], tenant_id=state["tenant_id"], idempotency_key=key
             ),
             # A waiting negotiation is never replayed from the ledger: the next call must make progress.
-            cacheable=lambda r: r.outcome in TERMINAL_OUTCOMES,
+            cacheable=lambda r: _outcome(r) in TERMINAL_OUTCOMES,
         )
         update: dict[str, Any] = {"negotiation": result.model_dump(mode="json")}
-        if result.outcome in TERMINAL_OUTCOMES:
+        if _outcome(result) in TERMINAL_OUTCOMES:
             update.update(await move(state, OfferStatus.NEGOTIATED))
         return update
 
@@ -586,6 +606,7 @@ __all__ = [
     "UNBLOCK_DECISION",
     "InvalidSignedDecision",
     "NegotiationNotCleared",
+    "UnknownNegotiationOutcome",
     "OfferGraphDeps",
     "build_offer_graph",
     "initial_state",

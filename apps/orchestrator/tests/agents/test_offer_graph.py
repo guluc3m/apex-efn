@@ -57,6 +57,15 @@ async def _resume(graph: Any, config: Any) -> dict[str, Any]:
     return result
 
 
+def _resolved(value: Any) -> Any:
+    """Wrap a value as an already-completed awaitable, for port stubs."""
+
+    async def _inner() -> Any:
+        return value
+
+    return _inner()
+
+
 def _interrupted(result: dict[str, Any]) -> dict[str, Any]:
     pending = result.get("__interrupt__")
     assert pending, "expected the graph to pause for a human"
@@ -314,6 +323,54 @@ async def test_waiting_negotiation_pauses_and_resumes_with_the_same_key(
     assert _interrupted(final)["decision_type"] == "deal_action"  # reached the human decision
     assert rig.calls["negotiation"] == 3
     assert set(rig.negotiation.keys) == {"negotiate:offer:m1:o1:1"}
+
+
+async def test_a_negotiator_with_its_own_enum_class_is_accepted() -> None:
+    """DEV-5 returns its own ``NegotiationOutcome`` (same values, different type). The boundary is explicit."""
+    from enum import StrEnum
+
+    from apex.agents.ports import NegotiationResult
+
+    class TheirOutcome(StrEnum):
+        AGREED = "agreed"
+        AWAITING_SELLER = "awaiting_seller"
+
+    class TheirResult(NegotiationResult):
+        outcome: TheirOutcome  # type: ignore[assignment]
+
+    rig = make_rig()
+    rig.deps.negotiation.negotiate = lambda *a, **k: _resolved(  # type: ignore[method-assign]
+        TheirResult(
+            outcome=TheirOutcome.AGREED,
+            negotiation_id="n1",
+            price_minor=900,
+            currency="EUR",
+            quantity=10,
+        )
+    )
+    graph, config = _start(rig)
+    result = await _run(graph, config)
+    assert _interrupted(result)["decision_type"] == "deal_action"
+    assert (await graph.aget_state(config)).values["negotiation"]["outcome"] == "agreed"
+
+
+async def test_an_outcome_outside_the_closed_set_fails_loudly() -> None:
+    from apex.agents.offer_graph import UnknownNegotiationOutcome
+    from apex.agents.ports import NegotiationResult
+
+    rig = make_rig()
+    rig.deps.negotiation.negotiate = lambda *a, **k: _resolved(  # type: ignore[method-assign]
+        NegotiationResult.model_construct(
+            outcome="something_new",
+            negotiation_id="n1",
+            price_minor=None,
+            currency=None,
+            quantity=None,
+        )
+    )
+    graph, config = _start(rig)
+    with pytest.raises(UnknownNegotiationOutcome):
+        await _run(graph, config)
 
 
 async def test_terminal_negotiation_is_cached_and_never_repeated_on_resume() -> None:

@@ -113,7 +113,8 @@ class NegotiationResult(_Frozen):
 
     @model_validator(mode="after")
     def _agreed_is_complete_and_only_agreed_has_a_price(self) -> NegotiationResult:
-        agreed = self.outcome is NegotiationOutcomeKind.AGREED
+        # Compare by value: DEV-5's negotiator may return its own enum class with the same values.
+        agreed = NegotiationOutcomeKind(self.outcome) is NegotiationOutcomeKind.AGREED
         complete = None not in (self.price_minor, self.currency, self.quantity)
         if agreed and not complete:
             raise ValueError("an agreed negotiation needs price_minor, currency and quantity")
