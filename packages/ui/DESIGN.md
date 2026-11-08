@@ -289,6 +289,34 @@ components:
     bounceHeight: "16px"
     pause: "150ms"
     easing: "cubic-bezier(0.65, 0, 0.35, 1)"
+  logo:
+    source: "apps/web/public/brand/ (apex-isotipo.svg, apex-logo.css)"
+    markViewBox: "0 0 64 40"
+    markFill: "currentColor"
+    markSize: "24px (cabecera) · 16px (mínimo) · 32px · 64px · 128px"
+    wordmark: "apex"
+    wordmarkFont: "Geist 600"
+    wordmarkSize: "0.72 × ancho del isotipo"
+    wordmarkTracking: "-0.04em"
+    gap: "0.25 × ancho del isotipo"
+    clearspace: "0.25 × ancho del isotipo"
+    colorOnDark: "{colors.ink}"
+    colorOnLight: "{colors.background}"
+  language-switcher:
+    backgroundColor: "transparent"
+    backgroundColorHover: "{colors.surface-raised}"
+    textColor: "{colors.ink}"
+    borderColor: "{colors.line}"
+    borderColorOpen: "{colors.line-strong}"
+    rounded: "{rounded.none}"
+    height: "38px"
+    icon: "globe 16px, {colors.ink-soft}"
+    code: "{typography.mono}, ES · EN · ZH"
+    menuBackground: "{colors.surface-raised}"
+    menuBorder: "{colors.line-strong}"
+    menuWidth: "232px"
+    itemHeight: "36px"
+    itemHover: "{colors.line}"
 ---
 
 # APEX-EFN — Sistema de diseño
@@ -335,7 +363,7 @@ Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 
 ## 3. Reglas para quitar el aspecto «generado»
 
-Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
+Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
 
 1. **Sin badges de relleno.** Nada de «Nuevo», «IA», «Beta», ni badges que repitan algo ya visible. Un
    badge solo existe si comunica un estado de dominio (§6).
@@ -477,7 +505,7 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
   rejilla y se lee como «burbujeo»; la intensidad mantiene la retícula intacta.
 - **Estabilidad:** Atkinson reordena muchos puntos ante cambios pequeños, así que el patrón se recalcula a
   `recomputeFps` y la transición de intensidad suaviza el resto.
-- **Motivo (pendiente de elegir):** hay tres candidatos en el lienzo "TRATO wireframes", todos con puntos
+- **Motivo (pendiente de elegir):** hay tres candidatos en el lienzo "APEX wireframes", todos con puntos
   circulares que solo cambian de intensidad:
   1. **Autómata celular elemental, regla 30**, sembrado con una sola celda, en rejilla cuadrada de 8 px. La
      generación nueva entra por arriba y las filas antiguas pierden intensidad hacia abajo. Es binario, así que
@@ -508,7 +536,28 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - Uso: modales de carga y esperas de más de 400 ms. Siempre con texto que diga qué se espera
   («Firmando decisión…») y `role="status"`. Con reduced motion: bolas quietas y el texto.
 
-## 10. Accesibilidad e internacionalización
+## 10. Logo
+
+El logo vive en `apps/web/public/brand/` (`apex-isotipo.svg`, `apex-icono.svg`, `apex-logo.css`, y la hoja
+de marca en `index.html`). Es la única forma de escribir el nombre del producto en la interfaz: nunca
+«APEX» o «APEX-EFN» en texto plano como marca, ni el nombre antiguo TRATO.
+
+- **Isotipo:** hexágono achatado con un pico en negativo, retícula 64 × 40. Un solo color
+  (`currentColor`), esquinas rectas, sin degradados ni sombras.
+- **Logotipo:** isotipo a la izquierda y «apex» en minúsculas, Geist 600, tracking −0,04 em. El texto mide
+  el 72 % del ancho del isotipo y la separación es un cuarto de ese ancho. Nunca en otra fuente ni en mayúsculas.
+- **Tamaños:** `--apex-mark-size` es el ancho del isotipo. 24 px en la cabecera de la app (56 px de alto),
+  16 px como mínimo para el isotipo solo; 32/64/128 px para login, documentos y la hoja de marca.
+- **Color:** `ink` sobre `background`/`surface`; `background` sobre claro (PDF, impresión). `ink-soft` solo
+  en contextos secundarios (pie, documentos).
+- **Área de seguridad:** un cuarto del ancho del isotipo por cada lado. Nada (nav, badges) dentro de ella.
+- **Dónde va:** primer elemento de `AppHeader` y de la cabecera del onboarding, enlazando a Decisiones;
+  arriba a la izquierda del login, sin enlace. Accesible como «APEX» (`aria-label`), el isotipo `aria-hidden`.
+- **Implementación:** componente `Logo` en `@apex/ui` con `size` (`sm`, `md`, `lg`, `xl`) y `tone`
+  (`onDark`, `onLight`, `soft`); SVG en línea con `fill="currentColor"` o la máscara de `apex-logo.css`.
+  Favicon: `apex-icono.svg`.
+
+## 11. Accesibilidad e internacionalización
 
 - WCAG 2.2 AA. Foco siempre visible con `focus-ring`; nunca `outline: none` sin sustituto.
 - Objetivo táctil mínimo 24×24 px; 32 px en acciones de fila.
@@ -516,8 +565,16 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - Todo texto por `next-intl` (`es`, `en`, `zh`). Sin anchos fijos en botones o etiquetas: el español
   crece un 20–30 % respecto al inglés.
 - Números, divisas y fechas con el locale activo vía `Intl`. Fechas relativas siempre con tooltip absoluto.
+- **Selector de idioma** (`LanguageSwitcher`, token `language-switcher`): en la cabecera, a la izquierda del
+  indicador de firma; en onboarding y login, arriba a la derecha. Botón con icono de globo, el código del
+  idioma activo en mono (`ES`, `EN`, `ZH`) y un chevron; nunca banderas (un idioma no es un país). Abre un
+  menú con el título «Idioma de la interfaz» y cada idioma por su endónimo (Español, English, 简体中文),
+  con su código a la derecha y un check en el activo. Cada opción lleva su `lang` (`es`, `en`, `zh-Hans`)
+  para que se lea y pronuncie bien. `aria-haspopup="menu"`, `aria-expanded`, opciones `menuitemradio`,
+  Escape y clic fuera cierran. Cambiar de idioma no recarga ni pierde contexto: cambia el locale de
+  next-intl, guarda la preferencia del usuario y mantiene la ruta.
 
-## 11. Código
+## 12. Código
 
 - Tailwind v4 CSS-first: los tokens del YAML se declaran una vez en `@theme`
   (`apps/web/src/styles/globals.css`) y se reexportan en `packages/ui/src/styles.css` para Storybook.
@@ -534,7 +591,7 @@ los valores del YAML son los únicos permitidos y las secciones 2 y 3 son obliga
 Usa componentes de @apex/ui, iconos lucide y textos vía next-intl (es/en/zh). La UI no calcula dinero ni
 bandas: muestra lo que devuelve la API. Usa datos reales de los fixtures del contrato.
 Implementa carga/vacío/error/datos. Entrega componente + story + test axe. Después renderiza, haz una
-captura con Playwright, revísala contra la checklist de la sección 12 y corrige lo que falle antes de
+captura con Playwright, revísala contra la checklist de la sección 13 y corrige lo que falle antes de
 terminar. Indica qué reglas comprobaste.
 ```
 
@@ -551,16 +608,19 @@ borrador de los componentes de `@apex/ui` y deben implementarse con el mismo nom
 | `UiBoton` | `Button` | variantes `pri`, `sec`, `ghost`, `danger`; tamaños `sm`, `md`, `lg`; deshabilitado con motivo |
 | `UiBadge` | `StatusBadge` | tonos `ok`, `warn`, `bad`, `neutro`, `plano`; la forma del punto distingue el tono además del color |
 | `UiCargando` | `SphereLoader` | §9.2 |
+| `UiLogo` | `Logo` | §10; tamaños `sm`, `md`, `lg`; tonos `claro`, `oscuro`, `suave` |
+| `UiIdioma` | `LanguageSwitcher` | §11; `es`, `en`, `zh` |
 
 La navegación entre pantallas, las guardas y el inventario de modales están en `apps/web/NAVIGATION.md`.
 
-## 12. Checklist de PR
+## 13. Checklist de PR
 
 - [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
 - [ ] Nada de la sección 2 (tema claro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
 - [ ] Sin badges de relleno ni etiquetas redundantes; mono solo en IDs/hashes.
 - [ ] Un elemento dominante y un único CTA primario por zona; titular concreto y con `balance`.
 - [ ] Radio 0 en todos los elementos de interfaz.
+- [ ] La marca es el logo de `apps/web/public/brand/` (§10), nunca el nombre en texto plano.
 - [ ] Texto ≥ 13 px y contraste ≥ `ink-muted`.
 - [ ] Cifras tabulares a la derecha; dinero solo con `MoneyDisplay`.
 - [ ] Confianza y banda de precio junto al precio; firma junto al trato.
