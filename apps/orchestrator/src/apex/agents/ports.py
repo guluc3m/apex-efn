@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from enum import StrEnum
 from typing import Any, Literal, Protocol, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 T = TypeVar("T")
 
@@ -69,10 +69,57 @@ class GateOutcome(_Frozen):
     reasons: list[str] = Field(default_factory=list)
 
 
+class NegotiationOutcomeKind(StrEnum):
+    """Closed set from ADR-900 (ADR-403 item 4), identical to DEV-5's ``NegotiationOutcome``.
+
+    ``awaiting_human_approval``, ``awaiting_seller`` and ``in_progress`` are non-terminal: the graph pauses and
+    calls again with the same idempotency key, and the effect ledger never caches them.
+    """
+
+    AGREED = "agreed"
+    NO_AGREEMENT = "no_agreement"
+    ESCALATED = "escalated"
+    STOPPED_ANOMALOUS_PRICE = "stopped_anomalous_price"
+    AWAITING_HUMAN_APPROVAL = "awaiting_human_approval"
+    AWAITING_SELLER = "awaiting_seller"
+    ABORTED = "aborted"
+    IN_PROGRESS = "in_progress"
+
+
+TERMINAL_OUTCOMES = frozenset(
+    {
+        NegotiationOutcomeKind.AGREED,
+        NegotiationOutcomeKind.NO_AGREEMENT,
+        NegotiationOutcomeKind.ESCALATED,
+        NegotiationOutcomeKind.STOPPED_ANOMALOUS_PRICE,
+        NegotiationOutcomeKind.ABORTED,
+    }
+)
+GATE_OUTCOMES = frozenset(
+    {NegotiationOutcomeKind.ESCALATED, NegotiationOutcomeKind.STOPPED_ANOMALOUS_PRICE}
+)
+REJECT_OUTCOMES = frozenset({NegotiationOutcomeKind.NO_AGREEMENT, NegotiationOutcomeKind.ABORTED})
+
+
 class NegotiationResult(_Frozen):
-    outcome: str
-    price_minor: int | None
-    currency: str | None
+    """Result of one ``negotiate`` call. ``price_minor`` is the **unit** price, set only for ``agreed``."""
+
+    outcome: NegotiationOutcomeKind
+    negotiation_id: str
+    price_minor: int | None = None
+    currency: str | None = None
+    quantity: int | None = None
+    reason: str | None = None
+
+    @model_validator(mode="after")
+    def _agreed_is_complete_and_only_agreed_has_a_price(self) -> NegotiationResult:
+        agreed = self.outcome is NegotiationOutcomeKind.AGREED
+        complete = None not in (self.price_minor, self.currency, self.quantity)
+        if agreed and not complete:
+            raise ValueError("an agreed negotiation needs price_minor, currency and quantity")
+        if not agreed and self.price_minor is not None:
+            raise ValueError("price_minor is only set when the outcome is agreed")
+        return self
 
 
 class DecisionRef(_Frozen):
@@ -106,7 +153,25 @@ class TrustPort(Protocol):
     async def score(self, offer: Mapping[str, Any], *, tenant_id: str) -> TrustOutcome: ...
 
 
+class UnitPriceEur(_Frozen):
+    """A negotiated price converted to EUR per unit (landed-cost basis is DEV-3's concern, not the graph's)."""
+
+    unit_price_eur_minor: int
+    fx_provisional: bool = False
+    fx_as_of: str | None = None
+
+
+class PriceNormalizer(Protocol):
+    """Converts a negotiated unit price to EUR per unit with DEV-3 FX (``fx.convert``)."""
+
+    async def to_eur_unit(
+        self, *, price_minor: int, currency: str, tenant_id: str
+    ) -> UnitPriceEur: ...
+
+
 class SanityPort(Protocol):
+    """``price_minor`` is in EUR minor units per unit, or ``None`` for the offer's own listed price."""
+
     async def check(
         self, offer: Mapping[str, Any], *, tenant_id: str, price_minor: int | None
     ) -> SanityOutcome: ...
@@ -123,6 +188,12 @@ class FinancePort(Protocol):
 
 
 class NegotiationPort(Protocol):
+    """Advance the negotiation of this offer and return at the next stop (ADR-900).
+
+    ``idempotency_key`` is ``negotiate:<subject_ref>:<attempt>``. Calls with the same key continue the same
+    negotiation, so a retry never sends a message twice. A new attempt (``renegotiate``) uses a new key.
+    """
+
     async def negotiate(
         self, offer: Mapping[str, Any], *, tenant_id: str, idempotency_key: str
     ) -> NegotiationResult: ...
@@ -153,6 +224,10 @@ class AuditPort(Protocol):
 class ConfigVersionPort(Protocol):
     def config_version(self, tenant_id: str) -> str: ...
 
+    def max_renegotiations(self, tenant_id: str) -> int:
+        """``gate.max_renegotiations``. Fails loudly when unset (ADR-900 Q7), never defaults."""
+        ...
+
 
 class EffectLedger(Protocol):
     """Runs a side effect at most once per key and replays its result afterwards.
@@ -162,7 +237,13 @@ class EffectLedger(Protocol):
     The production ledger is backed by Postgres (DEV-2 data layer); tests use the in-memory one.
     """
 
-    async def once(self, key: str, effect: Callable[[], Awaitable[T]]) -> T: ...
+    async def once(
+        self,
+        key: str,
+        effect: Callable[[], Awaitable[T]],
+        *,
+        cacheable: Callable[[T], bool] = ...,
+    ) -> T: ...
 
 
 __all__ = [
@@ -175,18 +256,24 @@ __all__ = [
     "EffectLedger",
     "FinancePort",
     "FitOutcome",
+    "GATE_OUTCOMES",
     "GateCombiner",
     "GateOutcome",
     "GateRoute",
+    "NegotiationOutcomeKind",
     "NegotiationPort",
     "NegotiationResult",
     "OfferStep",
+    "PriceNormalizer",
     "PendingSignature",
     "PriceBand",
+    "REJECT_OUTCOMES",
     "SanityOutcome",
     "SanityPort",
     "ScoringPort",
     "SignedDecisionView",
+    "TERMINAL_OUTCOMES",
     "TrustOutcome",
     "TrustPort",
+    "UnitPriceEur",
 ]

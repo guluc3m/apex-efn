@@ -32,6 +32,9 @@ from apex.agents.offer_state import (
     check_transition,
 )
 from apex.agents.ports import (
+    GATE_OUTCOMES,
+    REJECT_OUTCOMES,
+    TERMINAL_OUTCOMES,
     AuditPort,
     ConfidenceBand,
     ConfigVersionPort,
@@ -41,10 +44,12 @@ from apex.agents.ports import (
     FinancePort,
     GateCombiner,
     GateRoute,
+    NegotiationOutcomeKind,
     NegotiationPort,
     OfferStep,
     PendingSignature,
     PriceBand,
+    PriceNormalizer,
     SanityPort,
     ScoringPort,
     SignedDecisionView,
@@ -77,6 +82,7 @@ class OfferGraphDeps:
     combiner: GateCombiner
     finance: FinancePort
     negotiation: NegotiationPort
+    prices: PriceNormalizer
     scoring: ScoringPort
     decisions: DecisionPort
     audit: AuditPort
@@ -100,6 +106,8 @@ def initial_state(
         history=[OfferStatus.DISCOVERED.value],
         reject_reason=None,
         negotiation_cleared=False,
+        negotiation_attempt=1,
+        purchase_blocked=[],
         gate_decision_id=None,
         human_decision_id=None,
         human_action=None,
@@ -248,8 +256,8 @@ def build_offer_graph(
 
     async def _gate_payload(state: OfferState, stage: str) -> dict[str, Any]:
         return {
-            "action": "unblock",
             "stage": stage,
+            "attempt": state.get("negotiation_attempt", 1),
             "offer_id": state["offer_id"],
             "mission_id": state["mission_id"],
             "price_sanity": state.get("sanity", {}),
@@ -262,32 +270,61 @@ def build_offer_graph(
 
     async def gate_wait(state: OfferState) -> dict[str, Any]:
         stage = state["gate_stage"]
+        attempt = state.get("negotiation_attempt", 1)
+        # One decision per (offer, stage, attempt): an earlier unblock is never reused for a later gate.
         try:
             signed = await _await_signed(
                 state,
                 UNBLOCK_DECISION,
                 await _gate_payload(state, stage),
-                f"{subject_ref(state)}:{stage}",
+                f"{subject_ref(state)}:{stage}:{attempt}",
             )
         except DecisionRejected:
             update = await move(state, OfferStatus.REJECTED, reason="gate_rejected")
             return {"negotiation_cleared": False, **update}
-        if signed.payload.get("action") != "unblock":
-            raise InvalidSignedDecision(f"decision {signed.id} is not an unblock")
-        target = OfferStatus.FINANCIALLY_CHECKED if stage == "pre" else OfferStatus.SCORED
-        update = await move(state, target)
-        return {
-            "gate_decision_id": signed.id,
-            "negotiation_cleared": stage == "pre",
-            **update,
-        }
+        if signed.payload.get("stage") != stage or signed.payload.get("attempt") != attempt:
+            raise InvalidSignedDecision(
+                f"decision {signed.id} was signed for another gate (stage/attempt mismatch)"
+            )
+        action = signed.payload.get("action")
+        negotiated_price = state.get("negotiation", {}).get("price_minor")
+        if action == "unblock" and stage == "post" and negotiated_price is None:
+            # Escalated or stopped negotiations have no agreed price: there is nothing to score. The human
+            # must renegotiate or discard; "unblock" would push a priceless offer to the final decision.
+            raise InvalidSignedDecision(
+                f"decision {signed.id}: unblock is not valid, the negotiation has no agreed price"
+            )
+        if action == "unblock":
+            target = OfferStatus.FINANCIALLY_CHECKED if stage == "pre" else OfferStatus.SCORED
+            update = await move(state, target)
+            return {
+                "gate_decision_id": signed.id,
+                "negotiation_cleared": stage == "pre",
+                **update,
+            }
+        if action == "renegotiate" and stage == "post":
+            # ``attempt`` counts negotiations so far, so ``attempt`` renegotiations have been requested
+            # after this one is allowed only while that count stays within ``gate.max_renegotiations``.
+            limit = deps.config.max_renegotiations(state["tenant_id"])
+            if attempt > limit:
+                update = await move(state, OfferStatus.REJECTED, reason="renegotiation_limit")
+                return {"negotiation_cleared": False, **update}
+            update = await move(state, OfferStatus.FINANCIALLY_CHECKED)
+            return {
+                "gate_decision_id": signed.id,
+                "negotiation_cleared": True,
+                "negotiation_attempt": attempt + 1,
+                **update,
+            }
+        raise InvalidSignedDecision(f"decision {signed.id} has action {action!r}, not valid here")
 
     def after_gate_wait(state: OfferState) -> str:
         status = OfferStatus(state["status"])
         if status is OfferStatus.REJECTED:
             return END
-        # ``financially_checked`` was reached through a signed unblock: the finance node still runs.
-        return "check_financial" if state["gate_stage"] == "pre" else "score_offer"
+        if status is OfferStatus.FINANCIALLY_CHECKED:
+            return "check_financial"  # pre-stage unblock, or a signed renegotiate
+        return "score_offer"
 
     async def check_financial(state: OfferState) -> dict[str, Any]:
         update: dict[str, Any] = {"finance": await _fit(state)}
@@ -295,37 +332,103 @@ def build_offer_graph(
             update.update(await move(state, OfferStatus.FINANCIALLY_CHECKED))
         return update
 
-    async def negotiate(state: OfferState) -> dict[str, Any]:
+    async def enter_negotiating(state: OfferState) -> dict[str, Any]:
+        """Persist ``negotiating`` before the (possibly long) conversation, so the stored status is truthful."""
         if not state.get("negotiation_cleared"):
             raise NegotiationNotCleared(subject_ref(state))
-        await move(state, OfferStatus.NEGOTIATING)
-        key = f"negotiate:{subject_ref(state)}"
+        return await move(state, OfferStatus.NEGOTIATING)
+
+    async def negotiate(state: OfferState) -> dict[str, Any]:
+        """Poll the negotiator once. Non-terminal results go to ``wait_negotiation`` and come back here.
+
+        The wait is a separate node on purpose: LangGraph replays a node from its start on resume, so a
+        polling loop with ``interrupt()`` inside would call the negotiator twice per resume.
+        """
+        if not state.get("negotiation_cleared"):
+            raise NegotiationNotCleared(subject_ref(state))
+        attempt = state.get("negotiation_attempt", 1)
+        key = f"negotiate:{subject_ref(state)}:{attempt}"
         result = await deps.ledger.once(
             key,
             lambda: deps.negotiation.negotiate(
                 state["offer"], tenant_id=state["tenant_id"], idempotency_key=key
             ),
+            # A waiting negotiation is never replayed from the ledger: the next call must make progress.
+            cacheable=lambda r: r.outcome in TERMINAL_OUTCOMES,
         )
-        done = await move(state, OfferStatus.NEGOTIATED, source=OfferStatus.NEGOTIATING)
-        return {"negotiation": result.model_dump(mode="json"), **done}
+        update: dict[str, Any] = {"negotiation": result.model_dump(mode="json")}
+        if result.outcome in TERMINAL_OUTCOMES:
+            update.update(await move(state, OfferStatus.NEGOTIATED))
+        return update
+
+    def after_negotiate(state: OfferState) -> str:
+        outcome = NegotiationOutcomeKind(state["negotiation"]["outcome"])
+        return "route_negotiated" if outcome in TERMINAL_OUTCOMES else "wait_negotiation"
+
+    async def wait_negotiation(state: OfferState) -> dict[str, Any]:
+        negotiation = state["negotiation"]
+        interrupt(
+            {
+                "kind": "awaiting_negotiation",
+                "outcome": negotiation["outcome"],
+                "negotiation_id": negotiation["negotiation_id"],
+                "subject_ref": subject_ref(state),
+            }
+        )
+        return {}
+
+    async def route_negotiated(state: OfferState) -> dict[str, Any]:
+        outcome = NegotiationOutcomeKind(state["negotiation"]["outcome"])
+        if outcome is NegotiationOutcomeKind.AGREED:
+            return {}
+        if outcome in GATE_OUTCOMES:
+            gate = {
+                "route": GateRoute.GATE.value,
+                "reasons": [f"negotiation:{outcome.value}"],
+                "stage": "post",
+            }
+            return {
+                "gate": gate,
+                "gate_stage": "post",
+                **await move(state, OfferStatus.GATE_PENDING),
+            }
+        assert outcome in REJECT_OUTCOMES
+        gate = {"route": GateRoute.DISCARD.value, "reasons": [outcome.value], "stage": "post"}
+        return {
+            "gate": gate,
+            **await move(state, OfferStatus.REJECTED, reason=f"negotiation_{outcome.value}"),
+        }
+
+    def after_route_negotiated(state: OfferState) -> str:
+        status = OfferStatus(state["status"])
+        if status is OfferStatus.NEGOTIATED:
+            return "recheck_sanity"
+        if status is OfferStatus.GATE_PENDING:
+            return "gate_wait"
+        return END
 
     async def recheck_sanity(state: OfferState) -> dict[str, Any]:
-        price = state["negotiation"].get("price_minor")
+        negotiation = state["negotiation"]
+        attempt = state.get("negotiation_attempt", 1)
+        # The sanity engine works in EUR per unit; convert the negotiated price with DEV-3 FX first.
+        unit = await deps.ledger.once(
+            f"eur-unit:{subject_ref(state)}:{attempt}",
+            lambda: deps.prices.to_eur_unit(
+                price_minor=negotiation["price_minor"],
+                currency=negotiation["currency"],
+                tenant_id=state["tenant_id"],
+            ),
+        )
         outcome = await deps.sanity.check(
-            state["offer"], tenant_id=state["tenant_id"], price_minor=price
+            state["offer"], tenant_id=state["tenant_id"], price_minor=unit.unit_price_eur_minor
         )
         return {
             "sanity": outcome.model_dump(mode="json"),
+            "negotiation_price": unit.model_dump(mode="json"),
             **await move(state, OfferStatus.SANITY_RECHECKED),
         }
 
     async def route_post(state: OfferState) -> dict[str, Any]:
-        if state["negotiation"].get("price_minor") is None:
-            update = await move(state, OfferStatus.REJECTED, reason="negotiation_no_price")
-            return {
-                "gate": {"route": "discard", "reasons": ["no_price"], "stage": "post"},
-                **update,
-            }
         route, reasons = _route(state)
         gate = {"route": route.value, "reasons": reasons, "stage": "post"}
         if route is GateRoute.NEGOTIATE:
@@ -368,6 +471,7 @@ def build_offer_graph(
             "seller_confidence": state.get("trust", {}),
             "financial_fit": state.get("finance", {}),
             "negotiation": state.get("negotiation", {}),
+            "negotiation_price": state.get("negotiation_price", {}),
             "score": state.get("score", {}),
             "config_version": state.get("config_version", ""),
         }
@@ -407,6 +511,11 @@ def build_offer_graph(
         signed = await deps.decisions.require_signed(decision_id, tenant_id=state["tenant_id"])
         if signed.payload.get("action") != "approve":
             raise InvalidSignedDecision(f"decision {signed.id} is not an approval")
+        # ADR-900: an approval never buys an out-of-budget offer. The offer stays ``approved`` and the reason
+        # is recorded so the dashboard (D4-11) can show why. ``financials_stale`` and ``fx_provisional`` are
+        # enforced by D4-11 at purchase time.
+        if state.get("finance", {}).get("verdict") == "out_of_budget":
+            return {"purchase_blocked": ["out_of_budget"]}
         return await move(state, OfferStatus.PURCHASED)
 
     graph: StateGraph[OfferState, None, OfferState, OfferState] = StateGraph(OfferState)
@@ -417,7 +526,10 @@ def build_offer_graph(
     graph.add_node("route_pre", route_pre)
     graph.add_node("gate_wait", gate_wait)
     graph.add_node("check_financial", check_financial)
+    graph.add_node("enter_negotiating", enter_negotiating)
     graph.add_node("negotiate", negotiate)
+    graph.add_node("wait_negotiation", wait_negotiation)
+    graph.add_node("route_negotiated", route_negotiated)
     graph.add_node("recheck_sanity", recheck_sanity)
     graph.add_node("route_post", route_post)
     graph.add_node("score_offer", score_offer)
@@ -441,8 +553,19 @@ def build_offer_graph(
         after_gate_wait,
         {"check_financial": "check_financial", "score_offer": "score_offer", END: END},
     )
-    graph.add_edge("check_financial", "negotiate")
-    graph.add_edge("negotiate", "recheck_sanity")
+    graph.add_edge("check_financial", "enter_negotiating")
+    graph.add_edge("enter_negotiating", "negotiate")
+    graph.add_conditional_edges(
+        "negotiate",
+        after_negotiate,
+        {"route_negotiated": "route_negotiated", "wait_negotiation": "wait_negotiation"},
+    )
+    graph.add_edge("wait_negotiation", "negotiate")
+    graph.add_conditional_edges(
+        "route_negotiated",
+        after_route_negotiated,
+        {"recheck_sanity": "recheck_sanity", "gate_wait": "gate_wait", END: END},
+    )
     graph.add_edge("recheck_sanity", "route_post")
     graph.add_conditional_edges(
         "route_post",

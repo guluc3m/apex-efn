@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (D4-06 is `TL approval: yes`; needs tech lead sign-off before merge).
+Accepted in substance by the Tech Lead in ADR-900 (items under "ADR-403"); the PR review lists the changes that were required before approval. D4-06 is `TL approval: yes`, so the TL merges.
 
 ## Context
 
@@ -55,14 +55,26 @@ humans for hours or days, so each offer needs its own resumable thread.
 - Two decision types are used now: `gate_unblock` and `deal_action`. DEV-2 must accept them (issue #92).
 - Reject-by-human and expiry both end in `rejected`; the reason distinguishes them.
 
-## Open questions for the tech lead
+## Decisions from the Tech Lead (ADR-900)
 
-1. After a signed unblock at the *pre* stage, should the offer still run the financial check before
-   negotiating? The graph does (it always does).
-2. After negotiation, a price that returns to `normal` goes straight to scoring; one that is `atypical` goes to
-   the gate again. Confirm that a second signed unblock is required rather than reusing the first.
-3. `financials_stale` and `fx_provisional` blocks are enforced at purchase time by the gate/dashboard
-   (D4-11), not inside this graph. Confirm.
+1. After a pre-stage unblock the offer still runs the financial check before negotiating.
+2. A price that becomes anomalous after negotiation needs a **new** signed unblock. The decision key is
+   `(offer, stage, attempt)` and the signed payload must carry the same `stage` and `attempt`, so an earlier
+   unblock cannot authorize a later gate.
+3. `financials_stale` and `fx_provisional` are enforced by D4-11 at purchase time. The graph also never
+   purchases an `out_of_budget` offer: it stays `approved` with `purchase_blocked=["out_of_budget"]`.
+4. Negotiation contract with DEV-5:
+   - `NegotiationResult.outcome` is a closed enum (`agreed`, `no_agreement`, `escalated`,
+     `stopped_anomalous_price`, `awaiting_human_approval`, `awaiting_seller`, `aborted`, `in_progress`); it
+     carries `negotiation_id`, `price_minor` (**unit** price, only for `agreed`), `currency` and `quantity`.
+   - `escalated` and `stopped_anomalous_price` go to the gate; `no_agreement` and `aborted` reject.
+   - Non-terminal outcomes (`awaiting_human_approval`, `awaiting_seller`, `in_progress`) interrupt the graph,
+     are never cached by the ledger, and the next call uses the **same** idempotency key. The wait is its own
+     node because LangGraph replays a node from the start on resume.
+   - Idempotency key: `negotiate:<subject_ref>:<attempt>`. A signed `renegotiate` at the post gate starts the
+     next attempt, up to `gate.max_renegotiations` (read from config, fails loudly when unset).
+5. The negotiated price is converted to EUR per unit by a `PriceNormalizer` port (DEV-3 FX) before the
+   sanity re-check. An unblock is refused when the negotiation has no agreed price.
 
 ## Related
 

@@ -17,12 +17,14 @@ from apex.agents.ports import (
     FitOutcome,
     GateOutcome,
     GateRoute,
+    NegotiationOutcomeKind,
     NegotiationResult,
     PendingSignature,
     PriceBand,
     SanityOutcome,
     SignedDecisionView,
     TrustOutcome,
+    UnitPriceEur,
 )
 
 TENANT = "tenant-a"
@@ -104,23 +106,57 @@ class AlwaysNegotiateCombiner:
 
 
 class FakeFinance:
-    def __init__(self, calls: Calls) -> None:
-        self.calls = calls
+    def __init__(self, calls: Calls, verdict: str = "within_budget") -> None:
+        self.calls, self.verdict = calls, verdict
 
     async def fit(self, offer: Mapping[str, Any], *, tenant_id: str) -> FitOutcome:
         self.calls.hit("finance")
-        return FitOutcome(verdict="within_budget")
+        return FitOutcome(verdict=self.verdict)  # type: ignore[arg-type]
 
 
 class FakeNegotiation:
-    def __init__(self, calls: Calls, price_minor: int | None = 900) -> None:
-        self.calls, self.price_minor = calls, price_minor
+    """Scripted per-call results. The last one repeats. ``keys`` records every idempotency key used."""
+
+    def __init__(self, calls: Calls, *results: NegotiationResult) -> None:
+        self.calls = calls
+        self.results = list(results) or [agreed()]
+        self.keys: list[str] = []
 
     async def negotiate(
         self, offer: Mapping[str, Any], *, tenant_id: str, idempotency_key: str
     ) -> NegotiationResult:
         self.calls.hit("negotiation")
-        return NegotiationResult(outcome="agreed", price_minor=self.price_minor, currency="EUR")
+        self.keys.append(idempotency_key)
+        if len(self.results) > 1:
+            return self.results.pop(0)
+        return self.results[0]
+
+
+def agreed(price_minor: int = 900, currency: str = "EUR", quantity: int = 100) -> NegotiationResult:
+    return NegotiationResult(
+        outcome=NegotiationOutcomeKind.AGREED,
+        negotiation_id="n1",
+        price_minor=price_minor,
+        currency=currency,
+        quantity=quantity,
+    )
+
+
+def stopped(kind: NegotiationOutcomeKind) -> NegotiationResult:
+    return NegotiationResult(outcome=kind, negotiation_id="n1", reason="test")
+
+
+class FakePrices:
+    """Converts at a fixed test rate so tests can see that the sanity check got the EUR price."""
+
+    def __init__(self, calls: Calls, eur_per_unit_minor: dict[str, int] | None = None) -> None:
+        self.calls = calls
+        self.rates = eur_per_unit_minor or {"EUR": 1, "USD": 1}
+        self.sanity_prices: list[int | None] = []
+
+    async def to_eur_unit(self, *, price_minor: int, currency: str, tenant_id: str) -> UnitPriceEur:
+        self.calls.hit("prices")
+        return UnitPriceEur(unit_price_eur_minor=price_minor * self.rates[currency])
 
 
 class FakeScoring:
@@ -200,8 +236,14 @@ class FakeAudit:
 
 
 class FakeConfig:
+    def __init__(self, max_renegotiations: int = 2) -> None:
+        self._max = max_renegotiations
+
     def config_version(self, tenant_id: str) -> str:
         return "cfg-1"
+
+    def max_renegotiations(self, tenant_id: str) -> int:
+        return self._max
 
 
 @dataclass
@@ -211,6 +253,8 @@ class Rig:
     decisions: FakeDecisions
     audit: FakeAudit
     ledger: InMemoryEffectLedger
+    negotiation: FakeNegotiation
+    prices: FakePrices
 
 
 def make_rig(
@@ -219,7 +263,9 @@ def make_rig(
     price: PriceBand = PriceBand.NORMAL,
     rechecked: PriceBand | None = None,
     combiner: Any = None,
-    negotiated_price: int | None = 900,
+    negotiation: tuple[NegotiationResult, ...] = (),
+    max_renegotiations: int = 2,
+    verdict: str = "within_budget",
 ) -> Rig:
     calls = Calls()
     decisions = FakeDecisions(calls)
@@ -230,12 +276,13 @@ def make_rig(
         trust=FakeTrust(calls, trust),
         sanity=FakeSanity(calls, price, rechecked),
         combiner=combiner or TableCombiner(),
-        finance=FakeFinance(calls),
-        negotiation=FakeNegotiation(calls, negotiated_price),
+        finance=FakeFinance(calls, verdict),
+        negotiation=FakeNegotiation(calls, *negotiation),
+        prices=FakePrices(calls),
         scoring=FakeScoring(calls),
         decisions=decisions,
         audit=audit,
-        config=FakeConfig(),
+        config=FakeConfig(max_renegotiations),
         ledger=ledger,
     )
-    return Rig(deps, calls, decisions, audit, ledger)
+    return Rig(deps, calls, decisions, audit, ledger, deps.negotiation, deps.prices)  # type: ignore[arg-type]

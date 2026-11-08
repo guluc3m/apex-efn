@@ -40,7 +40,7 @@ ALLOWED: dict[OfferStatus, frozenset[OfferStatus]] = {
     S.GATE_PENDING: frozenset({S.FINANCIALLY_CHECKED, S.SCORED, S.REJECTED}),
     S.FINANCIALLY_CHECKED: frozenset({S.NEGOTIATING}),
     S.NEGOTIATING: frozenset({S.NEGOTIATED}),
-    S.NEGOTIATED: frozenset({S.SANITY_RECHECKED}),
+    S.NEGOTIATED: frozenset({S.SANITY_RECHECKED, S.GATE_PENDING, S.REJECTED}),
     S.SANITY_RECHECKED: frozenset({S.GATE_PENDING, S.SCORED, S.REJECTED}),
     S.SCORED: frozenset({S.AWAITING_HUMAN}),
     S.AWAITING_HUMAN: frozenset({S.SIGNED, S.REJECTED}),
@@ -84,6 +84,11 @@ class OfferState(TypedDict, total=False):
     gate: dict[str, Any]
     negotiation: dict[str, Any]
     score: dict[str, Any]
+
+    # Negotiation attempt (starts at 1, +1 per signed renegotiate) and the EUR-per-unit price that was sanity-checked.
+    negotiation_attempt: int
+    negotiation_price: dict[str, Any]
+    purchase_blocked: list[str]
 
     # Gate bookkeeping. ``negotiation_cleared`` is True only after route=negotiate or a signed unblock.
     gate_stage: str

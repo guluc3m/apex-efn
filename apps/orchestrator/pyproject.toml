@@ -94,4 +94,8 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+markers = [
+    "integration: Testcontainers, needs Docker",
+    "vault_integration: real Vault dev server, no Docker",
+]
 filterwarnings = ["ignore:Module already imported so cannot be rewritten:pytest.PytestAssertRewriteWarning"]
