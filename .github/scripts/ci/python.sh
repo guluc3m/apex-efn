@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
-# Unit tests and coverage gate for the orchestrator (D1-04).
-# Integration tests (Testcontainers) are excluded here and run by python-integration.sh.
+# Python job (D1-04): ruff, mypy and unit tests with the coverage gate (80%, per target that exists).
+# Integration tests (Testcontainers) are excluded here and run by integration.sh.
 # Coverage targets are added only when their code exists, so the gate switches on by itself.
 set -euo pipefail
+# shellcheck source=common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-cd "$(dirname "${BASH_SOURCE[0]}")/../../apps/orchestrator"
+require_cmd uv "install uv ${UV_VERSION:-0.13.7} (https://docs.astral.sh/uv/) and run uv sync --locked --dev in apps/orchestrator"
+
+cd apps/orchestrator
+
+uv run ruff check .
+uv run mypy src/
 
 THRESHOLD=80
 # "<module to measure>|<glob that activates the target>"

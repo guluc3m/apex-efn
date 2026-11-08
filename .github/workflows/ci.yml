@@ -3,6 +3,9 @@ name: CI
 # Required gates for `main` (see docs/runbooks/branch-protection.md, section "Required checks").
 # Recommended single required check: "CI OK". Jobs skipped by path filters or by a missing
 # target report "skipped", which GitHub counts as passing; "CI OK" fails if any job failed.
+#
+# Every job runs a script from .github/scripts/ci/. The same scripts run locally with `pnpm ci:local`,
+# so this file only sets up the runner (checkout, toolchains, services) and then calls the script.
 
 on:
   push:
@@ -28,8 +31,6 @@ env:
   PYTHON_VERSION: '3.12'
   # Pinned to the version used locally (`uv --version`). Bump it here and in the local toolchain together.
   UV_VERSION: '0.13.7'
-  PIP_AUDIT_VERSION: '2.10.1'
-  TRUFFLEHOG_VERSION: '3.99.8'
 
 jobs:
   # =============================================================================
@@ -83,13 +84,30 @@ jobs:
               - '.github/**'
 
   # =============================================================================
+  # Workflow and script lint: actionlint on this file, shellcheck on .github/scripts.
+  # Cheap, always runs.
+  # =============================================================================
+  workflow-lint:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: actionlint and shellcheck
+        run: bash .github/scripts/ci/workflow-lint.sh
+
+  # =============================================================================
   # TypeScript packages. Affected packages on pull requests, everything on main.
+  # Then the coverage ratchet (.github/coverage-baseline.json).
   # =============================================================================
   typescript:
     name: TypeScript
     needs: changes
     if: needs.changes.outputs.all == 'true' || needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
+    env:
+      CI_TS_SCOPE: ${{ github.event_name == 'pull_request' && 'affected' || 'full' }}
+      CI_BASE_REF: origin/main
     steps:
       - uses: actions/checkout@v4
         with:
@@ -105,18 +123,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build, lint, typecheck and test
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "Affected packages only (compared with origin/main)"
-            pnpm exec turbo run build lint typecheck test --filter='...[origin/main]'
-          else
-            echo "Full run (push to main)"
-            pnpm exec turbo run build lint typecheck test
-          fi
-
-      - name: Coverage gate (80%)
-        run: bash .github/scripts/ts-coverage.sh
+      - name: Build, lint, typecheck, test and coverage ratchet
+        run: bash .github/scripts/ci/typescript.sh
 
   # =============================================================================
   # Python orchestrator: lint, types, unit tests with coverage gate.
@@ -144,16 +152,8 @@ jobs:
         working-directory: apps/orchestrator
         run: uv sync --locked --dev
 
-      - name: Lint
-        working-directory: apps/orchestrator
-        run: uv run ruff check .
-
-      - name: Type check
-        working-directory: apps/orchestrator
-        run: uv run mypy src/
-
-      - name: Unit tests and coverage gate (80%)
-        run: bash .github/scripts/python-unit.sh
+      - name: Lint, type check, unit tests and coverage gate
+        run: bash .github/scripts/ci/python.sh
 
   # =============================================================================
   # Integration tests (Testcontainers). Docker is available on ubuntu-latest.
@@ -182,11 +182,12 @@ jobs:
         run: uv sync --locked --dev
 
       - name: Run integration tests
-        run: bash .github/scripts/python-integration.sh
+        run: bash .github/scripts/ci/integration.sh
 
   # =============================================================================
   # Secret scan. Always runs. Verified secrets only, to keep the signal high.
   # PR: base..head of the PR. Push: before..after. Initial push (before = zeros): full history.
+  # The script (TruffleHog pinned in .github/scripts/ci/tools.sh) does the same locally.
   # =============================================================================
   secret-scan:
     name: Secret scan
@@ -196,18 +197,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: TruffleHog
-        uses: trufflesecurity/trufflehog@v3.99.8
-        with:
-          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '') }}
-          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          version: ${{ env.TRUFFLEHOG_VERSION }}
-          extra_args: --only-verified
+      - name: TruffleHog (verified secrets)
+        env:
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '') }}
+        run: bash .github/scripts/ci/secret-scan.sh
 
   # =============================================================================
   # Dependency audit. Advisory until the findings listed in
   # docs/runbooks/branch-protection.md ("Current audit findings") are fixed.
-  # Step-level continue-on-error keeps the job green while the findings stay visible in the log.
+  # The script prints findings and exits 0 unless AUDIT_MODE=blocking.
   # =============================================================================
   dependency-audit:
     name: Dependency audit (advisory)
@@ -225,10 +223,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: pnpm audit (high and critical)
-        continue-on-error: true
-        run: pnpm audit --audit-level=high
-
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -236,12 +230,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: apps/orchestrator/uv.lock
 
-      - name: pip-audit against the locked Python environment
-        continue-on-error: true
-        working-directory: apps/orchestrator
-        run: |
-          uv export --locked --no-hashes --no-emit-project --format requirements-txt > "$RUNNER_TEMP/requirements.txt"
-          uvx "pip-audit==${PIP_AUDIT_VERSION}" --progress-spinner off -r "$RUNNER_TEMP/requirements.txt"
+      - name: pnpm audit and pip-audit (advisory)
+        run: bash .github/scripts/ci/dependency-audit.sh
 
   # =============================================================================
   # No proprietary LLM endpoints (criterion 25). Cheap, always runs.
@@ -252,11 +242,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Self-test of the deny-list
-        run: bash .github/scripts/llm-portability.sh --self-test
-
-      - name: Scan the repository
-        run: bash .github/scripts/llm-portability.sh
+      - name: Self-test of the deny-list and repository scan
+        run: bash .github/scripts/ci/llm-portability.sh
 
   # =============================================================================
   # Contract drift (D2-01). Skips until the root script `contracts:check` exists.
@@ -276,27 +263,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
-      - name: Check whether the target exists
-        id: target
-        run: |
-          if node -e "process.exit(require('./package.json').scripts?.['contracts:check'] ? 0 : 1)"; then
-            echo "active=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "active=false" >> "$GITHUB_OUTPUT"
-            echo "SKIP: root script 'contracts:check' is not defined yet (activates with D2-01)"
-          fi
-
       - name: Install dependencies
-        if: steps.target.outputs.active == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Check for contract drift
-        if: steps.target.outputs.active == 'true'
-        run: pnpm run contracts:check
+        run: bash .github/scripts/ci/contracts-drift.sh
 
   # =============================================================================
   # Migration drift (D2-03). Skips until apps/web/prisma/migrations exists.
-  # The Postgres service is only started when this job runs (path filter on prisma changes).
+  # The Postgres service only starts when this job runs (path filter on prisma changes).
   # =============================================================================
   migration-drift:
     name: Migration drift
@@ -322,37 +297,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check whether the target exists
-        id: target
-        run: |
-          if [ -d apps/web/prisma/migrations ]; then
-            echo "active=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "active=false" >> "$GITHUB_OUTPUT"
-            echo "SKIP: apps/web/prisma/migrations does not exist yet (activates with D2-03)"
-          fi
-
       - uses: pnpm/action-setup@v4
-        if: steps.target.outputs.active == 'true'
 
       - uses: actions/setup-node@v4
-        if: steps.target.outputs.active == 'true'
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
-        if: steps.target.outputs.active == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Schema matches migrations
-        if: steps.target.outputs.active == 'true'
-        run: |
-          pnpm --filter @apex/web exec prisma migrate diff \
-            --from-migrations prisma/migrations \
-            --to-schema-datamodel prisma/schema.prisma \
-            --shadow-database-url "$SHADOW_DATABASE_URL" \
-            --exit-code
+        run: bash .github/scripts/ci/migration-drift.sh
 
   # =============================================================================
   # Playwright E2E (D6-08). Skips until apps/web has e2e specs.
@@ -366,52 +322,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check whether the target exists
-        id: target
-        run: |
-          if [ -n "$(find apps/web -path '*/node_modules' -prune -o -path '*e2e*' -name '*.spec.ts' -print -quit)" ]; then
-            echo "active=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "active=false" >> "$GITHUB_OUTPUT"
-            echo "SKIP: no Playwright e2e specs under apps/web yet (activates with D6-08)"
-          fi
-
       - uses: pnpm/action-setup@v4
-        if: steps.target.outputs.active == 'true'
 
       - uses: actions/setup-node@v4
-        if: steps.target.outputs.active == 'true'
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
-        if: steps.target.outputs.active == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Start the local stack
-        if: steps.target.outputs.active == 'true'
-        run: docker compose up -d --wait
-
-      - name: Install Chromium
-        if: steps.target.outputs.active == 'true'
-        run: pnpm --filter @apex/web exec playwright install --with-deps chromium
-
-      - name: Run E2E tests
-        if: steps.target.outputs.active == 'true'
-        run: pnpm --filter @apex/web test:e2e
+      - name: Start the stack, run E2E, stop the stack
+        run: bash .github/scripts/ci/e2e.sh
 
       - name: Upload Playwright report
-        if: failure() && steps.target.outputs.active == 'true'
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: apps/web/playwright-report
           retention-days: 7
-
-      - name: Stop the local stack
-        if: always() && steps.target.outputs.active == 'true'
-        run: docker compose down -v
 
   # =============================================================================
   # Aggregate. Recommended as the single required check in branch protection.
@@ -420,6 +350,7 @@ jobs:
     name: CI OK
     needs:
       - changes
+      - workflow-lint
       - typescript
       - python
       - integration
