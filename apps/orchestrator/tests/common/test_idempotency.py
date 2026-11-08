@@ -185,3 +185,19 @@ def test_redis_store_claim_is_atomic_and_ttl_applied() -> None:
 def test_ttl_must_be_positive() -> None:
     with pytest.raises(ValueError):
         IdempotencyMiddleware(FastAPI(), store=InMemoryIdempotencyStore(), ttl_seconds=0)
+
+
+async def test_redis_complete_survives_expired_in_flight_marker() -> None:
+    import fakeredis
+
+    from apex.common.idempotency import RedisIdempotencyStore, StoredResponse
+
+    client = fakeredis.FakeAsyncRedis()
+    store = RedisIdempotencyStore(client)
+    assert await store.claim("k", "h1", 60) is None
+    await client.flushall()  # marker expired while the request was running
+    await store.complete("k", "h1", StoredResponse(201, [], ""), 60)
+    record = await store.get("k")
+    assert record is not None
+    assert record.request_hash == "h1"
+    assert not record.in_flight
