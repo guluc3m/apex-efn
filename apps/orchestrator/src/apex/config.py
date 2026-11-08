@@ -1,6 +1,7 @@
 """Application configuration using pydantic-settings."""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -46,6 +47,11 @@ class Settings(BaseSettings):
     # Observability
     otel_exporter_endpoint: str = Field(default="http://localhost:4318")
     log_level: str = Field(default="INFO")
+
+    # HTTP API: idempotency (technical settings, not business defaults)
+    idempotency_required: bool = Field(default=False)
+    idempotency_backend: Literal["memory", "redis"] = Field(default="memory")
+    idempotency_ttl_seconds: int = Field(default=86400, ge=1)
 
     # HTTP API: pagination (technical limits)
     pagination_default_limit: int = Field(default=50, ge=1)

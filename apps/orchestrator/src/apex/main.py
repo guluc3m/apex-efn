@@ -5,14 +5,28 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from redis.asyncio import Redis
 
 from apex.api import router
 from apex.common.errors import install_problem_handlers
+from apex.common.idempotency import (
+    IdempotencyMiddleware,
+    IdempotencyStore,
+    InMemoryIdempotencyStore,
+    RedisIdempotencyStore,
+)
 from apex.config import Settings, settings
 
 
-def create_app(cfg: Settings | None = None) -> FastAPI:
-    """Build the application. Tests pass their own settings."""
+def build_idempotency_store(cfg: Settings) -> IdempotencyStore:
+    """Select the idempotency store from settings. Redis is only constructed when selected."""
+    if cfg.idempotency_backend == "redis":
+        return RedisIdempotencyStore(Redis.from_url(cfg.redis_url))
+    return InMemoryIdempotencyStore()
+
+
+def create_app(cfg: Settings | None = None, store: IdempotencyStore | None = None) -> FastAPI:
+    """Build the application. Tests pass their own settings and an in-memory store."""
     active = cfg or settings
 
     @asynccontextmanager
@@ -37,6 +51,12 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    application.add_middleware(
+        IdempotencyMiddleware,
+        store=store or build_idempotency_store(active),
+        ttl_seconds=active.idempotency_ttl_seconds,
+        required=active.idempotency_required,
     )
 
     application.include_router(router, prefix="/v1")
