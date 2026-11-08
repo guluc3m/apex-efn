@@ -1,0 +1,66 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+.next
+.turbo
+out
+build
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+.eggs
+*.egg-info
+.mypy_cache
+.pytest_cache
+.ruff_cache
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Testing
+coverage
+.nyc_output
+playwright-report
+test-results
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (never commit)
+*.pem
+*.key
+secrets/
+
+# Generated
+*.generated.ts
+*.generated.py
+prisma/generated
+
+# Temporary
+tmp
+.tmp

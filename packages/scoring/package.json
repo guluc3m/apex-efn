@@ -1,0 +1,46 @@
+{
+  "name": "@trato/scoring",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./seller": {
+      "types": "./dist/seller/index.d.ts",
+      "import": "./dist/seller/index.js"
+    },
+    "./sanity": {
+      "types": "./dist/sanity/index.d.ts",
+      "import": "./dist/sanity/index.js"
+    },
+    "./mcda": {
+      "types": "./dist/mcda/index.d.ts",
+      "import": "./dist/mcda/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@trato/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@trato/eslint-config": "workspace:*",
+    "@trato/tsconfig": "workspace:*",
+    "@types/node": "^22.10.0",
+    "fast-check": "^3.23.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
