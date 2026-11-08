@@ -1,0 +1,12 @@
+scenarios:
+  - name: malformed-then-valid
+    description: First call returns truncated JSON, second returns valid JSON (repair attempt test).
+    capabilities:
+      "*":
+        supports_json_object: true
+        supports_json_schema: true
+    sequence:
+      - kind: text
+        content: '{"result": "val'
+      - kind: json
+        content: {"result": "valid"}

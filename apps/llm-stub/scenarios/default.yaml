@@ -1,0 +1,16 @@
+# Fallback scenario and the reference "everything supported" model. Matched for any request
+# that matches no other scenario (see README: matching order).
+scenarios:
+  - name: default
+    description: Full-capability model; returns a valid JSON object for any request.
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+        supports_tools: true
+        supports_streaming: true
+        supports_seed: true
+        supports_guided: true
+    response:
+      kind: json
+      content: {"status": "ok", "stub": true}

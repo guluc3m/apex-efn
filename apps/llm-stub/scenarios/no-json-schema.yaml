@@ -1,0 +1,12 @@
+scenarios:
+  - name: no-json-schema
+    description: Lacks json_schema (must 400 on response_format json_schema); json_object supported.
+    capabilities:
+      "*":
+        supports_json_object: true
+        supports_tools: true
+        supports_streaming: true
+        supports_seed: true
+    response:
+      kind: json
+      content: {"result": "valid"}

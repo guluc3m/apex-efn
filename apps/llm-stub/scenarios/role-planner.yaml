@@ -1,0 +1,14 @@
+scenarios:
+  - name: role-planner
+    description: "Matched by the 'role: planner' marker; full capabilities."
+    role: planner
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+        supports_tools: true
+        supports_streaming: true
+        supports_seed: true
+    response:
+      kind: json
+      content: {"plan": ["search", "rank"]}

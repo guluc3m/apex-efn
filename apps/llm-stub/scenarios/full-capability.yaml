@@ -1,0 +1,14 @@
+scenarios:
+  - name: full-capability
+    description: Declares every capability; valid structured output. Use with X-Stub-Scenario.
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+        supports_tools: true
+        supports_streaming: true
+        supports_seed: true
+        supports_guided: true
+    response:
+      kind: json
+      content: {"result": "valid", "confidence": 0.9}

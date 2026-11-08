@@ -1,0 +1,15 @@
+scenarios:
+  - name: flaky-5xx
+    description: First two calls return HTTP 503, then succeeds (retry tests). Reset via POST /_stub/reset.
+    capabilities:
+      "*":
+        supports_json_object: true
+    behaviour:
+      fail_times: 2
+      fail_with:
+        status: 503
+        message: "service temporarily unavailable"
+        type: server_error
+    response:
+      kind: json
+      content: {"result": "valid"}

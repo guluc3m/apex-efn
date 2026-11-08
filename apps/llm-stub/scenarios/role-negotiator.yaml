@@ -1,0 +1,9 @@
+scenarios:
+  - name: role-negotiator
+    description: "Matched by 'role: negotiator'; plain text drafting, no structured output."
+    role: negotiator
+    capabilities:
+      "*": {}
+    response:
+      kind: text
+      content: "Hello, could you consider a volume discount on 500 units?"

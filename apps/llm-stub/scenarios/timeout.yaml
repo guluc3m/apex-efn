@@ -1,0 +1,11 @@
+scenarios:
+  - name: timeout
+    description: Sleeps 60 s before answering so the caller's timeout fires (set a shorter client timeout).
+    capabilities:
+      "*":
+        supports_json_object: true
+    behaviour:
+      timeout_sleep_ms: 60000
+    response:
+      kind: json
+      content: {"result": "valid"}

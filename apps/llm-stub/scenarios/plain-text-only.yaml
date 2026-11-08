@@ -1,0 +1,8 @@
+scenarios:
+  - name: plain-text-only
+    description: No structured-output capabilities; returns prose that is not JSON (forces repair path).
+    capabilities:
+      "*": {}
+    response:
+      kind: text
+      content: "Sure! Here is the answer: the price looks fine to me."
