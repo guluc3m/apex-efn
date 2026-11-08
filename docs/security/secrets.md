@@ -166,6 +166,23 @@ only in compose.
   validated `tenant_id` in every path.
 - `transit/keys/*` and `transit/sign/*` cover every key. Restrict them to the key list once D2-07 fixes it.
 
+### 2.5 Running the real-Vault tests (no Docker)
+
+The Python tests in `apps/orchestrator/tests/platform/test_vault_integration.py` (marker `vault_integration`) and the
+real-Vault block in `apps/browser-worker/src/platform/vault.test.ts` need a live Vault. They skip unless
+`VAULT_INTEGRATION_ADDR` is set, so plain `pytest` and `vitest` stay hermetic. Two ways to run them:
+
+- **The CI way:** `pnpm ci:local --job integration` (or `bash .github/scripts/ci-local.sh --job integration`). The
+  script downloads the pinned Vault 1.21.4 binary (SHA-256 checked, see `tools.sh`), starts a dev server on a free
+  port, bootstraps it with `infra/vault/init.sh`, runs both test sets, and stops the server. It needs no Docker. The
+  Testcontainers phase of the same job is separate and reports `SKIP` until a test is marked `integration`.
+- **Against the compose stack:** start `pnpm dev:up`, then run
+  `VAULT_INTEGRATION_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token uv run pytest -q -m vault_integration -o markers=vault_integration`
+  from `apps/orchestrator`, and `VAULT_INTEGRATION_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token pnpm --filter @apex/browser-worker exec vitest run src/platform/vault.test.ts`.
+
+The Python tests create uniquely named tenants, accounts and keys. The browser-worker test writes one session state
+for `tenant-a` under a unique account name. Both write only to the dev mount. Do not point them at a real Vault.
+
 ## 3. Client APIs
 
 ### 3.1 Python: `apex.platform.vault`

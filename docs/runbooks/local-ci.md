@@ -9,18 +9,18 @@ full CI: the local run now, and the `CI OK` check on GitHub once Actions is enab
 
 ## What it runs
 
-| Job                | Script                   | What it checks                                                                                                  | Result when not applicable                                                |
-| ------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `workflow-lint`    | `ci/workflow-lint.sh`    | actionlint on `.github/workflows/*.yml`, shellcheck on `.github/scripts/**/*.sh`                                | never skips                                                               |
-| `typescript`       | `ci/typescript.sh`       | `turbo run build lint typecheck test` (full), then the coverage ratchet for `money`, `scoring`, `crypto-client` | never skips                                                               |
-| `python`           | `ci/python.sh`           | `ruff check`, `mypy src/`, unit tests with the 80% coverage gate for every target that exists                   | never skips (coverage gate per target)                                    |
-| `integration`      | `ci/integration.sh`      | `pytest -m integration`                                                                                         | `SKIP` until a test is marked `integration`; then Docker is required      |
-| `secret-scan`      | `ci/secret-scan.sh`      | TruffleHog 3.99.8, verified secrets only, on the commits this branch adds                                       | never skips                                                               |
-| `dependency-audit` | `ci/dependency-audit.sh` | `pnpm audit --audit-level=high` and `pip-audit` on the locked Python environment                                | advisory: findings are printed, the job still passes                      |
-| `llm-portability`  | `ci/llm-portability.sh`  | Criterion 25: no proprietary LLM endpoints or vendor SDK imports (self-test first)                              | never skips                                                               |
-| `contracts-drift`  | `ci/contracts-drift.sh`  | root script `contracts:check` (D2-01)                                                                           | `SKIP` until the script exists                                            |
-| `migration-drift`  | `ci/migration-drift.sh`  | `prisma migrate diff` from migrations to the schema (D2-03)                                                     | `SKIP` until `apps/web/prisma/migrations` exists; then Docker is required |
-| `e2e`              | `ci/e2e.sh`              | Playwright on the compose stack (D6-08)                                                                         | `SKIP` until an e2e spec exists under `apps/web`; then Docker is required |
+| Job                | Script                   | What it checks                                                                                                                                          | Result when not applicable                                                      |
+| ------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `workflow-lint`    | `ci/workflow-lint.sh`    | actionlint on `.github/workflows/*.yml`, shellcheck on `.github/scripts/**/*.sh`                                                                        | never skips                                                                     |
+| `typescript`       | `ci/typescript.sh`       | `turbo run build lint typecheck test` (full), then the coverage ratchet for `money`, `scoring`, `crypto-client`                                         | never skips                                                                     |
+| `python`           | `ci/python.sh`           | `ruff check`, `mypy src/`, unit tests with the 80% coverage gate for every target that exists                                                           | never skips (coverage gate per target)                                          |
+| `integration`      | `ci/integration.sh`      | Phase A: real Vault (no Docker), `pytest -m vault_integration` and the browser-worker real-Vault test. Phase B: Testcontainers, `pytest -m integration` | Each phase `SKIP`s until its target exists. Phase B needs Docker once it exists |
+| `secret-scan`      | `ci/secret-scan.sh`      | TruffleHog 3.99.8, verified secrets only, on the commits this branch adds                                                                               | never skips                                                                     |
+| `dependency-audit` | `ci/dependency-audit.sh` | `pnpm audit --audit-level=high` and `pip-audit` on the locked Python environment                                                                        | advisory: findings are printed, the job still passes                            |
+| `llm-portability`  | `ci/llm-portability.sh`  | Criterion 25: no proprietary LLM endpoints or vendor SDK imports (self-test first)                                                                      | never skips                                                                     |
+| `contracts-drift`  | `ci/contracts-drift.sh`  | root script `contracts:check` (D2-01)                                                                                                                   | `SKIP` until the script exists                                                  |
+| `migration-drift`  | `ci/migration-drift.sh`  | `prisma migrate diff` from migrations to the schema (D2-03)                                                                                             | `SKIP` until `apps/web/prisma/migrations` exists; then Docker is required       |
+| `e2e`              | `ci/e2e.sh`              | Playwright on the compose stack (D6-08)                                                                                                                 | `SKIP` until an e2e spec exists under `apps/web`; then Docker is required       |
 
 Results:
 
@@ -43,18 +43,40 @@ A job that needs Docker and finds the target present but no Docker running **fai
   ```
 - Network access for the first run: `git fetch origin` (the runner tries it and continues offline), the pinned
   security tools (downloaded once, see below), `pnpm audit`, and `pip-audit`.
-- Docker: **only** for `integration`, `migration-drift` and `e2e`, and only once their targets exist.
+- Docker: **only** for `migration-drift`, `e2e`, and phase B (Testcontainers) of `integration`, and only once their
+  targets exist. Phase A of `integration` (real Vault) needs no Docker.
+
+#### The `integration` job
+
+`ci/integration.sh` runs two phases. Each phase skips with its own reason when its target does not exist:
+
+- **Phase A, Vault (no Docker).** Target: a test marked `vault_integration` under `apps/orchestrator/tests`, or the
+  real-Vault block in `apps/browser-worker/src` (gated by `VAULT_INTEGRATION_ADDR`). The script downloads the pinned
+  Vault 1.21.4 binary (`tools.sh`, SHA-256 checked), starts `vault server -dev` on a free local port (it also needs
+  port+1 free for the cluster address), bootstraps it with `infra/vault/init.sh`, runs both test sets against it,
+  and stops it. The stop sends SIGTERM and, after 10 s, SIGKILL.
+- **Phase B, Testcontainers (Docker).** Target: a test marked `integration`. Without Docker this phase **fails**
+  with `requires Docker`.
+
+The job result: `FAIL` if either phase fails. `PASS` if at least one phase ran and none failed (the message says which
+phases ran). `SKIP` only if both phases skip. Markers:
+
+| Marker              | Meaning                                                                                                                  | Excluded from the unit run (`ci/python.sh`) |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| `integration`       | Testcontainers, needs Docker                                                                                             | yes                                         |
+| `vault_integration` | Real Vault dev server (pinned), no Docker. Self-skips without `VAULT_INTEGRATION_ADDR`, so plain `pytest` stays hermetic | yes                                         |
 
 ### Pinned security tools
 
-`secret-scan`, `workflow-lint` and `.github/scripts/ci/tools.sh` need three binaries at the versions pinned in
-`tools.sh`: TruffleHog 3.99.8, actionlint 1.7.12, shellcheck 0.11.0.
+`secret-scan`, `workflow-lint`, `integration` (phase A) and `.github/scripts/ci/tools.sh` need these binaries at the
+versions pinned in `tools.sh`: TruffleHog 3.99.8, actionlint 1.7.12, shellcheck 0.11.0, Vault 1.21.4.
 
 - A binary on your `PATH` is used only if it reports exactly the pinned version.
 - Otherwise the tool is downloaded into `${XDG_CACHE_HOME:-$HOME/.cache}/apex-ci-tools/<tool>-<version>/`,
   outside the repository.
 - Every download is checked against the SHA-256 pinned in `tools.sh` before anything is unpacked. A mismatch
   stops the run.
+- Vault ships as a `.zip`. It is unpacked with the first tool found: `unzip`, `bsdtar`, `python3`, or `uv run python`.
 - A cached binary is checked against the hash recorded when it was installed. If that fails, the cached copy is
   discarded and downloaded again.
 

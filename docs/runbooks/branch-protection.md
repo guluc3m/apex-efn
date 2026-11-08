@@ -51,20 +51,20 @@ Job names come from `.github/workflows/ci.yml`. Check names in a ruleset must ma
 **Recommended: require only `CI OK`.** It is an aggregate job that needs every gate and fails if any of them
 failed or was cancelled. Adding a gate later means editing one `needs:` list in the workflow, not the ruleset.
 
-| Job name (check name)         | Required?                   | Notes                                                                                              |
-| ----------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------- |
-| `CI OK`                       | **Yes (recommended)**       | Aggregate. Passes only if every needed job succeeded or was skipped.                               |
-| `Workflow lint`               | Only if listed individually | actionlint on `.github/workflows`, shellcheck on `.github/scripts`. Always runs.                   |
-| `TypeScript`                  | Only if listed individually | Build, lint, typecheck, test (affected packages on PRs, all on `main`), plus the coverage ratchet. |
-| `Python`                      | Only if listed individually | `ruff`, `mypy`, unit tests, 80% coverage gate for the modules that exist.                          |
-| `Integration tests`           | Only if listed individually | Testcontainers, runs `pytest -m integration`.                                                      |
-| `Secret scan`                 | Only if listed individually | TruffleHog, verified secrets only, pinned to `3.99.8`.                                             |
-| `LLM Portability Check`       | Only if listed individually | Criterion 25. Deny-list grep, self-tested with `--self-test`.                                      |
-| `Contracts drift`             | Only if listed individually | Skips until `contracts:check` exists (D2-01).                                                      |
-| `Migration drift`             | Only if listed individually | Skips until `apps/web/prisma/migrations` exists (D2-03).                                           |
-| `E2E (Playwright)`            | Only if listed individually | Skips until e2e specs exist (D6-08).                                                               |
-| `Dependency audit (advisory)` | **No**                      | Non-blocking. See "Current audit findings".                                                        |
-| `Detect changes`              | No                          | Helper job for path filters. Its result is part of `CI OK`.                                        |
+| Job name (check name)         | Required?                   | Notes                                                                                               |
+| ----------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| `CI OK`                       | **Yes (recommended)**       | Aggregate. Passes only if every needed job succeeded or was skipped.                                |
+| `Workflow lint`               | Only if listed individually | actionlint on `.github/workflows`, shellcheck on `.github/scripts`. Always runs.                    |
+| `TypeScript`                  | Only if listed individually | Build, lint, typecheck, test (affected packages on PRs, all on `main`), plus the coverage ratchet.  |
+| `Python`                      | Only if listed individually | `ruff`, `mypy`, unit tests, 80% coverage gate for the modules that exist.                           |
+| `Integration tests`           | Only if listed individually | Two phases: real Vault (pinned dev server, no Docker) and Testcontainers (`pytest -m integration`). |
+| `Secret scan`                 | Only if listed individually | TruffleHog, verified secrets only, pinned to `3.99.8`.                                              |
+| `LLM Portability Check`       | Only if listed individually | Criterion 25. Deny-list grep, self-tested with `--self-test`.                                       |
+| `Contracts drift`             | Only if listed individually | Skips until `contracts:check` exists (D2-01).                                                       |
+| `Migration drift`             | Only if listed individually | Skips until `apps/web/prisma/migrations` exists (D2-03).                                            |
+| `E2E (Playwright)`            | Only if listed individually | Skips until e2e specs exist (D6-08).                                                                |
+| `Dependency audit (advisory)` | **No**                      | Non-blocking. See "Current audit findings".                                                         |
+| `Detect changes`              | No                          | Helper job for path filters. Its result is part of `CI OK`.                                         |
 
 Every job calls a script in `.github/scripts/ci/`. The same script runs locally in `pnpm ci:local`, so a
 local pass and a CI pass mean the same thing. See `docs/runbooks/local-ci.md`.
@@ -78,20 +78,20 @@ GitHub counts a **skipped** job as passing for a required check. Two mechanisms 
 2. **Missing target.** The job runs, prints a line starting with `SKIP:` and passes, until the thing it checks
    exists. Each gate activates by itself when its target appears. No workflow edit is needed.
 
-| Gate                | Runs when                                                                                                            | Skips with `SKIP:` until                                                                                                                                   |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TypeScript          | `packages/**`, `apps/web/**`, `apps/browser-worker/**`, `apps/mock-marketplace/**`, root manifests; always on `main` | Never skips. Turbo runs only affected packages on PRs.                                                                                                     |
-| TypeScript coverage | Inside `TypeScript`                                                                                                  | Ratchet against `.github/coverage-baseline.json` (see "Current gate status"). A package graduates to the hard 80% gate once all four metrics reach 80%.    |
-| Workflow lint       | Always                                                                                                               | Never skips.                                                                                                                                               |
-| Python              | `apps/orchestrator/**`, `apps/llm-stub/**`; always on `main`                                                         | No target to wait for.                                                                                                                                     |
-| Python coverage     | Inside `Python`                                                                                                      | Skips per target until a non-`__init__.py` module exists in `src/apex/domain/`, `src/apex/signing/` or `src/apex/negotiation/guardrails*.py` (D3, D2, D5). |
-| Integration tests   | Python paths; always on `main`                                                                                       | No test contains `mark.integration` in `apps/orchestrator/tests`.                                                                                          |
-| Contracts drift     | `contracts/**`, `packages/shared-types/**`, generated contract code, TS paths; always on `main`                      | The root `package.json` has no `contracts:check` script (D2-01).                                                                                           |
-| Migration drift     | `apps/web/prisma/**`, `apps/orchestrator/src/apex/db/**`; always on `main`                                           | `apps/web/prisma/migrations` does not exist (D2-03). The Postgres service only starts when this job runs.                                                  |
-| E2E (Playwright)    | `apps/web/**`, `infra/**`, `compose.yaml`; always on `main`                                                          | No `*e2e*.spec.ts` file under `apps/web` (D6-08).                                                                                                          |
-| Secret scan         | Always                                                                                                               | Never skips.                                                                                                                                               |
-| LLM Portability     | Always                                                                                                               | Never skips.                                                                                                                                               |
-| Dependency audit    | Always, advisory                                                                                                     | Never blocks (see below).                                                                                                                                  |
+| Gate                | Runs when                                                                                                            | Skips with `SKIP:` until                                                                                                                                       |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript          | `packages/**`, `apps/web/**`, `apps/browser-worker/**`, `apps/mock-marketplace/**`, root manifests; always on `main` | Never skips. Turbo runs only affected packages on PRs.                                                                                                         |
+| TypeScript coverage | Inside `TypeScript`                                                                                                  | Ratchet against `.github/coverage-baseline.json` (see "Current gate status"). A package graduates to the hard 80% gate once all four metrics reach 80%.        |
+| Workflow lint       | Always                                                                                                               | Never skips.                                                                                                                                                   |
+| Python              | `apps/orchestrator/**`, `apps/llm-stub/**`; always on `main`                                                         | No target to wait for.                                                                                                                                         |
+| Python coverage     | Inside `Python`                                                                                                      | Skips per target until a non-`__init__.py` module exists in `src/apex/domain/`, `src/apex/signing/` or `src/apex/negotiation/guardrails*.py` (D3, D2, D5).     |
+| Integration tests   | Python or TypeScript paths; always on `main`                                                                         | Phase A (Vault) waits for a `mark.vault_integration` test or the browser-worker real-Vault test. Phase B (Testcontainers) waits for a `mark.integration` test. |
+| Contracts drift     | `contracts/**`, `packages/shared-types/**`, generated contract code, TS paths; always on `main`                      | The root `package.json` has no `contracts:check` script (D2-01).                                                                                               |
+| Migration drift     | `apps/web/prisma/**`, `apps/orchestrator/src/apex/db/**`; always on `main`                                           | `apps/web/prisma/migrations` does not exist (D2-03). The Postgres service only starts when this job runs.                                                      |
+| E2E (Playwright)    | `apps/web/**`, `infra/**`, `compose.yaml`; always on `main`                                                          | No `*e2e*.spec.ts` file under `apps/web` (D6-08).                                                                                                              |
+| Secret scan         | Always                                                                                                               | Never skips.                                                                                                                                                   |
+| LLM Portability     | Always                                                                                                               | Never skips.                                                                                                                                                   |
+| Dependency audit    | Always, advisory                                                                                                     | Never blocks (see below).                                                                                                                                      |
 
 ## Current gate status
 

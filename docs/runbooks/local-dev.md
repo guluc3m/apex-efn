@@ -171,5 +171,6 @@ Owner: DEV-1 (task D1-06). Full layout, policies and client APIs: `docs/security
 - Dev data is lost whenever the Vault container stops. `dev:down` and `dev:reset` both recreate it, and
   `vault-init` runs again on the next `dev:up`.
 - Local tests that need a real Vault (not part of normal `pytest`, which stays hermetic):
-  `VAULT_INTEGRATION_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token uv run pytest -q -m integration -o markers=integration`
+  `VAULT_INTEGRATION_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token uv run pytest -q -m vault_integration -o markers=vault_integration`
   (run from `apps/orchestrator`), and `VAULT_INTEGRATION_ADDR=... pnpm --filter @apex/browser-worker exec vitest run`.
+  To run them without this compose stack, use `pnpm ci:local --job integration` (see `docs/security/secrets.md` section 2.5).
