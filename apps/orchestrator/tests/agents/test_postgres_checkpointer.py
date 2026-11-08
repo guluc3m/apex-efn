@@ -20,7 +20,10 @@ def _docker_ok() -> bool:
     return subprocess.run(["docker", "info"], capture_output=True).returncode == 0
 
 
-pytestmark = pytest.mark.skipif(not _docker_ok(), reason="docker not available")
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(not _docker_ok(), reason="docker not available"),
+]
 
 
 @pytest.fixture(scope="module")
