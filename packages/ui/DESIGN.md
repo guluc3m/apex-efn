@@ -1,29 +1,35 @@
 ---
 name: APEX-EFN
-description: Sistema visual oscuro de APEX-EFN, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo puro y esquinas rectas, sin color de acento; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
+description: Sistema visual oscuro de APEX-EFN, plataforma B2B de compras por volumen donde un humano decide y firma. Neutros casi negros y esquinas rectas, con un único acento verde para lo interactivo y lo destacado; azul para lo bueno, amarillo para los avisos y rojo para lo malo; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
 colors:
   background: "#0b0b0d"
   surface: "#131316"
   surface-raised: "#1b1b20"
   line: "#26262c"
   line-strong: "#36363e"
+  control-border: "#6b6b77"
   ink: "#ededf0"
   ink-soft: "#b4b4be"
   ink-muted: "#8e8e9a"
   on-ink: "#0b0b0d"
-  accent: "#ededf0"
-  accent-deep: "#ffffff"
-  accent-subtle: "#1b1b20"
+  accent: "#8fbb8b"
+  accent-hover: "#a0c99c"
+  accent-subtle: "#16211a"
+  accent-line: "#3a4a3b"
   on-accent: "#0b0b0d"
-  success: "#3fbf74"
-  success-subtle: "#0f2419"
-  warning: "#f5873a"
-  warning-subtle: "#2d1a0b"
+  success: "#5aa9ff"
+  success-subtle: "#0d1f35"
+  warning: "#e6c34a"
+  warning-subtle: "#2a2308"
   danger: "#f7566a"
   danger-solid: "#c4271f"
-  danger-solid-hover: "#a31f18"
+  danger-solid-hover: "#cf2a22"
   danger-subtle: "#2e1117"
   white: "#ffffff"
+  halo-1: "#8fbb8b"
+  halo-2: "#5aa9ff"
+  halo-3: "#a58bf0"
+  halo-4: "#e07f9c"
 typography:
   display:
     fontFamily: "Geist, sans-serif"
@@ -111,10 +117,13 @@ shadows:
   none: "none"
   overlay: "0 12px 32px rgba(0, 0, 0, 0.5)"
 motion:
+  press: "60ms"
   fast: "120ms"
   base: "180ms"
   overlay: "220ms"
+  exit: "90ms"
   easing: "cubic-bezier(0.2, 0, 0, 1)"
+  easing-move: "cubic-bezier(0.4, 0, 0.2, 1)"
 shadcn:
   note: "Variables de shadcn/ui exportadas desde tweakcn. :root y .dark llevan los mismos valores (solo modo oscuro). Ojo: en shadcn 'accent' es el fondo de hover, no el color de marca; el color de marca es ring/chart-1."
   background: "{colors.background}"
@@ -123,8 +132,8 @@ shadcn:
   card-foreground: "{colors.ink}"
   popover: "{colors.surface}"
   popover-foreground: "{colors.ink}"
-  primary: "{colors.ink}"
-  primary-foreground: "{colors.on-ink}"
+  primary: "{colors.accent}"
+  primary-foreground: "{colors.on-accent}"
   secondary: "{colors.surface-raised}"
   secondary-foreground: "{colors.ink}"
   muted: "{colors.surface-raised}"
@@ -134,7 +143,7 @@ shadcn:
   destructive: "{colors.danger-solid}"
   destructive-foreground: "{colors.white}"
   border: "{colors.line}"
-  input: "{colors.line-strong}"
+  input: "{colors.control-border}"
   ring: "{colors.accent}"
   chart-1: "{colors.accent}"
   chart-2: "{colors.ink-soft}"
@@ -143,8 +152,8 @@ shadcn:
   chart-5: "{colors.line}"
   sidebar: "{colors.surface}"
   sidebar-foreground: "{colors.ink}"
-  sidebar-primary: "{colors.ink}"
-  sidebar-primary-foreground: "{colors.on-ink}"
+  sidebar-primary: "{colors.accent}"
+  sidebar-primary-foreground: "{colors.on-accent}"
   sidebar-accent: "{colors.surface-raised}"
   sidebar-accent-foreground: "{colors.ink}"
   sidebar-border: "{colors.line}"
@@ -154,23 +163,24 @@ shadcn:
   font-mono: "Geist Mono, ui-monospace, monospace"
 components:
   button-primary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.on-ink}"
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
     rounded: "{rounded.none}"
     padding: "0 14px"
     height: "{spacing.control-height}"
     typography: "{typography.label}"
   button-primary-hover:
-    backgroundColor: "{colors.ink-soft}"
+    backgroundColor: "{colors.accent-hover}"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    borderColor: "{colors.line-strong}"
+    borderColor: "{colors.control-border}"
     rounded: "{rounded.none}"
     padding: "0 14px"
     height: "{spacing.control-height}"
   button-secondary-hover:
     backgroundColor: "{colors.surface-raised}"
+    borderColor: "{colors.ink-muted}"
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.ink-soft}"
@@ -192,7 +202,7 @@ components:
     textDecoration: "underline"
     underlineOffset: "3px"
   link-hover:
-    textColor: "{colors.accent-deep}"
+    textColor: "{colors.accent-hover}"
   focus-ring:
     outline: "2px solid {colors.accent}"
     outlineOffset: "2px"
@@ -200,7 +210,7 @@ components:
     backgroundColor: "{colors.background}"
     textColor: "{colors.ink}"
     placeholderColor: "{colors.ink-muted}"
-    borderColor: "{colors.line-strong}"
+    borderColor: "{colors.control-border}"
     rounded: "{rounded.none}"
     padding: "0 12px"
     height: "{spacing.control-height}"
@@ -258,12 +268,16 @@ components:
   filter-chip:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-soft}"
-    borderColor: "{colors.line-strong}"
+    borderColor: "{colors.control-border}"
     rounded: "{rounded.none}"
     height: "32px"
   filter-chip-active:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.on-ink}"
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
+  chat-halo:
+    colors: "{colors.halo-1} · {colors.halo-2} · {colors.halo-3} · {colors.halo-4}"
+    placement: "detrás del compositor, fuera del panel"
+    states: "apagado en reposo · tenue con foco · intenso mientras piensa"
   dither:
     algorithm: "atkinson"
     dotShape: "{rounded.dot}"
@@ -306,8 +320,8 @@ components:
     backgroundColor: "transparent"
     backgroundColorHover: "{colors.surface-raised}"
     textColor: "{colors.ink}"
-    borderColor: "{colors.line}"
-    borderColorOpen: "{colors.line-strong}"
+    borderColor: "{colors.control-border}"
+    borderColorOpen: "{colors.ink-muted}"
     rounded: "{rounded.none}"
     height: "38px"
     icon: "globe 16px, {colors.ink-soft}"
@@ -332,11 +346,11 @@ components:
 APEX-EFN es una herramienta donde alguien **firma compras con dinero real**. Tiene que parecer un
 instrumento preciso, no una demo.
 
-- **Vercel:** monocromo sobre casi negro, tipografía Geist, bordes finos, botón principal claro, cero adorno.
+- **Vercel:** neutros sobre casi negro, tipografía Geist, bordes finos, cero adorno.
 - **Render:** esquinas rectas (radio 0 en todo) y bordes de 1 px.
-- **Sin color de acento:** `accent` es el mismo blanco roto que `ink`. Lo que destaca (foco, selección,
-  enlaces, serie principal) lo hace por luminosidad, subrayado o borde, nunca por un tono propio. Así el
-  único color de la interfaz es el de estado, y cuando aparece significa algo.
+- **Un solo acento:** el verde `accent` es para lo interactivo y lo destacado (foco, selección, enlaces,
+  botón principal, serie principal). Relleno = se pulsa; línea o barra = solo señala. El resto del color es
+  de estado: azul bueno, amarillo atención y rojo malo, y cuando aparece significa algo.
 - **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios, la cantidad como protagonista.
 
 Solo modo oscuro. No hay tema claro: un único tema evita mantener dos paletas y que una de las dos quede descuidada.
@@ -347,7 +361,8 @@ Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 
 - Modo claro o un segundo tema. APEX-EFN es solo oscuro.
 - Negro puro (`#000`) de fondo o blanco puro para texto: cansan la vista y hacen vibrar el contraste.
-- Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color.
+- Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color. Única
+  excepción: el halo del compositor de los chats (§6), solo ahí y sin efecto cristal.
 - Titulares que entran con desenfoque.
 - Esquinas redondeadas en la interfaz: todo es recto (`rounded.none`). Lo único circular son los puntos
   del dithering.
@@ -357,7 +372,8 @@ Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 - Etiquetas en mayúsculas espaciadas encima de un titular («eyebrows»), en píldora o sin ella.
 - Bloques de CSS que sobrescriben reglas anteriores en lugar de cambiarlas.
 - Titulares a dos tonos (primera línea oscura, segunda gris).
-- Iconos decorativos inventados (cubos apilados, destellos) y flechas en elementos que no son enlaces.
+- Iconos decorativos inventados (cubos apilados, destellos) y flechas de adorno. Las únicas flechas son las
+  de enlace, las de fila (`ArrowUpRight`), las de orden de columna y las de tendencia (§6).
 - Rejillas de tarjetas idénticas con icono + título + frase.
 - Inventar cifras, clientes, logos, testimonios, premios o fotos. Si no hay dato real, no se muestra.
 
@@ -381,10 +397,12 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
    separados por `group-gap`; secciones por `section`. No añadir bordes o paneles para agrupar.
 9. **Titulares concretos.** «3 ofertas esperan tu firma», no «Compras inteligentes, simplificadas».
 10. **Destacar el CTA.** Un solo `button-primary` por zona; el resto `secondary` o `ghost`.
-11. **Monocromo.** No hay color de acento: foco, selección, enlaces y serie principal usan `accent` (= `ink`).
-    Los enlaces se distinguen por subrayado. Los colores de estado no son acentos: solo significan estado.
-12. **Iconos coherentes.** Solo lucide, mismo trazo (1.75) y tamaño (16 px en texto, 20 px en
-    navegación), y solo cuando aportan significado.
+11. **Un solo acento.** Foco, selección, enlaces, botón principal y serie principal usan `accent` (verde).
+    Relleno = se pulsa; línea o barra = solo señala. Los enlaces además van subrayados. Los colores de estado
+    no son acentos: solo significan estado, y el amarillo nunca marca algo activo.
+12. **Iconos en todas las acciones.** Solo lucide, mismo trazo (1.75) y tamaño (16 px en texto, 20 px en
+    navegación). Llevan icono la navegación, todas las acciones, los badges, las cabeceras de sección, los
+    estados vacíos, los errores y el chat; las cabeceras de columna, donde ayude.
 13. **Quitar adornos.** Si algo se puede eliminar sin perder información, se elimina.
 14. **Radio 0.** Paneles, botones, inputs, badges, chips y diálogos con esquinas rectas. La jerarquía la
     dan el borde y el paso de luminosidad, no la forma.
@@ -397,8 +415,8 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
 19. **Estados de carga.** Toda vista asíncrona tiene carga (skeleton con la forma final), vacío, error y
     datos. **Siempre**, cualquier componente que cargue al arrancar una página usa un skeleton, nunca
     `SphereLoader`, un spinner ni una pantalla en blanco.
-20. **Animar feedback útil.** Solo animaciones que confirman algo: guardado, firmado, fila añadida,
-    botón pulsado (§8).
+20. **Todo lo interactivo responde.** La respuesta es del tamaño justo según el presupuesto por frecuencia
+    (§8): cuanto más se usa algo, menos se anima. Si se quita una animación y no se pierde significado, se borra.
 
 ## 4. Color
 
@@ -407,11 +425,20 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
 - Jerarquía de superficie: en oscuro, **más elevado = más claro**. `background` (página e inputs) →
   `surface` (paneles) → `surface-raised` (cabeceras de tabla, hover, popovers, badge neutro). Las capas se
   separan con `line` y con ese paso de luminosidad, no con sombra.
-- El botón principal es claro (`ink`) con texto `on-ink`; el destructivo usa `danger-solid` con texto
+- El botón principal es `accent` con texto `on-accent` y hover `accent-hover`; el destructivo usa `danger-solid` con texto
   `white`. `danger` (más claro) es solo para texto e iconos de error.
 - Los fondos `*-subtle` son tintes muy oscuros: en badges el texto va en el color de estado, nunca en blanco.
-- `line-strong` solo para el borde de controles interactivos (inputs, botón secundario).
-- El color nunca es la única señal: todo estado lleva texto e icono.
+- `control-border` para el borde de los controles interactivos (inputs, selects, botón secundario, chips): da
+  el 3:1 que pide WCAG 1.4.11. `line-strong` queda para divisores fuertes y el borde de las capas flotantes.
+- El color nunca es la única señal: todo estado es **icono + color + texto**. Fuera de los conceptos de
+  dominio (§6), que tienen su icono propio:
+
+| Significado | Token | Icono lucide |
+|---|---|---|
+| Bueno | `success` (azul) | `CircleCheck` |
+| Atención | `warning` (amarillo) | `TriangleAlert` |
+| Malo | `danger` (rojo) | `OctagonAlert` |
+| Sin datos / neutro | `ink-soft` (gris) | `CircleHelp` |
 
 ## 5. Tipografía
 
@@ -457,7 +484,17 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - **`SigningSessionIndicator`** en la cabecera: firmante, `mm:ss`, firmas restantes. En los últimos 60 s
   pasa a `warning` sin parpadear; al expirar, la vista queda en solo lectura con «Reautenticar para firmar».
 - **Tablas:** cabecera `table-header` fija, divisores solo horizontales, números a la derecha, fila
-  seleccionada `table-row-selected`, paginación «Cargar más» (cursor).
+  seleccionada `table-row-selected`, paginación «Cargar más» (cursor). El título de la fila es un enlace real
+  (`<a>`, funciona con teclado y Ctrl+clic) con `ArrowUpRight` que aparece en hover; no hay columna «Abrir».
+- **Flechas de tendencia:** la dirección dice cómo se mueve el valor y el color dice si eso es bueno. Un precio
+  que baja es bueno (`ArrowDown` en `success`); uno que sube es malo (`ArrowUp` en `danger`). La capacidad de
+  compra funciona al revés. Siempre con la cifra al lado (`ArrowDown −4,9 %`).
+- **Chat (`UiChat`):** una sola pieza para Nueva misión y Negociación. En reposo, compositor compacto de una
+  línea; al hacer clic crece hacia arriba en `motion.overlay`, sin rebote. Panel opaco y radio 0, sin
+  glassmorfismo. El halo (`chat-halo`) es una sombra difusa detrás del compositor, **fuera del panel** y nunca
+  detrás de cifras, con cuatro colores que rotan despacio: apagado en reposo, tenue con foco, intenso mientras
+  piensa. Es la única excepción decorativa del sistema y no se usa fuera de los chats. Se detiene con
+  movimiento reducido o con la pestaña oculta.
 - **Formularios:** etiqueta encima, ayuda y error debajo en `small`. Validación al salir del campo y al
   enviar. Importes en input de texto decimal con divisa explícita, nunca `type="number"`.
 - **Estados:** skeleton con la forma final; vacío con un icono, un título concreto y una acción; error con
@@ -478,17 +515,76 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 
 ## 8. Movimiento
 
-- Solo `opacity` y `transform`, con `motion.fast` (hover, pulsado), `motion.base` (cambios de estado) y
-  `motion.overlay` (popover, diálogo), siempre con `motion.easing`.
-- Animación permitida = feedback: confirmación de firma, guardado, fila nueva resaltada brevemente,
-  cambio de banda tras recalcular.
-- Prohibido: entradas de página, desenfoques, rebotes y parallax.
-- Los bucles solo existen en el campo de puntos (§9), el indicador de carga (§9.2) y `ShiningText`.
+**Se mueven las líneas, no las cajas.** APEX es un instrumento con esquinas rectas y bordes de 1 px: lo que
+responde son bordes, reglas e indicadores. Los paneles y botones no flotan ni rebotan. La única caja que cambia
+de tamaño es el compositor del chat (§6), porque ahí se pasa de mirar a escribir.
+
+**Presupuesto según la frecuencia.** Cuanto más se usa algo, menos se anima.
+
+| Nivel | Frecuencia | Qué pasa |
+|---|---|---|
+| 0 · Inmediato | Cientos de veces al día o por teclado: hover de fila, opciones de menú, foco, atajos | Entra en 0 ms; al salir, se apaga en `motion.fast` |
+| 1 · Respuesta | Decenas al día: botones, inputs, tabs, checkbox | Un solo cambio de 60–120 ms (`motion.press`, `motion.fast`) |
+| 2 · Transición | Abrir o cerrar capas, expandir el chat | 120–220 ms (`motion.fast` a `motion.overlay`); el cierre, más rápido que la apertura (`motion.exit`) |
+| 3 · Momento | Registrar una firma | 600 ms; es el único |
+
+`motion.base` es para los cambios de estado. `motion.easing` para las entradas y `motion.easing-move` para lo
+que se desplaza en pantalla.
+
+Respuesta por componente:
+
+| Componente | Respuesta |
+|---|---|
+| Botón primario | Hover: cambio de tono. Pulsado: baja 1 px como una tecla, sin escalar, y vuelve en `fast` |
+| Botón secundario | El borde sube a `ink-muted` |
+| Botón ghost | Aparece el fondo; el icono no se mueve |
+| Botón ocupado | Mantiene el ancho; `ShiningText` en el texto y sin spinner |
+| Dropdown | El panel se revela como una persiana desde el borde del control (`clip-path`, `fast`); cierre con opacidad en `exit`; el chevron gira |
+| Opción de menú | Nivel 0 |
+| Input / textarea | El borde pasa a acento en `press`; el foco, al instante |
+| Checkbox / radio | Relleno inmediato y el check aparece con recorte en `fast` |
+| Switch | El mando se desplaza en `fast` con `easing-move`, sin rebote |
+| Tabs de una vista | El indicador de 2 px **viaja** a la pestaña nueva; es la línea que se mueve |
+| Navegación principal | Sin viaje: cambia de página |
+| Fila de tabla | Nivel 0. Entra una regla interior de 1 px en acento; `ArrowUpRight` aparece por opacidad |
+| Ordenar columna | La flecha gira; las filas cambian sin animación |
+| Badge que cambia | Cruce de color en `base`, sin pulso |
+| Fila nueva o recalculada | Tinte `accent-subtle` que se apaga en 1,2 s |
+| Tooltip | 500 ms de espera la primera vez, inmediato al pasar al siguiente; 100 ms de opacidad |
+| Diálogo | Fondo en `fast`; panel con opacidad y 4 px en `overlay`; cierre en `exit`, sin escala |
+| Toast | Entra desde el borde en `base`, sin barra de tiempo; se pausa con hover |
+| Cifras | Cruce de 120 ms con `tabular-nums`. Nunca un valor intermedio |
+| Cuenta atrás | Sin animación; último minuto en aviso, sin parpadeo |
+| Skeleton | Opacidad .6–1 en 1,6 s |
+
+**El único momento coreografiado: registrar una firma.** Al confirmar, una línea de 1 px recorre la fila de
+izquierda a derecha, dejando tras ella el estado `Firmado`; después, el hash se revela con un recorte en `mono`.
+600 ms en total, una vez. Con movimiento reducido, cambio de estado directo.
+
+**Descartado:**
+
+- Barrido de luz en botones, brillo en hover, botones que se elevan: es la plantilla de landing generada.
+- Rebote o `spring` con sobrepaso: aquí se firma dinero.
+- Opciones de menú y listas escalonadas: retrasan justo lo que se va a pulsar.
+- Contadores que suben hasta la cifra: muestran importes falsos durante la animación.
+- Filas que se recolocan al ordenar: impiden leer mientras se compara.
+- Texto palabra a palabra con cursor parpadeante: la respuesta real llega a trozos.
+- Mantener pulsado para firmar con relleno: fricción falsa, la firma ya exige sesión y passkey.
+- Foco animado: el foco se ve al instante.
+- Skeleton con brillo que recorre: se usa una opacidad lenta y discreta.
+- Barra de tiempo en toasts y checks dibujados en cada botón: adorno repetido.
+- `transition: all`, entradas de página o al hacer scroll, desenfoques y parallax: sin función.
+
+**Implementación:** transiciones CSS, que se pueden interrumpir, antes que keyframes; propiedades siempre
+enumeradas; hover solo dentro de `@media (hover: hover)`.
+
+- Los bucles solo existen en el campo de puntos (§9), el indicador de carga (§9.2), `ShiningText`, la opacidad
+  del skeleton y el halo del chat (§6).
 - **`ShiningText`:** un brillo que recorre el texto en bucle (2 s, lineal), de `ink-muted` a `ink`. Solo
   para trabajo que un agente está haciendo **ahora**: «Redactando la contraoferta…», «Buscando ofertas…»,
   «Analizando el CSV…». Nunca en títulos, cifras o estados terminados. Lleva `role="status"`; con reduced
   motion queda estático en `ink-muted`.
-- `prefers-reduced-motion`: se reduce todo a cambios de opacidad instantáneos.
+- `prefers-reduced-motion`: sin desplazamientos; se mantienen el color y la opacidad que comunican estado.
 
 ## 9. Campo de puntos y carga
 
@@ -619,7 +715,11 @@ La navegación entre pantallas, las guardas y el inventario de modales están en
 ## 13. Checklist de PR
 
 - [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
-- [ ] Nada de la sección 2 (tema claro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
+- [ ] Nada de la sección 2 (tema claro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…); halo solo en el compositor de los chats.
+- [ ] `accent` solo en lo interactivo y lo destacado; relleno = se pulsa, línea o barra = solo señala.
+- [ ] Controles interactivos con borde `control-border`; estados con icono + color + texto (azul, amarillo, rojo, gris).
+- [ ] Iconos lucide en todas las acciones; flechas de tendencia con la cifra al lado.
+- [ ] Título de fila como enlace real, sin columna «Abrir».
 - [ ] Sin badges de relleno ni etiquetas redundantes; mono solo en IDs/hashes.
 - [ ] Un elemento dominante y un único CTA primario por zona; titular concreto y con `balance`.
 - [ ] Radio 0 en todos los elementos de interfaz.
@@ -628,5 +728,5 @@ La navegación entre pantallas, las guardas y el inventario de modales están en
 - [ ] Cifras tabulares a la derecha; dinero solo con `MoneyDisplay`.
 - [ ] Confianza y banda de precio junto al precio; firma junto al trato.
 - [ ] Botones deshabilitados con razón visible.
-- [ ] Carga, vacío, error y datos implementados; componentes de carga inicial con skeleton; animaciones solo de feedback.
+- [ ] Carga, vacío, error y datos implementados; componentes de carga inicial con skeleton; movimiento dentro del presupuesto de §8, sin nada de su lista de descartes.
 - [ ] Textos en `es`/`en`/`zh`, probado con textos largos; `axe` limpio; foco visible.
