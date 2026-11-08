@@ -12,11 +12,11 @@ set -eu
 mc alias set local "$MINIO_ENDPOINT" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
 
 # Object Lock exige versionado; `--with-lock` lo activa al crear el bucket.
-mc mb --ignore-existing --with-lock local/trato-attachments
-mc mb --ignore-existing --with-lock local/trato-csv
-mc mb --ignore-existing --with-lock local/trato-audit
+mc mb --ignore-existing --with-lock local/apex-attachments
+mc mb --ignore-existing --with-lock local/apex-csv
+mc mb --ignore-existing --with-lock local/apex-audit
 
 # Retención por defecto en COMPLIANCE: ni el propio root puede borrar versiones antes de caducar.
-mc retention set --default COMPLIANCE "$MINIO_AUDIT_RETENTION" local/trato-audit
+mc retention set --default COMPLIANCE "$MINIO_AUDIT_RETENTION" local/apex-audit
 
-echo "trato buckets listos (audit retention=$MINIO_AUDIT_RETENTION, dev only)"
+echo "apex buckets listos (audit retention=$MINIO_AUDIT_RETENTION, dev only)"

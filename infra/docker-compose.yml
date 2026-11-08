@@ -1,4 +1,4 @@
-name: trato
+name: apex
 
 # Image tags are pinned on purpose. Bump them in a PR, never switch to `latest`.
 # Dev-only credentials below are placeholders; they are not secrets.
@@ -10,18 +10,18 @@ services:
   # =============================================================================
   postgres:
     image: pgvector/pgvector:0.8.7-pg16-bookworm
-    container_name: trato-postgres
+    container_name: apex-postgres
     environment:
-      POSTGRES_USER: trato
-      POSTGRES_PASSWORD: trato
-      POSTGRES_DB: trato
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: apex
+      POSTGRES_DB: apex
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U trato -d trato']
+      test: ['CMD-SHELL', 'pg_isready -U apex -d apex']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
   # =============================================================================
   redis:
     image: redis:7.4.12-alpine
-    container_name: trato-redis
+    container_name: apex-redis
     ports:
       - '6379:6379'
     volumes:
@@ -50,7 +50,7 @@ services:
   # =============================================================================
   minio:
     image: ${MINIO_IMAGE:-quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z}
-    container_name: trato-minio
+    container_name: apex-minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -69,7 +69,7 @@ services:
   # One-shot: creates the buckets with Object Lock. Idempotent, safe to rerun.
   minio-init:
     image: ${MC_IMAGE:-quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z}
-    container_name: trato-minio-init
+    container_name: apex-minio-init
     entrypoint: ['/bin/sh', '/scripts/init-buckets.sh']
     environment:
       MINIO_ENDPOINT: http://minio:9000
@@ -85,11 +85,11 @@ services:
     restart: 'no'
 
   # =============================================================================
-  # Keycloak (OIDC, realm "trato" imported on first start)
+  # Keycloak (OIDC, realm "apex" imported on first start)
   # =============================================================================
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
-    container_name: trato-keycloak
+    container_name: apex-keycloak
     command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
@@ -97,13 +97,13 @@ services:
       KC_HOSTNAME: http://localhost:8080
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: trato
-      KC_DB_PASSWORD: trato
+      KC_DB_USERNAME: apex
+      KC_DB_PASSWORD: apex
     ports:
       - '8080:8080'
     volumes:
-      # Imported only when realm "trato" does not exist yet (empty DB).
-      - ./keycloak/realm-trato.json:/opt/keycloak/data/import/realm-trato.json:ro
+      # Imported only when realm "apex" does not exist yet (empty DB).
+      - ./keycloak/realm-apex.json:/opt/keycloak/data/import/realm-apex.json:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,12 +113,12 @@ services:
   # =============================================================================
   vault:
     image: hashicorp/vault:1.21.4
-    container_name: trato-vault
+    container_name: apex-vault
     cap_add:
       - IPC_LOCK
     environment:
       # DEV ONLY root token. Never reuse outside local development.
-      VAULT_DEV_ROOT_TOKEN_ID: trato-dev-root-token
+      VAULT_DEV_ROOT_TOKEN_ID: apex-dev-root-token
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
       VAULT_ADDR: http://127.0.0.1:8200
     ports:
@@ -134,12 +134,12 @@ services:
   # =============================================================================
   unleash:
     image: unleashorg/unleash-server:8.3.1
-    container_name: trato-unleash
+    container_name: apex-unleash
     environment:
-      DATABASE_URL: postgres://trato:trato@postgres:5432/unleash
+      DATABASE_URL: postgres://apex:apex@postgres:5432/unleash
       # DEV ONLY tokens. Client token is the value of UNLEASH_API_TOKEN in .env.example.
-      INIT_ADMIN_API_TOKENS: '*:*.trato-dev-unleash-admin'
-      INIT_CLIENT_API_TOKENS: 'default:development.trato-dev-unleash-client'
+      INIT_ADMIN_API_TOKENS: '*:*.apex-dev-unleash-admin'
+      INIT_CLIENT_API_TOKENS: 'default:development.apex-dev-unleash-client'
     ports:
       - '4242:4242'
     depends_on:
@@ -161,9 +161,9 @@ services:
   # =============================================================================
   langfuse:
     image: langfuse/langfuse:2.95.11
-    container_name: trato-langfuse
+    container_name: apex-langfuse
     environment:
-      DATABASE_URL: postgresql://trato:trato@postgres:5432/langfuse
+      DATABASE_URL: postgresql://apex:apex@postgres:5432/langfuse
       # DEV ONLY secrets.
       NEXTAUTH_SECRET: langfuse-secret-change-me
       NEXTAUTH_URL: http://localhost:3001
@@ -189,7 +189,7 @@ services:
   # =============================================================================
   llm-stub:
     image: mockoon/cli:9.10.0
-    container_name: trato-llm-stub
+    container_name: apex-llm-stub
     command: --data /data/openai-stub.json --port 8001
     ports:
       - '8001:8001'
@@ -202,7 +202,7 @@ services:
   # =============================================================================
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.165.0
-    container_name: trato-otel-collector
+    container_name: apex-otel-collector
     command: ['--config=/etc/otelcol-contrib/config.yaml']
     volumes:
       - ./otel/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
@@ -216,7 +216,7 @@ services:
 
   tempo:
     image: grafana/tempo:2.10.10
-    container_name: trato-tempo
+    container_name: apex-tempo
     command: ['-config.file=/etc/tempo/tempo.yaml']
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
@@ -226,7 +226,7 @@ services:
 
   loki:
     image: grafana/loki:3.6.20
-    container_name: trato-loki
+    container_name: apex-loki
     command: ['-config.file=/etc/loki/loki.yaml']
     volumes:
       - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
@@ -242,7 +242,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.16.0
-    container_name: trato-prometheus
+    container_name: apex-prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -260,7 +260,7 @@ services:
 
   grafana:
     image: grafana/grafana:12.4.14
-    container_name: trato-grafana
+    container_name: apex-grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
@@ -290,12 +290,12 @@ services:
     profiles: ['apps']
     build:
       context: ../apps/orchestrator
-    container_name: trato-orchestrator
+    container_name: apex-orchestrator
     environment:
-      DATABASE_URL: postgresql://trato:trato@postgres:5432/trato
+      DATABASE_URL: postgresql://apex:apex@postgres:5432/apex
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
-      AUTH_ISSUER_URL: http://localhost:8080/realms/trato
+      AUTH_ISSUER_URL: http://localhost:8080/realms/apex
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       UNLEASH_URL: http://unleash:4242/api
     ports:
@@ -310,9 +310,9 @@ services:
     profiles: ['apps']
     build:
       context: ../apps/web
-    container_name: trato-web
+    container_name: apex-web
     environment:
-      DATABASE_URL: postgresql://trato:trato@postgres:5432/trato?schema=public
+      DATABASE_URL: postgresql://apex:apex@postgres:5432/apex?schema=public
       REDIS_URL: redis://redis:6379
       ORCHESTRATOR_URL: http://orchestrator:8000
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
@@ -326,7 +326,7 @@ services:
     profiles: ['apps']
     build:
       context: ../apps/browser-worker
-    container_name: trato-browser-worker
+    container_name: apex-browser-worker
     environment:
       REDIS_URL: redis://redis:6379
       VAULT_ADDR: http://vault:8200
@@ -339,7 +339,7 @@ services:
     profiles: ['apps']
     build:
       context: ../apps/mock-marketplace
-    container_name: trato-mock-marketplace
+    container_name: apex-mock-marketplace
     # Provisional host port. D5-04 confirms it.
     ports:
       - '8002:8002'

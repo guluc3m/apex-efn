@@ -1,7 +1,7 @@
 {
-  "realm": "trato",
+  "realm": "apex",
   "enabled": true,
-  "displayName": "TRATO (dev)",
+  "displayName": "APEX-EFN (dev)",
   "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
@@ -76,12 +76,12 @@
   ],
   "clients": [
     {
-      "clientId": "trato-web",
-      "name": "TRATO web (BFF Next.js)",
+      "clientId": "apex-web",
+      "name": "APEX-EFN web (BFF Next.js)",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "trato-dev-web-secret",
+      "secret": "apex-dev-web-secret",
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
@@ -122,12 +122,12 @@
           }
         },
         {
-          "name": "audience-trato-orchestrator",
+          "name": "audience-apex-orchestrator",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "consentRequired": false,
           "config": {
-            "included.client.audience": "trato-orchestrator",
+            "included.client.audience": "apex-orchestrator",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
@@ -135,12 +135,12 @@
       ]
     },
     {
-      "clientId": "trato-orchestrator",
-      "name": "TRATO orchestrator (resource server)",
+      "clientId": "apex-orchestrator",
+      "name": "APEX-EFN orchestrator (resource server)",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "trato-dev-orchestrator-secret",
+      "secret": "apex-dev-orchestrator-secret",
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
@@ -151,8 +151,8 @@
   ],
   "users": [
     {
-      "username": "owner-a@trato.local",
-      "email": "owner-a@trato.local",
+      "username": "owner-a@apex.local",
+      "email": "owner-a@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Owner",
@@ -166,14 +166,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "admin-a@trato.local",
-      "email": "admin-a@trato.local",
+      "username": "admin-a@apex.local",
+      "email": "admin-a@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Admin",
@@ -187,14 +187,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "buyer-a@trato.local",
-      "email": "buyer-a@trato.local",
+      "username": "buyer-a@apex.local",
+      "email": "buyer-a@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Buyer",
@@ -208,14 +208,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "finance-a@trato.local",
-      "email": "finance-a@trato.local",
+      "username": "finance-a@apex.local",
+      "email": "finance-a@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Finance",
@@ -229,14 +229,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "viewer-a@trato.local",
-      "email": "viewer-a@trato.local",
+      "username": "viewer-a@apex.local",
+      "email": "viewer-a@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Viewer",
@@ -250,14 +250,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "owner-b@trato.local",
-      "email": "owner-b@trato.local",
+      "username": "owner-b@apex.local",
+      "email": "owner-b@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Owner",
@@ -271,14 +271,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "admin-b@trato.local",
-      "email": "admin-b@trato.local",
+      "username": "admin-b@apex.local",
+      "email": "admin-b@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Admin",
@@ -292,14 +292,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "buyer-b@trato.local",
-      "email": "buyer-b@trato.local",
+      "username": "buyer-b@apex.local",
+      "email": "buyer-b@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Buyer",
@@ -313,14 +313,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "finance-b@trato.local",
-      "email": "finance-b@trato.local",
+      "username": "finance-b@apex.local",
+      "email": "finance-b@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Finance",
@@ -334,14 +334,14 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]
     },
     {
-      "username": "viewer-b@trato.local",
-      "email": "viewer-b@trato.local",
+      "username": "viewer-b@apex.local",
+      "email": "viewer-b@apex.local",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Viewer",
@@ -355,7 +355,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "trato-dev",
+          "value": "apex-dev",
           "temporary": false
         }
       ]

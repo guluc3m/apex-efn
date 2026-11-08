@@ -1,7 +1,7 @@
 # Runbook: local development environment
 
 Owner: DEV-1 (task D1-03). Entry point: `compose.yaml` at the repo root, which `include:`s
-`infra/docker-compose.yml`. The compose project name is pinned to `trato` in both files.
+`infra/docker-compose.yml`. The compose project name is pinned to `apex` in both files.
 
 > **Dev only.** Every password, token and client secret in this runbook and in `infra/` is a public
 > placeholder. Never reuse them outside a local machine.
@@ -38,43 +38,43 @@ docker compose --profile apps up -d --build
 
 ## 4. Services, ports and dev credentials
 
-| Service                           | Host URL / port                                  | Image (pinned)                                     | Dev credentials / notes                                                                                                                                                |
-| --------------------------------- | ------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`            | user `trato` / `trato`. DBs: `trato` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`.                                                                     |
-| Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                              | no auth                                                                                                                                                                |
-| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` | `minioadmin` / `minioadmin`                                                                                                                                            |
-| MinIO console                     | `http://localhost:9001`                          | (same)                                             | `minioadmin` / `minioadmin`                                                                                                                                            |
-| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`    | creates buckets, see section 6                                                                                                                                         |
-| Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                   | admin console: `admin` / `admin` (master realm). Realm `trato`, see section 5.                                                                                         |
-| Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                           | root token `trato-dev-root-token`. In-memory: everything is lost on restart.                                                                                           |
-| Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                  | client API token `default:development.trato-dev-unleash-client`, admin API token `*:*.trato-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here). |
-| Langfuse v2                       | `http://localhost:3001`                          | `langfuse/langfuse:2.95.11`                        | no seeded user: sign up locally on first visit                                                                                                                         |
-| Grafana                           | `http://localhost:3002`                          | `grafana/grafana:12.4.14`                          | `admin` / `admin`. Datasources (Prometheus, Loki, Tempo) are provisioned. No dashboards yet (D1-07).                                                                   |
-| Prometheus                        | `http://localhost:9090`                          | `prom/prometheus:v3.16.0`                          | no auth. Scrapes the OTel collector.                                                                                                                                   |
-| Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                              | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                            |
-| Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                            | no auth. Receives traces from the collector.                                                                                                                           |
-| OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`     | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                              |
-| LLM stub (Mockoon)                | `http://localhost:8001/v1`                       | `mockoon/cli:9.10.0`                               | no auth. **Temporary:** replaced by `apps/llm-stub` (D4-02).                                                                                                           |
-| Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                     | not buildable until D1-09                                                                                                                                              |
-| Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace`                 | port is provisional. Not buildable until D5-04.                                                                                                                        |
-| Web (profile `apps`)              | no host port                                     | built from `apps/web`                              | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                         |
+| Service                           | Host URL / port                                  | Image (pinned)                                     | Dev credentials / notes                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`            | user `apex` / `apex`. DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`.                                                                      |
+| Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                              | no auth                                                                                                                                                              |
+| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` | `minioadmin` / `minioadmin`                                                                                                                                          |
+| MinIO console                     | `http://localhost:9001`                          | (same)                                             | `minioadmin` / `minioadmin`                                                                                                                                          |
+| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`    | creates buckets, see section 6                                                                                                                                       |
+| Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                   | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                        |
+| Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                           | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                          |
+| Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                  | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here). |
+| Langfuse v2                       | `http://localhost:3001`                          | `langfuse/langfuse:2.95.11`                        | no seeded user: sign up locally on first visit                                                                                                                       |
+| Grafana                           | `http://localhost:3002`                          | `grafana/grafana:12.4.14`                          | `admin` / `admin`. Datasources (Prometheus, Loki, Tempo) are provisioned. No dashboards yet (D1-07).                                                                 |
+| Prometheus                        | `http://localhost:9090`                          | `prom/prometheus:v3.16.0`                          | no auth. Scrapes the OTel collector.                                                                                                                                 |
+| Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                              | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                          |
+| Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                            | no auth. Receives traces from the collector.                                                                                                                         |
+| OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`     | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                            |
+| LLM stub (Mockoon)                | `http://localhost:8001/v1`                       | `mockoon/cli:9.10.0`                               | no auth. **Temporary:** replaced by `apps/llm-stub` (D4-02).                                                                                                         |
+| Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                     | not buildable until D1-09                                                                                                                                            |
+| Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace`                 | port is provisional. Not buildable until D5-04.                                                                                                                      |
+| Web (profile `apps`)              | no host port                                     | built from `apps/web`                              | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                       |
 
-Keycloak test users (realm `trato`, password `trato-dev` for all, MFA enrolment on first login):
+Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on first login):
 
-| Tenant   | Users (username = email)                                                                                             |
-| -------- | -------------------------------------------------------------------------------------------------------------------- |
-| tenant-a | `owner-a@trato.local`, `admin-a@trato.local`, `buyer-a@trato.local`, `finance-a@trato.local`, `viewer-a@trato.local` |
-| tenant-b | `owner-b@trato.local`, `admin-b@trato.local`, `buyer-b@trato.local`, `finance-b@trato.local`, `viewer-b@trato.local` |
+| Tenant   | Users (username = email)                                                                                        |
+| -------- | --------------------------------------------------------------------------------------------------------------- |
+| tenant-a | `owner-a@apex.local`, `admin-a@apex.local`, `buyer-a@apex.local`, `finance-a@apex.local`, `viewer-a@apex.local` |
+| tenant-b | `owner-b@apex.local`, `admin-b@apex.local`, `buyer-b@apex.local`, `finance-b@apex.local`, `viewer-b@apex.local` |
 
 ## 5. Keycloak realm and MFA
 
-- File: `infra/keycloak/realm-trato.json`. It is imported with `start-dev --import-realm` **only when the
+- File: `infra/keycloak/realm-apex.json`. It is imported with `start-dev --import-realm` **only when the
   realm does not exist yet** (on an empty Keycloak database). Changing the file later does nothing on a
   running stack. Use `pnpm dev:reset`, or change the realm in the admin console and export it.
-- Clients: `trato-web` (confidential, standard flow, redirect `http://localhost:3000/*`, PKCE S256, dev
-  secret `trato-dev-web-secret`). Its tokens carry the claims `tenant_id` (user attribute), `roles` (realm
-  roles) and the audience `trato-orchestrator`. `trato-orchestrator` is the resource server: a confidential
-  client with every flow disabled, dev secret `trato-dev-orchestrator-secret`.
+- Clients: `apex-web` (confidential, standard flow, redirect `http://localhost:3000/*`, PKCE S256, dev
+  secret `apex-dev-web-secret`). Its tokens carry the claims `tenant_id` (user attribute), `roles` (realm
+  roles) and the audience `apex-orchestrator`. `apex-orchestrator` is the resource server: a confidential
+  client with every flow disabled, dev secret `apex-dev-orchestrator-secret`.
 - Roles: `owner`, `admin`, `buyer`, `finance`, `viewer`. `viewer` never signs (see `docs/security/rbac.md`, D1-05).
 - Tenants: groups `/tenant-a` and `/tenant-b`, each with a `tenant_id` attribute. Users carry the same
   `tenant_id` attribute, which is what the claim mapper reads.
@@ -90,9 +90,9 @@ Keycloak test users (realm `trato`, password `trato-dev` for all, MFA enrolment 
 
 ## 6. Object Lock and MinIO buckets
 
-- `minio-init` runs `infra/minio/init-buckets.sh` once. It creates `trato-attachments`, `trato-csv` and
-  `trato-audit`, all with Object Lock (`mc mb --with-lock`, `--ignore-existing`, so it is safe to rerun).
-- On `trato-audit` it sets a **default retention in COMPLIANCE mode**. The dev value is
+- `minio-init` runs `infra/minio/init-buckets.sh` once. It creates `apex-attachments`, `apex-csv` and
+  `apex-audit`, all with Object Lock (`mc mb --with-lock`, `--ignore-existing`, so it is safe to rerun).
+- On `apex-audit` it sets a **default retention in COMPLIANCE mode**. The dev value is
   `MINIO_AUDIT_RETENTION` (default `1d`).
 - **Production retention is a TL decision.** The spec does not define it. Do not copy the dev value.
 - **Caveat:** in COMPLIANCE mode, locked object versions cannot be deleted by anyone, root included, until
@@ -108,7 +108,7 @@ Keycloak test users (realm `trato`, password `trato-dev` for all, MFA enrolment 
 - `infra/postgres/init-databases.sql` runs **only when the Postgres data volume is empty** (first start).
   Changing it later does nothing on an existing volume. Run `pnpm dev:reset`, or
   `docker compose down -v` and then `up`.
-- It creates the `keycloak`, `langfuse` and `unleash` databases and enables `vector` (pgvector) in `trato`.
+- It creates the `keycloak`, `langfuse` and `unleash` databases and enables `vector` (pgvector) in `apex`.
 - Keycloak, Langfuse and Unleash each have their own database. Langfuse and Prisma migrations do not share
   one.
 
@@ -132,8 +132,8 @@ Verified on the authoring machine (no Docker daemon):
   required action, clients and mappers.
 - **Keycloak 26.0.8 (native distribution, dev H2 database) imports the realm successfully.** Via the admin
   API, for a tenant-a and a tenant-b user: the `tenant_id` attribute is persisted, the example access token
-  carries `tenant_id`, `roles` and audience `trato-orchestrator`, `CONFIGURE_TOTP` is a required action,
-  `tenant_id` is admin-only in the user profile, and the password grant is disabled on `trato-web`.
+  carries `tenant_id`, `roles` and audience `apex-orchestrator`, `CONFIGURE_TOTP` is a required action,
+  `tenant_id` is admin-only in the user profile, and the password grant is disabled on `apex-web`.
 - **Observability configs, with the pinned upstream binaries run natively:** `otelcol-contrib validate`
   (0.165.0), `promtool check config` (3.16.0) and `loki -verify-config` (3.6.20) all pass. End to end, an OTLP
   trace, log and metric sent to the collector arrive in Tempo (trace found by ID), Loki (LogQL query) and the
