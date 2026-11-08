@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a bug in another lane's code. Attach a failing test (AGENTS.md 3.5).
+title: '[bug] '
+labels: ['bug']
+body:
+  - type: dropdown
+    id: owner
+    attributes:
+      label: Owning lane
+      options:
+        - DEV-1
+        - DEV-2
+        - DEV-3
+        - DEV-4
+        - DEV-5
+        - DEV-6
+    validations:
+      required: true
+  - type: input
+    id: path
+    attributes:
+      label: Affected path
+      placeholder: 'packages/money/src/money.ts'
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What is wrong
+      description: Expected and actual behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: failing_test
+    attributes:
+      label: Failing test
+      description: A test that fails on main. Paste it or link to it.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps

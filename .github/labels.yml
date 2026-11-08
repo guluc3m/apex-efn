@@ -1,0 +1,56 @@
+# Source of truth for repository labels (AGENTS.md D1-02 step 3).
+# Apply with the GitHub API or `gh label create --force`. Colors are hex without "#".
+- name: needs-tech-lead
+  color: B60205
+  description: Touches money, thresholds, seller confidence, signatures or compliance. TL merges.
+- name: schema-change
+  color: 5319E7
+  description: Requests a DB schema change. Only DEV-2 writes migrations.
+- name: contract-change
+  color: 1D76DB
+  description: Requests a change to /contracts (public or internal API).
+- name: platform-request
+  color: 0E8A16
+  description: Requests a root, tooling, CI or compose change from DEV-1.
+- name: interface
+  color: FBCA04
+  description: Agrees a cross-lane function signature (AGENTS.md section 4).
+- name: tl-question
+  color: D93F0B
+  description: Question for the Tech Lead (AGENTS.md section 8).
+- name: bug
+  color: D73A4A
+  description: Bug in another lane's code. Must include a failing test.
+- name: lane:dev1
+  color: C5DEF5
+  description: Platform, DevOps and Identity (DEV-1)
+- name: lane:dev2
+  color: BFD4F2
+  description: Data, Contracts, Signing and Audit (DEV-2)
+- name: lane:dev3
+  color: BFDADC
+  description: Deterministic Domain Engines (DEV-3)
+- name: lane:dev4
+  color: D4C5F9
+  description: Orchestrator, Agents and LLM (DEV-4)
+- name: lane:dev5
+  color: F9D0C4
+  description: Browser Automation and Negotiation (DEV-5)
+- name: lane:dev6
+  color: FEF2C0
+  description: Frontend and UX (DEV-6)
+- name: phase:F0
+  color: EDEDED
+  description: Roadmap phase F0 (PROMPT-IMPLEMENTACION.md section 10)
+- name: phase:F1
+  color: DDDDDD
+  description: Roadmap phase F1
+- name: phase:F2
+  color: CCCCCC
+  description: Roadmap phase F2
+- name: phase:F3
+  color: BBBBBB
+  description: Roadmap phase F3
+- name: phase:F4
+  color: AAAAAA
+  description: Roadmap phase F4

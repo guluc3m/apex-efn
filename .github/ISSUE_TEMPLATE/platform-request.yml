@@ -1,0 +1,51 @@
+name: Platform request
+description: Ask DEV-1 for a root or tooling change (root package.json, turbo, CI, compose). AGENTS.md 3.5.
+title: '[platform-request] '
+labels: ['platform-request']
+body:
+  - type: input
+    id: task
+    attributes:
+      label: Requesting task ID
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Requesting lane
+      options:
+        - DEV-1
+        - DEV-2
+        - DEV-3
+        - DEV-4
+        - DEV-5
+        - DEV-6
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Root package.json or scripts
+        - turbo / pnpm workspace
+        - CI workflow (.github/)
+        - Compose / local environment
+        - Infra (infra/)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Requested change
+      description: What should exist or behave differently after the change.
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason and blocked work
+      description: Why it is needed and which task it blocks.
+    validations:
+      required: true

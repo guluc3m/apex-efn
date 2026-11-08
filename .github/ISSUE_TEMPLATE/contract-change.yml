@@ -1,0 +1,55 @@
+name: Contract change request
+description: Propose a change to /contracts (endpoint, DTO or queue payload). DEV-2 approves (AGENTS.md 3.5).
+title: '[contract-change] '
+labels: ['contract-change']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Open the contract change as a PR that only edits `/contracts/**`, titled `<TASK-ID>-contract: ...`. Link that PR here.
+  - type: input
+    id: task
+    attributes:
+      label: Requesting task ID
+      description: The task that needs the change, for example D5-07.
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Requesting lane
+      options:
+        - DEV-1
+        - DEV-2
+        - DEV-3
+        - DEV-4
+        - DEV-5
+        - DEV-6
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: Endpoint, DTO or queue payload
+      placeholder: 'POST /v1/negotiations/{id}/approve-send'
+    validations:
+      required: true
+  - type: textarea
+    id: diff
+    attributes:
+      label: Contract diff
+      description: The OpenAPI fragment you want added or changed.
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is needed
+    validations:
+      required: true
+  - type: input
+    id: pr
+    attributes:
+      label: Contract PR
+      description: Link to the PR that only edits /contracts/**.

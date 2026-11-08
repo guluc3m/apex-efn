@@ -1,0 +1,136 @@
+# Generated from AGENTS.md section 2 (file ownership map). Update both together.
+# GitHub CODEOWNERS is LAST-MATCH-WINS: broad rules first, exceptions after.
+# Enforcement (auto-requested reviews, "require review from Code Owners") needs GitHub Pro/Team
+# on a private repo, or a public repo. See docs/runbooks/branch-protection.md.
+
+# Unlisted paths: ask DEV-1 (AGENTS.md section 2)
+* @z4na14
+
+# ---------- Root, tooling, platform (DEV-1) ----------
+/package.json @z4na14
+/pnpm-workspace.yaml @z4na14
+/turbo.json @z4na14
+/tsconfig.json @z4na14
+/.prettierrc @z4na14
+/.prettierignore @z4na14
+/.gitignore @z4na14
+/.nvmrc @z4na14
+/.python-version @z4na14
+/.env.example @z4na14
+/compose.yaml @z4na14
+/.github/ @z4na14
+/infra/ @z4na14
+/infra/mocks/ @fedes1to
+/tests/load/ @z4na14
+/docs/observability/ @z4na14
+/docs/security/ @z4na14
+/packages/eslint-config/ @z4na14
+/packages/tsconfig/ @z4na14
+
+# ---------- Contracts and generated types (DEV-2) ----------
+/contracts/ @gdethan11yoshi
+/packages/shared-types/ @gdethan11yoshi
+/packages/crypto-client/ @gdethan11yoshi
+
+# ---------- Domain engines (DEV-3) ----------
+/packages/money/ @Elmiguegv
+/packages/scoring/ @Elmiguegv
+/packages/test-vectors/ @Elmiguegv
+/packages/test-vectors/signing/ @gdethan11yoshi
+
+# ---------- UI (DEV-6) ----------
+/packages/ui/ @Toriomg
+
+# ---------- Web app (DEV-6, exceptions DEV-1 and DEV-2) ----------
+/apps/web/ @Toriomg
+/apps/web/prisma/ @gdethan11yoshi
+/apps/web/src/server/auth/ @z4na14
+/apps/web/src/middleware.ts @z4na14
+/apps/web/instrumentation.ts @z4na14
+
+# ---------- Browser worker and mock marketplace (DEV-5, exception DEV-1) ----------
+/apps/browser-worker/ @Rotlerxd
+/apps/browser-worker/src/platform/ @z4na14
+/apps/mock-marketplace/ @Rotlerxd
+/docs/compliance/ @Rotlerxd
+
+# ---------- LLM stub and shared config (DEV-4) ----------
+/apps/llm-stub/ @fedes1to
+/config/defaults/ @fedes1to
+
+# ---------- Orchestrator (DEV-4 by default, exceptions per module) ----------
+/apps/orchestrator/ @fedes1to
+/apps/orchestrator/pyproject.toml @fedes1to
+/apps/orchestrator/src/trato/main.py @fedes1to
+/apps/orchestrator/src/trato/config.py @fedes1to
+/apps/orchestrator/src/trato/common/ @fedes1to
+/apps/orchestrator/src/trato/agents/ @fedes1to
+/apps/orchestrator/src/trato/llm/ @fedes1to
+/apps/orchestrator/src/trato/workers/ @fedes1to
+/apps/orchestrator/src/trato/tenant_config/ @fedes1to
+/apps/orchestrator/prompts/ @fedes1to
+/apps/orchestrator/evals/ @fedes1to
+/apps/orchestrator/src/trato/api/ @fedes1to
+/apps/orchestrator/src/trato/api/signing.py @gdethan11yoshi
+/apps/orchestrator/src/trato/api/decisions.py @gdethan11yoshi
+/apps/orchestrator/src/trato/api/keys.py @gdethan11yoshi
+/apps/orchestrator/src/trato/api/audit.py @gdethan11yoshi
+/apps/orchestrator/src/trato/api/negotiations.py @Rotlerxd
+/apps/orchestrator/src/trato/api/webhooks.py @Rotlerxd
+/apps/orchestrator/src/trato/auth/ @z4na14
+/apps/orchestrator/src/trato/platform/ @z4na14
+/apps/orchestrator/src/trato/db/ @gdethan11yoshi
+/apps/orchestrator/src/trato/contracts/generated/ @gdethan11yoshi
+/apps/orchestrator/src/trato/signing/ @gdethan11yoshi
+/apps/orchestrator/src/trato/audit/ @gdethan11yoshi
+/apps/orchestrator/src/trato/documents/ @gdethan11yoshi
+/apps/orchestrator/src/trato/domain/ @Elmiguegv
+/apps/orchestrator/src/trato/negotiation/ @Rotlerxd
+
+# Orchestrator tests follow the owner of <area> (AGENTS.md section 2)
+/apps/orchestrator/tests/auth/ @z4na14
+/apps/orchestrator/tests/platform/ @z4na14
+/apps/orchestrator/tests/db/ @gdethan11yoshi
+/apps/orchestrator/tests/contracts/ @gdethan11yoshi
+/apps/orchestrator/tests/signing/ @gdethan11yoshi
+/apps/orchestrator/tests/audit/ @gdethan11yoshi
+/apps/orchestrator/tests/documents/ @gdethan11yoshi
+/apps/orchestrator/tests/domain/ @Elmiguegv
+/apps/orchestrator/tests/common/ @fedes1to
+/apps/orchestrator/tests/agents/ @fedes1to
+/apps/orchestrator/tests/llm/ @fedes1to
+/apps/orchestrator/tests/workers/ @fedes1to
+/apps/orchestrator/tests/tenant_config/ @fedes1to
+/apps/orchestrator/tests/negotiation/ @Rotlerxd
+
+# ---------- Per-app files (DEV-1, after the app-wide rules above) ----------
+/apps/*/Dockerfile @z4na14
+/apps/*/eslint.config.* @z4na14
+
+# ---------- Architecture decision records (by number range, AGENTS.md 3.6) ----------
+/docs/adr/00*.md @Toriomg
+/docs/adr/1*.md @z4na14
+/docs/adr/2*.md @gdethan11yoshi
+/docs/adr/3*.md @Elmiguegv
+/docs/adr/4*.md @fedes1to
+/docs/adr/5*.md @Rotlerxd
+/docs/adr/6*.md @Toriomg
+/docs/adr/9*.md @Toriomg
+
+# ---------- Runbooks (by the lane whose task creates them) ----------
+/docs/runbooks/branch-protection.md @z4na14
+/docs/runbooks/local-dev.md @z4na14
+/docs/runbooks/key-loss.md @gdethan11yoshi
+/docs/runbooks/signing-session-blocked.md @gdethan11yoshi
+/docs/runbooks/audit-chain-broken.md @gdethan11yoshi
+/docs/runbooks/financial-snapshot-stale.md @fedes1to
+/docs/runbooks/platform-session-invalidated.md @Rotlerxd
+/docs/runbooks/captcha-persistent.md @Rotlerxd
+/docs/runbooks/dom-change.md @Rotlerxd
+/docs/runbooks/platform-signals-missing.md @Rotlerxd
+
+# ---------- Tech Lead only (last, so they win over the default) ----------
+/README.md @Toriomg
+/AGENTS.md @Toriomg
+/PROMPT-IMPLEMENTACION.md @Toriomg
+/NOTAS-TECH-LEAD.md @Toriomg
