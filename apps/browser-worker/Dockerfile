@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.10
 # Build context: repository root (pnpm workspace). Ignore rules are in /.dockerignore.
-#   docker build -f apps/browser-worker/Dockerfile -t trato-browser-worker .
+#   docker build -f apps/browser-worker/Dockerfile -t apex-browser-worker .
 #
 # Chromium comes from Debian (not from the Puppeteer download), so the image
 # does not depend on a Chrome build fetched at install time. PUPPETEER_EXECUTABLE_PATH
@@ -18,15 +18,15 @@ WORKDIR /app
 
 FROM base AS fetch
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-RUN --mount=type=cache,id=trato-pnpm-store,target=/pnpm/store \
+RUN --mount=type=cache,id=apex-pnpm-store,target=/pnpm/store \
     pnpm fetch
 
 FROM fetch AS builder
 COPY . .
-RUN --mount=type=cache,id=trato-pnpm-store,target=/pnpm/store \
+RUN --mount=type=cache,id=apex-pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile --offline
-RUN pnpm --filter @trato/browser-worker build
-RUN pnpm deploy --filter @trato/browser-worker --prod /out \
+RUN pnpm --filter @apex/browser-worker build
+RUN pnpm deploy --filter @apex/browser-worker --prod /out \
  && mkdir -p /out/dist && cp -r apps/browser-worker/dist/. /out/dist/
 
 FROM node:22.20.0-bookworm-slim AS runtime
@@ -41,8 +41,8 @@ RUN apt-get update \
       ca-certificates \
       tini \
  && rm -rf /var/lib/apt/lists/* \
- && groupadd --system --gid 10001 trato \
- && useradd --system --uid 10001 --gid trato --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin trato
+ && groupadd --system --gid 10001 apex \
+ && useradd --system --uid 10001 --gid apex --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin apex
 
 ENV NODE_ENV=production \
     PUPPETEER_SKIP_DOWNLOAD=true \

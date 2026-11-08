@@ -6,7 +6,7 @@
 # terraform {
 #   backend "s3" {
 #     bucket         = "<state-bucket>"
-#     key            = "trato/staging/terraform.tfstate"
+#     key            = "apex/staging/terraform.tfstate"
 #     region         = "<region>"
 #     dynamodb_table = "<lock-table>"
 #     encrypt        = true

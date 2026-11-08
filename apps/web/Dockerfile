@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.10
 # Build context: repository root (pnpm workspace). Ignore rules are in /.dockerignore.
-#   docker build -f apps/web/Dockerfile -t trato-web .
+#   docker build -f apps/web/Dockerfile -t apex-web .
 #
 # next.config.ts has no `output: 'standalone'`, so the runtime keeps the pruned
 # production node_modules from `pnpm deploy` and runs `next start`.
@@ -17,18 +17,18 @@ WORKDIR /app
 # Lockfile-only layer: downloads the locked packages into the BuildKit store cache.
 FROM base AS fetch
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-RUN --mount=type=cache,id=trato-pnpm-store,target=/pnpm/store \
+RUN --mount=type=cache,id=apex-pnpm-store,target=/pnpm/store \
     pnpm fetch
 
 FROM fetch AS builder
 COPY . .
 # The root postinstall builds the workspace packages (turbo) and apps/web's postinstall
 # runs `prisma generate`, so the sources and prisma/schema.prisma must be present here.
-RUN --mount=type=cache,id=trato-pnpm-store,target=/pnpm/store \
+RUN --mount=type=cache,id=apex-pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile --offline
-RUN pnpm --filter @trato/web build
+RUN pnpm --filter @apex/web build
 # Pruned runtime: production dependencies only, plus the Next.js build output.
-RUN pnpm deploy --filter @trato/web --prod /out \
+RUN pnpm deploy --filter @apex/web --prod /out \
  && mkdir -p /out/.next && cp -r apps/web/.next/. /out/.next/
 
 FROM node:22.20.0-bookworm-slim AS runtime
@@ -36,8 +36,8 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0
-RUN groupadd --system --gid 10001 trato \
- && useradd --system --uid 10001 --gid trato --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin trato
+RUN groupadd --system --gid 10001 apex \
+ && useradd --system --uid 10001 --gid apex --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin apex
 WORKDIR /app
 COPY --from=builder /out ./
 USER 10001:10001

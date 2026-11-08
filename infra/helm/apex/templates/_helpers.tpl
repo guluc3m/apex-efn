@@ -1,9 +1,9 @@
 {{/* Chart name, truncated to 63 chars (DNS label limit). */}}
-{{- define "trato.name" -}}
+{{- define "apex.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "trato.fullname" -}}
+{{- define "apex.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -16,33 +16,33 @@
 {{- end }}
 {{- end }}
 
-{{/* Usage: include "trato.selectorLabels" (dict "root" $ "component" "web") */}}
-{{- define "trato.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "trato.name" .root }}
+{{/* Usage: include "apex.selectorLabels" (dict "root" $ "component" "web") */}}
+{{- define "apex.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "apex.name" .root }}
 app.kubernetes.io/instance: {{ .root.Release.Name }}
 app.kubernetes.io/component: {{ .component }}
 {{- end }}
 
-{{- define "trato.labels" -}}
+{{- define "apex.labels" -}}
 helm.sh/chart: {{ printf "%s-%s" .root.Chart.Name .root.Chart.Version | replace "+" "_" }}
 app.kubernetes.io/managed-by: {{ .root.Release.Service }}
-app.kubernetes.io/part-of: trato
+app.kubernetes.io/part-of: apex
 app.kubernetes.io/version: {{ .root.Chart.AppVersion | quote }}
-{{ include "trato.selectorLabels" . }}
+{{ include "apex.selectorLabels" . }}
 {{- end }}
 
-{{/* Resource name for one component: <fullname>-<component>. Usage: include "trato.componentName" (dict "root" $ "component" "web") */}}
-{{- define "trato.componentName" -}}
-{{- printf "%s-%s" (include "trato.fullname" .root) .component | trunc 63 | trimSuffix "-" }}
+{{/* Resource name for one component: <fullname>-<component>. Usage: include "apex.componentName" (dict "root" $ "component" "web") */}}
+{{- define "apex.componentName" -}}
+{{- printf "%s-%s" (include "apex.fullname" .root) .component | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{/* Image reference. Usage: include "trato.image" (dict "root" $ "image" .Values.web.image) */}}
-{{- define "trato.image" -}}
+{{/* Image reference. Usage: include "apex.image" (dict "root" $ "image" .Values.web.image) */}}
+{{- define "apex.image" -}}
 {{- printf "%s:%s" .image.repository (.image.tag | default .root.Chart.AppVersion) }}
 {{- end }}
 
 {{/* Pod-level hardening shared by every component (non-root, no privilege escalation path). */}}
-{{- define "trato.podSecurityContext" -}}
+{{- define "apex.podSecurityContext" -}}
 runAsNonRoot: true
 runAsUser: 10001
 runAsGroup: 10001
@@ -51,7 +51,7 @@ seccompProfile:
   type: RuntimeDefault
 {{- end }}
 
-{{- define "trato.containerSecurityContext" -}}
+{{- define "apex.containerSecurityContext" -}}
 allowPrivilegeEscalation: false
 readOnlyRootFilesystem: true
 capabilities:
@@ -60,17 +60,17 @@ capabilities:
 {{- end }}
 
 {{/* Non-secret env from the shared ConfigMap, plus the component's secret. */}}
-{{- define "trato.envFrom" -}}
+{{- define "apex.envFrom" -}}
 - configMapRef:
-    name: {{ include "trato.fullname" .root }}-config
+    name: {{ include "apex.fullname" .root }}-config
 - secretRef:
     name: {{ .secretName }}
 {{- end }}
 
-{{/* Usage: include "trato.serviceAccountName" (dict "root" $ "component" "web" "sa" .Values.web.serviceAccount) */}}
-{{- define "trato.serviceAccountName" -}}
+{{/* Usage: include "apex.serviceAccountName" (dict "root" $ "component" "web" "sa" .Values.web.serviceAccount) */}}
+{{- define "apex.serviceAccountName" -}}
 {{- if .sa.create }}
-{{- default (include "trato.componentName" .) .sa.name }}
+{{- default (include "apex.componentName" .) .sa.name }}
 {{- else }}
 {{- default "default" .sa.name }}
 {{- end }}

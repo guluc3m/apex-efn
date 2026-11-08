@@ -2,7 +2,7 @@
 # ServiceAccount in the target namespace (sub + aud conditions).
 #
 # The ServiceAccount names are "<helm release name>-<component>". Keep helm_release_name in sync with
-# the release name used by CD (`helm upgrade --install trato ...`).
+# the release name used by CD (`helm upgrade --install apex ...`).
 
 locals {
   oidc_host = replace(var.oidc_issuer, "https://", "")

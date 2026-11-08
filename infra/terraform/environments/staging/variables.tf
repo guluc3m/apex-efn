@@ -12,7 +12,7 @@ variable "environment" {
 variable "name_prefix" {
   description = "Resource name prefix."
   type        = string
-  default     = "trato"
+  default     = "apex"
 }
 
 variable "vpc_cidr" {
@@ -65,13 +65,13 @@ variable "deploy_role_arn" {
 variable "kubernetes_namespace" {
   description = "Namespace the Helm release is installed in. Must match the CD namespace."
   type        = string
-  default     = "trato-staging"
+  default     = "apex-staging"
 }
 
 variable "helm_release_name" {
   description = "Helm release name. Must match the release name used by CD (ServiceAccount names are <release>-<component>)."
   type        = string
-  default     = "trato"
+  default     = "apex"
 }
 
 variable "general_instance_types" {

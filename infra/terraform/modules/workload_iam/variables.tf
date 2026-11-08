@@ -1,7 +1,7 @@
 variable "name_prefix" {
   description = "Resource name prefix."
   type        = string
-  default     = "trato"
+  default     = "apex"
 }
 
 variable "environment" {
@@ -27,7 +27,7 @@ variable "namespace" {
 variable "helm_release_name" {
   description = "Helm release name. The ServiceAccount names are <release>-<component>."
   type        = string
-  default     = "trato"
+  default     = "apex"
 }
 
 variable "bucket_arns" {

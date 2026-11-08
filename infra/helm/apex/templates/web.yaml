@@ -1,23 +1,23 @@
 {{- if .Values.web.enabled }}
 {{- $c := dict "root" $ "component" "web" }}
-{{- $sa := include "trato.serviceAccountName" (dict "root" $ "component" "web" "sa" .Values.web.serviceAccount) }}
+{{- $sa := include "apex.serviceAccountName" (dict "root" $ "component" "web" "sa" .Values.web.serviceAccount) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "trato.componentName" $c }}
+  name: {{ include "apex.componentName" $c }}
   labels:
-    {{- include "trato.labels" $c | nindent 4 }}
+    {{- include "apex.labels" $c | nindent 4 }}
 spec:
   {{- if not .Values.web.autoscaling.enabled }}
   replicas: {{ .Values.web.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "trato.selectorLabels" $c | nindent 6 }}
+      {{- include "apex.selectorLabels" $c | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "trato.selectorLabels" $c | nindent 8 }}
+        {{- include "apex.selectorLabels" $c | nindent 8 }}
     spec:
       serviceAccountName: {{ $sa }}
       {{- with $.Values.imagePullSecrets }}
@@ -25,22 +25,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        {{- include "trato.podSecurityContext" $ | nindent 8 }}
+        {{- include "apex.podSecurityContext" $ | nindent 8 }}
       containers:
         - name: web
-          image: {{ include "trato.image" (dict "root" $ "image" .Values.web.image) | quote }}
+          image: {{ include "apex.image" (dict "root" $ "image" .Values.web.image) | quote }}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: {{ .Values.web.containerPort }}
           envFrom:
-            {{- include "trato.envFrom" (dict "root" $ "secretName" .Values.web.secretName) | nindent 12 }}
+            {{- include "apex.envFrom" (dict "root" $ "secretName" .Values.web.secretName) | nindent 12 }}
           {{- with .Values.web.extraEnv }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           securityContext:
-            {{- include "trato.containerSecurityContext" $ | nindent 12 }}
+            {{- include "apex.containerSecurityContext" $ | nindent 12 }}
           # The app redirects "/" to a locale, a 3xx that kubelet counts as success.
           livenessProbe:
             httpGet:
@@ -70,13 +70,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "trato.componentName" $c }}
+  name: {{ include "apex.componentName" $c }}
   labels:
-    {{- include "trato.labels" $c | nindent 4 }}
+    {{- include "apex.labels" $c | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    {{- include "trato.selectorLabels" $c | nindent 4 }}
+    {{- include "apex.selectorLabels" $c | nindent 4 }}
   ports:
     - name: http
       port: 80
@@ -86,14 +86,14 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "trato.componentName" $c }}
+  name: {{ include "apex.componentName" $c }}
   labels:
-    {{- include "trato.labels" $c | nindent 4 }}
+    {{- include "apex.labels" $c | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "trato.componentName" $c }}
+    name: {{ include "apex.componentName" $c }}
   minReplicas: {{ .Values.web.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.web.autoscaling.maxReplicas }}
   metrics:

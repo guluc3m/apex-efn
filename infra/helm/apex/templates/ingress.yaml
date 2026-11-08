@@ -4,9 +4,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "trato.fullname" . }}
+  name: {{ include "apex.fullname" . }}
   labels:
-    {{- include "trato.labels" (dict "root" $ "component" "ingress") | nindent 4 }}
+    {{- include "apex.labels" (dict "root" $ "component" "ingress") | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -30,7 +30,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "trato.componentName" (dict "root" $ "component" "web") }}
+                name: {{ include "apex.componentName" (dict "root" $ "component" "web") }}
                 port:
                   name: http
     - host: {{ $apiHost | quote }}
@@ -40,14 +40,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "trato.componentName" (dict "root" $ "component" "orchestrator") }}
+                name: {{ include "apex.componentName" (dict "root" $ "component" "orchestrator") }}
                 port:
                   name: http
           - path: /health
             pathType: Exact
             backend:
               service:
-                name: {{ include "trato.componentName" (dict "root" $ "component" "orchestrator") }}
+                name: {{ include "apex.componentName" (dict "root" $ "component" "orchestrator") }}
                 port:
                   name: http
 {{- end }}

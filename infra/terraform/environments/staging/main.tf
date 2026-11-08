@@ -43,7 +43,7 @@ module "vpc" {
 # ---------------------------------------------------------------------------
 # EKS (community module, pinned). Three managed node groups:
 #   general: web, orchestrator, add-ons
-#   browser: tainted, Chromium pods only (trato.io/nodepool=browser:NoSchedule)
+#   browser: tainted, Chromium pods only (apex.io/nodepool=browser:NoSchedule)
 #   gpu:     tainted, optional self-hosted LLM (count 0 by default)
 # ---------------------------------------------------------------------------
 
@@ -92,7 +92,7 @@ module "eks" {
       max_size       = var.general_max_size
       desired_size   = var.general_desired_size
       labels = {
-        "trato.io/nodepool" = "general"
+        "apex.io/nodepool" = "general"
       }
     }
 
@@ -102,11 +102,11 @@ module "eks" {
       max_size       = var.browser_max_size
       desired_size   = var.browser_desired_size
       labels = {
-        "trato.io/nodepool" = "browser"
+        "apex.io/nodepool" = "browser"
       }
       taints = {
         dedicated = {
-          key    = "trato.io/nodepool"
+          key    = "apex.io/nodepool"
           value  = "browser"
           effect = "NO_SCHEDULE"
         }
@@ -120,11 +120,11 @@ module "eks" {
       max_size       = var.gpu_max_size
       desired_size   = var.gpu_node_count
       labels = {
-        "trato.io/nodepool" = "gpu"
+        "apex.io/nodepool" = "gpu"
       }
       taints = {
         dedicated = {
-          key    = "trato.io/nodepool"
+          key    = "apex.io/nodepool"
           value  = "gpu"
           effect = "NO_SCHEDULE"
         }

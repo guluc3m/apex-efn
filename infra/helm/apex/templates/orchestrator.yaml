@@ -1,23 +1,23 @@
 {{- if .Values.orchestrator.enabled }}
 {{- $c := dict "root" $ "component" "orchestrator" }}
-{{- $sa := include "trato.serviceAccountName" (dict "root" $ "component" "orchestrator" "sa" .Values.orchestrator.serviceAccount) }}
+{{- $sa := include "apex.serviceAccountName" (dict "root" $ "component" "orchestrator" "sa" .Values.orchestrator.serviceAccount) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "trato.componentName" $c }}
+  name: {{ include "apex.componentName" $c }}
   labels:
-    {{- include "trato.labels" $c | nindent 4 }}
+    {{- include "apex.labels" $c | nindent 4 }}
 spec:
   {{- if not .Values.orchestrator.autoscaling.enabled }}
   replicas: {{ .Values.orchestrator.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "trato.selectorLabels" $c | nindent 6 }}
+      {{- include "apex.selectorLabels" $c | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "trato.selectorLabels" $c | nindent 8 }}
+        {{- include "apex.selectorLabels" $c | nindent 8 }}
     spec:
       serviceAccountName: {{ $sa }}
       {{- with $.Values.imagePullSecrets }}
@@ -25,22 +25,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        {{- include "trato.podSecurityContext" $ | nindent 8 }}
+        {{- include "apex.podSecurityContext" $ | nindent 8 }}
       containers:
         - name: orchestrator
-          image: {{ include "trato.image" (dict "root" $ "image" .Values.orchestrator.image) | quote }}
+          image: {{ include "apex.image" (dict "root" $ "image" .Values.orchestrator.image) | quote }}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: {{ .Values.orchestrator.containerPort }}
           envFrom:
-            {{- include "trato.envFrom" (dict "root" $ "secretName" .Values.orchestrator.secretName) | nindent 12 }}
+            {{- include "apex.envFrom" (dict "root" $ "secretName" .Values.orchestrator.secretName) | nindent 12 }}
           {{- with .Values.orchestrator.extraEnv }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           securityContext:
-            {{- include "trato.containerSecurityContext" $ | nindent 12 }}
+            {{- include "apex.containerSecurityContext" $ | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /health
@@ -64,13 +64,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "trato.componentName" $c }}
+  name: {{ include "apex.componentName" $c }}
   labels:
-    {{- include "trato.labels" $c | nindent 4 }}
+    {{- include "apex.labels" $c | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    {{- include "trato.selectorLabels" $c | nindent 4 }}
+    {{- include "apex.selectorLabels" $c | nindent 4 }}
   ports:
     - name: http
       port: 80
@@ -80,14 +80,14 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "trato.componentName" $c }}
+  name: {{ include "apex.componentName" $c }}
   labels:
-    {{- include "trato.labels" $c | nindent 4 }}
+    {{- include "apex.labels" $c | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "trato.componentName" $c }}
+    name: {{ include "apex.componentName" $c }}
   minReplicas: {{ .Values.orchestrator.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.orchestrator.autoscaling.maxReplicas }}
   metrics:

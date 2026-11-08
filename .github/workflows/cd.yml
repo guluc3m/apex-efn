@@ -22,8 +22,8 @@ env:
   IMAGE_NAMESPACE: guluc3m/apex-efn
   HELM_VERSION: v3.16.4
   # Must match the Terraform defaults (environments/staging: kubernetes_namespace, helm_release_name).
-  HELM_RELEASE: trato
-  HELM_NAMESPACE: trato-staging
+  HELM_RELEASE: apex
+  HELM_NAMESPACE: apex-staging
 
 jobs:
   # =============================================================================
@@ -144,7 +144,7 @@ jobs:
         env:
           EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
           AWS_REGION: ${{ vars.AWS_REGION }}
-        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION" --alias trato-staging
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION" --alias apex-staging
 
       - uses: azure/setup-helm@v4
         with:
@@ -189,9 +189,9 @@ jobs:
               annotations:
                 eks.amazonaws.com/role-arn: "${BROWSER_WORKER_ROLE_ARN}"
           EOF
-          helm upgrade --install "$HELM_RELEASE" infra/helm/trato \
+          helm upgrade --install "$HELM_RELEASE" infra/helm/apex \
             --namespace "$HELM_NAMESPACE" --create-namespace \
-            -f infra/helm/trato/values-staging.yaml \
+            -f infra/helm/apex/values-staging.yaml \
             -f "$values" \
             --atomic --timeout 10m
           helm status "$HELM_RELEASE" --namespace "$HELM_NAMESPACE"

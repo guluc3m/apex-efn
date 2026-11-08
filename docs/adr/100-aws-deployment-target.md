@@ -20,8 +20,8 @@ and only `infra/terraform/` is AWS-specific.
 
 1. **Kubernetes:** Amazon EKS, managed node groups:
    - `general`: web, orchestrator, add-ons.
-   - `browser`: tainted `trato.io/nodepool=browser:NoSchedule`. Chromium pods only.
-   - `gpu`: tainted `trato.io/nodepool=gpu:NoSchedule`, AL2023 NVIDIA AMI, desired count 0 by default.
+   - `browser`: tainted `apex.io/nodepool=browser:NoSchedule`. Chromium pods only.
+   - `gpu`: tainted `apex.io/nodepool=gpu:NoSchedule`, AL2023 NVIDIA AMI, desired count 0 by default.
      Used only by the optional self-hosted LLM (vLLM, OpenAI-compatible `/v1`, ADR-002).
 2. **Database:** RDS for PostgreSQL 16 (pgvector is available). TLS forced by parameter group. Master
    password generated and stored by RDS in Secrets Manager (never in Terraform state).
@@ -36,7 +36,7 @@ and only `infra/terraform/` is AWS-specific.
 6. **Workload identity:** IRSA. One IAM role per ServiceAccount, trusting only that ServiceAccount.
    The audit bucket is append-only for the orchestrator (no delete permission).
 7. **Packaging and delivery:** images in GHCR (`ghcr.io/guluc3m/apex-efn/<app>`), tagged `sha-<short>`
-   and `main`, never `latest`. One Helm umbrella chart (`infra/helm/trato`), not a chart per app: the three
+   and `main`, never `latest`. One Helm umbrella chart (`infra/helm/apex`), not a chart per app: the three
    apps are released together and share config and secret conventions, and per-component toggles keep the
    value surface in one place. CD (`.github/workflows/cd.yml`) authenticates with GitHub OIDC, with no
    stored AWS keys.

@@ -7,7 +7,7 @@ locals {
 # Two keys: one for operational data and CSVs, one dedicated to the audit trail, so that
 # the audit key can be restricted to the audit writer without touching the rest.
 resource "aws_kms_key" "data" {
-  description             = "TRATO ${var.environment}: attachments, CSV, secrets, RDS, Redis"
+  description             = "APEX-EFN ${var.environment}: attachments, CSV, secrets, RDS, Redis"
   enable_key_rotation     = true
   deletion_window_in_days = var.kms_deletion_window_days
 }
@@ -18,7 +18,7 @@ resource "aws_kms_alias" "data" {
 }
 
 resource "aws_kms_key" "audit" {
-  description             = "TRATO ${var.environment}: signed audit log (S3 Object Lock)"
+  description             = "APEX-EFN ${var.environment}: signed audit log (S3 Object Lock)"
   enable_key_rotation     = true
   deletion_window_in_days = var.kms_deletion_window_days
 }

@@ -47,8 +47,8 @@ resource "aws_db_instance" "postgres" {
   storage_encrypted     = true
   kms_key_id            = var.kms_key_arn
 
-  db_name  = "trato"
-  username = "trato_owner"
+  db_name  = "apex"
+  username = "apex_owner"
   # The master password is generated and kept by RDS in Secrets Manager, never in Terraform state.
   manage_master_user_password   = true
   master_user_secret_kms_key_id = var.kms_key_arn
@@ -93,7 +93,7 @@ resource "aws_vpc_security_group_ingress_rule" "redis_from_nodes" {
 
 resource "aws_elasticache_replication_group" "redis" {
   replication_group_id = "${local.suffix}-redis"
-  description          = "TRATO ${var.environment} Redis (queues, sessions, idempotency)"
+  description          = "APEX-EFN ${var.environment} Redis (queues, sessions, idempotency)"
   engine               = "redis"
   engine_version       = var.redis_engine_version
   node_type            = var.redis_node_type
@@ -123,7 +123,7 @@ resource "aws_secretsmanager_secret" "app" {
   for_each = toset(var.secret_components)
 
   name                    = "${var.name_prefix}/${var.environment}/${each.key}"
-  description             = "TRATO ${var.environment} ${each.key} runtime configuration (values set out of band)"
+  description             = "APEX-EFN ${var.environment} ${each.key} runtime configuration (values set out of band)"
   kms_key_id              = var.kms_key_arn
   recovery_window_in_days = 7
 }

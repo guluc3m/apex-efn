@@ -41,7 +41,7 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
    terraform output                      # cluster_name, bucket names, irsa_role_arns, secret_names
    ```
 2. **Secret values** (Terraform only creates the empty secrets). Write one JSON object per secret in AWS Secrets Manager,
-   named as `secret_names` (for example `trato/staging/orchestrator`). The keys of the JSON are the environment
+   named as `secret_names` (for example `apex/staging/orchestrator`). The keys of the JSON are the environment
    variables the app reads (`DATABASE_URL`, `REDIS_URL`, `LLM_GATEWAY_API_KEY`, ...). Values never go to Git,
    Helm values or CI logs.
 3. **Cluster add-ons:** External Secrets Operator, the `aws-secrets-manager` ClusterSecretStore, and an ingress
@@ -62,8 +62,8 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
 
 5. **Helm** runs from CD. For a manual first install (same values as CD):
    ```bash
-   helm upgrade --install trato infra/helm/trato -n trato-staging --create-namespace \
-     -f infra/helm/trato/values-staging.yaml \
+   helm upgrade --install apex infra/helm/apex -n apex-staging --create-namespace \
+     -f infra/helm/apex/values-staging.yaml \
      --set-string orchestrator.image.tag=sha-<short> --set-string web.image.tag=sha-<short> \
      --set-string browserWorker.image.tag=sha-<short> --atomic --timeout 10m
    ```
@@ -84,8 +84,8 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
 - Automatic: `--atomic` already rolls back a failed upgrade.
 - Manual, to a previous release:
   ```bash
-  helm history trato -n trato-staging
-  helm rollback trato <REVISION> -n trato-staging --wait --timeout 10m
+  helm history apex -n apex-staging
+  helm rollback apex <REVISION> -n apex-staging --wait --timeout 10m
   ```
 - Helm rolls back **only Kubernetes objects**. It does not roll back database migrations, Object Lock
   objects, or Secrets Manager values. Check the migration state before rolling back an image that depends on a
@@ -112,7 +112,7 @@ Nothing was built, pushed, applied or deployed by the author of this change.
 - **Browser worker health.** No HTTP endpoint yet, so no probes. Add probes when the internal API lands (D5-01).
 - **LLM workload.** Disabled by default. The image, resources and read-only root filesystem (with `HOME`, `XDG_CACHE_HOME`,
   `HF_HOME` in `/tmp`) are untested on a GPU node. Validate before enabling. Model choice is a TL/ADR decision.
-- **Orchestrator prompts.** `apps/orchestrator/prompts/` is not in the wheel (hatch packages only `src/trato`). If the
+- **Orchestrator prompts.** `apps/orchestrator/prompts/` is not in the wheel (hatch packages only `src/apex`). If the
   agents load prompts from disk, the image must copy them (DEV-4).
 - **Environment protection.** The deploy job uses `environment: staging`. Add required reviewers in GitHub once wanted.
 - **Production environment, RDS migrations job, backups and restore drills, DR region, cost alarms.** Not in scope.

@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "trato.fullname" . }}-config
+  name: {{ include "apex.fullname" . }}-config
   labels:
-    {{- include "trato.labels" (dict "root" $ "component" "config") | nindent 4 }}
+    {{- include "apex.labels" (dict "root" $ "component" "config") | nindent 4 }}
 data:
   {{- range $key, $value := .Values.config }}
   {{ $key }}: {{ $value | toString | quote }}

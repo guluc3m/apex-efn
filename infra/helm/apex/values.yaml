@@ -1,4 +1,4 @@
-# Default values for the TRATO umbrella chart.
+# Default values for the APEX-EFN umbrella chart.
 #
 # Conventions:
 # - Images are pulled from GHCR (ghcr.io/guluc3m/apex-efn/<app>). Tags default to Chart.AppVersion;
@@ -33,7 +33,7 @@ orchestrator:
   replicaCount: 2
   containerPort: 8000
   # Secret with DATABASE_URL, REDIS_URL, LLM_GATEWAY_API_KEY, etc. (see docs/runbooks/deploy.md).
-  secretName: trato-orchestrator
+  secretName: apex-orchestrator
   externalSecret:
     # AWS Secrets Manager secret name holding the orchestrator's keys (used when externalSecrets.enabled).
     remoteKey: ''
@@ -62,7 +62,7 @@ web:
     tag: ''
   replicaCount: 2
   containerPort: 3000
-  secretName: trato-web
+  secretName: apex-web
   externalSecret:
     remoteKey: ''
   serviceAccount:
@@ -88,7 +88,7 @@ browserWorker:
     repository: ghcr.io/guluc3m/apex-efn/browser-worker
     tag: ''
   replicaCount: 1
-  secretName: trato-browser-worker
+  secretName: apex-browser-worker
   externalSecret:
     remoteKey: ''
   serviceAccount:
@@ -99,9 +99,9 @@ browserWorker:
   shmSize: 1Gi
   # Dedicated, tainted node pool (see infra/terraform: node group "browser").
   nodeSelector:
-    trato.io/nodepool: browser
+    apex.io/nodepool: browser
   tolerations:
-    - key: trato.io/nodepool
+    - key: apex.io/nodepool
       operator: Equal
       value: browser
       effect: NoSchedule
@@ -125,15 +125,15 @@ llm:
   model: ''
   replicaCount: 1
   containerPort: 8000
-  secretName: trato-llm
+  secretName: apex-llm
   externalSecret:
     remoteKey: ''
   # Shared memory for tensor parallelism / multiprocessing.
   shmSize: 2Gi
   nodeSelector:
-    trato.io/nodepool: gpu
+    apex.io/nodepool: gpu
   tolerations:
-    - key: trato.io/nodepool
+    - key: apex.io/nodepool
       operator: Equal
       value: gpu
       effect: NoSchedule
