@@ -120,6 +120,17 @@ Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on
   `pnpm dev:reset`.
 - Logs: `pnpm docker:logs`, or `docker compose logs -f <service>`.
 
+### 8.1 Feature flags (Unleash)
+
+Naming, defaults (everything off) and client usage: `docs/observability/flags.md`.
+
+- Seed the known flags once the stack is healthy (idempotent, creates disabled flags only):
+  `node infra/unleash/seed-flags.mjs`. Extra flag names can be passed as arguments. Set `UNLEASH_URL` (default
+  `http://localhost:4242/api`) and `UNLEASH_ADMIN_TOKEN` (default: the dev admin token) if they differ.
+- Unleash UI: `http://localhost:4242`. UI login is separate from the API tokens. The API tokens are for
+  the apps and the seed script only.
+- `pnpm dev:reset` wipes the Unleash database, so run the seed script again afterwards.
+
 ## 9. Validation status (what has and has not been verified)
 
 Verified on the authoring machine (no Docker daemon):
