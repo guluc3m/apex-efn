@@ -2,8 +2,9 @@
 
 ## Status
 
-Proposed (TL gate: `needs-tech-lead`, issue #48 / D4-03). Draft-quality implementation is built behind
-interfaces because `apex.db` (D2-05) and `apex.signing` (DEV-2) are not merged yet.
+Proposed (TL gate: `needs-tech-lead`, issue #48 / D4-03). The questions raised here were answered in
+ADR-900 (issue #96) and the implementation follows those answers. It is built behind interfaces because
+`apex.db` (D2-05) and `apex.signing` (DEV-2) are not merged yet.
 
 ## Context
 
@@ -69,10 +70,19 @@ no layer is returned as **explicitly unset** (see §3), never omitted and never 
   or deleted (enforced by DB triggers in D2-03).
 - `config_version`: a **monotonic integer per tenant**, starting at 1 for the seeded v1 defaults. Each
   applied change increments it by exactly 1. Versions are never reused or reordered.
-- `content_hash`: `sha256` over the **canonical JSON** (RFC 8785 JCS, D2-06) of the *effective* values
-  of the resolved configuration (all keys, unset keys included as `null`, provenance excluded). Hash
-  reproducibility: the same effective values always produce the same hash, regardless of layer
-  decomposition.
+- `content_hash` identifies the version **including category overrides** (ADR-900): `sha256` over the
+  canonical JSON of `{base: <effective tenant view>, categories: <every category override>}`, so any
+  category patch changes the hash. Unset keys are included as `null`, provenance is excluded.
+  `effective(tenant, category)` returns the hash of what *that category* sees (`{category, view}`), so two
+  categories of the same version have different hashes when their overrides differ.
+  Canonicalization is sorted keys, no whitespace, UTF-8, no NaN; it is a stand-in for RFC 8785 JCS (D2-06)
+  until `apex.signing.jcs` exists.
+- **No floats anywhere in config** (ADR-900). Rates and percentages are decimal fractions stored as decimal
+  strings and parsed as `Decimal`; money is `{amount_minor: int, currency}` with a closed currency.
+  A float in a patch, in a stored version, or reaching the hash is a loud error.
+- Category patches are validated when proposed **and again when applied**, and every stored category
+  override must produce a valid configuration. A decision signed for one category cannot be applied as
+  another.
 - An evaluation stores `(config_version, content_hash)`. Recomputing the effective config at that
   `config_version` must reproduce the hash exactly; a mismatch is a loud integrity error.
 

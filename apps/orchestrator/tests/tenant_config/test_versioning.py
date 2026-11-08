@@ -64,7 +64,7 @@ async def test_hash_changes_when_effective_value_changes(
     seeded_service: TenantConfigService, port: FakeDecisionPort
 ) -> None:
     before = await seeded_service.effective("tenant-a")
-    await _change(seeded_service, port, "tenant-a", 1, {"sanity": {"z_gate": 7.0}})
+    await _change(seeded_service, port, "tenant-a", 1, {"sanity": {"z_gate": "7.0"}})
     after = await seeded_service.effective("tenant-a")
     assert before.content_hash != after.content_hash
     assert after.config_version == 2
@@ -73,7 +73,7 @@ async def test_hash_changes_when_effective_value_changes(
 async def test_stored_version_hash_verifies(
     seeded_service: TenantConfigService, port: FakeDecisionPort, repo: InMemoryConfigRepository
 ) -> None:
-    await _change(seeded_service, port, "tenant-a", 1, {"sanity": {"z_gate": 7.0}})
+    await _change(seeded_service, port, "tenant-a", 1, {"sanity": {"z_gate": "7.0"}})
     await seeded_service.verify_version("tenant-a", 2)
 
 
@@ -82,8 +82,8 @@ async def test_tampered_stored_hash_is_detected(
 ) -> None:
     from dataclasses import replace
 
-    await _change(seeded_service, port, "tenant-a", 1, {"sanity": {"z_gate": 7.0}})
+    await _change(seeded_service, port, "tenant-a", 1, {"sanity": {"z_gate": "7.0"}})
     rows = repo._versions["tenant-a"]  # type: ignore[attr-defined]
-    rows[-1] = replace(rows[-1], values={"sanity": {"z_gate": 9.0}})
+    rows[-1] = replace(rows[-1], values={"sanity": {"z_gate": "9.0"}})
     with pytest.raises(ContentHashMismatchError):
         await seeded_service.verify_version("tenant-a", 2)

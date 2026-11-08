@@ -2,116 +2,472 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://apex.local/config/tenant-config.schema.json",
   "title": "APEX-EFN tenant configuration (format 1)",
-  "description": "Shape of config/defaults/tenant-config.v1.json. Keys with value null and status 'unset' are 'sin definir' in PROMPT-IMPLEMENTACION.md §7 and must be supplied by the tenant. The typed runtime model lives in apex.tenant_config.models.",
+  "description": "Shape of config/defaults/tenant-config.v1.json. Keys with value null and status 'unset' are 'sin definir' in PROMPT-IMPLEMENTACION.md \u00a77 and must be supplied by the tenant. The typed runtime model lives in apex.tenant_config.models.",
   "type": "object",
-  "required": ["config_format", "config_version", "values"],
+  "required": [
+    "config_format",
+    "config_version",
+    "values"
+  ],
   "additionalProperties": false,
   "properties": {
-    "$schema": {"type": "string"},
-    "config_format": {"const": 1},
-    "config_version": {"type": "integer", "minimum": 1},
-    "source": {"type": "string"},
+    "$schema": {
+      "type": "string"
+    },
+    "config_format": {
+      "const": 1
+    },
+    "config_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source": {
+      "type": "string"
+    },
     "values": {
       "type": "object",
-      "required": ["money", "fx", "sanity", "seller", "finance", "neg", "gate", "approval", "signing", "llm"],
+      "required": [
+        "money",
+        "fx",
+        "sanity",
+        "seller",
+        "finance",
+        "landed",
+        "constraints",
+        "neg",
+        "gate",
+        "approval",
+        "signing",
+        "supervisor",
+        "llm"
+      ],
       "additionalProperties": false,
       "properties": {
-        "money": {"$ref": "#/$defs/moneySection"},
-        "fx": {"$ref": "#/$defs/fxSection"},
-        "sanity": {"$ref": "#/$defs/sanitySection"},
-        "seller": {"$ref": "#/$defs/sellerSection"},
-        "finance": {"$ref": "#/$defs/financeSection"},
-        "neg": {"$ref": "#/$defs/negSection"},
-        "gate": {"$ref": "#/$defs/gateSection"},
-        "approval": {"$ref": "#/$defs/approvalSection"},
-        "signing": {"$ref": "#/$defs/signingSection"},
-        "llm": {"$ref": "#/$defs/llmSection"}
+        "money": {
+          "$ref": "#/$defs/moneySection"
+        },
+        "fx": {
+          "$ref": "#/$defs/fxSection"
+        },
+        "sanity": {
+          "$ref": "#/$defs/sanitySection"
+        },
+        "seller": {
+          "$ref": "#/$defs/sellerSection"
+        },
+        "finance": {
+          "$ref": "#/$defs/financeSection"
+        },
+        "neg": {
+          "$ref": "#/$defs/negSection"
+        },
+        "gate": {
+          "$ref": "#/$defs/gateSection"
+        },
+        "approval": {
+          "$ref": "#/$defs/approvalSection"
+        },
+        "signing": {
+          "$ref": "#/$defs/signingSection"
+        },
+        "llm": {
+          "$ref": "#/$defs/llmSection"
+        },
+        "landed": {
+          "$ref": "#/$defs/landedSection"
+        },
+        "constraints": {
+          "$ref": "#/$defs/constraintsSection"
+        },
+        "supervisor": {
+          "$ref": "#/$defs/supervisorSection"
+        }
       }
     }
   },
   "$defs": {
-    "scope": {"enum": ["global", "tenant", "category", "tenant_category"]},
+    "scope": {
+      "enum": [
+        "global",
+        "tenant",
+        "category",
+        "tenant_category"
+      ]
+    },
     "entry": {
       "type": "object",
-      "required": ["value", "scope"],
+      "required": [
+        "value",
+        "scope"
+      ],
       "additionalProperties": false,
       "properties": {
         "value": {},
-        "scope": {"$ref": "#/$defs/scope"},
-        "status": {"enum": ["unset"]},
-        "allowed": {"type": "array", "items": {"type": "string"}, "minItems": 1},
-        "non_configurable": {"type": "boolean"},
-        "pending": {"type": "string"}
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "status": {
+          "enum": [
+            "unset"
+          ]
+        },
+        "allowed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "non_configurable": {
+          "type": "boolean"
+        },
+        "pending": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
       }
     },
     "moneySection": {
-      "type": "object", "additionalProperties": false, "required": ["supported_currencies"],
-      "properties": {"supported_currencies": {"allOf": [{"$ref": "#/$defs/entry"}, {"properties": {"value": {"const": ["EUR", "USD", "CNY"]}, "non_configurable": {"const": true}}}]}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported_currencies"
+      ],
+      "properties": {
+        "supported_currencies": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/entry"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": [
+                    "EUR",
+                    "USD",
+                    "CNY"
+                  ]
+                },
+                "non_configurable": {
+                  "const": true
+                }
+              }
+            }
+          ]
+        }
+      }
     },
     "fxSection": {
-      "type": "object", "additionalProperties": false, "required": ["pivot", "max_age_hours"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pivot",
+        "max_age_hours"
+      ],
       "properties": {
-        "pivot": {"allOf": [{"$ref": "#/$defs/entry"}, {"properties": {"value": {"const": "EUR"}}}]},
-        "max_age_hours": {"$ref": "#/$defs/entry"}
+        "pivot": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/entry"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "EUR"
+                }
+              }
+            }
+          ]
+        },
+        "max_age_hours": {
+          "$ref": "#/$defs/entry"
+        }
       }
     },
     "sanitySection": {
-      "type": "object", "additionalProperties": false,
-      "required": ["min_sample", "z_ok", "z_gate", "low_side_factor", "max_relative_rise", "max_relative_drop", "floor_per_unit", "ceiling_per_unit", "on_insufficient_reference"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min_sample",
+        "z_ok",
+        "z_gate",
+        "low_side_factor",
+        "max_relative_rise",
+        "max_relative_drop",
+        "floor_per_unit",
+        "ceiling_per_unit",
+        "on_insufficient_reference",
+        "reference_weights"
+      ],
       "properties": {
-        "min_sample": {"$ref": "#/$defs/entry"},
-        "z_ok": {"$ref": "#/$defs/entry"},
-        "z_gate": {"$ref": "#/$defs/entry"},
-        "low_side_factor": {"$ref": "#/$defs/entry"},
-        "max_relative_rise": {"$ref": "#/$defs/entry"},
-        "max_relative_drop": {"$ref": "#/$defs/entry"},
-        "floor_per_unit": {"$ref": "#/$defs/entry"},
-        "ceiling_per_unit": {"$ref": "#/$defs/entry"},
-        "on_insufficient_reference": {"allOf": [{"$ref": "#/$defs/entry"}, {"properties": {"value": {"enum": ["gate", "negotiate"]}}}]}
+        "min_sample": {
+          "$ref": "#/$defs/entry"
+        },
+        "z_ok": {
+          "$ref": "#/$defs/entry"
+        },
+        "z_gate": {
+          "$ref": "#/$defs/entry"
+        },
+        "low_side_factor": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_relative_rise": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_relative_drop": {
+          "$ref": "#/$defs/entry"
+        },
+        "floor_per_unit": {
+          "$ref": "#/$defs/entry"
+        },
+        "ceiling_per_unit": {
+          "$ref": "#/$defs/entry"
+        },
+        "on_insufficient_reference": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/entry"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "gate"
+                }
+              }
+            }
+          ]
+        },
+        "reference_weights": {
+          "$ref": "#/$defs/entry"
+        }
       }
     },
     "sellerSection": {
-      "type": "object", "additionalProperties": false,
-      "required": ["weights", "rating_prior_weight", "age_saturation_days", "min_signals", "band_high", "band_medium", "band_low", "hard_block_below", "min_accepted_band", "review_burst_z", "max_dispute_rate", "snapshot_max_age_days", "escalate_cheap_low_confidence"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "weights",
+        "rating_prior_weight",
+        "age_saturation_days",
+        "min_signals",
+        "band_high",
+        "band_medium",
+        "band_low",
+        "hard_block_below",
+        "min_accepted_band",
+        "review_burst_z",
+        "max_dispute_rate",
+        "snapshot_max_age_days",
+        "escalate_cheap_low_confidence"
+      ],
       "properties": {
-        "weights": {"$ref": "#/$defs/entry"},
-        "rating_prior_weight": {"$ref": "#/$defs/entry"},
-        "age_saturation_days": {"$ref": "#/$defs/entry"},
-        "min_signals": {"$ref": "#/$defs/entry"},
-        "band_high": {"$ref": "#/$defs/entry"},
-        "band_medium": {"$ref": "#/$defs/entry"},
-        "band_low": {"$ref": "#/$defs/entry"},
-        "hard_block_below": {"$ref": "#/$defs/entry"},
-        "min_accepted_band": {"$ref": "#/$defs/entry"},
-        "review_burst_z": {"$ref": "#/$defs/entry"},
-        "max_dispute_rate": {"$ref": "#/$defs/entry"},
-        "snapshot_max_age_days": {"$ref": "#/$defs/entry"},
-        "escalate_cheap_low_confidence": {"$ref": "#/$defs/entry"}
+        "weights": {
+          "$ref": "#/$defs/entry"
+        },
+        "rating_prior_weight": {
+          "$ref": "#/$defs/entry"
+        },
+        "age_saturation_days": {
+          "$ref": "#/$defs/entry"
+        },
+        "min_signals": {
+          "$ref": "#/$defs/entry"
+        },
+        "band_high": {
+          "$ref": "#/$defs/entry"
+        },
+        "band_medium": {
+          "$ref": "#/$defs/entry"
+        },
+        "band_low": {
+          "$ref": "#/$defs/entry"
+        },
+        "hard_block_below": {
+          "$ref": "#/$defs/entry"
+        },
+        "min_accepted_band": {
+          "$ref": "#/$defs/entry"
+        },
+        "review_burst_z": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_dispute_rate": {
+          "$ref": "#/$defs/entry"
+        },
+        "snapshot_max_age_days": {
+          "$ref": "#/$defs/entry"
+        },
+        "escalate_cheap_low_confidence": {
+          "$ref": "#/$defs/entry"
+        }
       }
     },
     "financeSection": {
-      "type": "object", "additionalProperties": false, "required": ["safety_buffer_pct", "stale_after_days"],
-      "properties": {"safety_buffer_pct": {"$ref": "#/$defs/entry"}, "stale_after_days": {"$ref": "#/$defs/entry"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "safety_buffer_pct",
+        "stale_after_days",
+        "cost_of_capital_rate"
+      ],
+      "properties": {
+        "safety_buffer_pct": {
+          "$ref": "#/$defs/entry"
+        },
+        "stale_after_days": {
+          "$ref": "#/$defs/entry"
+        },
+        "cost_of_capital_rate": {
+          "$ref": "#/$defs/entry"
+        }
+      }
     },
     "negSection": {
-      "type": "object", "additionalProperties": false, "required": ["target_discount", "max_discount", "max_rounds"],
-      "properties": {"target_discount": {"$ref": "#/$defs/entry"}, "max_discount": {"$ref": "#/$defs/entry"}, "max_rounds": {"$ref": "#/$defs/entry"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_discount",
+        "max_discount",
+        "max_rounds",
+        "max_tokens_per_conversation",
+        "max_messages_per_hour_per_account",
+        "max_message_chars",
+        "allowed_counterparts"
+      ],
+      "properties": {
+        "target_discount": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_discount": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_rounds": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_tokens_per_conversation": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_messages_per_hour_per_account": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_message_chars": {
+          "$ref": "#/$defs/entry"
+        },
+        "allowed_counterparts": {
+          "$ref": "#/$defs/entry"
+        }
+      }
     },
     "gateSection": {
-      "type": "object", "additionalProperties": false, "required": ["sla_hours", "max_renegotiations"],
-      "properties": {"sla_hours": {"$ref": "#/$defs/entry"}, "max_renegotiations": {"$ref": "#/$defs/entry"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sla_hours",
+        "max_renegotiations"
+      ],
+      "properties": {
+        "sla_hours": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_renegotiations": {
+          "$ref": "#/$defs/entry"
+        }
+      }
     },
     "approvalSection": {
-      "type": "object", "additionalProperties": false, "required": ["threshold", "dual_control_above"],
-      "properties": {"threshold": {"$ref": "#/$defs/entry"}, "dual_control_above": {"$ref": "#/$defs/entry"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "threshold",
+        "dual_control_above"
+      ],
+      "properties": {
+        "threshold": {
+          "$ref": "#/$defs/entry"
+        },
+        "dual_control_above": {
+          "$ref": "#/$defs/entry"
+        }
+      }
     },
     "signingSection": {
-      "type": "object", "additionalProperties": false, "required": ["session_minutes", "max_decisions_per_session", "high_value_reauth_above"],
-      "properties": {"session_minutes": {"$ref": "#/$defs/entry"}, "max_decisions_per_session": {"$ref": "#/$defs/entry"}, "high_value_reauth_above": {"$ref": "#/$defs/entry"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_minutes",
+        "max_decisions_per_session",
+        "high_value_reauth_above"
+      ],
+      "properties": {
+        "session_minutes": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_decisions_per_session": {
+          "$ref": "#/$defs/entry"
+        },
+        "high_value_reauth_above": {
+          "$ref": "#/$defs/entry"
+        }
+      }
     },
     "llmSection": {
-      "type": "object", "additionalProperties": false, "required": ["roles"],
-      "properties": {"roles": {"$ref": "#/$defs/entry"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roles"
+      ],
+      "properties": {
+        "roles": {
+          "$ref": "#/$defs/entry"
+        }
+      }
+    },
+    "landedSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duty_rate",
+        "import_vat_rate"
+      ],
+      "properties": {
+        "duty_rate": {
+          "$ref": "#/$defs/entry"
+        },
+        "import_vat_rate": {
+          "$ref": "#/$defs/entry"
+        }
+      }
+    },
+    "constraintsSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "require_escrow"
+      ],
+      "properties": {
+        "require_escrow": {
+          "$ref": "#/$defs/entry"
+        }
+      }
+    },
+    "supervisorSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stuck_after_minutes",
+        "degrade_on_budget_exhausted"
+      ],
+      "properties": {
+        "stuck_after_minutes": {
+          "$ref": "#/$defs/entry"
+        },
+        "degrade_on_budget_exhausted": {
+          "$ref": "#/$defs/entry"
+        }
+      }
     }
   }
 }

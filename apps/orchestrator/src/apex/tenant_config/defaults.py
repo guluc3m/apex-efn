@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Final
 
 _META_KEYS: Final[frozenset[str]] = frozenset(
-    {"scope", "status", "allowed", "non_configurable", "pending"}
+    {"scope", "status", "allowed", "non_configurable", "pending", "note"}
 )
 
 DEFAULT_PATH: Final[Path] = (

@@ -25,10 +25,10 @@ def test_main_with_args_returns_zero_and_warns_no_db(caplog: pytest.LogCaptureFi
 
 
 def test_main_reads_env_when_no_args(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("APEX-EFN_TENANT_IDS", "a, b ,a")
+    monkeypatch.setenv("APEX_TENANT_IDS", "a, b ,a")
     assert load_defaults._tenant_ids([]) == ["a", "b"]
 
 
 def test_main_without_tenants_is_usage_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("APEX-EFN_TENANT_IDS", raising=False)
+    monkeypatch.delenv("APEX_TENANT_IDS", raising=False)
     assert load_defaults.main([]) == 2

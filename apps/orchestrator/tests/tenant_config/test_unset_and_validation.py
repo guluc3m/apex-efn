@@ -25,7 +25,6 @@ from apex.tenant_config.service import TenantConfigService
         "approval.dual_control_above",
         "signing.high_value_reauth_above",
         "seller.weights",
-        "llm.roles",
     ],
 )
 async def test_unset_keys_are_marked_unset_and_raise_loudly(
@@ -73,7 +72,7 @@ async def test_z_ok_must_be_below_z_gate(
 ) -> None:
     with pytest.raises(ConfigValidationError):
         await seeded_service.propose_change(
-            "tenant-a", {"sanity": {"z_ok": 7.0}}, base_config_version=1
+            "tenant-a", {"sanity": {"z_ok": "7.0"}}, base_config_version=1
         )
 
 

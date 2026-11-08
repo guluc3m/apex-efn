@@ -48,6 +48,8 @@ class EffectiveConfig:
     content_hash: str
     resolved_at: datetime
     values: Mapping[str, ResolvedValue] = field(default_factory=dict)
+    typed: Any = None
+    """The validated ``TenantConfig`` (``Decimal`` rates, ``Money``) for engines. ``values`` stays JSON."""
 
     def get(self, path: str) -> ResolvedValue:
         """Dotted-path lookup. Missing paths are a programming error, not an unset value."""
@@ -106,6 +108,24 @@ def _copy(value: Any) -> Any:
     return value
 
 
+class FloatInConfigError(TypeError):
+    """A float reached the config layer. Rates and money are decimal strings or integers (ADR-900)."""
+
+
+def assert_no_floats(value: Any, path: str = "") -> None:
+    """Raise if any float hides in a config tree. ``json.dumps`` serializes floats silently, so check first."""
+    if isinstance(value, float):
+        raise FloatInConfigError(
+            f"float at '{path or '<root>'}': use a decimal string or an integer"
+        )
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            assert_no_floats(item, f"{path}.{key}" if path else str(key))
+    elif isinstance(value, list | tuple):
+        for index, item in enumerate(value):
+            assert_no_floats(item, f"{path}[{index}]")
+
+
 def canonical_json(data: Any) -> bytes:
     """Canonical JSON bytes for hashing.
 
@@ -113,6 +133,7 @@ def canonical_json(data: Any) -> bytes:
     RFC 8785 JCS (D2-06); once ``apex.signing.jcs`` exists it must be replaced by that implementation
     and the hash test vectors regenerated.
     """
+    assert_no_floats(data)
     return json.dumps(
         data,
         sort_keys=True,

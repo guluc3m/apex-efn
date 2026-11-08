@@ -26,8 +26,10 @@ from apex.tenant_config.ports import (
 )
 from apex.tenant_config.resolver import (
     EffectiveConfig,
+    FloatInConfigError,
     Layer,
     ResolvedValue,
+    assert_no_floats,
     content_hash,
     deep_merge,
     flatten,
@@ -92,7 +94,7 @@ class TenantConfigService:
         effective_plain = deep_merge(after_tenant, category_patch)
 
         # Validate the fully merged result. Unset keys (None) are allowed; wrong types/ranges are not.
-        _validate_merged(effective_plain)
+        typed = _validate_merged(effective_plain)
 
         effective_flat = flatten(effective_plain)
         tenant_flat = flatten(tenant_only)
@@ -122,6 +124,7 @@ class TenantConfigService:
             content_hash=digest,
             resolved_at=self._clock.now(),
             values=values,
+            typed=typed,
         )
 
     async def verify_version(self, tenant_id: str, config_version: int) -> None:
@@ -138,6 +141,10 @@ class TenantConfigService:
     # ------------------------------------------------------------------ changes
 
     def _validate_patch(self, patch: dict[str, Any], category: str | None = None) -> None:
+        try:
+            assert_no_floats(patch)
+        except FloatInConfigError as exc:
+            raise ConfigValidationError(str(exc)) from exc
         _require_shape_consistent(self._global, patch)
         for path in flatten(patch):
             if path in NON_CONFIGURABLE_PATHS:
@@ -274,14 +281,14 @@ def _apply_patch(
     return deep_merge(current, {CATEGORY_KEY: {category: updated_cat}})
 
 
-def _validate_merged(merged: dict[str, Any]) -> None:
+def _validate_merged(merged: dict[str, Any]) -> TenantConfig:
     """Validate a fully merged plain mapping against the typed model.
 
     A ``None`` for a required non-optional field is a validation error, which is the correct "unset is
     loud" behaviour for keys that must never be null in the typed model.
     """
     try:
-        TenantConfig.from_mapping(_model_shape(merged))
+        return TenantConfig.from_mapping(_model_shape(merged))
     except ValidationError as exc:
         raise ConfigValidationError(str(exc)) from exc
 
