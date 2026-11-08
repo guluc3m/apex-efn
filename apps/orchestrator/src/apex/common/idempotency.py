@@ -70,7 +70,7 @@ class IdempotencyStore(Protocol):
     ) -> IdempotencyRecord | None: ...
 
     async def complete(
-        self, scope_key: str, response: StoredResponse, ttl_seconds: int
+        self, scope_key: str, request_hash: str, response: StoredResponse, ttl_seconds: int
     ) -> None: ...
 
     async def release(self, scope_key: str) -> None: ...
@@ -127,11 +127,13 @@ class InMemoryIdempotencyStore:
         self._records[scope_key] = IdempotencyRecord(request_hash=request_hash)
         return None
 
-    async def complete(self, scope_key: str, response: StoredResponse, ttl_seconds: int) -> None:
+    async def complete(
+        self, scope_key: str, request_hash: str, response: StoredResponse, ttl_seconds: int
+    ) -> None:
         del ttl_seconds
-        record = self._records[scope_key]
-        record.in_flight = False
-        record.response = response
+        self._records[scope_key] = IdempotencyRecord(
+            request_hash=request_hash, in_flight=False, response=response
+        )
 
     async def release(self, scope_key: str) -> None:
         self._records.pop(scope_key, None)
@@ -164,12 +166,12 @@ class RedisIdempotencyStore:
             return IdempotencyRecord(request_hash=request_hash, in_flight=True)
         return _deserialize_record(raw)
 
-    async def complete(self, scope_key: str, response: StoredResponse, ttl_seconds: int) -> None:
-        record = IdempotencyRecord(
-            request_hash=(await self._get_record(scope_key)).request_hash,
-            in_flight=False,
-            response=response,
-        )
+    async def complete(
+        self, scope_key: str, request_hash: str, response: StoredResponse, ttl_seconds: int
+    ) -> None:
+        # The request hash is passed in rather than re-read: the in-flight marker may have expired
+        # while the request ran, and the response has already been sent to the client by then.
+        record = IdempotencyRecord(request_hash=request_hash, in_flight=False, response=response)
         await self._redis.set(self._key(scope_key), _serialize_record(record), ex=ttl_seconds)
 
     async def release(self, scope_key: str) -> None:
@@ -178,12 +180,6 @@ class RedisIdempotencyStore:
     async def get(self, scope_key: str) -> IdempotencyRecord | None:
         raw = await self._redis.get(self._key(scope_key))
         return None if raw is None else _deserialize_record(raw)
-
-    async def _get_record(self, scope_key: str) -> IdempotencyRecord:
-        record = await self.get(scope_key)
-        if record is None:
-            raise KeyError(scope_key)
-        return record
 
 
 def _hash_request(method: str, path: str, query: bytes, body: bytes) -> str:
@@ -286,7 +282,7 @@ class IdempotencyMiddleware:
             await _replay(send, existing.response)
             return
 
-        await self._run_and_store(scope, receive, send, body, scope_key)
+        await self._run_and_store(scope, receive, send, body, scope_key, request_hash)
 
     async def _run_and_store(
         self,
@@ -295,6 +291,7 @@ class IdempotencyMiddleware:
         send: Send,
         body: bytes,
         scope_key: str,
+        request_hash: str,
     ) -> None:
         captured: dict[str, Any] = {"status": 500, "headers": [], "body": b""}
         replayed = False
@@ -329,7 +326,7 @@ class IdempotencyMiddleware:
             headers=[(k.decode("latin-1"), v.decode("latin-1")) for k, v in captured["headers"]],
             body_b64=base64.b64encode(captured["body"]).decode("ascii"),
         )
-        await self.store.complete(scope_key, stored, self.ttl_seconds)
+        await self.store.complete(scope_key, request_hash, stored, self.ttl_seconds)
 
 
 def _scope_key(principal: str, method: str, path: str, key: str) -> str:
