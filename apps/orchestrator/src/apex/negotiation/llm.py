@@ -11,10 +11,12 @@ Prompts live here, versioned, until DEV-4's prompt registry (D4-05) is on main; 
 
 from __future__ import annotations
 
+import hashlib
 from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from apex.llm.budget import estimate_prompt_tokens
 from apex.llm.config import LLMRole
 from apex.llm.gateway import ChatResult
 from apex.negotiation.models import Intent, NegotiationSession, Plan
@@ -112,6 +114,11 @@ def draft_messages(
     ]
 
 
+def session_seed(negotiation_id: str) -> int:
+    """Stable per-negotiation seed, so endpoints that honour ``seed`` can replay a transcript."""
+    return int.from_bytes(hashlib.sha256(negotiation_id.encode()).digest()[:4], "big")
+
+
 def _to_minor(value: str) -> int | None:
     cleaned = value.strip().replace(",", ".")
     if cleaned.count(".") > 1 or not cleaned.replace(".", "", 1).isdigit():
@@ -136,6 +143,8 @@ class LLMDrafter:
             mission_id=self._mission_id,
             tenant_id=session.tenant_id,
             prompt_version=DRAFT_PROMPT_VERSION,
+            temperature=0.0,
+            seed=session_seed(session.id),
             max_tokens=200,
         )
         return Draft(text=result.content.strip(), tokens=result.tokens_in + result.tokens_out)
@@ -164,8 +173,13 @@ class LLMExtractor:
             mission_id=self._mission_id,
             tenant_id=session.tenant_id,
             prompt_version=EXTRACT_PROMPT_VERSION,
+            temperature=0.0,
+            seed=session_seed(session.id),
         )
         minor = _to_minor(out.unit_price) if out.unit_price else None
         currency = (out.currency or "").strip().upper() or None
-        # Token usage of structured calls is accounted by the gateway (LLMEvent, mission budget).
-        return Extraction(unit_price_minor=minor, currency=currency, tokens=0)
+        # chat_structured does not report usage; count the prompt estimate against the conversation cap
+        # (the gateway still accounts the real usage against the mission budget).
+        return Extraction(
+            unit_price_minor=minor, currency=currency, tokens=estimate_prompt_tokens(messages)
+        )

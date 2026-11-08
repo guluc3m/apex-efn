@@ -265,7 +265,7 @@ async def test_extract_converts_price_to_minor_units(
 
     assert result.unit_price_minor == expected_minor
     assert result.currency == expected_currency
-    assert result.tokens == 0
+    assert result.tokens > 0  # prompt estimate counted against the conversation cap
 
 
 @pytest.mark.parametrize(
@@ -285,7 +285,7 @@ async def test_extract_returns_no_price_for_unusable_value(unit_price: str | Non
 
     assert result.unit_price_minor is None
     assert result.currency == "EUR"
-    assert result.tokens == 0
+    assert result.tokens > 0  # prompt estimate counted against the conversation cap
 
 
 async def test_extract_null_currency_stays_null() -> None:

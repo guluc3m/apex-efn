@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from apex.negotiation.engine import NegotiationEngine, OpenRequest
 from apex.negotiation.models import NegotiationOutcome, NegotiationParams, NegotiationSession
+from apex.negotiation.ports import NegotiationStore
 
 
 class OfferInput(BaseModel):
@@ -61,17 +62,24 @@ def to_result(session: NegotiationSession) -> NegotiationResult:
 
 
 class EngineNegotiationPort:
-    def __init__(self, engine: NegotiationEngine, resolve: ParamsResolver) -> None:
+    """Stateless adapter: the store maps the idempotency key to the negotiation, so a restart is safe."""
+
+    def __init__(
+        self, engine: NegotiationEngine, store: NegotiationStore, resolve: ParamsResolver
+    ) -> None:
         self._engine = engine
+        self._store = store
         self._resolve = resolve
-        self._ids: dict[str, str] = {}
 
     async def negotiate(
         self, offer: Mapping[str, Any], *, tenant_id: str, idempotency_key: str
     ) -> NegotiationResult:
-        known = self._ids.get(idempotency_key)
-        if known is not None:
-            return to_result(await self._engine.advance(known))
+        existing = await self._store.find_by_key(idempotency_key)
+        started = existing is not None and (
+            existing.rounds_sent > 0 or existing.pending is not None or existing.terminal
+        )
+        if existing is not None and started and existing.tenant_id == tenant_id:
+            return to_result(await self._engine.advance(existing.id, tenant_id=tenant_id))
         data = OfferInput.model_validate(dict(offer))
         params, config_version, account_id = await self._resolve(data, tenant_id)
         session = await self._engine.start(
@@ -86,5 +94,4 @@ class EngineNegotiationPort:
             ),
             idempotency_key=idempotency_key,
         )
-        self._ids[idempotency_key] = session.id
         return to_result(session)
