@@ -406,7 +406,10 @@ contribución de cada criterio al score.
 - `renegotiate` — pedir una ronda más con instrucciones libres, respetando `gate.max_renegotiations`.
 - `takeover` — asumir el control del chat y cerrar a mano.
 - `hold` — aparcar con fecha de revisión.
-- `discard` — descartar con motivo obligatorio (código cerrado + comentario).
+- `discard` — descartar con motivo obligatorio (código cerrado + comentario). Códigos: `price_too_high`,
+  `seller_not_trusted`, `spec_mismatch`, `lead_time`, `out_of_budget`, `duplicate`, `other`.
+- `unblock` — dejar que siga adelante una oferta retenida en la cola de gate.
+- `override_discard` — revertir un descarte (3.4.4). Solo `finance`, `admin` y `owner`, con reautenticación inmediata.
 
 **Cola de gate:** agrupa todo lo que requiere humano — precio en banda `atypical` o
 `insufficient_reference`, **vendedor en banda `low` o `insufficient_data`**, `out_of_budget`, `stretch` por
@@ -637,8 +640,8 @@ responsable que la toma, y es verificable de forma independiente.
   Ed25519 custodiada en KMS, de modo que el origen (humano frente a agente) es demostrable.
 
 ### 5.10.2 Qué se firma y cómo
-- Decisiones de gate (`follow`, `renegotiate`, `takeover`, `hold`, `discard`), aprobación de compra,
-  activación de snapshot financiero, override de descarte, cambio de umbrales de cordura de precio, cambio
+- Decisiones de gate (`follow`, `renegotiate`, `takeover`, `hold`, `discard`, `unblock`, `override_discard`), aprobación de compra,
+  activación de snapshot financiero, cambio de umbrales de cordura de precio, cambio
   de pesos del modelo de confianza, cambio de pesos de scoring y toda transición de estado automática
   relevante del grafo.
 - **Payload canónico JSON (RFC 8785 JCS)**, y `payload_hash = SHA-256(bytes)`.
@@ -683,6 +686,7 @@ sesión viva, clave no revocada y dispositivo coincidente antes de aceptar.
 - Activación o sustitución del snapshot financiero.
 - Cambio de umbrales de precio, pesos de confianza o pesos de scoring.
 - Rotación o revocación de claves, y cambios de política de firma.
+- Anulación de un descarte (`override_discard`).
 
 **Invalidación de la sesión** por: caducidad, cierre de sesión de usuario, revocación o rotación de la
 clave, cambio de dispositivo o de huella, salto anómalo de red (ASN o país distinto del habitual), alcance
@@ -813,6 +817,7 @@ POST   /v1/sellers/{id}/confidence/recompute          # recálculo forzado (audi
 GET    /v1/dashboard/deals                            # tratos finales (filtros por estado, bandas)
 POST   /v1/dashboard/deals/{id}/actions               # follow | hold | discard | renegotiate | takeover
 GET    /v1/gate/queue                                 # cola de gate humano con SLA
+POST   /v1/gate/queue/{id}/actions                    # unblock | override_discard
 POST   /v1/negotiations/{id}/takeover
 POST   /v1/negotiations/{id}/resume
 POST   /v1/negotiations/{id}/abort
