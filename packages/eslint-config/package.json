@@ -6,6 +6,17 @@
   "files": [
     "*.js"
   ],
+  "exports": {
+    "./base": "./base.js",
+    "./base.js": "./base.js",
+    "./library": "./library.js",
+    "./library.js": "./library.js",
+    "./nextjs": "./nextjs.js",
+    "./nextjs.js": "./nextjs.js"
+  },
+  "dependencies": {
+    "globals": "^14.0.0"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@eslint/js": "^9",

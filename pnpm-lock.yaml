@@ -196,6 +196,10 @@ importers:
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.5)(lightningcss@1.33.0)
 
   packages/eslint-config:
+    dependencies:
+      globals:
+        specifier: ^14.0.0
+        version: 14.0.0
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3
