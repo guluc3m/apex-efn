@@ -56,6 +56,9 @@ IMPLEMENTED_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/v1/gate/queue/{id}/actions"),
         ("GET", "/v1/dashboard/deals"),
         ("POST", "/v1/dashboard/deals/{id}/actions"),
+        ("POST", "/v1/onboarding/sessions"),
+        ("POST", "/v1/onboarding/{id}/financial-csv"),
+        ("POST", "/v1/onboarding/{id}/financial-csv/activate"),
     }
 )
 

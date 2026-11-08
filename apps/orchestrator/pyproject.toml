@@ -5,6 +5,7 @@ description = "APEX-EFN Agent Orchestrator - FastAPI + LangGraph"
 requires-python = ">=3.12"
 dependencies = [
     "jinja2>=3.1.4",
+    "python-multipart>=0.0.20",
     "pyyaml>=6.0.2",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
