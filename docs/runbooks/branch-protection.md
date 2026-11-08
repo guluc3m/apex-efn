@@ -13,7 +13,9 @@ These facts were checked against the GitHub API on the repository itself:
 3. CODEOWNERS is only **enforced** (review required, reviews auto-requested) on private repositories with GitHub Pro, Team or Enterprise, or on public repositories. The file `.github/CODEOWNERS` is in place, but on this plan it does not request reviews or block merges.
 4. GitHub Actions is **disabled for this repository by organisation policy**: the organisation allows Actions only for "selected repositories", and this repository is not selected. The CI jobs in `.github/workflows/ci.yml` do not run, so no required status check can report a result. An organisation admin can fix this under **Organisation Settings → Actions → General → Policies** by adding this repository to the selected list. On the free plan, runs for private repositories consume the organisation's shared Actions minutes.
 
-Consequence: until one of the options below is chosen, the rules in this file are enforced **by convention** only. Every author must still get one approval from another lane, and the Tech Lead must merge `needs-tech-lead` PRs.
+Consequence: until one of the options below is chosen, the rules in this file are enforced **by convention** only. The merge gate for every PR is the full local CI (`pnpm ci:local`, see `docs/runbooks/local-ci.md`) and, once Actions is enabled, the `CI OK` check. The Tech Lead merges `needs-tech-lead` PRs and approves the phase gates.
+
+Decision of the human owner: **a PR does not need an approval from another person.** The merge gate is the passing CI, not a review.
 
 ## Options
 
@@ -30,12 +32,13 @@ Option C is available now. Options A and B are needed for real enforcement.
 Apply these once option A or B is in place. Use a branch ruleset (Settings → Rules → Rulesets) or classic branch protection, whichever the plan offers.
 
 - Require a pull request before merging.
-  - Required approving reviews: **1**.
-  - Require review from Code Owners: **on**. This applies the `.github/CODEOWNERS` file.
-  - Dismiss stale pull request approvals when new commits are pushed: **on**.
-  - Require approval of the most recent reviewable push: **on**, if the plan offers it.
+  - Required approving reviews: **0**. A PR is mergeable when the full CI passes (see below). The Tech Lead's
+    merge of `needs-tech-lead` PRs and the phase gates stay as conventions, because a ruleset cannot express them.
+  - Require review from Code Owners: **off**. `.github/CODEOWNERS` still requests reviews automatically, for
+    visibility across lanes, but a review is not a merge requirement.
 - Require status checks to pass before merging, and require branches to be up to date before merging.
   - Required status check: **`CI OK`**, the single aggregate job. See "Required checks" below for the full list and the reasons.
+  - The same gates run locally with `pnpm ci:local`. Run it before you open or merge a PR.
 - Require linear history: **on** (squash merges only produce linear history).
 - Block force pushes: **on**.
 - Block deletion of `main`: **on**.
@@ -48,19 +51,23 @@ Job names come from `.github/workflows/ci.yml`. Check names in a ruleset must ma
 **Recommended: require only `CI OK`.** It is an aggregate job that needs every gate and fails if any of them
 failed or was cancelled. Adding a gate later means editing one `needs:` list in the workflow, not the ruleset.
 
-| Job name (check name)         | Required?                   | Notes                                                                                               |
-| ----------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| `CI OK`                       | **Yes (recommended)**       | Aggregate. Passes only if every needed job succeeded or was skipped.                                |
-| `TypeScript`                  | Only if listed individually | Build, lint, typecheck, test (affected packages on PRs, all on `main`), plus the 80% coverage gate. |
-| `Python`                      | Only if listed individually | `ruff`, `mypy`, unit tests, 80% coverage gate for the modules that exist.                           |
-| `Integration tests`           | Only if listed individually | Testcontainers, runs `pytest -m integration`.                                                       |
-| `Secret scan`                 | Only if listed individually | TruffleHog, verified secrets only, pinned to `v3.99.8`.                                             |
-| `LLM Portability Check`       | Only if listed individually | Criterion 25. Deny-list grep, self-tested with `--self-test`.                                       |
-| `Contracts drift`             | Only if listed individually | Skips until `contracts:check` exists (D2-01).                                                       |
-| `Migration drift`             | Only if listed individually | Skips until `apps/web/prisma/migrations` exists (D2-03).                                            |
-| `E2E (Playwright)`            | Only if listed individually | Skips until e2e specs exist (D6-08).                                                                |
-| `Dependency audit (advisory)` | **No**                      | Non-blocking. See "Current audit findings".                                                         |
-| `Detect changes`              | No                          | Helper job for path filters. Its result is part of `CI OK`.                                         |
+| Job name (check name)         | Required?                   | Notes                                                                                              |
+| ----------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------- |
+| `CI OK`                       | **Yes (recommended)**       | Aggregate. Passes only if every needed job succeeded or was skipped.                               |
+| `Workflow lint`               | Only if listed individually | actionlint on `.github/workflows`, shellcheck on `.github/scripts`. Always runs.                   |
+| `TypeScript`                  | Only if listed individually | Build, lint, typecheck, test (affected packages on PRs, all on `main`), plus the coverage ratchet. |
+| `Python`                      | Only if listed individually | `ruff`, `mypy`, unit tests, 80% coverage gate for the modules that exist.                          |
+| `Integration tests`           | Only if listed individually | Testcontainers, runs `pytest -m integration`.                                                      |
+| `Secret scan`                 | Only if listed individually | TruffleHog, verified secrets only, pinned to `3.99.8`.                                             |
+| `LLM Portability Check`       | Only if listed individually | Criterion 25. Deny-list grep, self-tested with `--self-test`.                                      |
+| `Contracts drift`             | Only if listed individually | Skips until `contracts:check` exists (D2-01).                                                      |
+| `Migration drift`             | Only if listed individually | Skips until `apps/web/prisma/migrations` exists (D2-03).                                           |
+| `E2E (Playwright)`            | Only if listed individually | Skips until e2e specs exist (D6-08).                                                               |
+| `Dependency audit (advisory)` | **No**                      | Non-blocking. See "Current audit findings".                                                        |
+| `Detect changes`              | No                          | Helper job for path filters. Its result is part of `CI OK`.                                        |
+
+Every job calls a script in `.github/scripts/ci/`. The same script runs locally in `pnpm ci:local`, so a
+local pass and a CI pass mean the same thing. See `docs/runbooks/local-ci.md`.
 
 ### Why skipped jobs do not block
 
@@ -74,7 +81,8 @@ GitHub counts a **skipped** job as passing for a required check. Two mechanisms 
 | Gate                | Runs when                                                                                                            | Skips with `SKIP:` until                                                                                                                                   |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | TypeScript          | `packages/**`, `apps/web/**`, `apps/browser-worker/**`, `apps/mock-marketplace/**`, root manifests; always on `main` | Never skips. Turbo runs only affected packages on PRs.                                                                                                     |
-| TypeScript coverage | Inside `TypeScript`                                                                                                  | No target to wait for. Fails under 80% for `money`, `scoring`, `crypto-client` (see "Current gate status").                                                |
+| TypeScript coverage | Inside `TypeScript`                                                                                                  | Ratchet against `.github/coverage-baseline.json` (see "Current gate status"). A package graduates to the hard 80% gate once all four metrics reach 80%.    |
+| Workflow lint       | Always                                                                                                               | Never skips.                                                                                                                                               |
 | Python              | `apps/orchestrator/**`, `apps/llm-stub/**`; always on `main`                                                         | No target to wait for.                                                                                                                                     |
 | Python coverage     | Inside `Python`                                                                                                      | Skips per target until a non-`__init__.py` module exists in `src/apex/domain/`, `src/apex/signing/` or `src/apex/negotiation/guardrails*.py` (D3, D2, D5). |
 | Integration tests   | Python paths; always on `main`                                                                                       | No test contains `mark.integration` in `apps/orchestrator/tests`.                                                                                          |
@@ -89,10 +97,18 @@ GitHub counts a **skipped** job as passing for a required check. Two mechanisms 
 
 Measured locally on the D1-04 branch. These are the facts a human needs before enabling enforcement.
 
-- **TypeScript coverage is red today** (80% gate). Lines/statements: `@apex/money` 71.73%, `@apex/scoring`
-  69.12%, `@apex/crypto-client` 30.99%. Branches are above 80% in all three. The packages belong to DEV-3
-  (money, scoring) and DEV-2 (crypto-client). The gate was not lowered and no tests were added to those packages.
-  Excluding the `index.ts` barrel files does not change the result.
+- **TypeScript coverage is a ratchet, not the 80% gate yet.** The values in `.github/coverage-baseline.json`
+  are the measured values, rounded down to 2 decimals: `@apex/money` lines/statements 71.73%, branches 84.44%,
+  functions 48.57%; `@apex/scoring` 69.12%, 81.98%, 75.75%; `@apex/crypto-client` 30.99%, 93.33%, 27.77%.
+  The packages belong to DEV-3 (money, scoring) and DEV-2 (crypto-client). Rules, enforced by
+  `.github/scripts/ci/ts-coverage.mjs`:
+  - A metric may not drop more than 0.01 below its baseline.
+  - Baselines only go up. The check fails if the working copy has a value below `origin/main`'s, or if an entry
+    that main has is removed while its package is below 80%.
+  - A package with all four metrics at 80% or more, or with no baseline entry, is held to the hard 80% gate.
+  - Raise a baseline after tests are added: `node .github/scripts/ci/ts-coverage.mjs --update-baseline`. It writes
+    the maximum of the working copy, main and the measured value, so it never lowers a value. Without the flag, the
+    output prints a `hint:` line for each value that can be raised.
 - **Dependency audit** is advisory until the findings below are fixed.
 
 ## Current audit findings
@@ -125,9 +141,9 @@ pip-audit does not report severity. Check the severity of `python-jose` in the a
 impact is high for JWT validation: **consider replacing `python-jose` with PyJWT** (pyproject is DEV-4's file,
 auth is DEV-1's D1-05).
 
-When a finding is fixed, remove it from this list. When the list is empty, make the two audit steps blocking by
-removing `continue-on-error: true` from `.github/workflows/ci.yml` (the `dependency-audit` job) and add
-`Dependency audit (advisory)` to the required list.
+When a finding is fixed, remove it from this list. When the list is empty, make the audit blocking: set
+`AUDIT_MODE: blocking` in the `env` of the `dependency-audit` job's step in `.github/workflows/ci.yml` (the script
+reads it), run `pnpm ci:local --job dependency-audit`, and add `Dependency audit (advisory)` to the required list.
 
 ## Repository merge settings (available on the free plan)
 
@@ -153,8 +169,8 @@ Verify afterwards with the API (`GET /repos/<owner>/<repo>`): `allow_merge_commi
 6. Under **Bypass list**, leave it empty unless the Tech Lead decides otherwise.
 7. Click **Create**.
 8. Open a test PR from a throwaway branch and confirm:
-   - the CODEOWNERS reviewers are requested automatically,
-   - merging is blocked until the required checks pass and one approval exists,
+   - the CODEOWNERS reviewers are requested automatically (visibility only, no approval is needed),
+   - merging is blocked until the required checks pass,
    - only squash merge is offered.
 9. Close the test PR and delete its branch.
 
