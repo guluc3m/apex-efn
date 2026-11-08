@@ -167,10 +167,65 @@ async def stream_mission_events(
     )
 
 
-@router.get("/{id}/offers")
-async def list_mission_offers(id: str) -> None:
-    """Offers with SellerConfidence, PriceSanityCheck and FinancialFit (D4-10)."""
-    raise not_implemented("offers per mission arrive with D4-10")
+class OfferOut(BaseModel):
+    id: str
+    platform_id: str
+    seller_id: str
+    product_id: str
+    unit_price_eur_minor: int
+    currency: str
+    quantity: int
+    collected_at: str
+    seller_confidence: dict[str, Any] | None
+    price_sanity: dict[str, Any] | None
+    financial_fit: dict[str, Any] | None
+
+
+class MissionOffersOut(BaseModel):
+    mission_id: str
+    offers: list[OfferOut]
+
+
+def get_analysis_nodes() -> Any:
+    from apex.api.sellers import get_analysis_nodes as _get
+
+    return _get()
+
+
+@router.get("/{id}/offers", response_model=MissionOffersOut, tags=["missions"])
+async def list_mission_offers(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    nodes: Annotated[Any, Depends(get_analysis_nodes)],
+) -> MissionOffersOut:
+    """Offers with their seller confidence, price sanity check and financial fit (D4-10)."""
+    try:
+        await service.get_mission(tenant_id=tenant_id, mission_id=id)
+    except MissionMissing as exc:
+        raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
+    pairs = await nodes.mission_offers(tenant_id=tenant_id, mission_id=id)
+    return MissionOffersOut(
+        mission_id=id,
+        offers=[
+            OfferOut(
+                id=offer.id,
+                platform_id=offer.platform_id,
+                seller_id=offer.seller_id,
+                product_id=offer.product_id,
+                unit_price_eur_minor=offer.unit_price_eur_minor,
+                currency=offer.currency,
+                quantity=offer.quantity,
+                collected_at=offer.collected_at.isoformat(),
+                seller_confidence=(
+                    analysis.confidence.model_dump(mode="json") if analysis else None
+                ),
+                price_sanity=analysis.sanity.model_dump(mode="json") if analysis else None,
+                financial_fit=analysis.fit.model_dump(mode="json") if analysis else None,
+            )
+            for offer, analysis in pairs
+        ],
+    )
 
 
 @router.get("/{id}/recommendation")
