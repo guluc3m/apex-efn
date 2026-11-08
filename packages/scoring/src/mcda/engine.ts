@@ -78,7 +78,7 @@ export class MCDAEngine {
     }
 
     // Validate weights sum to approximately 1
-    const weightSum = Object.values(this.config.weights).reduce((a, b) => a + b, 0)
+    const weightSum = (Object.values(this.config.weights) as number[]).reduce((a, b) => a + b, 0)
     if (Math.abs(weightSum - 1) > 0.001) {
       throw new Error(`Weights must sum to 1, got ${weightSum}`)
     }

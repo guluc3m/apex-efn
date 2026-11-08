@@ -6,9 +6,7 @@ const withNextIntl = createNextIntlPlugin()
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@trato/ui', '@trato/shared-types', '@trato/money', '@trato/scoring', '@trato/crypto-client'],
-  experimental: {
-    typedRoutes: true,
-  },
+  typedRoutes: true,
 }
 
 export default withNextIntl(nextConfig)

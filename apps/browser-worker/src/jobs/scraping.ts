@@ -16,6 +16,7 @@ export interface ScrapingJobResult {
   sellerSignals: Record<string, unknown>
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await -- stub hasta implementar el job
 export async function processScrapingJob(job: Job<ScrapingJobData>): Promise<ScrapingJobResult> {
   const { platform, query, missionId } = job.data
 

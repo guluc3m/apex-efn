@@ -30,6 +30,7 @@ export interface NegotiationJobResult {
   outcome: 'success' | 'no_response' | 'rejected' | 'escalated'
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await -- stub hasta implementar el job
 export async function processNegotiationJob(
   job: Job<NegotiationJobData>
 ): Promise<NegotiationJobResult> {

@@ -64,3 +64,6 @@ prisma/generated
 # Temporary
 tmp
 .tmp
+
+next-env.d.ts
+*.tsbuildinfo

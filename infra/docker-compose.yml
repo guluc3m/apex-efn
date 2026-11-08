@@ -15,6 +15,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U trato"]
       interval: 10s
@@ -69,7 +70,7 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/trato
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: trato
       KC_DB_PASSWORD: trato
     ports:
@@ -85,7 +86,7 @@ services:
     image: langfuse/langfuse:2
     container_name: trato-langfuse
     environment:
-      DATABASE_URL: postgresql://trato:trato@postgres:5432/trato
+      DATABASE_URL: postgresql://trato:trato@postgres:5432/langfuse
       NEXTAUTH_SECRET: langfuse-secret-change-me
       NEXTAUTH_URL: http://localhost:3001
       SALT: langfuse-salt-change-me

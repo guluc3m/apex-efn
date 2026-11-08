@@ -1,0 +1,22 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/apps/orchestrator/.venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/apps/orchestrator/src"
+  ],
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.experimental.configFile": "apps/web/src/styles/globals.css",
+  "jest.enable": false,
+  "search.exclude": {
+    "**/dist": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/.venv": true
+  },
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ]
+}

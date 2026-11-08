@@ -6,25 +6,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "@tanstack/react-query": "^5.62.0",
+    "@tanstack/react-table": "^8.20.0",
     "@trato/crypto-client": "workspace:*",
     "@trato/money": "workspace:*",
     "@trato/scoring": "workspace:*",
     "@trato/shared-types": "workspace:*",
     "@trato/ui": "workspace:*",
-    "@prisma/client": "^6.1.0",
-    "@tanstack/react-query": "^5.62.0",
-    "@tanstack/react-table": "^8.20.0",
     "next": "^15.1.0",
     "next-intl": "^3.25.0",
     "react": "^19.0.0",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
+    "@tailwindcss/postcss": "^4",
     "@trato/eslint-config": "workspace:*",
     "@trato/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",
@@ -46,6 +48,6 @@
     "prisma": "^6.1.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "vitest": "^3.2.6"
   }
 }

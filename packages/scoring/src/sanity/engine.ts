@@ -26,6 +26,8 @@ const DEFAULT_CONFIG: PriceSanityEngineConfig = {
   configVersion: '1.0.0',
 }
 
+const HARD_MAX_RELATIVE_DROP = 0.6
+
 /**
  * Price sanity checking engine.
  * Implements section 3.3 of the spec.
@@ -77,17 +79,19 @@ export class PriceSanityEngine {
     // Calculate robust statistics
     const stats = robustStatistics(referencePrices)
     const relDev = relativeDeviation(priceEur, stats.median)
-    const indexScore = modifiedZScore(priceEur, stats.median, stats.mad)
+    // dispersionValue is MAD, or IQR when MAD is 0, or 0 (no index) when both are
+    const indexScore = modifiedZScore(priceEur, stats.median, stats.dispersionValue)
+    const sampleSize = referencePrices.length
 
     // Check absolute bounds first (they override statistical bands)
     if (this.config.floorPerUnit !== undefined && priceEur < this.config.floorPerUnit) {
-      return this.buildResult(offerId, priceEur, stats, indexScore, relDev, 'implausible', 'discard', [
+      return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, 'implausible', 'discard', [
         { code: 'none', detail: `Below absolute floor ${this.config.floorPerUnit}` },
       ])
     }
 
     if (this.config.ceilingPerUnit !== undefined && priceEur > this.config.ceilingPerUnit) {
-      return this.buildResult(offerId, priceEur, stats, indexScore, relDev, 'implausible', 'discard', [
+      return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, 'implausible', 'discard', [
         { code: 'none', detail: `Above absolute ceiling ${this.config.ceilingPerUnit}` },
       ])
     }
@@ -96,7 +100,7 @@ export class PriceSanityEngine {
     const band = this.determineBand(indexScore, relDev, priceEur < stats.median)
     const decision = this.bandToDecision(band)
 
-    return this.buildResult(offerId, priceEur, stats, indexScore, relDev, band, decision, [])
+    return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, band, decision, [])
   }
 
   private determineBand(
@@ -107,36 +111,22 @@ export class PriceSanityEngine {
     // Apply low-side factor for cheap prices (more suspicious)
     const factor = isCheap ? this.config.lowSideFactor : 1
 
-    // Check relative deviation bounds
-    const maxDrop = this.config.maxRelativeDrop * factor
-    const maxRise = this.config.maxRelativeRise
-
-    // Cheap and more than 60% below median is at least atypical
-    if (isCheap && relDev < -0.6) {
-      return 'atypical'
-    }
-
-    // Outside relative bounds
-    if (relDev < -maxDrop || relDev > maxRise) {
-      // Check if it's extreme
-      if (relDev < -maxDrop * 1.5 || relDev > maxRise * 1.5) {
-        return 'implausible'
-      }
-      return 'atypical'
-    }
-
-    // Use index score if available
+    // Only the index (or the absolute bounds, checked earlier) can make a price implausible
     if (indexScore !== null) {
       const absIndex = Math.abs(indexScore)
-      const zOk = this.config.zOk * factor
-      const zGate = this.config.zGate * factor
 
-      if (absIndex > zGate) {
+      if (absIndex > this.config.zGate * factor) {
         return 'implausible'
       }
-      if (absIndex > zOk) {
+      if (absIndex > this.config.zOk * factor) {
         return 'atypical'
       }
+    }
+
+    // More than 60% below the median is at least atypical, whatever the configured drop
+    const maxDrop = Math.min(this.config.maxRelativeDrop * factor, HARD_MAX_RELATIVE_DROP)
+    if (relDev < -maxDrop || relDev > this.config.maxRelativeRise) {
+      return 'atypical'
     }
 
     return 'normal'
@@ -156,7 +146,7 @@ export class PriceSanityEngine {
 
   private buildResult(
     offerId: string,
-    priceEur: number,
+    sampleSize: number,
     stats: ReturnType<typeof robustStatistics>,
     indexScore: number | null,
     relDev: number,
@@ -166,11 +156,11 @@ export class PriceSanityEngine {
   ): PriceSanityCheck {
     return {
       offerId,
-      referencePriceEur: priceEur,
+      referencePriceEur: Math.round(stats.median),
       median: Math.round(stats.median),
       dispersionMeasure: stats.dispersionMeasure,
       dispersionValue: stats.dispersionValue,
-      sampleSize: 0, // Will be set by caller
+      sampleSize,
       indexScore,
       relativeDeviation: relDev,
       band,

@@ -8,7 +8,7 @@ Implements section 5.6 of the spec:
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import httpx
@@ -16,7 +16,7 @@ import httpx
 from trato.config import settings
 
 
-class LLMRole(str, Enum):
+class LLMRole(StrEnum):
     """LLM roles with different model configurations."""
 
     PLANNER = "planner"

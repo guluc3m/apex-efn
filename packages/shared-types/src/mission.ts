@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { CurrencySchema, MoneySchema } from './currency.js'
+import { MoneySchema } from './currency.js'
 
 /**
  * Sourcing request specification

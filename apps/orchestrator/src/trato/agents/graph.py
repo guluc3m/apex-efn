@@ -9,11 +9,12 @@ scored -> awaiting_human -> signed -> approved | rejected -> purchased
 from typing import Any
 
 from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from trato.agents.state import MissionState
 
 
-def create_mission_graph() -> StateGraph:
+def create_mission_graph() -> CompiledStateGraph[MissionState, None, MissionState, MissionState]:
     """Create the mission orchestration graph.
 
     This is a scaffold - actual agent implementations will be added

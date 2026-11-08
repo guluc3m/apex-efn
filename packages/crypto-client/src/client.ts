@@ -12,8 +12,7 @@ interface StoredKey {
   createdAt: string
 }
 
-const KEY_STORAGE_PREFIX = 'trato:signing:'
-const ALGORITHM = { name: 'Ed25519' }
+const ALGORITHM = { name: 'Ed25519' } as const
 
 /**
  * Ed25519 signing client using WebCrypto.
@@ -95,7 +94,7 @@ export class SigningClient {
             resolve(false)
           }
         }
-        request.onerror = () => reject(request.error)
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'))
       })
     } catch {
       return false
@@ -193,7 +192,7 @@ export class SigningClient {
 
     return new Promise((resolve, reject) => {
       tx.oncomplete = () => resolve()
-      tx.onerror = () => reject(tx.error)
+      tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'))
     })
   }
 
@@ -201,7 +200,7 @@ export class SigningClient {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('trato-signing', 1)
 
-      request.onerror = () => reject(request.error)
+      request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'))
       request.onsuccess = () => resolve(request.result)
 
       request.onupgradeneeded = (event) => {

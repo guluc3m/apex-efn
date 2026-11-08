@@ -1,4 +1,4 @@
-import type { ReviewAnomaly, ReviewAnomalyType, RawSellerSignals } from '@trato/shared-types/seller'
+import type { ReviewAnomaly, RawSellerSignals } from '@trato/shared-types/seller'
 
 import { zScore } from './statistics.js'
 
@@ -42,7 +42,7 @@ export function detectReviewAnomalies(
 
     if (z > cfg.burstZThreshold) {
       anomalies.push({
-        type: 'burst_velocity' as ReviewAnomalyType,
+        type: 'burst_velocity',
         severity: z > cfg.burstZThreshold * 1.5 ? 'critical' : 'warning',
         evidence: {
           monthlyRate,
@@ -60,7 +60,7 @@ export function detectReviewAnomalies(
   if (signals.ratingAvg !== undefined && signals.ratingCount !== undefined) {
     if (signals.ratingAvg >= 4.9 && signals.ratingCount < 50) {
       anomalies.push({
-        type: 'five_star_anomaly' as ReviewAnomalyType,
+        type: 'five_star_anomaly',
         severity: 'warning',
         evidence: {
           ratingAvg: signals.ratingAvg,
@@ -75,7 +75,7 @@ export function detectReviewAnomalies(
   if (signals.verifiedReviewShare !== undefined) {
     if (signals.verifiedReviewShare < cfg.lowVerifiedThreshold) {
       anomalies.push({
-        type: 'low_verified_share' as ReviewAnomalyType,
+        type: 'low_verified_share',
         severity: signals.verifiedReviewShare < 0.1 ? 'critical' : 'warning',
         evidence: {
           verifiedShare: signals.verifiedReviewShare,

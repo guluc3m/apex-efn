@@ -2,11 +2,11 @@
 
 from fastapi import APIRouter
 
+from trato.api.dashboard import router as dashboard_router
+from trato.api.gate import router as gate_router
 from trato.api.missions import router as missions_router
 from trato.api.sellers import router as sellers_router
 from trato.api.signing import router as signing_router
-from trato.api.dashboard import router as dashboard_router
-from trato.api.gate import router as gate_router
 
 router = APIRouter()
 
