@@ -71,9 +71,7 @@ class _FakeGate:
 class _FakeSnapshots:
     calls: list[tuple[datetime, int]]
 
-    async def refresh_older_than(
-        self, now: datetime, max_age_days: int
-    ) -> SnapshotRefreshResult:
+    async def refresh_older_than(self, now: datetime, max_age_days: int) -> SnapshotRefreshResult:
         self.calls.append((now, max_age_days))
         return SnapshotRefreshResult(refreshed=7)
 
@@ -226,9 +224,7 @@ async def test_supervisor_port_fails_loudly_when_unwired() -> None:
         (send_gate_sla_reminders, "D4-11"),
     ],
 )
-async def test_unwired_ports_fail_loudly_naming_the_owner(
-    job: object, owner_hint: str
-) -> None:
+async def test_unwired_ports_fail_loudly_naming_the_owner(job: object, owner_hint: str) -> None:
     with pytest.raises(NotImplementedError, match=owner_hint):
         await job(FixedClock(NOW), WorkerPorts.unwired())  # type: ignore[operator]
 

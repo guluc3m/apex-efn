@@ -105,9 +105,7 @@ class MissionSnapshot:
 
     def __post_init__(self) -> None:
         if self.last_progress_at is not None:
-            object.__setattr__(
-                self, "last_progress_at", _require_aware_utc(self.last_progress_at)
-            )
+            object.__setattr__(self, "last_progress_at", _require_aware_utc(self.last_progress_at))
         if self.tokens_used < 0:
             raise ValueError("tokens_used must be >= 0")
         if self.token_budget < 0:

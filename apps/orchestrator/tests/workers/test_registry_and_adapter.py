@@ -127,9 +127,7 @@ def test_in_process_scheduler_selects_due_jobs_at_injected_instant() -> None:
     # 06:00 is the FX slot (and a supervisor slot, since 0 is in its minute list).
     assert [job.name for job in scheduler.due_jobs()] == [JOB_FX, JOB_SUPERVISOR]
     assert [job.name for job in scheduler.due_jobs(NOW + timedelta(minutes=1))] == []
-    assert [job.name for job in scheduler.due_jobs(NOW + timedelta(minutes=10))] == [
-        JOB_SUPERVISOR
-    ]
+    assert [job.name for job in scheduler.due_jobs(NOW + timedelta(minutes=10))] == [JOB_SUPERVISOR]
 
 
 def test_in_process_scheduler_weekday_field() -> None:
@@ -159,7 +157,9 @@ def test_arq_cron_jobs_mirror_the_registry_including_max_tries() -> None:
 
 async def test_arq_cron_body_runs_the_job_with_the_context_clock() -> None:
     registry = _registry()
-    fx_job = next(job for job in arq_cron_jobs(registry, clock=FixedClock(NOW)) if job.name == JOB_FX)
+    fx_job = next(
+        job for job in arq_cron_jobs(registry, clock=FixedClock(NOW)) if job.name == JOB_FX
+    )
     assert isinstance(fx_job, CronJob)
     later = NOW + timedelta(hours=5)
     out = await fx_job.coroutine({CLOCK_CTX_KEY: FixedClock(later)})
@@ -168,7 +168,9 @@ async def test_arq_cron_body_runs_the_job_with_the_context_clock() -> None:
 
 async def test_arq_cron_body_falls_back_to_the_captured_clock() -> None:
     registry = _registry()
-    fx_job = next(job for job in arq_cron_jobs(registry, clock=FixedClock(NOW)) if job.name == JOB_FX)
+    fx_job = next(
+        job for job in arq_cron_jobs(registry, clock=FixedClock(NOW)) if job.name == JOB_FX
+    )
     out = await fx_job.coroutine({})
     assert out["as_of"] == NOW.isoformat()
 

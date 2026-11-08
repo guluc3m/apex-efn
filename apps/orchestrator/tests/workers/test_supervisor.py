@@ -27,9 +27,7 @@ from apex.agents.supervisor import (
 
 NOW = datetime(2026, 3, 1, 12, 0, tzinfo=UTC)
 POLICY = SupervisorPolicy(stuck_after=timedelta(minutes=30), degrade_on_budget_exhausted=True)
-STOP_POLICY = SupervisorPolicy(
-    stuck_after=timedelta(minutes=30), degrade_on_budget_exhausted=False
-)
+STOP_POLICY = SupervisorPolicy(stuck_after=timedelta(minutes=30), degrade_on_budget_exhausted=False)
 
 
 def _mission(
@@ -161,9 +159,7 @@ def test_budget_at_limit_degrades_when_allowed() -> None:
 
 
 def test_budget_over_limit_stops_and_escalates_when_degradation_disabled() -> None:
-    a = assess_mission(
-        _mission(tokens_used=1500, token_budget=1000), now=NOW, policy=STOP_POLICY
-    )
+    a = assess_mission(_mission(tokens_used=1500, token_budget=1000), now=NOW, policy=STOP_POLICY)
     assert a.budget is BudgetState.EXHAUSTED
     assert a.actions == (SupervisorAction.STOP_BUDGET,)
     assert a.escalation is not None
@@ -203,9 +199,7 @@ def test_stuck_and_over_budget_prefers_the_budget_stop_incident() -> None:
 
 def test_assess_mission_is_pure_and_repeatable() -> None:
     m = _mission(idle=timedelta(hours=1))
-    assert assess_mission(m, now=NOW, policy=POLICY) == assess_mission(
-        m, now=NOW, policy=POLICY
-    )
+    assert assess_mission(m, now=NOW, policy=POLICY) == assess_mission(m, now=NOW, policy=POLICY)
 
 
 # --- SupervisorAgent.tick over ports -------------------------------------------------------------

@@ -93,6 +93,4 @@ def test_job_name_must_be_snake_case() -> None:
     with pytest.raises(ScheduleError):
         JobDefinition(name="bad name!", schedule=CronSpec.parse("* * * * *"), func=noop)
     with pytest.raises(ScheduleError):
-        JobDefinition(
-            name="ok_name", schedule=CronSpec.parse("* * * * *"), func=noop, max_tries=0
-        )
+        JobDefinition(name="ok_name", schedule=CronSpec.parse("* * * * *"), func=noop, max_tries=0)
