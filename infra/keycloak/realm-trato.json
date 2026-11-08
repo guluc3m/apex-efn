@@ -1,0 +1,258 @@
+{
+  "realm": "trato",
+  "enabled": true,
+  "displayName": "TRATO (dev)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      { "name": "owner", "description": "Responsable principal del tenant. Puede firmar." },
+      {
+        "name": "admin",
+        "description": "Administra configuración y usuarios del tenant. Puede firmar."
+      },
+      {
+        "name": "buyer",
+        "description": "Compras: sourcing, negociación y decisiones de gate. Puede firmar."
+      },
+      { "name": "finance", "description": "Finanzas: CSV financiero y snapshots. Puede firmar." },
+      { "name": "viewer", "description": "Solo lectura. Nunca firma." }
+    ]
+  },
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10,
+      "config": {}
+    }
+  ],
+  "groups": [
+    {
+      "name": "tenant-a",
+      "path": "/tenant-a",
+      "attributes": { "tenant_id": ["tenant-a"] }
+    },
+    {
+      "name": "tenant-b",
+      "path": "/tenant-b",
+      "attributes": { "tenant_id": ["tenant-b"] }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "trato-web",
+      "name": "TRATO web (BFF Next.js)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "trato-dev-web-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience-trato-orchestrator",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "trato-orchestrator",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "trato-orchestrator",
+      "name": "TRATO orchestrator (resource server)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "trato-dev-orchestrator-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ],
+  "users": [
+    {
+      "username": "owner-a@trato.local",
+      "email": "owner-a@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Owner",
+      "lastName": "Tenant A",
+      "attributes": { "tenant_id": ["tenant-a"] },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["owner"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "admin-a@trato.local",
+      "email": "admin-a@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "Tenant A",
+      "attributes": { "tenant_id": ["tenant-a"] },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["admin"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "buyer-a@trato.local",
+      "email": "buyer-a@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Buyer",
+      "lastName": "Tenant A",
+      "attributes": { "tenant_id": ["tenant-a"] },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["buyer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "finance-a@trato.local",
+      "email": "finance-a@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Finance",
+      "lastName": "Tenant A",
+      "attributes": { "tenant_id": ["tenant-a"] },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["finance"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "viewer-a@trato.local",
+      "email": "viewer-a@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Viewer",
+      "lastName": "Tenant A",
+      "attributes": { "tenant_id": ["tenant-a"] },
+      "groups": ["/tenant-a"],
+      "realmRoles": ["viewer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "owner-b@trato.local",
+      "email": "owner-b@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Owner",
+      "lastName": "Tenant B",
+      "attributes": { "tenant_id": ["tenant-b"] },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["owner"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "admin-b@trato.local",
+      "email": "admin-b@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "Tenant B",
+      "attributes": { "tenant_id": ["tenant-b"] },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["admin"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "buyer-b@trato.local",
+      "email": "buyer-b@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Buyer",
+      "lastName": "Tenant B",
+      "attributes": { "tenant_id": ["tenant-b"] },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["buyer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "finance-b@trato.local",
+      "email": "finance-b@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Finance",
+      "lastName": "Tenant B",
+      "attributes": { "tenant_id": ["tenant-b"] },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["finance"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    },
+    {
+      "username": "viewer-b@trato.local",
+      "email": "viewer-b@trato.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Viewer",
+      "lastName": "Tenant B",
+      "attributes": { "tenant_id": ["tenant-b"] },
+      "groups": ["/tenant-b"],
+      "realmRoles": ["viewer"],
+      "requiredActions": ["CONFIGURE_TOTP"],
+      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+    }
+  ]
+}
