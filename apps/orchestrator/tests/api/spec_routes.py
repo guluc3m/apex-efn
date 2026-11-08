@@ -40,6 +40,17 @@ SPEC_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
+# Routes implemented by DEV-4 (D4-03 config, D4-08 sourcing and missions). They answer real responses
+# instead of 501, so the stub check below skips them; their own tests cover behaviour.
+IMPLEMENTED_ROUTES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("POST", "/v1/sourcing-requests"),
+        ("POST", "/v1/missions"),
+        ("GET", "/v1/missions/{id}"),
+        ("GET", "/v1/missions/{id}/events"),
+    }
+)
+
 # Routes added by DEV-4 for the config service (D4-03). Not in §8 text: pending a contract PR.
 CONFIG_ROUTES: frozenset[tuple[str, str]] = frozenset(
     {
@@ -48,6 +59,5 @@ CONFIG_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
-# The exact-set check covers both. The 501 stub check covers only SPEC_ROUTES: the config routes
-# are implemented by D4-03 and answer real responses (see tests/tenant_config/test_api.py).
+# The exact-set check covers both. The 501 stub check covers only SPEC_ROUTES minus IMPLEMENTED_ROUTES.
 EXPECTED_ROUTES: frozenset[tuple[str, str]] = SPEC_ROUTES | CONFIG_ROUTES

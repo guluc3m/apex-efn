@@ -1,4 +1,8 @@
-"""Every §8 route answers 501 problem+json; no unexpected /v1 routes exist."""
+"""Every unimplemented §8 route answers 501 problem+json; no unexpected /v1 routes exist.
+
+Routes implemented by DEV-4 (``IMPLEMENTED_ROUTES``) are excluded: they answer real responses and are
+covered by their own tests.
+"""
 
 import pytest
 from fastapi import FastAPI
@@ -6,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from apex.config import Settings
 from apex.main import create_app
-from tests.api.spec_routes import EXPECTED_ROUTES, SPEC_ROUTES
+from tests.api.spec_routes import EXPECTED_ROUTES, IMPLEMENTED_ROUTES, SPEC_ROUTES
 
 PROBLEM_JSON = "application/problem+json"
 
@@ -40,7 +44,15 @@ def test_route_set_matches_expected_exactly(app: FastAPI) -> None:
     assert _v1_routes(app) == EXPECTED_ROUTES
 
 
-@pytest.mark.parametrize(("method", "path"), sorted(SPEC_ROUTES))
+def test_implemented_routes_are_not_stubs(app: FastAPI) -> None:
+    """A route listed as implemented must not answer 501 any more."""
+    client = TestClient(app, raise_server_exceptions=False)
+    for method, path in sorted(IMPLEMENTED_ROUTES):
+        response = client.request(method, _concrete(path), json={})
+        assert response.status_code != 501, (method, path, response.status_code)
+
+
+@pytest.mark.parametrize(("method", "path"), sorted(SPEC_ROUTES - IMPLEMENTED_ROUTES))
 def test_stub_answers_501_problem_json(app: FastAPI, method: str, path: str) -> None:
     client = TestClient(app, raise_server_exceptions=False)
     response = client.request(method, _concrete(path), json={})
