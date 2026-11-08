@@ -13,7 +13,7 @@ PROBLEM_JSON = "application/problem+json"
 
 @pytest.fixture
 def app() -> FastAPI:
-    return create_app(Settings())
+    return create_app(Settings(idempotency_backend="memory"))
 
 
 def _concrete(path: str) -> str:
