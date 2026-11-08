@@ -1,0 +1,693 @@
+{
+  "sellers": [
+    {
+      "id": "a-solid-veteran",
+      "platform": "mock-a",
+      "name": "Shenzhen Bright Gloves Co. (mock)",
+      "country": "CN",
+      "profile": "solid_veteran",
+      "persona": "cooperative",
+      "signals": {
+        "memberSince": "2019-03-12",
+        "firstSaleDate": "2019-04-02",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 4200,
+        "transactions12m": 900,
+        "gmv12mMinor": 410000000,
+        "gmvCurrency": "USD",
+        "repeatBuyerShare": 0.41,
+        "publishedProductsCount": 140,
+        "catalogChurn30d": 0.03,
+        "specCompletenessAvg": 0.9,
+        "reviewsTotal": 500,
+        "reviews12m": 260,
+        "ratingAvg": 4.8,
+        "ratingCount": 500,
+        "verifiedReviewShare": 0.92,
+        "responseRate": 0.97,
+        "identityVerified": true,
+        "tradeAssurance": true,
+        "escrowAvailable": true,
+        "disputeRate": 0.01,
+        "refundRate": 0.02
+      },
+      "reviews": [
+        {
+          "id": "rv-a-solid-veteran-1",
+          "rating": 5,
+          "text": "Second order of the same gloves. Stitching is consistent and the packaging survived ocean freight without damage.",
+          "date": "2026-09-14",
+          "verified": true
+        },
+        {
+          "id": "rv-a-solid-veteran-2",
+          "rating": 5,
+          "text": "Samples matched the production run closely. Lead time was 3 days longer than quoted but they messaged ahead.",
+          "date": "2026-07-02",
+          "verified": true
+        },
+        {
+          "id": "rv-a-solid-veteran-3",
+          "rating": 4,
+          "text": "Good quality overall, two cartons arrived with dented corners. Refund for the damaged units was processed in a week.",
+          "date": "2026-04-21",
+          "verified": true
+        },
+        {
+          "id": "rv-a-solid-veteran-4",
+          "rating": 5,
+          "text": "Repeat purchase for our warehouse team. Spec sheet is accurate, certificates attached without asking.",
+          "date": "2025-12-09",
+          "verified": true
+        },
+        {
+          "id": "rv-a-solid-veteran-5",
+          "rating": 4,
+          "text": "Price is competitive for the volume. Communication is slow on weekends, otherwise fine.",
+          "date": "2025-10-30",
+          "verified": true
+        },
+        {
+          "id": "rv-a-solid-veteran-6",
+          "rating": 5,
+          "text": "Very professional. Tiered pricing applied automatically on the second PO.",
+          "date": "2025-08-18",
+          "verified": false
+        },
+        {
+          "id": "rv-a-solid-veteran-7",
+          "rating": 5,
+          "text": "Used them for a pilot batch before scaling. Quality control photos before dispatch were a nice touch.",
+          "date": "2025-05-27",
+          "verified": true
+        },
+        {
+          "id": "rv-a-solid-veteran-8",
+          "rating": 4,
+          "text": "Solid supplier. Minor labelling mistake on the inner boxes, corrected in the reprint at no cost.",
+          "date": "2025-02-11",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "a-single-review",
+      "platform": "mock-a",
+      "name": "Madrid Quick Goods S.L. (mock)",
+      "country": "ES",
+      "profile": "single_perfect_review",
+      "persona": "aggressive",
+      "signals": {
+        "memberSince": "2026-08-20",
+        "firstSaleDate": "2026-08-28",
+        "monthsActiveLast12": 3,
+        "lifetimeTransactions": 3,
+        "transactions12m": 3,
+        "gmv12mMinor": 1850000,
+        "gmvCurrency": "EUR",
+        "repeatBuyerShare": 0,
+        "publishedProductsCount": 6,
+        "catalogChurn30d": 0,
+        "specCompletenessAvg": 0.5,
+        "reviewsTotal": 1,
+        "reviews12m": 1,
+        "ratingAvg": 5,
+        "ratingCount": 1,
+        "verifiedReviewShare": 1,
+        "responseRate": 0.9,
+        "identityVerified": true,
+        "tradeAssurance": false,
+        "escrowAvailable": true,
+        "disputeRate": 0,
+        "refundRate": 0
+      },
+      "reviews": [
+        {
+          "id": "rv-a-single-review-1",
+          "rating": 5,
+          "text": "Fast reply and the order was exactly as described. Only one order so far but very happy.",
+          "date": "2026-09-03",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "a-review-burst",
+      "platform": "mock-a",
+      "name": "Guangzhou Star Deals Trading (mock)",
+      "country": "CN",
+      "profile": "manipulated_reviews",
+      "persona": "lowball",
+      "signals": {
+        "memberSince": "2026-06-01",
+        "firstSaleDate": "2026-06-03",
+        "monthsActiveLast12": 5,
+        "lifetimeTransactions": 40,
+        "transactions12m": 40,
+        "gmv12mMinor": 1200000,
+        "gmvCurrency": "USD",
+        "repeatBuyerShare": 0.02,
+        "publishedProductsCount": 320,
+        "catalogChurn30d": 0.6,
+        "specCompletenessAvg": 0.35,
+        "reviewsTotal": 180,
+        "reviews12m": 180,
+        "ratingAvg": 4.97,
+        "ratingCount": 180,
+        "verifiedReviewShare": 0.08,
+        "responseRate": 0.7,
+        "identityVerified": false,
+        "tradeAssurance": false,
+        "escrowAvailable": false,
+        "disputeRate": 0.03,
+        "refundRate": 0.05
+      },
+      "reviews": [
+        {
+          "id": "rv-a-review-burst-1",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-03",
+          "verified": true
+        },
+        {
+          "id": "rv-a-review-burst-2",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-03",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-3",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-04",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-4",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-05",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-5",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-05",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-6",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-06",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-7",
+          "rating": 5,
+          "text": "Great product, fast shipping, highly recommend!",
+          "date": "2026-06-07",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-8",
+          "rating": 5,
+          "text": "Great product fast shipping highly recommended.",
+          "date": "2026-06-08",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-9",
+          "rating": 5,
+          "text": "Great product, fast ship, highly recommend!!",
+          "date": "2026-06-09",
+          "verified": false
+        },
+        {
+          "id": "rv-a-review-burst-10",
+          "rating": 5,
+          "text": "Great product. Fast shipping. Highly recommend",
+          "date": "2026-06-10",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "a-new-shop",
+      "platform": "mock-a",
+      "name": "Nuevo Shop Demo (mock)",
+      "country": null,
+      "profile": "insufficient_data",
+      "persona": "evasive",
+      "signals": {
+        "memberSince": "2026-10-15",
+        "publishedProductsCount": 2
+      },
+      "reviews": []
+    },
+    {
+      "id": "a-standard-offplatform",
+      "platform": "mock-a",
+      "name": "Dongguan Harbor Hardware (mock)",
+      "country": "CN",
+      "profile": "standard",
+      "persona": "off_platform",
+      "signals": {
+        "memberSince": "2022-07-04",
+        "firstSaleDate": "2022-08-01",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 610,
+        "transactions12m": 150,
+        "gmv12mMinor": 58000000,
+        "gmvCurrency": "USD",
+        "repeatBuyerShare": 0.28,
+        "publishedProductsCount": 85,
+        "catalogChurn30d": 0.1,
+        "specCompletenessAvg": 0.7,
+        "reviewsTotal": 60,
+        "reviews12m": 22,
+        "ratingAvg": 4.5,
+        "ratingCount": 60,
+        "verifiedReviewShare": 0.7,
+        "responseRate": 0.88,
+        "identityVerified": true,
+        "tradeAssurance": true,
+        "escrowAvailable": true,
+        "disputeRate": 0.02,
+        "refundRate": 0.03
+      },
+      "reviews": [
+        {
+          "id": "rv-a-standard-offplatform-1",
+          "rating": 5,
+          "text": "Hinges and latches as specified. Reorder went smoothly through the platform.",
+          "date": "2026-05-18",
+          "verified": true
+        },
+        {
+          "id": "rv-a-standard-offplatform-2",
+          "rating": 4,
+          "text": "Decent quality for the price. Packaging could be sturdier.",
+          "date": "2026-02-02",
+          "verified": true
+        },
+        {
+          "id": "rv-a-standard-offplatform-3",
+          "rating": 5,
+          "text": "Quick quote and the sample arrived in a week.",
+          "date": "2025-09-21",
+          "verified": false
+        },
+        {
+          "id": "rv-a-standard-offplatform-4",
+          "rating": 4,
+          "text": "Delivered two days late but the seller kept us informed. Would order again.",
+          "date": "2025-03-11",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "a-standard-gbp",
+      "platform": "mock-a",
+      "name": "Manchester Parcel Supplies Ltd (mock)",
+      "country": "GB",
+      "profile": "standard",
+      "persona": "unsupported_currency",
+      "signals": {
+        "memberSince": "2021-02-15",
+        "firstSaleDate": "2021-03-10",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 980,
+        "transactions12m": 210,
+        "gmv12mMinor": 12000000,
+        "gmvCurrency": "GBP",
+        "repeatBuyerShare": 0.33,
+        "publishedProductsCount": 120,
+        "catalogChurn30d": 0.05,
+        "specCompletenessAvg": 0.78,
+        "reviewsTotal": 95,
+        "reviews12m": 40,
+        "ratingAvg": 4.6,
+        "ratingCount": 95,
+        "verifiedReviewShare": 0.75,
+        "responseRate": 0.91,
+        "identityVerified": true,
+        "tradeAssurance": false,
+        "escrowAvailable": true,
+        "disputeRate": 0.02,
+        "refundRate": 0.03
+      },
+      "reviews": [
+        {
+          "id": "rv-a-standard-gbp-1",
+          "rating": 5,
+          "text": "Labels printed correctly and the pallet was well wrapped. Quoted in pounds, paid by bank transfer.",
+          "date": "2026-08-06",
+          "verified": true
+        },
+        {
+          "id": "rv-a-standard-gbp-2",
+          "rating": 4,
+          "text": "Good communication. Two items were backordered but they offered a partial shipment.",
+          "date": "2026-03-17",
+          "verified": true
+        },
+        {
+          "id": "rv-a-standard-gbp-3",
+          "rating": 5,
+          "text": "Reliable repeat supplier for our parcel boxes.",
+          "date": "2025-11-04",
+          "verified": true
+        },
+        {
+          "id": "rv-a-standard-gbp-4",
+          "rating": 4,
+          "text": "Fair pricing, invoice had a small mistake that was fixed the same day.",
+          "date": "2025-06-29",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "b-solid-factory",
+      "platform": "mock-b",
+      "name": "Hangzhou Lotus Packaging Factory (mock)",
+      "country": "CN",
+      "profile": "solid_veteran",
+      "persona": "chinese",
+      "signals": {
+        "memberSince": "2018-05-09",
+        "firstSaleDate": "2018-06-01",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 9800,
+        "transactions12m": 2100,
+        "gmv12mMinor": 2600000000,
+        "gmvCurrency": "CNY",
+        "repeatBuyerShare": 0.45,
+        "publishedProductsCount": 260,
+        "catalogChurn30d": 0.04,
+        "specCompletenessAvg": 0.88,
+        "reviewsTotal": 820,
+        "reviews12m": 390,
+        "ratingAvg": 4.7,
+        "ratingCount": 820,
+        "verifiedReviewShare": 0.88,
+        "responseRate": 0.95,
+        "identityVerified": true,
+        "tradeAssurance": true,
+        "escrowAvailable": true,
+        "disputeRate": 0.015,
+        "refundRate": 0.025
+      },
+      "reviews": [
+        {
+          "id": "rv-b-solid-factory-1",
+          "rating": 5,
+          "text": "质量稳定，第三次回购了，包装和说明书都很规范。",
+          "date": "2026-08-12",
+          "verified": true
+        },
+        {
+          "id": "rv-b-solid-factory-2",
+          "rating": 4,
+          "text": "Good workmanship, but the delivery took a week longer than promised. They kept me updated though.",
+          "date": "2026-06-22",
+          "verified": true
+        },
+        {
+          "id": "rv-b-solid-factory-3",
+          "rating": 5,
+          "text": "工厂验货报告很详细，交期准时，沟通顺畅。",
+          "date": "2026-03-30",
+          "verified": true
+        },
+        {
+          "id": "rv-b-solid-factory-4",
+          "rating": 5,
+          "text": "Samples were approved within two rounds. Material certificates provided on request.",
+          "date": "2025-11-17",
+          "verified": true
+        },
+        {
+          "id": "rv-b-solid-factory-5",
+          "rating": 4,
+          "text": "物流包装可以再加强，有两件外箱压坏，但内件完好。",
+          "date": "2025-09-05",
+          "verified": false
+        },
+        {
+          "id": "rv-b-solid-factory-6",
+          "rating": 5,
+          "text": "Repeat supplier for our packaging line. Pricing held steady through the year.",
+          "date": "2025-04-14",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "b-standard-coop",
+      "platform": "mock-b",
+      "name": "Berlin Werkstatt Partner GmbH (mock)",
+      "country": "DE",
+      "profile": "standard",
+      "persona": "cooperative",
+      "signals": {
+        "memberSince": "2020-09-01",
+        "firstSaleDate": "2020-10-05",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 1500,
+        "transactions12m": 240,
+        "gmv12mMinor": 7500000,
+        "gmvCurrency": "EUR",
+        "repeatBuyerShare": 0.3,
+        "publishedProductsCount": 95,
+        "catalogChurn30d": 0.08,
+        "specCompletenessAvg": 0.74,
+        "reviewsTotal": 140,
+        "reviews12m": 48,
+        "ratingAvg": 4.6,
+        "ratingCount": 140,
+        "verifiedReviewShare": 0.72,
+        "responseRate": 0.93,
+        "identityVerified": true,
+        "tradeAssurance": false,
+        "escrowAvailable": true,
+        "disputeRate": 0.02,
+        "refundRate": 0.03
+      },
+      "reviews": [
+        {
+          "id": "rv-b-standard-coop-1",
+          "rating": 5,
+          "text": "Clear communication and the tooling arrived on the agreed date.",
+          "date": "2026-07-28",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-coop-2",
+          "rating": 4,
+          "text": "Good parts, one batch needed rework on the edges. Handled without fuss.",
+          "date": "2026-01-15",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-coop-3",
+          "rating": 5,
+          "text": "Second time ordering from them. Invoicing in euros made our accounting easy.",
+          "date": "2025-08-09",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-coop-4",
+          "rating": 4,
+          "text": "Lead time is on the long side but the quality is consistent.",
+          "date": "2025-02-26",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "b-standard-sensitive",
+      "platform": "mock-b",
+      "name": "Suzhou Quiet Textiles (mock)",
+      "country": "CN",
+      "profile": "standard",
+      "persona": "sensitive_data",
+      "signals": {
+        "memberSince": "2023-04-18",
+        "firstSaleDate": "2023-05-10",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 320,
+        "transactions12m": 150,
+        "gmv12mMinor": 21000000,
+        "gmvCurrency": "CNY",
+        "repeatBuyerShare": 0.2,
+        "publishedProductsCount": 40,
+        "catalogChurn30d": 0.12,
+        "specCompletenessAvg": 0.65,
+        "reviewsTotal": 45,
+        "reviews12m": 30,
+        "ratingAvg": 4.4,
+        "ratingCount": 45,
+        "verifiedReviewShare": 0.66,
+        "responseRate": 0.85,
+        "identityVerified": true,
+        "tradeAssurance": true,
+        "escrowAvailable": false,
+        "disputeRate": 0.02,
+        "refundRate": 0.04
+      },
+      "reviews": [
+        {
+          "id": "rv-b-standard-sensitive-1",
+          "rating": 5,
+          "text": "Fabric weight matched the spec sheet. Good colour consistency across rolls.",
+          "date": "2026-05-06",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-sensitive-2",
+          "rating": 4,
+          "text": "Shipping took longer than expected, but the seller shared tracking updates.",
+          "date": "2025-12-20",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-sensitive-3",
+          "rating": 4,
+          "text": "Acceptable for the price. Would like more certification paperwork up front.",
+          "date": "2025-07-02",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "b-high-disputes",
+      "platform": "mock-b",
+      "name": "Yiwu Mega Wholesale Ltd (mock)",
+      "country": "CN",
+      "profile": "high_disputes",
+      "persona": "truncated",
+      "signals": {
+        "memberSince": "2021-08-03",
+        "firstSaleDate": "2021-09-01",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 3100,
+        "transactions12m": 700,
+        "gmv12mMinor": 92000000,
+        "gmvCurrency": "USD",
+        "repeatBuyerShare": 0.18,
+        "publishedProductsCount": 180,
+        "catalogChurn30d": 0.15,
+        "specCompletenessAvg": 0.6,
+        "reviewsTotal": 210,
+        "reviews12m": 95,
+        "ratingAvg": 4.2,
+        "ratingCount": 210,
+        "verifiedReviewShare": 0.6,
+        "responseRate": 0.8,
+        "identityVerified": true,
+        "tradeAssurance": true,
+        "escrowAvailable": true,
+        "disputeRate": 0.14,
+        "refundRate": 0.18
+      },
+      "reviews": [
+        {
+          "id": "rv-b-high-disputes-1",
+          "rating": 2,
+          "text": "Two of the units arrived with cracked housings. The return took almost a month to approve and I am still waiting on the refund.",
+          "date": "2026-07-19",
+          "verified": true
+        },
+        {
+          "id": "rv-b-high-disputes-2",
+          "rating": 1,
+          "text": "Dispute opened after the wrong colour was shipped. Seller contested it instead of replacing the order. Avoid for time-sensitive orders.",
+          "date": "2026-05-03",
+          "verified": true
+        },
+        {
+          "id": "rv-b-high-disputes-3",
+          "rating": 4,
+          "text": "Pricing is good and the catalogue is huge. Refund policy is strict, which cost me some money on a bad batch.",
+          "date": "2026-01-27",
+          "verified": false
+        },
+        {
+          "id": "rv-b-high-disputes-4",
+          "rating": 5,
+          "text": "Fast shipping and the first batch was fine. Good for small test orders.",
+          "date": "2025-10-08",
+          "verified": true
+        },
+        {
+          "id": "rv-b-high-disputes-5",
+          "rating": 2,
+          "text": "Refund requested after 10 days, partial credit only. Quality was inconsistent between cartons.",
+          "date": "2025-06-14",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "b-standard-aggressive",
+      "platform": "mock-b",
+      "name": "Porto Atlantico Comercio (mock)",
+      "country": "PT",
+      "profile": "standard",
+      "persona": "aggressive",
+      "signals": {
+        "memberSince": "2022-11-22",
+        "firstSaleDate": "2022-12-15",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 480,
+        "transactions12m": 130,
+        "gmv12mMinor": 9500000,
+        "gmvCurrency": "EUR",
+        "repeatBuyerShare": 0.25,
+        "publishedProductsCount": 70,
+        "catalogChurn30d": 0.07,
+        "specCompletenessAvg": 0.72,
+        "reviewsTotal": 75,
+        "reviews12m": 28,
+        "ratingAvg": 4.5,
+        "ratingCount": 75,
+        "verifiedReviewShare": 0.68,
+        "responseRate": 0.86,
+        "identityVerified": true,
+        "tradeAssurance": false,
+        "escrowAvailable": true,
+        "disputeRate": 0.02,
+        "refundRate": 0.03
+      },
+      "reviews": [
+        {
+          "id": "rv-b-standard-aggressive-1",
+          "rating": 5,
+          "text": "Pushed hard on price and they still delivered a clean order. Tough negotiator.",
+          "date": "2026-06-11",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-aggressive-2",
+          "rating": 4,
+          "text": "Good stock levels, quotes come back quickly. Minor delay on customs paperwork.",
+          "date": "2026-02-19",
+          "verified": true
+        },
+        {
+          "id": "rv-b-standard-aggressive-3",
+          "rating": 4,
+          "text": "Acceptable quality for the price range. Would consider again for non-critical items.",
+          "date": "2025-10-03",
+          "verified": false
+        }
+      ]
+    }
+  ]
+}
