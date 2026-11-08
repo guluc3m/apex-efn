@@ -54,7 +54,7 @@ docker compose --profile apps up -d --build
 | Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                              | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                            |
 | Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                            | no auth. Receives traces from the collector.                                                                                                                           |
 | OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`     | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                              |
-| LLM stub (Mockoon)                | `http://localhost:8001/v1`                       | `ghcr.io/mockoon/cli:9.10.0`                       | no auth. **Temporary:** replaced by `apps/llm-stub` (D4-02).                                                                                                           |
+| LLM stub (Mockoon)                | `http://localhost:8001/v1`                       | `mockoon/cli:9.10.0`                               | no auth. **Temporary:** replaced by `apps/llm-stub` (D4-02).                                                                                                           |
 | Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                     | not buildable until D1-09                                                                                                                                              |
 | Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace`                 | port is provisional. Not buildable until D5-04.                                                                                                                        |
 | Web (profile `apps`)              | no host port                                     | built from `apps/web`                              | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                         |
@@ -78,6 +78,9 @@ Keycloak test users (realm `trato`, password `trato-dev` for all, MFA enrolment 
 - Roles: `owner`, `admin`, `buyer`, `finance`, `viewer`. `viewer` never signs (see `docs/security/rbac.md`, D1-05).
 - Tenants: groups `/tenant-a` and `/tenant-b`, each with a `tenant_id` attribute. Users carry the same
   `tenant_id` attribute, which is what the claim mapper reads.
+- `tenant_id` is declared in the realm's user profile with **view and edit restricted to admins**, so a
+  user can never change their own tenant from the account console. Unmanaged attributes stay disabled.
+  Any new user attribute must be declared there too.
 - **MFA:** the realm sets `CONFIGURE_TOTP` as a default required action, and every test user has it in
   `requiredActions`. The first login forces OTP enrolment. The file keeps this on. Do not change it there.
 - **Disable MFA locally only** (for example for automated UI tests you control). In the admin console
@@ -127,12 +130,22 @@ Verified on the authoring machine (no Docker daemon):
 - Every bind-mount source exists. No image uses `latest`.
 - The Keycloak realm JSON parses and passes a structural check: roles, users, tenant attributes, MFA
   required action, clients and mappers.
+- **Keycloak 26.0.8 (native distribution, dev H2 database) imports the realm successfully.** Via the admin
+  API, for a tenant-a and a tenant-b user: the `tenant_id` attribute is persisted, the example access token
+  carries `tenant_id`, `roles` and audience `trato-orchestrator`, `CONFIGURE_TOTP` is a required action,
+  `tenant_id` is admin-only in the user profile, and the password grant is disabled on `trato-web`.
+- **Observability configs, with the pinned upstream binaries run natively:** `otelcol-contrib validate`
+  (0.165.0), `promtool check config` (3.16.0) and `loki -verify-config` (3.6.20) all pass. End to end, an OTLP
+  trace, log and metric sent to the collector arrive in Tempo (trace found by ID), Loki (LogQL query) and the
+  collector's Prometheus exporter.
+- Every pinned image tag exists in its registry (anonymous manifest lookup), except the MinIO images (section 6).
 
 **Not verified** (needs a machine with Docker):
 
-- Starting the stack, service health, and whether every healthcheck command works inside its image
-  (Grafana, Loki, Prometheus, Langfuse, Unleash, Vault).
-- Keycloak actually imports the realm, and the first login forces OTP enrolment.
+- Starting the stack in containers, service health, and whether every healthcheck command works inside its
+  image (Grafana, Loki, Prometheus, Langfuse, Unleash, Vault).
+- The first interactive login forces OTP enrolment in the browser (the required action is verified, the UI
+  flow is not).
 - `minio-init` creates the buckets with Object Lock, and `up --wait` treats the completed one-shot correctly.
 - Pulls of the MinIO Quay images (see section 6).
 - Cold-start time (section 3).

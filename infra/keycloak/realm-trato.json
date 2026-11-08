@@ -12,7 +12,10 @@
   "accessTokenLifespan": 300,
   "roles": {
     "realm": [
-      { "name": "owner", "description": "Responsable principal del tenant. Puede firmar." },
+      {
+        "name": "owner",
+        "description": "Responsable principal del tenant. Puede firmar."
+      },
       {
         "name": "admin",
         "description": "Administra configuración y usuarios del tenant. Puede firmar."
@@ -21,8 +24,14 @@
         "name": "buyer",
         "description": "Compras: sourcing, negociación y decisiones de gate. Puede firmar."
       },
-      { "name": "finance", "description": "Finanzas: CSV financiero y snapshots. Puede firmar." },
-      { "name": "viewer", "description": "Solo lectura. Nunca firma." }
+      {
+        "name": "finance",
+        "description": "Finanzas: CSV financiero y snapshots. Puede firmar."
+      },
+      {
+        "name": "viewer",
+        "description": "Solo lectura. Nunca firma."
+      }
     ]
   },
   "requiredActions": [
@@ -36,16 +45,33 @@
       "config": {}
     }
   ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"required\":{\"roles\":[\"user\"]},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"tenant_id\",\"displayName\":\"Tenant\",\"validations\":{\"length\":{\"min\":1,\"max\":64}},\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
+  },
   "groups": [
     {
       "name": "tenant-a",
       "path": "/tenant-a",
-      "attributes": { "tenant_id": ["tenant-a"] }
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
     },
     {
       "name": "tenant-b",
       "path": "/tenant-b",
-      "attributes": { "tenant_id": ["tenant-b"] }
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      }
     }
   ],
   "clients": [
@@ -131,11 +157,19 @@
       "enabled": true,
       "firstName": "Owner",
       "lastName": "Tenant A",
-      "attributes": { "tenant_id": ["tenant-a"] },
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
       "groups": ["/tenant-a"],
       "realmRoles": ["owner"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "admin-a@trato.local",
@@ -144,11 +178,19 @@
       "enabled": true,
       "firstName": "Admin",
       "lastName": "Tenant A",
-      "attributes": { "tenant_id": ["tenant-a"] },
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
       "groups": ["/tenant-a"],
       "realmRoles": ["admin"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "buyer-a@trato.local",
@@ -157,11 +199,19 @@
       "enabled": true,
       "firstName": "Buyer",
       "lastName": "Tenant A",
-      "attributes": { "tenant_id": ["tenant-a"] },
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
       "groups": ["/tenant-a"],
       "realmRoles": ["buyer"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "finance-a@trato.local",
@@ -170,11 +220,19 @@
       "enabled": true,
       "firstName": "Finance",
       "lastName": "Tenant A",
-      "attributes": { "tenant_id": ["tenant-a"] },
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
       "groups": ["/tenant-a"],
       "realmRoles": ["finance"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "viewer-a@trato.local",
@@ -183,11 +241,19 @@
       "enabled": true,
       "firstName": "Viewer",
       "lastName": "Tenant A",
-      "attributes": { "tenant_id": ["tenant-a"] },
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      },
       "groups": ["/tenant-a"],
       "realmRoles": ["viewer"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "owner-b@trato.local",
@@ -196,11 +262,19 @@
       "enabled": true,
       "firstName": "Owner",
       "lastName": "Tenant B",
-      "attributes": { "tenant_id": ["tenant-b"] },
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
       "groups": ["/tenant-b"],
       "realmRoles": ["owner"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "admin-b@trato.local",
@@ -209,11 +283,19 @@
       "enabled": true,
       "firstName": "Admin",
       "lastName": "Tenant B",
-      "attributes": { "tenant_id": ["tenant-b"] },
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
       "groups": ["/tenant-b"],
       "realmRoles": ["admin"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "buyer-b@trato.local",
@@ -222,11 +304,19 @@
       "enabled": true,
       "firstName": "Buyer",
       "lastName": "Tenant B",
-      "attributes": { "tenant_id": ["tenant-b"] },
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
       "groups": ["/tenant-b"],
       "realmRoles": ["buyer"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "finance-b@trato.local",
@@ -235,11 +325,19 @@
       "enabled": true,
       "firstName": "Finance",
       "lastName": "Tenant B",
-      "attributes": { "tenant_id": ["tenant-b"] },
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
       "groups": ["/tenant-b"],
       "realmRoles": ["finance"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     },
     {
       "username": "viewer-b@trato.local",
@@ -248,11 +346,19 @@
       "enabled": true,
       "firstName": "Viewer",
       "lastName": "Tenant B",
-      "attributes": { "tenant_id": ["tenant-b"] },
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      },
       "groups": ["/tenant-b"],
       "realmRoles": ["viewer"],
       "requiredActions": ["CONFIGURE_TOTP"],
-      "credentials": [{ "type": "password", "value": "trato-dev", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trato-dev",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

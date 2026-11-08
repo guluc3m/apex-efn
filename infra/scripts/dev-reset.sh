@@ -7,7 +7,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-export PATH="$HOME/.local/share/pnpm:$HOME/.local/bin:$PATH"
 # Valor de desarrollo por defecto. Solo se usa si no hay DATABASE_URL en el entorno.
 export DATABASE_URL="${DATABASE_URL:-postgresql://trato:trato@localhost:5432/trato?schema=public}"
 

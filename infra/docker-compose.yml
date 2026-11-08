@@ -188,7 +188,7 @@ services:
   # LLM stub (Mockoon). Temporary: replaced by apps/llm-stub (D4-02), then removed.
   # =============================================================================
   llm-stub:
-    image: ghcr.io/mockoon/cli:9.10.0
+    image: mockoon/cli:9.10.0
     container_name: trato-llm-stub
     command: --data /data/openai-stub.json --port 8001
     ports:
