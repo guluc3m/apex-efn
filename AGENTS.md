@@ -62,9 +62,10 @@ Plataforma B2B de compras por volumen que perfila a la empresa —incluida la ca
    (`now`) as parameters. `new Date()`, `datetime.now()`, `Math.random()` or unseeded randomness inside
    deterministic code is a bug.
 7. **Phase gates.** Every task has a phase (F0–F4) from the roadmap (`PROMPT-IMPLEMENTACION.md` §10).
-   You may **develop** a task of phase N+1 on its branch and open it as a **Draft PR**, but you may
-   **not merge** it until the git tag `phase-<N>-done` exists on `origin` (only the TL creates it,
-   once the phase Definition of Done is met). Check with `git ls-remote --tags origin`.
+   **Hackathon mode (ADR-900 P1):** phase tags do **not** gate merges. A task of any phase may merge
+   once every `Blocked by` task is merged, `pnpm ci:local` passes on the rebased branch (rule 0.10) and,
+   for `TL approval: yes` tasks, the TL has approved the PR. The TL still tags `phase-<N>-done` as a
+   milestone.
 8. **Never test against real marketplaces or paid models.** Use fixtures, the mock marketplace
    (D5-04) and the LLM stub (D4-02).
 9. **Agents communicate through GitHub issues.** Questions, requests, agreements and handoffs between
@@ -733,7 +734,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 2. An adapter registry gated by `platform.<id>.enabled` (a test proves a disabled platform is never called).
 3. A fixture harness (recorded HTML/JSON, replay mode) and a reusable **adapter contract test suite** that every adapter must pass.
 
-**D5-04 — Mock marketplace and simulated seller chat** · F1 · Blocked by: D5-01 · TL: no
+**D5-04 — Mock marketplace and simulated seller chat** · F1 · Blocked by: none (ADR-900 P2) · TL: no
 1. `apps/mock-marketplace/`: two fake platforms with products, sellers and a chat.
 2. Fixtures covering: manipulated-review sellers, insufficient-data sellers, solid sellers (1×5.0 vs.
    500×4.8), and offers with −90%/+200% outliers.
@@ -742,11 +743,12 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 - Done when: DEV-4 criterion 3 and DEV-6 E2E can run entirely against it.
 
 **D5-05 — Adapter #1 (official API)** · F1 · Blocked by: D5-03 · TL: **yes**
-1. The TL picks the platform (section 8, Q10). Write `/docs/compliance/<platform>.md` first (ToS, rate limits, data collected and why).
+1. Phase 1 platform (Q10, ADR-900): the `mock-a` adapter (JSON API) against D5-04. Real platforms move to D5-11. Write `/docs/compliance/<platform>.md` first (ToS, rate limits, data collected and why).
 2. Implement it with fixtures, contract suite, flag, and seller-signal mapping.
 
 **D5-06 — Adapter #2 (scraping)** · F1 · Blocked by: D5-03 · TL: **yes**
-1. Compliance doc first. If the ToS forbid automation, **don't implement it**: document why and propose an alternative.
+1. Phase 1 platform (Q10, ADR-900): the `mock-b` adapter (HTML via crw, chat via Playwright on Camoufox, ADR-500) against D5-04.
+   Compliance doc first. If the ToS forbid automation, **don't implement it**: document why and propose an alternative.
 2. Respect `robots.txt` and rate limits. Prefer `transport: http`, and use the browser only for login/chat.
 3. Fixtures include manipulated-review sellers. Contract suite, flag.
 
@@ -905,24 +907,27 @@ The scaffold was generated quickly and is **not** spec-compliant in these places
 If your task depends on one of these, implement the mechanism with the value **injected from
 config/fixtures**, open a `tl-question` issue referencing the ID, and keep the PR in Draft until it is answered.
 
-| ID | Question | Blocks |
-|---|---|---|
-| Q1 | "Half-up" rounding for negative amounts: away from zero, or toward +∞? | D3-02 |
-| Q2 | BuyingPowerScore formula, and how envelopes are derived from the CSV | D3-04 |
-| Q3 | Seller default weights, `x_sat` per signal, and whether `seller.min_signals` counts signals or is a ratio | D3-06 |
-| Q4 | Weights of the sanity reference universe (mission / history / benchmark) | D3-07 |
-| Q5 | Source of duties/import VAT data and the cost-of-capital rate | D3-05 |
-| Q6 | FX source (proposal: ECB reference rates) | D3-03 |
-| Q7 | Values for `approval.threshold`, `approval.dual_control_above`, `signing.high_value_reauth_above`, `neg.target_discount`/`max_discount` per category | D2-09, D4-11, D5-07 |
-| Q8 | Threshold for "`stretch` above threshold" going to the gate (spec §3.8) | D4-11 |
-| Q9 | Migration owner: Prisma Migrate only (ADR-201)? | D2-02 |
-| Q10 | Which platforms for adapter #1 (official API) and #2 (scraping), and who signs the compliance docs | D5-05, D5-06 |
-| Q11 | WebAuthn RP in the orchestrator vs. Keycloak step-up | D2-08 |
-| Q12 | `insufficient_reference`: block (current) or negotiate with a warning | D3-07, D4-03 |
-| Q13 | New-seller policy: systematic gate or a looser threshold | D3-06, D4-11 |
-| Q14 | Is platform KYC/escrow a hard requirement to buy? | D3-09 |
-| Q15 | Are counterparts (prepayment, framework contract) allowed in the MVP? | D5-07 |
-| Q16 | Key escrow: offered or not | D2-07 |
+**Q1–Q16 were answered on 2026-11-08 in `docs/adr/900-tech-lead-decisions-2026-11-08.md` (ADR-900), which is
+the authority.** The last column summarises each answer.
+
+| ID | Question | Blocks | TL answer (ADR-900) |
+|---|---|---|---|
+| Q1 | "Half-up" rounding for negative amounts: away from zero, or toward +∞? | D3-02 | Away from zero (`-2.5 → -3`), like Python `ROUND_HALF_UP`. |
+| Q2 | BuyingPowerScore formula, and how envelopes are derived from the CSV | D3-04 | Informational only (formula in a DEV-3 ADR). Envelopes from CSV `budget` rows; no row, no envelope. |
+| Q3 | Seller default weights, `x_sat` per signal, and whether `seller.min_signals` counts signals or is a ratio | D3-06 | Counts present raw signals. Weights and `x_sat` in ADR-304, institutional > volume. |
+| Q4 | Weights of the sanity reference universe (mission / history / benchmark) | D3-07 | `sanity.reference_weights` 0.5 / 0.3 / 0.2, renormalised over sources with data. |
+| Q5 | Source of duties/import VAT data and the cost-of-capital rate | D3-05 | Config `landed.duty_rate`, `landed.import_vat_rate`, `finance.cost_of_capital_rate`. Unset means `unknown`, never 0. |
+| Q6 | FX source (proposal: ECB reference rates) | D3-03 | ECB euro reference rates. |
+| Q7 | Values for `approval.threshold`, `approval.dual_control_above`, `signing.high_value_reauth_above`, `neg.target_discount`/`max_discount` per category | D2-09, D4-11, D5-07 | Unset per tenant (mission blocked until set). `llm.roles.*` global (stub in dev). Demo seed values in ADR-900. |
+| Q8 | Threshold for "`stretch` above threshold" going to the gate (spec §3.8) | D4-11 | Above `approval.threshold`. |
+| Q9 | Migration owner: Prisma Migrate only (ADR-201)? | D2-02 | Yes. |
+| Q10 | Which platforms for adapter #1 (official API) and #2 (scraping), and who signs the compliance docs | D5-05, D5-06 | `mock-a` and `mock-b` adapters in Phase 1. Real platforms in D5-11, compliance doc signed by the TL. |
+| Q11 | WebAuthn RP in the orchestrator vs. Keycloak step-up | D2-08 | Keycloak step-up (ACR + `auth_time`). |
+| Q12 | `insufficient_reference`: block (current) or negotiate with a warning | D3-07, D4-03 | Block: always the gate. `negotiate` value removed. |
+| Q13 | New-seller policy: systematic gate or a looser threshold | D3-06, D4-11 | Always gate. `fx.pivot` global. |
+| Q14 | Is platform KYC/escrow a hard requirement to buy? | D3-09 | No. Signal plus optional `constraints.require_escrow`. |
+| Q15 | Are counterparts (prepayment, framework contract) allowed in the MVP? | D5-07 | `neg.allowed_counterparts` (default `[]`). Phase 1: only `higher_volume`, `framework_contract`. |
+| Q16 | Key escrow: offered or not | D2-07 | No. |
 
 ## 9. Dependency waves (order, not dates)
 
