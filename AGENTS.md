@@ -17,6 +17,15 @@ Artefacto de exportación. El prompt limpio, listo para pegar en un agente de c�
 3. Ejecuta por fases (Fase 0 → Fase 4). No permitas avanzar de fase sin que se cumplan los criterios de aceptación de la sección 9.
 4. Mantén `NOTAS-TECH-LEAD.md` como documento de decisiones humanas: los ADRs que genere el agente deben contrastarse contra él.
 
+## Navegación
+
+- Si cambias una pantalla, una ruta, un enlace, la cabecera, la subnavegación o el destino de un botón,
+  en el lienzo de diseño o en el código, **actualiza `apps/web/NAVIGATION.md`** en el mismo cambio.
+- En la descripción del cambio (commit o PR), **informa del cambio de navegación** y enlaza
+  `apps/web/NAVIGATION.md`, que es donde se consulta cómo se navega entre pantallas.
+- Ninguna pantalla debe quedar sin entrada desde la app. Si una pantalla es solo de exploración, márcala
+  en §8 de ese documento.
+
 ## Alcance resumido
 
 Plataforma B2B de compras por volumen que perfila a la empresa —incluida la carga de su situación financiera vía CSV—, busca ofertas multi-plataforma vía scraping, puntúa la confianza de cada vendedor a partir de su antigüedad, ventas, catálogo y reseñas, filtra precios anómalos con bandas estadísticas configurables, negocia precios de forma autónoma en el chat del vendedor con Puppeteer, contrasta cada oferta contra la capacidad financiera real de la empresa en EUR/USD/CNY y presenta los tratos finales en un dashboard donde un responsable humano decide, con firma criptográfica Ed25519 en sesión de firma de 15 minutos, qué ofertas seguir y comprar.

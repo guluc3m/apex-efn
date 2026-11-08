@@ -613,6 +613,10 @@ borrador de los componentes de `@apex/ui` y deben implementarse con el mismo nom
 
 La navegación entre pantallas, las guardas y el inventario de modales están en `apps/web/NAVIGATION.md`.
 
+Si cambias una pantalla, un enlace, la cabecera o la subnavegación (en el lienzo o en código), actualiza
+`apps/web/NAVIGATION.md` en el mismo cambio e informa de ese cambio de navegación en la descripción del
+cambio, con enlace a ese documento.
+
 ## 13. Checklist de PR
 
 - [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
