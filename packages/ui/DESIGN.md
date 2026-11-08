@@ -395,7 +395,8 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
     cifras grandes con su divisa.
 18. **Cifras tabulares.** Todo número comparable usa `tabular-nums` y va alineado a la derecha en tablas.
 19. **Estados de carga.** Toda vista asíncrona tiene carga (skeleton con la forma final), vacío, error y
-    datos.
+    datos. **Siempre**, cualquier componente que cargue al arrancar una página usa un skeleton, nunca
+    `SphereLoader`, un spinner ni una pantalla en blanco.
 20. **Animar feedback útil.** Solo animaciones que confirman algo: guardado, firmado, fila añadida,
     botón pulsado (§8).
 
@@ -535,6 +536,8 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
   parabólica). Pausa `pause` entre movimientos. Las parejas de intercambio rotan: 1–2, 3–4, 2–3.
 - Uso: modales de carga y esperas de más de 400 ms. Siempre con texto que diga qué se espera
   («Firmando decisión…») y `role="status"`. Con reduced motion: bolas quietas y el texto.
+- No es para la carga inicial de una página: cualquier componente que cargue al arrancar la página usa
+  siempre un skeleton con la forma final (regla 19).
 
 ## 10. Logo
 
@@ -625,5 +628,5 @@ La navegación entre pantallas, las guardas y el inventario de modales están en
 - [ ] Cifras tabulares a la derecha; dinero solo con `MoneyDisplay`.
 - [ ] Confianza y banda de precio junto al precio; firma junto al trato.
 - [ ] Botones deshabilitados con razón visible.
-- [ ] Carga, vacío, error y datos implementados; animaciones solo de feedback.
+- [ ] Carga, vacío, error y datos implementados; componentes de carga inicial con skeleton; animaciones solo de feedback.
 - [ ] Textos en `es`/`en`/`zh`, probado con textos largos; `axe` limpio; foco visible.
