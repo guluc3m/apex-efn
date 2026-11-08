@@ -16,9 +16,7 @@ class Settings(BaseSettings):
     )
 
     # Database
-    database_url: str = Field(
-        default="postgresql+asyncpg://apex:apex@localhost:5432/apex"
-    )
+    database_url: str = Field(default="postgresql+asyncpg://apex:apex@localhost:5432/apex")
     database_pool_size: int = Field(default=10)
 
     # Redis
@@ -48,6 +46,10 @@ class Settings(BaseSettings):
     # Observability
     otel_exporter_endpoint: str = Field(default="http://localhost:4318")
     log_level: str = Field(default="INFO")
+
+    # HTTP API: pagination (technical limits)
+    pagination_default_limit: int = Field(default=50, ge=1)
+    pagination_max_limit: int = Field(default=200, ge=1)
 
     # CORS
     cors_origins: list[str] = Field(default=["http://localhost:3000"])
