@@ -16,6 +16,7 @@ from apex.common.idempotency import (
     RedisIdempotencyStore,
 )
 from apex.config import Settings, settings
+from apex.platform.telemetry import setup_telemetry
 
 
 def build_idempotency_store(cfg: Settings) -> IdempotencyStore:
@@ -60,6 +61,7 @@ def create_app(cfg: Settings | None = None, store: IdempotencyStore | None = Non
     )
 
     application.include_router(router, prefix="/v1")
+    setup_telemetry(application, service_name="apex-orchestrator")
 
     @application.get("/health")
     async def health_check() -> dict[str, str]:
