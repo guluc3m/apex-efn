@@ -477,9 +477,18 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
   rejilla y se lee como «burbujeo»; la intensidad mantiene la retícula intacta.
 - **Estabilidad:** Atkinson reordena muchos puntos ante cambios pequeños, así que el patrón se recalcula a
   `recomputeFps` y la transición de intensidad suaviza el resto.
-- **Motivo (en prueba):** autómata celular elemental, regla 30, sembrado con una sola celda. La generación
-  más nueva entra por arriba y el campo baja; las filas antiguas pierden intensidad hacia abajo. Es binario
-  por naturaleza, así que no pasa por Atkinson: la escala de grises sale de la edad de la fila.
+- **Motivo (pendiente de elegir):** hay tres candidatos en el lienzo "TRATO wireframes", todos con puntos
+  circulares que solo cambian de intensidad:
+  1. **Autómata celular elemental, regla 30**, sembrado con una sola celda, en rejilla cuadrada de 8 px. La
+     generación nueva entra por arriba y las filas antiguas pierden intensidad hacia abajo. Es binario, así que
+     no pasa por Atkinson: el gris sale de la edad de la fila.
+  2. **Reacción-difusión Gray-Scott** en rejilla **hexagonal** (filas desplazadas medio paso, laplaciano de
+     seis vecinos), celda de 7 px. Da un patrón de laberinto que deriva despacio; el gris sale de la
+     concentración.
+  3. **Manchas de jirafa:** distancia entre las dos semillas Worley más cercanas (F2 − F1) con deformación
+     suave, en rejilla hexagonal de 10 px y puntos de 7,8 px. Los bordes entre manchas quedan vacíos y las
+     semillas se desplazan lentamente.
+  Al elegir uno se borran los otros dos de este documento y se ajustan `cellSize` y `dotDiameter`.
 - **Animaciones** acordadas, independientes del motivo:
   1. **Revelado al cargar**, una vez, en `revealDuration`.
   2. **Estado del sistema:** más movimiento mientras algo trabaja; una onda al terminar con éxito.
@@ -528,6 +537,22 @@ Implementa carga/vacío/error/datos. Entrega componente + story + test axe. Desp
 captura con Playwright, revísala contra la checklist de la sección 12 y corrige lo que falle antes de
 terminar. Indica qué reglas comprobaste.
 ```
+
+### Componentes del lienzo
+
+El lienzo de wireframes ya separa las piezas comunes en componentes que importan todas las pantallas. Son el
+borrador de los componentes de `@trato/ui` y deben implementarse con el mismo nombre de concepto:
+
+| Lienzo | `@trato/ui` | Notas |
+|---|---|---|
+| `UiCabecera` | `AppHeader` | navegación primaria de `apps/web/NAVIGATION.md` §4 |
+| `UiChipFirma` | `SigningSessionIndicator` | estados activa, caduca pronto, caducada, sin firmas, sin sesión |
+| `UiEmpresaNav` | `CompanyNav` | subnavegación de Empresa |
+| `UiBoton` | `Button` | variantes `pri`, `sec`, `ghost`, `danger`; tamaños `sm`, `md`, `lg`; deshabilitado con motivo |
+| `UiBadge` | `StatusBadge` | tonos `ok`, `warn`, `bad`, `neutro`, `plano`; la forma del punto distingue el tono además del color |
+| `UiCargando` | `SphereLoader` | §9.2 |
+
+La navegación entre pantallas, las guardas y el inventario de modales están en `apps/web/NAVIGATION.md`.
 
 ## 12. Checklist de PR
 
