@@ -1,0 +1,107 @@
+{{- if .Values.web.enabled }}
+{{- $c := dict "root" $ "component" "web" }}
+{{- $sa := include "trato.serviceAccountName" (dict "root" $ "component" "web" "sa" .Values.web.serviceAccount) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trato.componentName" $c }}
+  labels:
+    {{- include "trato.labels" $c | nindent 4 }}
+spec:
+  {{- if not .Values.web.autoscaling.enabled }}
+  replicas: {{ .Values.web.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "trato.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trato.selectorLabels" $c | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $sa }}
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "trato.podSecurityContext" $ | nindent 8 }}
+      containers:
+        - name: web
+          image: {{ include "trato.image" (dict "root" $ "image" .Values.web.image) | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: {{ .Values.web.containerPort }}
+          envFrom:
+            {{- include "trato.envFrom" (dict "root" $ "secretName" .Values.web.secretName) | nindent 12 }}
+          {{- with .Values.web.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- include "trato.containerSecurityContext" $ | nindent 12 }}
+          # The app redirects "/" to a locale, a 3xx that kubelet counts as success.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.web.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: next-cache
+              mountPath: /app/.next/cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: next-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trato.componentName" $c }}
+  labels:
+    {{- include "trato.labels" $c | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "trato.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+{{- if .Values.web.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "trato.componentName" $c }}
+  labels:
+    {{- include "trato.labels" $c | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "trato.componentName" $c }}
+  minReplicas: {{ .Values.web.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.web.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.web.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}

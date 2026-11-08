@@ -1,0 +1,197 @@
+name: CD
+
+# On every push to main (and on demand): build and push the three images to GHCR, then deploy staging
+# with Helm. The deploy job is a no-op with a notice until the staging settings exist
+# (repository variables, see docs/runbooks/deploy.md). Image publishing does not depend on them.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Deploys never overlap. A queued run waits instead of cancelling a deploy that is in progress.
+concurrency:
+  group: cd-staging
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: guluc3m/apex-efn
+  HELM_VERSION: v3.16.4
+  # Must match the Terraform defaults (environments/staging: kubernetes_namespace, helm_release_name).
+  HELM_RELEASE: trato
+  HELM_NAMESPACE: trato-staging
+
+jobs:
+  # =============================================================================
+  # Images: one per app, tags sha-<short> and main. Never latest.
+  # =============================================================================
+  images:
+    name: Build and push ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - app: orchestrator
+            context: apps/orchestrator
+            file: apps/orchestrator/Dockerfile
+          - app: web
+            context: .
+            file: apps/web/Dockerfile
+          - app: browser-worker
+            context: .
+            file: apps/browser-worker/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.app }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: true
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  # =============================================================================
+  # Gate: are the staging settings configured? Everything below is skipped when not.
+  # =============================================================================
+  prepare:
+    name: Check staging settings
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Look for required repository variables
+        id: check
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+          ORCHESTRATOR_ROLE_ARN: ${{ vars.AWS_ORCHESTRATOR_ROLE_ARN }}
+          WEB_ROLE_ARN: ${{ vars.AWS_WEB_ROLE_ARN }}
+          BROWSER_WORKER_ROLE_ARN: ${{ vars.AWS_BROWSER_WORKER_ROLE_ARN }}
+          S3_BUCKET_ATTACHMENTS: ${{ vars.S3_BUCKET_ATTACHMENTS }}
+          S3_BUCKET_CSV: ${{ vars.S3_BUCKET_CSV }}
+          S3_BUCKET_AUDIT: ${{ vars.S3_BUCKET_AUDIT }}
+        run: |
+          missing=()
+          for name in AWS_DEPLOY_ROLE_ARN AWS_REGION EKS_CLUSTER_NAME \
+            ORCHESTRATOR_ROLE_ARN WEB_ROLE_ARN BROWSER_WORKER_ROLE_ARN \
+            S3_BUCKET_ATTACHMENTS S3_BUCKET_CSV S3_BUCKET_AUDIT; do
+            if [ -z "${!name}" ]; then
+              missing+=("$name")
+            fi
+          done
+          if [ "${#missing[@]}" -eq 0 ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "Staging settings found. Deploy will run."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Staging deploy skipped. Missing repository variables: ${missing[*]}. See docs/runbooks/deploy.md."
+          fi
+
+  # =============================================================================
+  # Staging deploy. OIDC to AWS (no stored keys), kubeconfig, then helm upgrade --atomic.
+  # =============================================================================
+  deploy-staging:
+    name: Deploy staging
+    needs: [images, prepare]
+    if: needs.prepare.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assume the deploy role (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Kubeconfig for the staging cluster
+        env:
+          EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION" --alias trato-staging
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Helm upgrade (atomic)
+        env:
+          ORCHESTRATOR_ROLE_ARN: ${{ vars.AWS_ORCHESTRATOR_ROLE_ARN }}
+          WEB_ROLE_ARN: ${{ vars.AWS_WEB_ROLE_ARN }}
+          BROWSER_WORKER_ROLE_ARN: ${{ vars.AWS_BROWSER_WORKER_ROLE_ARN }}
+          S3_BUCKET_ATTACHMENTS: ${{ vars.S3_BUCKET_ATTACHMENTS }}
+          S3_BUCKET_CSV: ${{ vars.S3_BUCKET_CSV }}
+          S3_BUCKET_AUDIT: ${{ vars.S3_BUCKET_AUDIT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          set -euo pipefail
+          tag="sha-${GITHUB_SHA::7}"
+          # Environment facts come from repository variables, not from the chart. Secret values never appear here.
+          values="$RUNNER_TEMP/cd-values.yaml"
+          cat > "$values" <<EOF
+          config:
+            AWS_REGION: "${AWS_REGION}"
+            S3_BUCKET_ATTACHMENTS: "${S3_BUCKET_ATTACHMENTS}"
+            S3_BUCKET_CSV: "${S3_BUCKET_CSV}"
+            S3_BUCKET_AUDIT: "${S3_BUCKET_AUDIT}"
+          orchestrator:
+            image:
+              tag: "${tag}"
+            serviceAccount:
+              annotations:
+                eks.amazonaws.com/role-arn: "${ORCHESTRATOR_ROLE_ARN}"
+          web:
+            image:
+              tag: "${tag}"
+            serviceAccount:
+              annotations:
+                eks.amazonaws.com/role-arn: "${WEB_ROLE_ARN}"
+          browserWorker:
+            image:
+              tag: "${tag}"
+            serviceAccount:
+              annotations:
+                eks.amazonaws.com/role-arn: "${BROWSER_WORKER_ROLE_ARN}"
+          EOF
+          helm upgrade --install "$HELM_RELEASE" infra/helm/trato \
+            --namespace "$HELM_NAMESPACE" --create-namespace \
+            -f infra/helm/trato/values-staging.yaml \
+            -f "$values" \
+            --atomic --timeout 10m
+          helm status "$HELM_RELEASE" --namespace "$HELM_NAMESPACE"

@@ -1,0 +1,101 @@
+{{- if .Values.llm.enabled }}
+{{- $c := dict "root" $ "component" "llm" }}
+{{- $model := required "llm.model is required when llm.enabled=true" .Values.llm.model }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trato.componentName" $c }}
+  labels:
+    {{- include "trato.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.llm.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "trato.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trato.selectorLabels" $c | nindent 8 }}
+    spec:
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "trato.podSecurityContext" $ | nindent 8 }}
+      {{- with .Values.llm.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.llm.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: llm
+          image: {{ include "trato.image" (dict "root" $ "image" .Values.llm.image) | quote }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model
+            - {{ $model | quote }}
+            - --host
+            - 0.0.0.0
+            - --port
+            - {{ .Values.llm.containerPort | quote }}
+            {{- range .Values.llm.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.llm.containerPort }}
+          envFrom:
+            {{- include "trato.envFrom" (dict "root" $ "secretName" .Values.llm.secretName) | nindent 12 }}
+          env:
+            # Caches go to the writable /tmp emptyDir (root filesystem is read-only).
+            - name: HOME
+              value: /tmp
+            - name: XDG_CACHE_HOME
+              value: /tmp/cache
+            - name: HF_HOME
+              value: /tmp/huggingface
+            {{- with .Values.llm.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          securityContext:
+            {{- include "trato.containerSecurityContext" $ | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.llm.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.llm.shmSize }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trato.componentName" $c }}
+  labels:
+    {{- include "trato.labels" $c | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "trato.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+{{- end }}

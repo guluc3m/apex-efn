@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars (gitignored) and fill in the environment facts. Nothing here is a real account value.
+# Every REQUIRED variable must be set before `terraform plan`.
+
+region = "<aws-region>"
+
+# REQUIRED: TL decision, open question (issue #81). Do not guess. Uncomment only with the approved number of days.
+# audit_object_lock_retention_days = <approved-days>
+
+# A mandatory placeholder: the plan stops until the line above is set.
+
+# REQUIRED: the CIDRs that may reach the public Kubernetes API (your office / VPN / self-hosted runner egress).
+eks_public_access_cidrs = ["<cidr-you-control>/32"]
+
+# ARN of the GitHub OIDC role that CD assumes (repo variable AWS_DEPLOY_ROLE_ARN). Leave commented until it exists.
+# deploy_role_arn = "arn:aws:iam::<account-id>:role/<github-deploy-role>"
+
+# gpu_node_count = 0

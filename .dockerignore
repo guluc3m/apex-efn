@@ -1,12 +1,19 @@
-# Repo-root Docker build context (apps/mock-marketplace image, D1-03).
-# Keep the context small and free of secrets/local state; the Dockerfile copies
-# only the workspace manifests and the mock-marketplace sources explicitly.
+# Repo-root Docker build context, shared by every image that builds from the repository
+# root (pnpm workspace): apps/web, apps/browser-worker and apps/mock-marketplace, plus the
+# orchestrator (uv/hatchling) which also reads config/defaults at the repo root. Each
+# Dockerfile copies only what it needs; this file keeps the context free of installed
+# dependencies, build outputs, secrets and local tooling state.
 
+# VCS and metadata
 .git
 .gitignore
 .claude
+.github
+.husky
+.vscode
+.idea
 
-# Installed dependencies and build outputs are rebuilt inside the image.
+# Installed dependencies and build outputs (rebuilt inside the image)
 **/node_modules
 **/.pnpm-store
 **/.turbo
@@ -15,8 +22,10 @@
 **/out
 **/build
 **/coverage
+**/playwright-report
+**/test-results
 
-# Python environments and caches (unused by the Node image).
+# Python environments and caches
 **/.venv
 **/venv
 **/__pycache__
@@ -25,13 +34,20 @@
 **/.mypy_cache
 **/.ruff_cache
 
-# Local environment files and editor state.
+# Docs, infra and media that no image needs
+docs
+infra
+compose.yaml
+*.png
+*.jpg
+
+# Local environment files and editor state (keep the checked-in example)
 .env
-.env.local
-.env.*.local
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
 **/.env.local
-.idea
-.vscode
 **/*.swp
 **/*.swo
 .DS_Store
