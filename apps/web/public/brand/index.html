@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APEX · Marca</title>
+<link rel="icon" href="./apex-icono.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400&amp;display=swap">
+<link rel="stylesheet" href="./apex-logo.css">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--apex-bg);
+    color: var(--apex-ink);
+    font: 400 14px/1.6 var(--apex-font);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  header.top {
+    border-bottom: 1px solid var(--apex-line);
+    height: 56px; display: flex; align-items: center;
+  }
+  header.top .wrap { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .muted { color: #8e8e9a; }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; }
+  h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; margin: 0; }
+  h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  section { padding: 48px 0; border-bottom: 1px solid var(--apex-line); }
+  .lead { max-width: 68ch; color: var(--apex-ink-soft); margin: 8px 0 0; }
+  .grid { display: grid; gap: 1px; background: var(--apex-line); border: 1px solid var(--apex-line); margin-top: 24px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .cell { background: var(--apex-surface); padding: 24px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; }
+  .cell.light { background: #ffffff; color: var(--apex-bg); }
+  .cell.ink { background: var(--apex-ink); color: var(--apex-bg); }
+  .stage { flex: 1; display: grid; place-items: center; }
+  .cap { font-size: 13px; color: #8e8e9a; display: flex; justify-content: space-between; gap: 12px; }
+  .cell.light .cap, .cell.ink .cap { color: #4a4a52; }
+  .hero { display: grid; place-items: center; min-height: 360px; background: var(--apex-surface); border: 1px solid var(--apex-line); margin-top: 32px; }
+
+  /* Construcción */
+  .construct { position: relative; width: min(100%, 480px); aspect-ratio: 64 / 40; margin: 24px auto; }
+  .construct svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+  /* Área de seguridad */
+  .clear { outline: 1px dashed #36363e; background:
+    repeating-linear-gradient(45deg, transparent 0 6px, rgba(237,237,240,.06) 6px 7px); }
+  .clear > .apex-mark { box-shadow: 0 0 0 999px transparent; outline: 1px solid #36363e; }
+
+  .swatch { height: 96px; border: 1px solid var(--apex-line); }
+  .dont .stage { position: relative; }
+  .dont .x { position: absolute; inset: 0; pointer-events: none; }
+  .dl { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .dl a {
+    display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px;
+    border: 1px solid #36363e; background: var(--apex-surface); color: var(--apex-ink);
+    text-decoration: none; font-weight: 500;
+  }
+  .dl a:hover { background: #1b1b20; }
+  a:focus-visible { outline: 2px solid var(--apex-ink); outline-offset: 2px; }
+  footer { padding: 32px 0 48px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="apex-lockup apex-sm" href="./"><span class="apex-mark" aria-hidden="true"></span><span class="apex-wordmark">apex</span></a>
+    <span class="muted mono">Marca · v1</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h1>Logo de APEX</h1>
+    <p class="lead">Un hexágono achatado con un pico en negativo. El hexágono es la estructura que da el sistema y el pico es la mejor oferta, la que llega a decidirse. Se dibuja en un solo color, con esquinas rectas y sin degradados, igual que la interfaz.</p>
+    <div class="hero"><span class="apex-mark apex-xl" role="img" aria-label="Isotipo de APEX" style="--apex-mark-size: 240px"></span></div>
+  </section>
+
+  <section>
+    <h2>Construcción</h2>
+    <p class="lead">Retícula de 64 × 40. Los lados del corte y del triángulo interior son paralelos y el hueco entre ellos mide lo mismo en todo el recorrido. El triángulo apoya en la línea base y la corona termina un poco por encima de ella.</p>
+    <div class="construct">
+      <svg viewBox="0 0 64 40" aria-hidden="true">
+        <g stroke="#36363e" stroke-width=".15" fill="none">
+          <path d="M0 0H64M0 20H64M0 40H64M32 0V40M14 0V40M50 0V40"/>
+          <path d="M14 40 32 10 50 40" stroke-dasharray=".6 .6"/>
+        </g>
+        <g fill="#ededf0" opacity=".9">
+          <path d="M14 0H50L64 20 50.54 39.23 32 8.33 13.46 39.23 0 20Z"/>
+          <path d="M32 19.17 44.5 40H19.5Z"/>
+        </g>
+        <g fill="#8e8e9a" font-family="Geist Mono, monospace" font-size="1.8">
+          <text x="-1" y="-1.2">0,0</text><text x="58" y="-1.2">64,0</text>
+          <text x="58" y="43">64,40</text><text x="36" y="8.8">32,8.33</text>
+          <text x="41" y="19.6">32,19.17</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <h2>Logotipo</h2>
+    <p class="lead">El isotipo va a la izquierda de «apex», en minúsculas, Geist 600 con tracking −0,04 em. El texto mide el 72 % del ancho del isotipo y la separación entre ambos es un cuarto de ese ancho. No se dibuja el nombre en otra fuente ni en mayúsculas.</p>
+    <div class="grid g2">
+      <div class="cell"><div class="stage"><span class="apex-lockup apex-lg"><span class="apex-mark" aria-hidden="true"></span><span class="apex-wordmark">apex</span></span></div><div class="cap"><span>Sobre oscuro</span><span class="mono">.apex-lockup</span></div></div>
+      <div class="cell light"><div class="stage"><span class="apex-lockup apex-lg apex-on-light"><span class="apex-mark" aria-hidden="true"></span><span class="apex-wordmark">apex</span></span></div><div class="cap"><span>Sobre claro</span><span class="mono">.apex-on-light</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Área de seguridad y tamaño mínimo</h2>
+    <p class="lead">Alrededor del logo se deja libre al menos un cuarto del ancho del isotipo. El isotipo solo se usa desde 16 px de ancho y el logotipo desde 24 px de isotipo, que es lo que lleva la cabecera de la app.</p>
+    <div class="grid g2">
+      <div class="cell"><div class="stage"><span class="apex-clearspace clear apex-lg"><span class="apex-mark"></span></span></div><div class="cap"><span>Margen = ¼ del ancho</span><span class="mono">.apex-clearspace</span></div></div>
+      <div class="cell"><div class="stage" style="display:flex;gap:32px;align-items:center;justify-content:center;flex-wrap:wrap">
+        <span class="apex-mark apex-xs" role="img" aria-label="16 px"></span>
+        <span class="apex-mark apex-sm" role="img" aria-label="24 px"></span>
+        <span class="apex-mark apex-md" role="img" aria-label="32 px"></span>
+        <span class="apex-lockup apex-sm"><span class="apex-mark" aria-hidden="true"></span><span class="apex-wordmark">apex</span></span>
+      </div><div class="cap"><span>16 · 24 · 32 px y logotipo mínimo</span><span class="mono">.apex-xs / -sm / -md</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Color</h2>
+    <p class="lead">Un solo color por aplicación. Por defecto, tinta sobre el fondo de la app. Sobre fondos claros, el negro de fondo. No hay color de acento: el logo nunca va en verde, naranja ni rojo, que se reservan a los estados.</p>
+    <div class="grid g3">
+      <div class="cell"><div class="stage"><span class="apex-mark apex-lg"></span></div><div class="cap"><span>Tinta sobre fondo</span><span class="mono">#ededf0 / #0b0b0d</span></div></div>
+      <div class="cell ink"><div class="stage"><span class="apex-mark apex-lg apex-on-light"></span></div><div class="cap"><span>Fondo sobre tinta</span><span class="mono">#0b0b0d / #ededf0</span></div></div>
+      <div class="cell"><div class="stage"><span class="apex-mark apex-lg apex-soft"></span></div><div class="cap"><span>Secundario (pies, marcas de agua)</span><span class="mono">#b4b4be</span></div></div>
+    </div>
+    <div class="grid g4" style="margin-top:24px">
+      <div class="cell" style="min-height:0"><div class="swatch" style="background:#0b0b0d"></div><div class="cap"><span>Fondo</span><span class="mono">#0b0b0d</span></div></div>
+      <div class="cell" style="min-height:0"><div class="swatch" style="background:#131316"></div><div class="cap"><span>Superficie</span><span class="mono">#131316</span></div></div>
+      <div class="cell" style="min-height:0"><div class="swatch" style="background:#b4b4be"></div><div class="cap"><span>Tinta suave</span><span class="mono">#b4b4be</span></div></div>
+      <div class="cell" style="min-height:0"><div class="swatch" style="background:#ededf0"></div><div class="cap"><span>Tinta</span><span class="mono">#ededf0</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Usos incorrectos</h2>
+    <div class="grid g4">
+      <div class="cell dont"><div class="stage"><span class="apex-mark apex-lg" style="color:#3fbf74"></span></div><div class="cap"><span>No cambiar el color</span></div></div>
+      <div class="cell dont"><div class="stage"><span class="apex-mark apex-lg" style="scale:1 1.6"></span></div><div class="cap"><span>No deformar</span></div></div>
+      <div class="cell dont"><div class="stage"><span class="apex-mark apex-lg" style="rotate:-15deg"></span></div><div class="cap"><span>No girar</span></div></div>
+      <div class="cell dont"><div class="stage"><span class="apex-mark apex-lg" style="background:linear-gradient(135deg,#ededf0,#36363e)"></span></div><div class="cap"><span>No aplicar degradados</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Archivos</h2>
+    <p class="lead">Todo está en <span class="mono">apps/web/public/brand/</span> y se sirve en <span class="mono">/brand/</span>.</p>
+    <div class="dl">
+      <a href="./apex-isotipo.svg" download>apex-isotipo.svg <span class="muted mono">currentColor</span></a>
+      <a href="./apex-isotipo-claro.svg" download>apex-isotipo-claro.svg <span class="muted mono">#ededf0</span></a>
+      <a href="./apex-isotipo-oscuro.svg" download>apex-isotipo-oscuro.svg <span class="muted mono">#0b0b0d</span></a>
+      <a href="./apex-icono.svg" download>apex-icono.svg <span class="muted mono">64×64</span></a>
+      <a href="./apex-logo.css" download>apex-logo.css</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap muted">APEX-EFN · Marca v1</footer>
+
+</body>
+</html>

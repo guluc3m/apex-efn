@@ -1,0 +1,74 @@
+/*
+ * APEX — hoja de estilo del logo.
+ * Colores y tipografía tomados de packages/ui/DESIGN.md (oscuro, monocromo, esquinas rectas).
+ *
+ * Uso:
+ *   <link rel="stylesheet" href="/brand/apex-logo.css">
+ *   <span class="apex-mark" role="img" aria-label="APEX"></span>
+ *   <a class="apex-lockup" href="/"><span class="apex-mark" aria-hidden="true"></span><span class="apex-wordmark">apex</span></a>
+ *
+ * Tamaño: --apex-mark-size es el ANCHO del isotipo; todo lo demás se deriva de él.
+ * Color: el logo toma currentColor; cambia `color` para invertirlo.
+ */
+
+:root {
+  --apex-ink: #ededf0;
+  --apex-ink-soft: #b4b4be;
+  --apex-bg: #0b0b0d;
+  --apex-surface: #131316;
+  --apex-line: #26262c;
+  --apex-font: Geist, ui-sans-serif, system-ui, sans-serif;
+
+  --apex-mark-size: 32px;
+  --apex-mark-ratio: 64 / 40;
+}
+
+/* Isotipo: hexágono achatado con el pico en negativo. */
+.apex-mark {
+  display: inline-block;
+  flex: none;
+  width: var(--apex-mark-size);
+  aspect-ratio: var(--apex-mark-ratio);
+  background-color: currentColor;
+  -webkit-mask: url('./apex-isotipo.svg') center / contain no-repeat;
+  mask: url('./apex-isotipo.svg') center / contain no-repeat;
+  vertical-align: middle;
+}
+
+/* Logotipo horizontal: isotipo + "apex" en Geist 600. */
+.apex-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--apex-mark-size) * 0.25);
+  color: var(--apex-ink);
+  font-family: var(--apex-font);
+  font-weight: 600;
+  font-size: calc(var(--apex-mark-size) * 0.72);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.apex-wordmark {
+  /* Compensa el lado derecho del espacio de letra negativo. */
+  padding-right: 0.04em;
+  translate: 0 -0.04em;
+}
+
+/* Área de seguridad: 1/4 del ancho del isotipo por cada lado. */
+.apex-clearspace {
+  display: inline-flex;
+  padding: calc(var(--apex-mark-size) * 0.25);
+}
+
+/* Tamaños */
+.apex-xs { --apex-mark-size: 16px; } /* mínimo para el isotipo solo */
+.apex-sm { --apex-mark-size: 24px; } /* cabecera de la app (56px de alto) */
+.apex-md { --apex-mark-size: 32px; }
+.apex-lg { --apex-mark-size: 64px; }
+.apex-xl { --apex-mark-size: 128px; }
+
+/* Versiones de color */
+.apex-on-dark { color: var(--apex-ink); }
+.apex-on-light { color: var(--apex-bg); }
+.apex-soft { color: var(--apex-ink-soft); }
