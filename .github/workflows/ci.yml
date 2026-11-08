@@ -7,8 +7,11 @@ name: CI
 on:
   push:
     branches: [main]
+  # Every PR, including stacked PRs whose base is another branch. Do NOT add the "edited" type: a
+  # title/body edit would start a run where every gate is skipped, and a skipped "CI OK" counts as
+  # passing. Retargeting a stacked PR needs no trigger: after a squash merge the child must be rebased
+  # and pushed, which fires "synchronize".
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
