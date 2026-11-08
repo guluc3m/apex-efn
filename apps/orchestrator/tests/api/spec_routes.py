@@ -48,6 +48,9 @@ IMPLEMENTED_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/v1/missions"),
         ("GET", "/v1/missions/{id}"),
         ("GET", "/v1/missions/{id}/events"),
+        ("GET", "/v1/missions/{id}/offers"),
+        ("GET", "/v1/sellers/{id}/confidence"),
+        ("POST", "/v1/sellers/{id}/confidence/recompute"),
     }
 )
 
