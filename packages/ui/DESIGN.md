@@ -1,6 +1,6 @@
 ---
 name: TRATO
-description: Sistema visual oscuro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo preciso con un único acento índigo; mezcla de la sobriedad de Vercel, el acento único de Render y las cifras grandes de la app de Revolut.
+description: Sistema visual oscuro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo puro y esquinas rectas, sin color de acento; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
 colors:
   background: "#0b0b0d"
   surface: "#131316"
@@ -11,17 +11,18 @@ colors:
   ink-soft: "#b4b4be"
   ink-muted: "#8e8e9a"
   on-ink: "#0b0b0d"
-  accent: "#8b7cff"
-  accent-deep: "#a497ff"
-  accent-subtle: "#221d45"
+  accent: "#ededf0"
+  accent-deep: "#ffffff"
+  accent-subtle: "#1b1b20"
+  on-accent: "#0b0b0d"
   success: "#3fbf74"
   success-subtle: "#0f2419"
-  warning: "#e5a03b"
-  warning-subtle: "#2a1e0a"
-  danger: "#f26b61"
+  warning: "#f5873a"
+  warning-subtle: "#2d1a0b"
+  danger: "#f7566a"
   danger-solid: "#c4271f"
   danger-solid-hover: "#a31f18"
-  danger-subtle: "#2c1312"
+  danger-subtle: "#2e1117"
   white: "#ffffff"
 typography:
   display:
@@ -88,11 +89,8 @@ typography:
     fontFamily: "Noto Sans SC, PingFang SC, Microsoft YaHei, sans-serif"
     lineHeight: 1.7
 rounded:
-  inner: "4px"
-  badge: "6px"
-  control: "8px"
-  panel: "12px"
-  pill: "9999px"
+  none: "0px"
+  dot: "50%"
 spacing:
   unit: "4px"
   inline-gap: "8px"
@@ -151,14 +149,14 @@ shadcn:
   sidebar-accent-foreground: "{colors.ink}"
   sidebar-border: "{colors.line}"
   sidebar-ring: "{colors.accent}"
-  radius: "0.75rem"
+  radius: "0rem"
   font-sans: "Geist, sans-serif"
   font-mono: "Geist Mono, ui-monospace, monospace"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.on-ink}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.none}"
     padding: "0 14px"
     height: "{spacing.control-height}"
     typography: "{typography.label}"
@@ -168,7 +166,7 @@ components:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     borderColor: "{colors.line-strong}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.none}"
     padding: "0 14px"
     height: "{spacing.control-height}"
   button-secondary-hover:
@@ -176,7 +174,7 @@ components:
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.ink-soft}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.none}"
     padding: "0 10px"
     height: "{spacing.control-height}"
   button-ghost-hover:
@@ -184,7 +182,7 @@ components:
   button-destructive:
     backgroundColor: "{colors.danger-solid}"
     textColor: "{colors.white}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.none}"
     padding: "0 14px"
     height: "{spacing.control-height}"
   button-destructive-hover:
@@ -203,7 +201,7 @@ components:
     textColor: "{colors.ink}"
     placeholderColor: "{colors.ink-muted}"
     borderColor: "{colors.line-strong}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.none}"
     padding: "0 12px"
     height: "{spacing.control-height}"
   input-focus:
@@ -213,13 +211,13 @@ components:
   panel:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.line}"
-    rounded: "{rounded.panel}"
+    rounded: "{rounded.none}"
     padding: "{spacing.panel-padding}"
     shadow: "{shadows.none}"
   overlay:
     backgroundColor: "{colors.surface-raised}"
     borderColor: "{colors.line-strong}"
-    rounded: "{rounded.panel}"
+    rounded: "{rounded.none}"
     shadow: "{shadows.overlay}"
   table-header:
     backgroundColor: "{colors.surface-raised}"
@@ -236,41 +234,61 @@ components:
   badge-success:
     backgroundColor: "{colors.success-subtle}"
     textColor: "{colors.success}"
-    rounded: "{rounded.badge}"
+    rounded: "{rounded.none}"
     padding: "2px 8px"
     typography: "{typography.small}"
   badge-warning:
     backgroundColor: "{colors.warning-subtle}"
     textColor: "{colors.warning}"
-    rounded: "{rounded.badge}"
+    rounded: "{rounded.none}"
     padding: "2px 8px"
     typography: "{typography.small}"
   badge-danger:
     backgroundColor: "{colors.danger-subtle}"
     textColor: "{colors.danger}"
-    rounded: "{rounded.badge}"
+    rounded: "{rounded.none}"
     padding: "2px 8px"
     typography: "{typography.small}"
   badge-neutral:
     backgroundColor: "{colors.surface-raised}"
     textColor: "{colors.ink-soft}"
-    rounded: "{rounded.badge}"
+    rounded: "{rounded.none}"
     padding: "2px 8px"
     typography: "{typography.small}"
   filter-chip:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-soft}"
     borderColor: "{colors.line-strong}"
-    rounded: "{rounded.pill}"
+    rounded: "{rounded.none}"
     height: "32px"
   filter-chip-active:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.on-ink}"
   dither:
-    inkColor: "{colors.ink-muted}"
+    algorithm: "atkinson"
+    dotShape: "{rounded.dot}"
     backgroundColor: "transparent"
-    cellSize: "3px"
-    bayerMatrix: 8
+    cellSize: "8px"
+    dotDiameter: "5px"
+    dotRamp: "{colors.background} → {colors.ink-muted}"
+    dotLevels: 8
+    dotTransition: "120ms"
+    recomputeFps: 12
+    rotationPeriod: "40s"
+    revealDuration: "800ms"
+  loader-spheres:
+    count: 4
+    fill: "{colors.ink}"
+    shading: "none"
+    sphereDiameter: "32px"
+    gap: "12px"
+    arcHeight: "0.31 × distancia"
+    swapDuration: "650ms"
+    bounceDuration: "420ms"
+    bounceStagger: "90ms"
+    bounceHeight: "16px"
+    pause: "150ms"
+    easing: "cubic-bezier(0.65, 0, 0.35, 1)"
 ---
 
 # TRATO — Sistema de diseño
@@ -287,9 +305,11 @@ TRATO es una herramienta donde alguien **firma compras con dinero real**. Tiene 
 instrumento preciso, no una demo.
 
 - **Vercel:** monocromo sobre casi negro, tipografía Geist, bordes finos, botón principal claro, cero adorno.
-- **Render:** fondo oscuro neutro y **un solo** acento con personalidad (índigo `accent`), usado con cuentagotas.
-- **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios y redondeados, la cantidad como
-  protagonista.
+- **Render:** esquinas rectas (radio 0 en todo) y bordes de 1 px.
+- **Sin color de acento:** `accent` es el mismo blanco roto que `ink`. Lo que destaca (foco, selección,
+  enlaces, serie principal) lo hace por luminosidad, subrayado o borde, nunca por un tono propio. Así el
+  único color de la interfaz es el de estado, y cuando aparece significa algo.
+- **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios, la cantidad como protagonista.
 
 Solo modo oscuro. No hay tema claro: un único tema evita mantener dos paletas y que una de las dos quede descuidada.
 
@@ -300,7 +320,9 @@ Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 - Modo claro o un segundo tema. TRATO es solo oscuro.
 - Negro puro (`#000`) de fondo o blanco puro para texto: cansan la vista y hacen vibrar el contraste.
 - Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color.
-- Titulares que entran con desenfoque, elementos que flotan o «respiran» en bucle. No hay excepciones.
+- Titulares que entran con desenfoque.
+- Esquinas redondeadas en la interfaz: todo es recto (`rounded.none`). Lo único circular son los puntos
+  del dithering.
 - Una paleta paralela de grises o tonos casi iguales definidos elemento a elemento. Todo gris sale de
   `colors` del YAML.
 - Texto de 9–12 px. El mínimo es `small` (13 px).
@@ -331,13 +353,13 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
    separados por `group-gap`; secciones por `section`. No añadir bordes o paneles para agrupar.
 9. **Titulares concretos.** «3 ofertas esperan tu firma», no «Compras inteligentes, simplificadas».
 10. **Destacar el CTA.** Un solo `button-primary` por zona; el resto `secondary` o `ghost`.
-11. **Un color de acento.** `accent` solo para enlaces, foco, selección y la serie principal de
-    gráficas. Los colores de estado no son acentos: solo significan estado.
+11. **Monocromo.** No hay color de acento: foco, selección, enlaces y serie principal usan `accent` (= `ink`).
+    Los enlaces se distinguen por subrayado. Los colores de estado no son acentos: solo significan estado.
 12. **Iconos coherentes.** Solo lucide, mismo trazo (1.75) y tamaño (16 px en texto, 20 px en
     navegación), y solo cuando aportan significado.
 13. **Quitar adornos.** Si algo se puede eliminar sin perder información, se elimina.
-14. **Radio interior = radio exterior − padding.** Un panel de 12 px con 8 px de padding lleva hijos de
-    4 px (`rounded.inner`). Nunca el mismo radio dentro que fuera.
+14. **Radio 0.** Paneles, botones, inputs, badges, chips y diálogos con esquinas rectas. La jerarquía la
+    dan el borde y el paso de luminosidad, no la forma.
 15. **Contraste de texto alto.** `ink` para texto principal, `ink-soft` para secundario, `ink-muted` como
     mínimo (≥ 5.3:1 sobre cualquier superficie). Nunca grises más oscuros para texto.
 16. **Titulares bien partidos.** `text-wrap: balance` en titulares, `pretty` en párrafos; sin viudas.
@@ -431,22 +453,60 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
   `motion.overlay` (popover, diálogo), siempre con `motion.easing`.
 - Animación permitida = feedback: confirmación de firma, guardado, fila nueva resaltada brevemente,
   cambio de banda tras recalcular.
-- Prohibido: entradas de página, desenfoques, rebotes, parallax y cualquier bucle.
+- Prohibido: entradas de página, desenfoques, rebotes y parallax.
+- Los bucles solo existen en el campo de puntos (§9), el indicador de carga (§9.2) y `ShiningText`.
+- **`ShiningText`:** un brillo que recorre el texto en bucle (2 s, lineal), de `ink-muted` a `ink`. Solo
+  para trabajo que un agente está haciendo **ahora**: «Redactando la contraoferta…», «Buscando ofertas…»,
+  «Analizando el CSV…». Nunca en títulos, cifras o estados terminados. Lleva `role="status"`; con reduced
+  motion queda estático en `ink-muted`.
 - `prefers-reduced-motion`: se reduce todo a cambios de opacidad instantáneos.
 
-## 9. Esferas con dithering
+## 9. Campo de puntos y carga
 
-Único recurso gráfico del sistema. Usa el componente `DitherSpheres` (token `components.dither`).
+Único recurso gráfico del sistema. Dos componentes: `DotField` (token `components.dither`) y `SphereLoader`
+(token `components.loader-spheres`).
 
-- 1 bit y una sola tinta (`ink-muted` por defecto, `ink` solo si es el único elemento visual) sobre fondo
-  transparente, es decir, píxeles claros sobre el oscuro; patrón Bayer 8×8 visible con
-  `image-rendering: pixelated`. Sin color, sin degradados, sin desenfoque.
-- Sombreado lambertiano con **una** dirección de luz compartida por todas las esferas.
-- Composición: 2–3 esferas de tamaños distintos, asimétricas, recortadas por el borde. Nunca centradas.
-- Estático. Como mucho, la luz sigue al puntero mientras se mueve; desactivado con reduced motion.
-- Determinista (sin `Math.random`), `aria-hidden`, sin desplazar el layout.
-- **Dónde:** login y landing, siempre junto a una captura real del producto. Nunca dentro de la app ni
-  detrás de importes, tablas o el gate.
+### 9.1 Campo de puntos (`DotField`)
+
+- **Rejilla:** toda la zona es una rejilla regular de `cellSize`; cada celda es un **círculo** de diámetro
+  fijo (`dotDiameter`). Nada de cuadrados ni `image-rendering: pixelated`.
+- **Atkinson:** la imagen fuente se convierte a 1 bit con difusión de error Atkinson (6/8 del error a seis
+  vecinos, umbral 0.5). El algoritmo puede cambiar si visualmente no convence.
+- **Los puntos cambian de intensidad, no de tamaño.** Al encenderse o apagarse, cada punto recorre una
+  rampa de grises (`dotRamp`, en `dotLevels` pasos) en `dotTransition`. Escalar el radio deforma la
+  rejilla y se lee como «burbujeo»; la intensidad mantiene la retícula intacta.
+- **Estabilidad:** Atkinson reordena muchos puntos ante cambios pequeños, así que el patrón se recalcula a
+  `recomputeFps` y la transición de intensidad suaviza el resto.
+- **Motivo (pendiente de elegir):** hay tres candidatos en el lienzo "TRATO wireframes", todos con puntos
+  circulares que solo cambian de intensidad:
+  1. **Autómata celular elemental, regla 30**, sembrado con una sola celda, en rejilla cuadrada de 8 px. La
+     generación nueva entra por arriba y las filas antiguas pierden intensidad hacia abajo. Es binario, así que
+     no pasa por Atkinson: el gris sale de la edad de la fila.
+  2. **Reacción-difusión Gray-Scott** en rejilla **hexagonal** (filas desplazadas medio paso, laplaciano de
+     seis vecinos), celda de 7 px. Da un patrón de laberinto que deriva despacio; el gris sale de la
+     concentración.
+  3. **Manchas de jirafa:** distancia entre las dos semillas Worley más cercanas (F2 − F1) con deformación
+     suave, en rejilla hexagonal de 10 px y puntos de 7,8 px. Los bordes entre manchas quedan vacíos y las
+     semillas se desplazan lentamente.
+  Al elegir uno se borran los otros dos de este documento y se ajustan `cellSize` y `dotDiameter`.
+- **Animaciones** acordadas, independientes del motivo:
+  1. **Revelado al cargar**, una vez, en `revealDuration`.
+  2. **Estado del sistema:** más movimiento mientras algo trabaja; una onda al terminar con éxito.
+  3. **Bucle lento** del motivo, en `rotationPeriod`.
+  4. **Reacción al CTA:** el campo responde al hover o foco del botón principal.
+- `prefers-reduced-motion`: un único fotograma estático. `aria-hidden`, `pointer-events: none`.
+- **Dónde:** de momento solo en el login. Nunca detrás de importes, tablas o el gate.
+
+### 9.2 Indicador de carga (`SphereLoader`)
+
+- Cuatro bolas **lisas, blancas (`ink`) e idénticas**, sin sombreado ni dithering, en línea horizontal.
+- Se intercambian por parejas contiguas: una viaja por un **arco por encima** y la otra por un **arco por
+  debajo**, como las transiciones de un autómata finito. La altura del arco es proporcional a la distancia.
+- **Alterna dos movimientos:** un intercambio y después una **ola**: las cuatro bolas botan una tras otra de
+  izquierda a derecha (`bounceDuration`, desfase `bounceStagger`, altura `bounceHeight`, trayectoria
+  parabólica). Pausa `pause` entre movimientos. Las parejas de intercambio rotan: 1–2, 3–4, 2–3.
+- Uso: modales de carga y esperas de más de 400 ms. Siempre con texto que diga qué se espera
+  («Firmando decisión…») y `role="status"`. Con reduced motion: bolas quietas y el texto.
 
 ## 10. Accesibilidad e internacionalización
 
@@ -478,13 +538,29 @@ captura con Playwright, revísala contra la checklist de la sección 12 y corrig
 terminar. Indica qué reglas comprobaste.
 ```
 
+### Componentes del lienzo
+
+El lienzo de wireframes ya separa las piezas comunes en componentes que importan todas las pantallas. Son el
+borrador de los componentes de `@trato/ui` y deben implementarse con el mismo nombre de concepto:
+
+| Lienzo | `@trato/ui` | Notas |
+|---|---|---|
+| `UiCabecera` | `AppHeader` | navegación primaria de `apps/web/NAVIGATION.md` §4 |
+| `UiChipFirma` | `SigningSessionIndicator` | estados activa, caduca pronto, caducada, sin firmas, sin sesión |
+| `UiEmpresaNav` | `CompanyNav` | subnavegación de Empresa |
+| `UiBoton` | `Button` | variantes `pri`, `sec`, `ghost`, `danger`; tamaños `sm`, `md`, `lg`; deshabilitado con motivo |
+| `UiBadge` | `StatusBadge` | tonos `ok`, `warn`, `bad`, `neutro`, `plano`; la forma del punto distingue el tono además del color |
+| `UiCargando` | `SphereLoader` | §9.2 |
+
+La navegación entre pantallas, las guardas y el inventario de modales están en `apps/web/NAVIGATION.md`.
+
 ## 12. Checklist de PR
 
 - [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
 - [ ] Nada de la sección 2 (tema claro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
 - [ ] Sin badges de relleno ni etiquetas redundantes; mono solo en IDs/hashes.
 - [ ] Un elemento dominante y un único CTA primario por zona; titular concreto y con `balance`.
-- [ ] Radios anidados = exterior − padding.
+- [ ] Radio 0 en todos los elementos de interfaz.
 - [ ] Texto ≥ 13 px y contraste ≥ `ink-muted`.
 - [ ] Cifras tabulares a la derecha; dinero solo con `MoneyDisplay`.
 - [ ] Confianza y banda de precio junto al precio; firma junto al trato.
