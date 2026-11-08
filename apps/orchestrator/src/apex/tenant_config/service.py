@@ -134,7 +134,8 @@ class TenantConfigService:
 
     # ------------------------------------------------------------------ changes
 
-    def _validate_patch(self, patch: dict[str, Any]) -> None:
+    def _validate_patch(self, patch: dict[str, Any], category: str | None = None) -> None:
+        _require_shape_consistent(self._global, patch)
         for path in flatten(patch):
             if path in NON_CONFIGURABLE_PATHS:
                 raise NonConfigurableKeyError(
@@ -155,7 +156,7 @@ class TenantConfigService:
 
         Returns the decision id. Nothing is written to the version history here (ADR-400 §6).
         """
-        self._validate_patch(patch)
+        self._validate_patch(patch, category)
         await self._require_baseline(tenant_id)
         current_version, current_patch = await self._tenant_patch(tenant_id)
         if base_config_version != current_version:
@@ -227,6 +228,34 @@ class TenantConfigService:
         )
         await self._repo.append_version(record)
         return record
+
+
+def _require_shape_consistent(
+    base: dict[str, Any], patch: dict[str, Any], prefix: str = ""
+) -> None:
+    """Only leaves may be ``null``, and a patch may not turn a leaf into an object or the reverse.
+
+    ADR-900: ``null`` means "unset" for a *leaf*. A whole section, ``llm.roles`` or ``seller.weights`` set to
+    ``null`` is rejected. Keys whose global value is ``null`` are unset leaves (``sanity.floor_per_unit``,
+    ``llm.roles``, ...): they may receive a value or ``null``. This also keeps deep-merge associative.
+    """
+    for key, value in patch.items():
+        path = f"{prefix}.{key}" if prefix else key
+        if key == CATEGORY_KEY:
+            raise ConfigValidationError(f"'{path}' is reserved and cannot be patched directly")
+        if key not in base:
+            raise ConfigValidationError(f"unknown config key '{path}'")
+        current = base[key]
+        if isinstance(value, dict):
+            if current is None:
+                continue  # an unset leaf that holds a structured value (llm.roles, seller.weights)
+            if not isinstance(current, dict):
+                raise ConfigValidationError(f"'{path}' is a leaf, not an object")
+            _require_shape_consistent(current, value, path)
+        elif value is None and isinstance(current, dict):
+            raise ConfigValidationError(f"'{path}' is a section: only leaves may be null")
+        elif isinstance(current, dict):
+            raise ConfigValidationError(f"'{path}' is a section, not a value")
 
 
 def _apply_patch(

@@ -113,17 +113,32 @@ def test_seller_weights_must_sum_to_one_when_set() -> None:
 
 @pytest.mark.parametrize(
     "patch",
-    [{"llm": {"roles": None}}, {"sanity": None}, {"seller": {"weights": None}}, {"llm": None}],
+    [
+        {"sanity": None},
+        {"llm": None},
+        {"fx": None},
+        {"seller": {"band_low": {"x": 1}}},  # a leaf turned into an object
+        {"sanity": 5},  # a section replaced by a scalar
+        {"categories": {"x": {}}},  # reserved key
+        {"nonexistent": {"a": 1}},
+    ],
 )
-def test_null_over_a_whole_object_is_rejected(patch: dict) -> None:
-    """ADR-400 section 2: only leaves may be set to null. This is what keeps deep-merge associative."""
-    import json
-    import pathlib
-
-    from apex.tenant_config.resolver import deep_merge
-    from apex.tenant_config.service import _validate_merged
-
-    path = pathlib.Path(__file__).resolve().parents[4] / "config/defaults/tenant-config.v1.json"
-    values = json.loads(path.read_text())["values"]
+async def test_patches_that_change_shape_are_rejected_before_any_decision_exists(
+    patch: dict, seeded_service: TenantConfigService, port: FakeDecisionPort
+) -> None:
+    """ADR-900: only leaves may be null, never a whole section. Rejected at propose time."""
     with pytest.raises(ConfigValidationError):
-        _validate_merged(deep_merge(values, patch))
+        await seeded_service.propose_change("tenant-a", patch, base_config_version=1)
+    assert port.decisions == {}
+
+
+def test_the_real_global_layer_accepts_null_only_on_leaves() -> None:
+    """Guards the test above: ``_validate_merged`` alone does NOT reject ``llm.roles: null``."""
+    from apex.tenant_config.defaults import load_global_layer
+    from apex.tenant_config.service import _require_shape_consistent
+
+    _, base = load_global_layer()
+    _require_shape_consistent(base, {"sanity": {"floor_per_unit": None}})
+    _require_shape_consistent(base, {"seller": {"weights": None}})  # unset leaf, may stay unset
+    with pytest.raises(ConfigValidationError):
+        _require_shape_consistent(base, {"seller": None})
