@@ -1,4 +1,4 @@
-"""FastAPI application: OpenAI-compatible ``/v1`` surface (non-streaming)."""
+"""FastAPI application: OpenAI-compatible ``/v1`` surface plus the ``/_stub`` admin surface."""
 
 from __future__ import annotations
 
@@ -8,12 +8,13 @@ import os
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from llm_stub.models import (
     Capabilities,
@@ -42,17 +43,33 @@ from llm_stub.scenarios import (
 SCENARIO_HEADER = "X-Stub-Scenario"
 SCENARIOS_ENV = "LLM_STUB_SCENARIOS_DIR"
 DEFAULT_SCENARIOS_DIR = Path(__file__).resolve().parents[2] / "scenarios"
+CALL_LOG_LIMIT = 1000
+
+
+@dataclass
+class CallRecord:
+    """One received request, kept in the call log for assertions in tests."""
+
+    index: int
+    path: str
+    scenario: str | None
+    headers: dict[str, str]
+    body: dict[str, Any]
+    status: int
+    timestamp: float = field(default_factory=time.time)
 
 
 @dataclass
 class StubState:
     scenarios: dict[str, Scenario]
+    call_log: list[CallRecord] = field(default_factory=list)
     # Per-scenario call counters: drive sequences and fail-N-times behaviour.
     counters: dict[str, int] = field(default_factory=lambda: defaultdict(int))
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     def reset(self) -> None:
         self.counters = defaultdict(int)
+        self.call_log = []
 
 
 def _error_body(spec: ErrorSpec) -> dict[str, Any]:
@@ -135,6 +152,73 @@ def _build_completion(
     return body
 
 
+def _sse_lines(body: dict[str, Any]) -> list[str]:
+    """Split a completion body into OpenAI-style SSE ``data:`` frames, ending with ``[DONE]``."""
+    base = {
+        "id": body["id"],
+        "object": "chat.completion.chunk",
+        "created": body["created"],
+        "model": body["model"],
+    }
+    choice = body["choices"][0]
+    msg = choice["message"]
+    frames: list[dict[str, Any]] = [
+        {**base, "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}]}
+    ]
+    if msg.get("tool_calls"):
+        tc = msg["tool_calls"][0]
+        frames.append(
+            {
+                **base,
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {
+                            "tool_calls": [
+                                {
+                                    "index": 0,
+                                    "id": tc["id"],
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc["function"]["name"],
+                                        "arguments": tc["function"]["arguments"],
+                                    },
+                                }
+                            ]
+                        },
+                        "finish_reason": None,
+                    }
+                ],
+            }
+        )
+    else:
+        content = msg.get("content") or ""
+        # Emit in 16-char pieces so consumers really exercise incremental assembly.
+        for i in range(0, len(content), 16):
+            frames.append(
+                {
+                    **base,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"content": content[i : i + 16]},
+                            "finish_reason": None,
+                        }
+                    ],
+                }
+            )
+    frames.append(
+        {
+            **base,
+            "choices": [{"index": 0, "delta": {}, "finish_reason": choice["finish_reason"]}],
+            "usage": body["usage"],
+        }
+    )
+    lines = [f"data: {json.dumps(f)}\n\n" for f in frames]
+    lines.append("data: [DONE]\n\n")
+    return lines
+
+
 def _resolve(state: StubState, header: str | None, req: ChatRequest) -> Scenario | None:
     try:
         return select_scenario(
@@ -142,6 +226,30 @@ def _resolve(state: StubState, header: str | None, req: ChatRequest) -> Scenario
         )
     except ScenarioError:
         return None
+
+
+def _record(
+    state: StubState, request: Request, scenario: str | None, body: Any, response: Response
+) -> Response:
+    """Append the received request to the call log and return ``response`` unchanged."""
+    headers = {
+        k.lower(): v
+        for k, v in request.headers.items()
+        if k.lower() not in {"authorization", "cookie"}
+    }
+    state.call_log.append(
+        CallRecord(
+            index=len(state.call_log),
+            path=request.url.path,
+            scenario=scenario,
+            headers=headers,
+            body=body if isinstance(body, dict) else {"_raw": str(body)},
+            status=response.status_code,
+        )
+    )
+    if len(state.call_log) > CALL_LOG_LIMIT:
+        del state.call_log[0 : len(state.call_log) - CALL_LOG_LIMIT]
+    return response
 
 
 def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
@@ -186,7 +294,7 @@ def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
             not_found = _unsupported(
                 f"unknown scenario '{x_stub_scenario}'", code="scenario_not_found"
             )
-            return not_found
+            return _record(state, request, None, raw, not_found)
 
         caps = scenario.caps_for(req.model)
         async with state.lock:
@@ -196,11 +304,11 @@ def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
 
         # Fail-N-times-then-succeed comes first: a flaky endpoint fails regardless of the request.
         if index < beh.fail_times:
-            return _error_response(beh.fail_with)
+            return _record(state, request, scenario.name, raw, _error_response(beh.fail_with))
 
         cap_error = _check_capabilities(req, caps)
         if cap_error is not None:
-            return cap_error
+            return _record(state, request, scenario.name, raw, cap_error)
 
         scripted = scenario.response_for_call(index)
         if beh.timeout_sleep_ms:
@@ -209,10 +317,19 @@ def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
             await asyncio.sleep(scripted.delay_ms / 1000)
 
         if scripted.kind == "error" and scripted.error is not None:
-            return _error_response(scripted.error)
+            return _record(state, request, scenario.name, raw, _error_response(scripted.error))
 
         body = _build_completion(scenario, req, scripted)
-        return JSONResponse(content=body)
+        if req.stream:
+            lines = _sse_lines(body)
+
+            async def gen() -> AsyncIterator[str]:
+                for line in lines:
+                    yield line
+
+            stream = StreamingResponse(gen(), media_type="text/event-stream")
+            return _record(state, request, scenario.name, raw, stream)
+        return _record(state, request, scenario.name, raw, JSONResponse(content=body))
 
     @app.post("/v1/embeddings")
     async def embeddings(
@@ -224,7 +341,9 @@ def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
         try:
             scenario = select_embedding_scenario(state.scenarios, x_stub_scenario, req.model)
         except ScenarioError as exc:
-            return _unsupported(str(exc), code="scenario_not_found")
+            return _record(
+                state, request, None, raw, _unsupported(str(exc), code="scenario_not_found")
+            )
         inputs = [req.input] if isinstance(req.input, str) else req.input
         data = [
             {
@@ -241,6 +360,53 @@ def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
             "model": req.model,
             "usage": {"prompt_tokens": tokens, "total_tokens": tokens},
         }
-        return JSONResponse(content=body)
+        return _record(state, request, scenario.name, raw, JSONResponse(content=body))
+
+    # ---- admin surface, deliberately outside /v1 ----
+
+    @app.post("/_stub/reset")
+    async def admin_reset() -> dict[str, str]:
+        async with state.lock:
+            state.reset()
+        return {"status": "reset"}
+
+    @app.get("/_stub/scenarios")
+    async def admin_scenarios() -> dict[str, Any]:
+        return {
+            "scenarios": [
+                {
+                    "name": s.name,
+                    "description": s.description,
+                    "models": s.models,
+                    "role": s.role,
+                    "prompt_sha256": s.prompt_sha256,
+                    "capabilities": {k: v.model_dump() for k, v in s.capabilities.items()},
+                    "calls": state.counters.get(s.name, 0),
+                }
+                for s in state.scenarios.values()
+            ]
+        }
+
+    @app.get("/_stub/calls")
+    async def admin_calls() -> dict[str, Any]:
+        return {
+            "calls": [
+                {
+                    "index": c.index,
+                    "path": c.path,
+                    "scenario": c.scenario,
+                    "status": c.status,
+                    "headers": c.headers,
+                    "body": c.body,
+                }
+                for c in state.call_log
+            ]
+        }
+
+    @app.delete("/_stub/calls")
+    async def admin_clear_calls() -> dict[str, str]:
+        async with state.lock:
+            state.call_log = []
+        return {"status": "cleared"}
 
     return app
