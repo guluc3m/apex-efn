@@ -1,0 +1,444 @@
+---
+name: TRATO
+description: Sistema visual claro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo preciso con un único acento índigo; mezcla de la sobriedad de Vercel, el acento único de Render y las cifras grandes de la app de Revolut.
+colors:
+  white: "#ffffff"
+  surface: "#f7f7f8"
+  surface-sunken: "#f1f1f3"
+  line: "#e6e6ea"
+  line-strong: "#d4d4da"
+  ink: "#111114"
+  ink-soft: "#3f3f46"
+  ink-muted: "#5c5c66"
+  accent: "#5b3df5"
+  accent-deep: "#4a2fd6"
+  accent-subtle: "#efecfe"
+  success: "#157f3c"
+  success-subtle: "#e8f5ec"
+  warning: "#a15c00"
+  warning-subtle: "#fdf3e2"
+  danger: "#c4271f"
+  danger-deep: "#a31f18"
+  danger-subtle: "#fdecea"
+typography:
+  display:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "clamp(2.25rem, 5vw, 3.5rem)"
+    fontWeight: 600
+    lineHeight: 1.05
+    letterSpacing: "-0.03em"
+    textWrap: "balance"
+  numeral:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "clamp(2rem, 4vw, 2.75rem)"
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: "-0.02em"
+    fontFeature: "tnum"
+  title:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "28px"
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: "-0.02em"
+    textWrap: "balance"
+  headline:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "22px"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.015em"
+    textWrap: "balance"
+  heading:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "17px"
+    fontWeight: 600
+    lineHeight: 1.35
+    letterSpacing: "-0.01em"
+  body-long:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.6
+    textWrap: "pretty"
+  body:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.5
+  label:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "14px"
+    fontWeight: 500
+    lineHeight: 1.4
+  small:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.45
+  mono:
+    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.45
+  cjk-fallback:
+    fontFamily: "Noto Sans SC, PingFang SC, Microsoft YaHei, sans-serif"
+    lineHeight: 1.7
+rounded:
+  inner: "4px"
+  badge: "6px"
+  control: "8px"
+  panel: "12px"
+  pill: "9999px"
+spacing:
+  unit: "4px"
+  inline-gap: "8px"
+  control-gap: "12px"
+  group-gap: "24px"
+  section: "48px"
+  panel-padding: "24px"
+  panel-padding-dense: "16px"
+  row-height: "44px"
+  row-height-dense: "36px"
+  control-height: "36px"
+  control-height-lg: "44px"
+  header: "56px"
+  sidebar: "240px"
+  container: "1440px"
+  prose: "68ch"
+shadows:
+  none: "none"
+  overlay: "0 8px 24px rgba(17, 17, 20, 0.08), 0 0 0 1px rgba(17, 17, 20, 0.06)"
+motion:
+  fast: "120ms"
+  base: "180ms"
+  overlay: "220ms"
+  easing: "cubic-bezier(0.2, 0, 0, 1)"
+components:
+  button-primary:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.white}"
+    rounded: "{rounded.control}"
+    padding: "0 14px"
+    height: "{spacing.control-height}"
+    typography: "{typography.label}"
+  button-primary-hover:
+    backgroundColor: "{colors.ink-soft}"
+  button-secondary:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    borderColor: "{colors.line-strong}"
+    rounded: "{rounded.control}"
+    padding: "0 14px"
+    height: "{spacing.control-height}"
+  button-secondary-hover:
+    backgroundColor: "{colors.surface}"
+  button-ghost:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-soft}"
+    rounded: "{rounded.control}"
+    padding: "0 10px"
+    height: "{spacing.control-height}"
+  button-ghost-hover:
+    backgroundColor: "{colors.surface-sunken}"
+  button-destructive:
+    backgroundColor: "{colors.danger}"
+    textColor: "{colors.white}"
+    rounded: "{rounded.control}"
+    padding: "0 14px"
+    height: "{spacing.control-height}"
+  button-destructive-hover:
+    backgroundColor: "{colors.danger-deep}"
+  link:
+    textColor: "{colors.accent}"
+    textDecoration: "underline"
+    underlineOffset: "3px"
+  link-hover:
+    textColor: "{colors.accent-deep}"
+  focus-ring:
+    outline: "2px solid {colors.accent}"
+    outlineOffset: "2px"
+  input:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    placeholderColor: "{colors.ink-muted}"
+    borderColor: "{colors.line-strong}"
+    rounded: "{rounded.control}"
+    padding: "0 12px"
+    height: "{spacing.control-height}"
+  input-focus:
+    borderColor: "{colors.accent}"
+  input-error:
+    borderColor: "{colors.danger}"
+  panel:
+    backgroundColor: "{colors.white}"
+    borderColor: "{colors.line}"
+    rounded: "{rounded.panel}"
+    padding: "{spacing.panel-padding}"
+    shadow: "{shadows.none}"
+  overlay:
+    backgroundColor: "{colors.white}"
+    rounded: "{rounded.panel}"
+    shadow: "{shadows.overlay}"
+  table-header:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink-muted}"
+    typography: "{typography.small}"
+    height: "{spacing.row-height-dense}"
+  table-row:
+    borderColor: "{colors.line}"
+    height: "{spacing.row-height}"
+  table-row-hover:
+    backgroundColor: "{colors.surface}"
+  table-row-selected:
+    backgroundColor: "{colors.accent-subtle}"
+  badge-success:
+    backgroundColor: "{colors.success-subtle}"
+    textColor: "{colors.success}"
+    rounded: "{rounded.badge}"
+    padding: "2px 8px"
+    typography: "{typography.small}"
+  badge-warning:
+    backgroundColor: "{colors.warning-subtle}"
+    textColor: "{colors.warning}"
+    rounded: "{rounded.badge}"
+    padding: "2px 8px"
+    typography: "{typography.small}"
+  badge-danger:
+    backgroundColor: "{colors.danger-subtle}"
+    textColor: "{colors.danger}"
+    rounded: "{rounded.badge}"
+    padding: "2px 8px"
+    typography: "{typography.small}"
+  badge-neutral:
+    backgroundColor: "{colors.surface-sunken}"
+    textColor: "{colors.ink-soft}"
+    rounded: "{rounded.badge}"
+    padding: "2px 8px"
+    typography: "{typography.small}"
+  filter-chip:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink-soft}"
+    borderColor: "{colors.line-strong}"
+    rounded: "{rounded.pill}"
+    height: "32px"
+  filter-chip-active:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.white}"
+  dither:
+    inkColor: "{colors.ink}"
+    backgroundColor: "transparent"
+    cellSize: "3px"
+    bayerMatrix: 8
+---
+
+# TRATO — Sistema de diseño
+
+> Ámbito: `apps/web/**` y `packages/ui/**` (carril DEV-6). El bloque YAML de arriba es la **fuente de
+> verdad de los valores**; este texto explica cómo usarlos. Si este documento contradice a
+> `PROMPT-IMPLEMENTACION.md` en comportamiento de producto, gana el spec. Los tokens se implementan como
+> variables CSS en `@theme` (Tailwind v4) en D6-01 y los componentes en D6-02.
+
+## 1. Carácter
+
+TRATO es una herramienta donde alguien **firma compras con dinero real**. Tiene que parecer un
+instrumento preciso, no una demo.
+
+- **Vercel:** monocromo, tipografía Geist, bordes finos, botones casi negros, cero adorno.
+- **Render:** fondo blanco y **un solo** acento con personalidad (índigo `accent`), usado con cuentagotas.
+- **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios y redondeados, la cantidad como
+  protagonista.
+
+Solo modo claro. No hay tema oscuro.
+
+## 2. Lo que no hacemos
+
+Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
+
+- Fondos oscuros o modo oscuro.
+- Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color.
+- Titulares que entran con desenfoque, elementos que flotan o «respiran» en bucle. No hay excepciones.
+- Una paleta paralela de grises o tonos casi iguales definidos elemento a elemento. Todo gris sale de
+  `colors` del YAML.
+- Texto de 9–12 px. El mínimo es `small` (13 px).
+- Etiquetas en mayúsculas espaciadas encima de un titular («eyebrows»), en píldora o sin ella.
+- Bloques de CSS que sobrescriben reglas anteriores en lugar de cambiarlas.
+- Titulares a dos tonos (primera línea oscura, segunda gris).
+- Iconos decorativos inventados (cubos apilados, destellos) y flechas en elementos que no son enlaces.
+- Rejillas de tarjetas idénticas con icono + título + frase.
+- Inventar cifras, clientes, logos, testimonios, premios o fotos. Si no hay dato real, no se muestra.
+
+## 3. Reglas para quitar el aspecto «generado»
+
+Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
+
+1. **Sin badges de relleno.** Nada de «Nuevo», «IA», «Beta», ni badges que repitan algo ya visible. Un
+   badge solo existe si comunica un estado de dominio (§6).
+2. **Sin etiquetas redundantes.** Un importe con divisa, una fecha o un nombre de vendedor no necesitan
+   rótulo encima.
+3. **Sin cursivas al azar.** Nunca se resalta una palabra suelta con cursiva o color.
+4. **Mono solo donde hace falta.** `mono` es para IDs, hashes, claves públicas y código. Nunca para
+   cifras, titulares ni etiquetas «técnicas».
+5. **Sistema de diseño siempre.** Solo componentes de `@trato/ui` y tokens de este archivo.
+6. **Mostrar el producto real.** Pantallas, capturas y stories con datos reales del contrato (fixtures),
+   no textos de relleno.
+7. **Agrandar lo principal.** Un elemento dominante por vista (el precio, la decisión, el KPI con
+   `numeral`); todo lo demás baja de nivel.
+8. **Agrupar con espacio, no con cajas.** Elementos relacionados a `inline-gap`/`control-gap`; grupos
+   separados por `group-gap`; secciones por `section`. No añadir bordes o paneles para agrupar.
+9. **Titulares concretos.** «3 ofertas esperan tu firma», no «Compras inteligentes, simplificadas».
+10. **Destacar el CTA.** Un solo `button-primary` por zona; el resto `secondary` o `ghost`.
+11. **Un color de acento.** `accent` solo para enlaces, foco, selección y la serie principal de
+    gráficas. Los colores de estado no son acentos: solo significan estado.
+12. **Iconos coherentes.** Solo lucide, mismo trazo (1.75) y tamaño (16 px en texto, 20 px en
+    navegación), y solo cuando aportan significado.
+13. **Quitar adornos.** Si algo se puede eliminar sin perder información, se elimina.
+14. **Radio interior = radio exterior − padding.** Un panel de 12 px con 8 px de padding lleva hijos de
+    4 px (`rounded.inner`). Nunca el mismo radio dentro que fuera.
+15. **Contraste de texto alto.** `ink` para texto principal, `ink-soft` para secundario, `ink-muted` como
+    mínimo (6.6:1 sobre blanco). Nunca grises más claros para texto.
+16. **Titulares bien partidos.** `text-wrap: balance` en titulares, `pretty` en párrafos; sin viudas.
+17. **Alinear a ojo, no a píxel.** Ajustar ópticamente iconos junto a texto, triángulos de «play»,
+    cifras grandes con su divisa.
+18. **Cifras tabulares.** Todo número comparable usa `tabular-nums` y va alineado a la derecha en tablas.
+19. **Estados de carga.** Toda vista asíncrona tiene carga (skeleton con la forma final), vacío, error y
+    datos.
+20. **Animar feedback útil.** Solo animaciones que confirman algo: guardado, firmado, fila añadida,
+    botón pulsado (§8).
+
+## 4. Color
+
+- Todo color se consume por token semántico (`bg-surface`, `text-ink-muted`, `border-line`…). Prohibidos
+  hex literales, paleta cruda de Tailwind (`bg-red-100`) y valores arbitrarios en componentes.
+- Jerarquía de superficie: `white` (página y paneles) → `surface` (cabeceras, hover) → `surface-sunken`
+  (zonas hundidas, badge neutro). Las capas se separan con `line`, no con sombra.
+- `line-strong` solo para el borde de controles interactivos (inputs, botón secundario).
+- El color nunca es la única señal: todo estado lleva texto e icono.
+
+## 5. Tipografía
+
+- Geist para todo; Geist Mono según la regla 4; `cjk-fallback` para `zh` (con interlineado 1.7 y sin
+  cursivas).
+- Por defecto la app usa `body` (14 px). `body-long` (16 px) para texto corrido: explicaciones,
+  transcript de negociación. Máximo `prose` de ancho.
+- `display` solo en login/landing. `numeral` para el importe o KPI protagonista de una vista.
+- Pesos: 400, 500 y 600. Nada más.
+- Mayúscula solo inicial en títulos y botones.
+
+## 6. Componentes de dominio
+
+La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vienen de la API.
+
+| Concepto | Valor | Badge | Icono lucide |
+|---|---|---|---|
+| Confianza vendedor | `high` | success | `ShieldCheck` |
+| | `medium` | neutral | `Shield` |
+| | `low` | warning | `ShieldAlert` |
+| | `untrusted` | danger | `ShieldX` |
+| | `insufficient_data` | neutral | `ShieldQuestion` |
+| Banda de precio | `normal` | success | `CircleCheck` |
+| | `atypical` | warning | `TriangleAlert` |
+| | `implausible` | danger | `OctagonAlert` |
+| | `insufficient_reference` | neutral | `CircleHelp` |
+| Veredicto financiero | `within_budget` | success | `Wallet` |
+| | `stretch` | warning | `WalletMinimal` |
+| | `out_of_budget` | danger | `Ban` |
+| Firma | `signed` | success | `BadgeCheck` |
+| | `pending` | neutral | `Clock` |
+| | `invalid` | danger | `BadgeAlert` |
+| Avisos | `fx_provisional`, `financials_stale` | warning | `Info`, `History` |
+
+- **Fila de oferta:** `precio · banda de precio · confianza · veredicto · firma`, siempre en ese orden y
+  siempre visibles en la tabla.
+- Cada badge abre un popover con el porqué (desglose de señales y `model_version`; mediana de
+  referencia y muestra; razones numéricas; firmante, hora y hash en `mono`).
+- **`MoneyDisplay`:** recibe `{amount_minor, currency}` y formatea con `Intl.NumberFormat`. Sin sumas ni
+  redondeos. Signo menos real (`−`). Importe convertido: el original en tooltip.
+- **Botones deshabilitados** muestran la razón que devuelve la API (tooltip accesible con
+  `aria-describedby`). Las acciones que firman llevan icono `PenLine` y texto «Firmar…».
+- **`SigningSessionIndicator`** en la cabecera: firmante, `mm:ss`, firmas restantes. En los últimos 60 s
+  pasa a `warning` sin parpadear; al expirar, la vista queda en solo lectura con «Reautenticar para firmar».
+- **Tablas:** cabecera `table-header` fija, divisores solo horizontales, números a la derecha, fila
+  seleccionada `table-row-selected`, paginación «Cargar más» (cursor).
+- **Formularios:** etiqueta encima, ayuda y error debajo en `small`. Validación al salir del campo y al
+  enviar. Importes en input de texto decimal con divisa explícita, nunca `type="number"`.
+- **Estados:** skeleton con la forma final; vacío con un icono, un título concreto y una acción; error con
+  el `title`/`detail` de problem+json y «Reintentar». `428 reauth_required` abre el flujo de passkey, no
+  muestra error.
+- **Gráficas (Recharts):** serie principal `accent`, el resto en grises de `ink-muted`/`line-strong`;
+  bandas de sanity como áreas `warning-subtle`/`danger-subtle`; sin degradados ni 3D; tabla alternativa
+  para lectores de pantalla.
+
+## 7. Layout
+
+- Cabecera de `header`, barra lateral de `sidebar` (colapsable a 64 px), contenido hasta `container` con
+  padding lateral de 24 px.
+- Escritorio primero (uso profesional), pero ninguna vista se rompe a 360 px.
+- Densidad: `row-height` por defecto, `row-height-dense` en comparativas, elegida por prop.
+- Sombras solo en capas flotantes (`overlay`: popovers, menús, diálogos). Paneles con borde y sin sombra.
+
+## 8. Movimiento
+
+- Solo `opacity` y `transform`, con `motion.fast` (hover, pulsado), `motion.base` (cambios de estado) y
+  `motion.overlay` (popover, diálogo), siempre con `motion.easing`.
+- Animación permitida = feedback: confirmación de firma, guardado, fila nueva resaltada brevemente,
+  cambio de banda tras recalcular.
+- Prohibido: entradas de página, desenfoques, rebotes, parallax y cualquier bucle.
+- `prefers-reduced-motion`: se reduce todo a cambios de opacidad instantáneos.
+
+## 9. Esferas con dithering
+
+Único recurso gráfico del sistema. Usa el componente `DitherSpheres` (token `components.dither`).
+
+- 1 bit y una sola tinta (`ink`) sobre fondo transparente; patrón Bayer 8×8 visible con
+  `image-rendering: pixelated`. Sin color, sin degradados, sin desenfoque.
+- Sombreado lambertiano con **una** dirección de luz compartida por todas las esferas.
+- Composición: 2–3 esferas de tamaños distintos, asimétricas, recortadas por el borde. Nunca centradas.
+- Estático. Como mucho, la luz sigue al puntero mientras se mueve; desactivado con reduced motion.
+- Determinista (sin `Math.random`), `aria-hidden`, sin desplazar el layout.
+- **Dónde:** login y landing, siempre junto a una captura real del producto. Nunca dentro de la app ni
+  detrás de importes, tablas o el gate.
+
+## 10. Accesibilidad e internacionalización
+
+- WCAG 2.2 AA. Foco siempre visible con `focus-ring`; nunca `outline: none` sin sustituto.
+- Objetivo táctil mínimo 24×24 px; 32 px en acciones de fila.
+- `axe` en Storybook y Playwright; violaciones `serious`/`critical` bloquean el PR.
+- Todo texto por `next-intl` (`es`, `en`, `zh`). Sin anchos fijos en botones o etiquetas: el español
+  crece un 20–30 % respecto al inglés.
+- Números, divisas y fechas con el locale activo vía `Intl`. Fechas relativas siempre con tooltip absoluto.
+
+## 11. Código
+
+- Tailwind v4 CSS-first: los tokens del YAML se declaran una vez en `@theme`
+  (`apps/web/src/styles/globals.css`) y se reexportan en `packages/ui/src/styles.css` para Storybook.
+- Variantes con `cva`, combinación con `cn()`. Sin `style={{}}` para color o espaciado, sin
+  `!important`, sin CSS modules nuevos.
+- Se cambia la regla existente; nunca se añade un bloque posterior que la sobrescriba.
+- Cada componente de `packages/ui` llega con story (variantes, `es` y `zh`, datos reales) y test de axe.
+
+### Prompt base para agentes que tocan UI
+
+```text
+Eres DEV-6. Construye <componente/vista> para TRATO siguiendo packages/ui/DESIGN.md al pie de la letra:
+los valores del YAML son los únicos permitidos y las secciones 2 y 3 son obligatorias. Solo modo claro.
+Usa componentes de @trato/ui, iconos lucide y textos vía next-intl (es/en/zh). La UI no calcula dinero ni
+bandas: muestra lo que devuelve la API. Usa datos reales de los fixtures del contrato.
+Implementa carga/vacío/error/datos. Entrega componente + story + test axe. Después renderiza, haz una
+captura con Playwright, revísala contra la checklist de la sección 12 y corrige lo que falle antes de
+terminar. Indica qué reglas comprobaste.
+```
+
+## 12. Checklist de PR
+
+- [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
+- [ ] Nada de la sección 2 (oscuro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
+- [ ] Sin badges de relleno ni etiquetas redundantes; mono solo en IDs/hashes.
+- [ ] Un elemento dominante y un único CTA primario por zona; titular concreto y con `balance`.
+- [ ] Radios anidados = exterior − padding.
+- [ ] Texto ≥ 13 px y contraste ≥ `ink-muted`.
+- [ ] Cifras tabulares a la derecha; dinero solo con `MoneyDisplay`.
+- [ ] Confianza y banda de precio junto al precio; firma junto al trato.
+- [ ] Botones deshabilitados con razón visible.
+- [ ] Carga, vacío, error y datos implementados; animaciones solo de feedback.
+- [ ] Textos en `es`/`en`/`zh`, probado con textos largos; `axe` limpio; foco visible.
