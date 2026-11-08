@@ -1,17 +1,19 @@
-"""Dashboard endpoints."""
+"""Dashboard endpoints (owner: DEV-4, D4-11)."""
 
 from fastapi import APIRouter
+
+from apex.common.errors import not_implemented
 
 router = APIRouter()
 
 
 @router.get("/deals")
-async def get_deals() -> dict[str, str]:
-    """Get final deals for dashboard."""
-    return {"status": "not_implemented"}
+async def list_deals() -> None:
+    """Final deals with bands, verdicts and signature status."""
+    raise not_implemented()
 
 
-@router.post("/deals/{deal_id}/actions")
-async def deal_action(deal_id: str) -> dict[str, str]:
-    """Execute action on a deal (follow, hold, discard, renegotiate, takeover)."""
-    return {"deal_id": deal_id, "status": "not_implemented"}
+@router.post("/deals/{id}/actions")
+async def deal_action(id: str) -> None:
+    """follow | hold | discard | renegotiate | takeover (signed decisions)."""
+    raise not_implemented()
