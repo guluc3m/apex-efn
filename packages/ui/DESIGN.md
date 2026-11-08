@@ -15,6 +15,7 @@ colors:
   accent: "#8fbb8b"
   accent-hover: "#a0c99c"
   accent-subtle: "#16211a"
+  accent-line: "#3a4a3b"
   on-accent: "#0b0b0d"
   success: "#5aa9ff"
   success-subtle: "#0d1f35"
@@ -22,7 +23,7 @@ colors:
   warning-subtle: "#2a2308"
   danger: "#f7566a"
   danger-solid: "#c4271f"
-  danger-solid-hover: "#a31f18"
+  danger-solid-hover: "#cf2a22"
   danger-subtle: "#2e1117"
   white: "#ffffff"
   halo-1: "#8fbb8b"
@@ -529,6 +530,32 @@ de tamaño es el compositor del chat (§6), porque ahí se pasa de mirar a escri
 
 `motion.base` es para los cambios de estado. `motion.easing` para las entradas y `motion.easing-move` para lo
 que se desplaza en pantalla.
+
+Respuesta por componente:
+
+| Componente | Respuesta |
+|---|---|
+| Botón primario | Hover: cambio de tono. Pulsado: baja 1 px como una tecla, sin escalar, y vuelve en `fast` |
+| Botón secundario | El borde sube a `ink-muted` |
+| Botón ghost | Aparece el fondo; el icono no se mueve |
+| Botón ocupado | Mantiene el ancho; `ShiningText` en el texto y sin spinner |
+| Dropdown | El panel se revela como una persiana desde el borde del control (`clip-path`, `fast`); cierre con opacidad en `exit`; el chevron gira |
+| Opción de menú | Nivel 0 |
+| Input / textarea | El borde pasa a acento en `press`; el foco, al instante |
+| Checkbox / radio | Relleno inmediato y el check aparece con recorte en `fast` |
+| Switch | El mando se desplaza en `fast` con `easing-move`, sin rebote |
+| Tabs de una vista | El indicador de 2 px **viaja** a la pestaña nueva; es la línea que se mueve |
+| Navegación principal | Sin viaje: cambia de página |
+| Fila de tabla | Nivel 0. Entra una regla interior de 1 px en acento; `ArrowUpRight` aparece por opacidad |
+| Ordenar columna | La flecha gira; las filas cambian sin animación |
+| Badge que cambia | Cruce de color en `base`, sin pulso |
+| Fila nueva o recalculada | Tinte `accent-subtle` que se apaga en 1,2 s |
+| Tooltip | 500 ms de espera la primera vez, inmediato al pasar al siguiente; 100 ms de opacidad |
+| Diálogo | Fondo en `fast`; panel con opacidad y 4 px en `overlay`; cierre en `exit`, sin escala |
+| Toast | Entra desde el borde en `base`, sin barra de tiempo; se pausa con hover |
+| Cifras | Cruce de 120 ms con `tabular-nums`. Nunca un valor intermedio |
+| Cuenta atrás | Sin animación; último minuto en aviso, sin parpadeo |
+| Skeleton | Opacidad .6–1 en 1,6 s |
 
 **El único momento coreografiado: registrar una firma.** Al confirmar, una línea de 1 px recorre la fila de
 izquierda a derecha, dejando tras ella el estado `Firmado`; después, el hash se revela con un recorte en `mono`.
