@@ -1,0 +1,58 @@
+prompt: intake_sourcing_request
+version: 1
+schema: SourcingRequestDraft
+cases:
+  - id: bottles-complete
+    variables:
+      today: "2026-11-08"
+      base_currency: EUR
+      user_text: "Necesito 5000 botellas PET 500ml con tapón flip-top, entrega en España antes del 2027-06-01, certificación food grade, presupuesto 4500 EUR"
+    expect:
+      - equals: {destination_country: ES, deadline: "2027-06-01"}
+      - contains_all: {certifications: [food grade]}
+      - min_len: {quantity_tiers: 1}
+      - numbers_in_input: [budget_text]
+    stub_response:
+      spec: "Botellas PET 500ml con tapón flip-top"
+      quantity_tiers: [{min_quantity: 5000}]
+      deadline: "2027-06-01"
+      deadline_text: null
+      destination_country: ES
+      certifications: [food grade]
+      budget_text: "4500 EUR"
+      missing_fields: []
+  - id: nothing-invented
+    variables:
+      today: "2026-11-08"
+      base_currency: EUR
+      user_text: "Busco cajas de cartón corrugado"
+    expect:
+      - is_null: [deadline, destination_country, budget_text]
+      - equals: {quantity_tiers: [], certifications: []}
+      - contains_all: {missing_fields: [budget_text]}
+    stub_response:
+      spec: "Cajas de cartón corrugado"
+      quantity_tiers: []
+      deadline: null
+      deadline_text: null
+      destination_country: null
+      certifications: []
+      budget_text: null
+      missing_fields: [quantity_tiers, deadline, destination_country, budget_text]
+  - id: ambiguous-deadline-kept-as-text
+    variables:
+      today: "2026-11-08"
+      base_currency: EUR
+      user_text: "Quiero 200 sillas de oficina, las necesito pronto"
+    expect:
+      - is_null: [deadline]
+      - equals: {deadline_text: "pronto"}
+    stub_response:
+      spec: "Sillas de oficina"
+      quantity_tiers: [{min_quantity: 200}]
+      deadline: null
+      deadline_text: "pronto"
+      destination_country: null
+      certifications: []
+      budget_text: null
+      missing_fields: [destination_country, budget_text]

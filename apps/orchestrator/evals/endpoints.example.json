@@ -1,0 +1,15 @@
+[
+  {
+    "endpoint_id": "vllm-local",
+    "base_url": "http://localhost:8000",
+    "model": "replace-with-served-model-name",
+    "api_key_env": "APEX_EVAL_VLLM_KEY",
+    "capabilities": {"supports_json_schema": true, "supports_json_object": true, "supports_seed": true}
+  },
+  {
+    "endpoint_id": "ollama-local",
+    "base_url": "http://localhost:11434",
+    "model": "replace-with-model-tag",
+    "capabilities": {"supports_json_object": true}
+  }
+]

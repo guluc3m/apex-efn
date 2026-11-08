@@ -38,8 +38,22 @@ MESSAGES = [{"role": "user", "content": "extract the invoice"}]
 
 
 class Invoice(BaseModel):
-    vendor: str
-    total_minor: int
+    """Shape of the stub's ``default`` scenario output."""
+
+    status: str
+    stub: bool
+
+
+class Unsatisfiable(BaseModel):
+    """A shape no ``always-malformed`` reply ever satisfies, so the ladder must fail loudly."""
+
+    never_present: str
+
+
+class Result(BaseModel):
+    """Shape of the stub's ``full-capability`` / ``malformed-then-valid`` output (extra keys ignored)."""
+
+    result: str
 
 
 def _scoped(client: httpx.AsyncClient, scenario: str) -> httpx.AsyncClient:
@@ -83,7 +97,7 @@ async def test_no_response_format_sent_without_capability(llm_stub: Any) -> None
 async def test_no_response_format_sent_to_no_json_schema_scenario(llm_stub: Any) -> None:
     gw, _ = _gateway(llm_stub, CapabilityProfile(), "no-json-schema")
     await gw.chat_structured(
-        LLMRole.EXTRACTOR, MESSAGES, Invoice, mission_id="m", tenant_id="t", prompt_version="v"
+        LLMRole.EXTRACTOR, MESSAGES, Result, mission_id="m", tenant_id="t", prompt_version="v"
     )
     for call in await llm_stub.calls():
         assert "response_format" not in call["body"] or (
@@ -95,7 +109,7 @@ async def test_full_capability_uses_json_schema_step(llm_stub: Any) -> None:
     caps = CapabilityProfile(supports_json_schema=True, supports_json_object=True)
     gw, sink = _gateway(llm_stub, caps, "full-capability")
     await gw.chat_structured(
-        LLMRole.EXTRACTOR, MESSAGES, Invoice, mission_id="m", tenant_id="t", prompt_version="v"
+        LLMRole.EXTRACTOR, MESSAGES, Result, mission_id="m", tenant_id="t", prompt_version="v"
     )
     assert sink.events[-1].ladder_step == LadderStep.JSON_SCHEMA.value
 
@@ -103,7 +117,7 @@ async def test_full_capability_uses_json_schema_step(llm_stub: Any) -> None:
 async def test_malformed_then_valid_repairs_within_bound(llm_stub: Any) -> None:
     gw, sink = _gateway(llm_stub, CapabilityProfile(), "malformed-then-valid")
     await gw.chat_structured(
-        LLMRole.EXTRACTOR, MESSAGES, Invoice, mission_id="m", tenant_id="t", prompt_version="v"
+        LLMRole.EXTRACTOR, MESSAGES, Result, mission_id="m", tenant_id="t", prompt_version="v"
     )
     assert 1 <= sink.events[-1].repair_attempts <= 2
 
@@ -112,7 +126,12 @@ async def test_always_malformed_fails_loudly_after_two_repairs(llm_stub: Any) ->
     gw, _ = _gateway(llm_stub, CapabilityProfile(), "always-malformed")
     with pytest.raises(StructuredOutputError):
         await gw.chat_structured(
-            LLMRole.EXTRACTOR, MESSAGES, Invoice, mission_id="m", tenant_id="t", prompt_version="v"
+            LLMRole.EXTRACTOR,
+            MESSAGES,
+            Unsatisfiable,
+            mission_id="m",
+            tenant_id="t",
+            prompt_version="v",
         )
     assert len(await llm_stub.calls()) == 3  # 1 initial + exactly 2 repairs
 
