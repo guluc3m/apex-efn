@@ -21,6 +21,7 @@ export { Label } from './components/label.js'
 
 // Feedback
 export { Progress } from './components/progress.js'
+export { ShiningText, type ShiningTextProps } from './components/shining-text.js'
 
 // TODO: Add more components as needed:
 // - Dialog
