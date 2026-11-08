@@ -69,7 +69,7 @@ describe('VaultClient.getCredential', () => {
     const payload = await client().getCredential('tenant-a', REF)
 
     expect(calls).toHaveLength(1)
-    expect(calls[0]?.url).toBe(`${ADDR}/v1/trato-kv/data/tenants/tenant-a/credentials/${REF}`)
+    expect(calls[0]?.url).toBe(`${ADDR}/v1/apex-kv/data/tenants/tenant-a/credentials/${REF}`)
     expect(calls[0]?.init.method).toBe('GET')
     expect((calls[0]?.init.headers as Record<string, string>)['X-Vault-Token']).toBe(TOKEN)
     expect(payload.reveal()).toEqual({ username: 'buyer', password: SECRET })
@@ -138,7 +138,7 @@ describe('VaultClient session state', () => {
 
     await client().putSessionState('tenant-a', 'acct-1', state)
 
-    expect(calls[0]?.url).toBe(`${ADDR}/v1/trato-kv/data/tenants/tenant-a/browser-sessions/acct-1`)
+    expect(calls[0]?.url).toBe(`${ADDR}/v1/apex-kv/data/tenants/tenant-a/browser-sessions/acct-1`)
     expect(calls[0]?.init.method).toBe('POST')
     expect(JSON.parse(calls[0]?.init.body as string)).toEqual({ data: state })
   })
@@ -213,7 +213,7 @@ describe('VaultClient.fromEnv', () => {
       .getCredential('tenant-a', REF)
       .catch(() => undefined)
 
-    expect(calls[0]?.url).toBe(`${ADDR}/v1/trato-kv/data/tenants/tenant-a/credentials/${REF}`)
+    expect(calls[0]?.url).toBe(`${ADDR}/v1/apex-kv/data/tenants/tenant-a/credentials/${REF}`)
   })
 })
 

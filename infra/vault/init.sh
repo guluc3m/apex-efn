@@ -27,24 +27,24 @@ log "Vault reachable at $VAULT_ADDR"
 
 mounts="$(vault secrets list | awk 'NR>2 {print $1}')"
 
-if printf '%s\n' "$mounts" | grep -qx 'trato-kv/'; then
-  kv_options="$(vault read -field=options sys/mounts/trato-kv)"
+if printf '%s\n' "$mounts" | grep -qx 'apex-kv/'; then
+  kv_options="$(vault read -field=options sys/mounts/apex-kv)"
   case "$kv_options" in
-    *version:2*) log "KV v2 mount trato-kv/ already enabled" ;;
+    *version:2*) log "KV v2 mount apex-kv/ already enabled" ;;
     *)
-      log "trato-kv/ exists but is not KV v2"
+      log "apex-kv/ exists but is not KV v2"
       exit 1
       ;;
   esac
 else
-  vault secrets enable -path=trato-kv -version=2 -description="TRATO KV v2: credentials, browser sessions" kv
-  log "enabled KV v2 at trato-kv/"
+  vault secrets enable -path=apex-kv -version=2 -description="APEX-EFN KV v2: credentials, browser sessions" kv
+  log "enabled KV v2 at apex-kv/"
 fi
 
 if printf '%s\n' "$mounts" | grep -qx 'transit/'; then
   log "Transit mount transit/ already enabled"
 else
-  vault secrets enable -path=transit -description="TRATO Transit: service signing keys" transit
+  vault secrets enable -path=transit -description="APEX-EFN Transit: service signing keys" transit
   log "enabled Transit at transit/"
 fi
 

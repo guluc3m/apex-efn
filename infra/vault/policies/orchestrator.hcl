@@ -3,12 +3,12 @@
 
 # Marketplace credentials: the orchestrator stores them at onboarding. It does NOT read values back.
 # Values are read only by the browser-worker (policies/browser-worker.hcl).
-path "trato-kv/data/tenants/+/credentials/*" {
+path "apex-kv/data/tenants/+/credentials/*" {
   capabilities = ["create", "update"]
 }
 
 # Metadata only (versions, timestamps). `delete` removes every version of a credential.
-path "trato-kv/metadata/tenants/+/credentials/*" {
+path "apex-kv/metadata/tenants/+/credentials/*" {
   capabilities = ["read", "list", "delete"]
 }
 

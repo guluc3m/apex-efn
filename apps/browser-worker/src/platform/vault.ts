@@ -8,7 +8,7 @@
 
 import { z } from 'zod'
 
-const KV_MOUNT = 'trato-kv'
+const KV_MOUNT = 'apex-kv'
 
 const TENANT_RE = /^[a-z0-9][a-z0-9-]{0,62}$/
 const ACCOUNT_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/

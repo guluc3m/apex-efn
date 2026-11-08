@@ -11,7 +11,7 @@ import pytest
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from trato.platform.vault import (
+from apex.platform.vault import (
     CredentialRef,
     InvalidIdentifierError,
     SecretPayload,
@@ -42,10 +42,10 @@ class FakeVault:
             return self.forced.pop(0)
         path = request.url.path
         method = request.method
-        if path.startswith("/v1/trato-kv/data/"):
-            return self._kv_data(method, path.removeprefix("/v1/trato-kv/data/"), request)
-        if path.startswith("/v1/trato-kv/metadata/") and method == "DELETE":
-            rel = path.removeprefix("/v1/trato-kv/metadata/")
+        if path.startswith("/v1/apex-kv/data/"):
+            return self._kv_data(method, path.removeprefix("/v1/apex-kv/data/"), request)
+        if path.startswith("/v1/apex-kv/metadata/") and method == "DELETE":
+            rel = path.removeprefix("/v1/apex-kv/metadata/")
             if rel not in self.kv:
                 return httpx.Response(404, json={"errors": []})
             del self.kv[rel]
@@ -177,7 +177,7 @@ async def test_put_then_get_credential_round_trip(client: VaultClient, fake: Fak
 
     assert str(ref) == REF
     assert fake.requests[-1].method == "POST"
-    assert fake.requests[-1].url.path == f"/v1/trato-kv/data/tenants/tenant-a/credentials/{REF}"
+    assert fake.requests[-1].url.path == f"/v1/apex-kv/data/tenants/tenant-a/credentials/{REF}"
     assert json.loads(fake.requests[-1].content) == {
         "data": {"username": "buyer", "password": SECRET_VALUE}
     }
@@ -204,7 +204,7 @@ async def test_delete_credential_uses_metadata_path_and_is_idempotent(
     ref = await client.put_credential("tenant-a", {"k": "v"})
     await client.delete_credential("tenant-a", ref)
     assert fake.requests[-1].method == "DELETE"
-    assert fake.requests[-1].url.path == f"/v1/trato-kv/metadata/tenants/tenant-a/credentials/{ref}"
+    assert fake.requests[-1].url.path == f"/v1/apex-kv/metadata/tenants/tenant-a/credentials/{ref}"
     await client.delete_credential("tenant-a", ref)
     with pytest.raises(VaultNotFoundError):
         await client.get_credential("tenant-a", ref)
@@ -217,7 +217,7 @@ async def test_session_state_round_trip_uses_browser_sessions_path(
     await client.put_session_state("tenant-a", "acct-1", state)
 
     assert (
-        fake.requests[-1].url.path == "/v1/trato-kv/data/tenants/tenant-a/browser-sessions/acct-1"
+        fake.requests[-1].url.path == "/v1/apex-kv/data/tenants/tenant-a/browser-sessions/acct-1"
     )
     payload = await client.get_session_state("tenant-a", "acct-1")
     assert payload.reveal() == state
@@ -242,8 +242,8 @@ async def test_secret_values_never_appear_in_repr_str_format_or_logs(
     assert SECRET_VALUE not in f"{payload!r}"
     assert SECRET_VALUE not in repr([payload])
 
-    logging.getLogger("trato.test").warning("payload=%s extra=%r", payload, payload)
-    logging.getLogger("trato.test").info("object", extra={"payload": payload})
+    logging.getLogger("apex.test").warning("payload=%s extra=%r", payload, payload)
+    logging.getLogger("apex.test").info("object", extra={"payload": payload})
     assert SECRET_VALUE not in caplog.text
     for record in caplog.records:
         assert SECRET_VALUE not in record.getMessage()

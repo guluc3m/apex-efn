@@ -160,16 +160,16 @@ services in `infra/docker-compose.yml` use hardcoded dev values, except the MinI
 
 Owner: DEV-1 (task D1-06). Full layout, policies and client APIs: `docs/security/secrets.md`.
 
-- `vault` runs in dev mode (in memory, root token `trato-dev-root-token`, `http://localhost:8200`). `vault-init`
-  runs once per `dev:up` and bootstraps it: KV v2 at `trato-kv/`, Transit at `transit/`, the `orchestrator` and
+- `vault` runs in dev mode (in memory, root token `apex-dev-root-token`, `http://localhost:8200`). `vault-init`
+  runs once per `dev:up` and bootstraps it: KV v2 at `apex-kv/`, Transit at `transit/`, the `orchestrator` and
   `browser-worker` policies, and one non-exportable ed25519 Transit key per name in `VAULT_SERVICE_KEYS`
   (default `orchestrator,gate-agent,negotiator`, a dev default owned by D2-07).
 - Check it: `docker compose logs vault-init` should end with `[vault-init] done`. From the host:
-  `VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=trato-dev-root-token vault secrets list`.
+  `VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token vault secrets list`.
 - Rerun the bootstrap without restarting Vault (idempotent):
   `docker compose run --rm vault-init`. Changing `VAULT_SERVICE_KEYS` adds keys and never deletes them.
 - Dev data is lost whenever the Vault container stops. `dev:down` and `dev:reset` both recreate it, and
   `vault-init` runs again on the next `dev:up`.
 - Local tests that need a real Vault (not part of normal `pytest`, which stays hermetic):
-  `VAULT_INTEGRATION_ADDR=http://localhost:8200 VAULT_TOKEN=trato-dev-root-token uv run pytest -q -m integration -o markers=integration`
-  (run from `apps/orchestrator`), and `VAULT_INTEGRATION_ADDR=... pnpm --filter @trato/browser-worker exec vitest run`.
+  `VAULT_INTEGRATION_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token uv run pytest -q -m integration -o markers=integration`
+  (run from `apps/orchestrator`), and `VAULT_INTEGRATION_ADDR=... pnpm --filter @apex/browser-worker exec vitest run`.

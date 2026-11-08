@@ -1,7 +1,7 @@
 # Secrets: sops/age for the repo, Vault for runtime
 
 Owner: DEV-1 (task D1-06). Related: `docs/runbooks/local-dev.md` (section 11), `.sops.yaml`,
-`infra/vault/`, `apps/orchestrator/src/trato/platform/vault.py`, `apps/browser-worker/src/platform/vault.ts`.
+`infra/vault/`, `apps/orchestrator/src/apex/platform/vault.py`, `apps/browser-worker/src/platform/vault.ts`.
 
 Two stores, two purposes:
 
@@ -94,14 +94,14 @@ like any other and is added with the same process (1.3).
 `infra/docker-compose.yml` runs two services:
 
 - `vault`: `hashicorp/vault:1.21.4` in **dev mode**. It is in memory, and the root token
-  `trato-dev-root-token` is public. Local only.
+  `apex-dev-root-token` is public. Local only.
 - `vault-init`: the same image, `restart: 'no'`, `depends_on: vault (service_healthy)`. It runs
   `infra/vault/init.sh`, which is mounted read-only from `infra/vault/` and is idempotent.
 
 `init.sh` does the following on every run:
 
 1. Waits for `vault status` (30 s maximum).
-2. Enables KV v2 at **`trato-kv/`** if it is missing. Fails if the mount exists but is not v2.
+2. Enables KV v2 at **`apex-kv/`** if it is missing. Fails if the mount exists but is not v2.
 3. Enables **Transit** at **`transit/`** if it is missing.
 4. Writes the policies `orchestrator` and `browser-worker` from `infra/vault/policies/*.hcl`.
 5. For each name in **`VAULT_SERVICE_KEYS`** (comma-separated, default `orchestrator,gate-agent,negotiator`),
@@ -115,12 +115,12 @@ re-bootstraps on every `dev:up`.
 
 ### 2.2 KV v2 layout
 
-Mount `trato-kv/`. Paths are built from validated identifiers only:
+Mount `apex-kv/`. Paths are built from validated identifiers only:
 
-| Data                                                           | Path (KV v2 data API)                                             | Written by                                  | Read by                                |
-| -------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------- | -------------------------------------- |
-| Marketplace credential                                         | `trato-kv/data/tenants/<tenant_id>/credentials/<credential_ref>`  | orchestrator (onboarding, `put_credential`) | browser worker only (`get_credential`) |
-| Browser session state (cookies, storage state) for one account | `trato-kv/data/tenants/<tenant_id>/browser-sessions/<account_id>` | browser worker                              | browser worker                         |
+| Data                                                           | Path (KV v2 data API)                                            | Written by                                  | Read by                                |
+| -------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------- | -------------------------------------- |
+| Marketplace credential                                         | `apex-kv/data/tenants/<tenant_id>/credentials/<credential_ref>`  | orchestrator (onboarding, `put_credential`) | browser worker only (`get_credential`) |
+| Browser session state (cookies, storage state) for one account | `apex-kv/data/tenants/<tenant_id>/browser-sessions/<account_id>` | browser worker                              | browser worker                         |
 
 - `tenant_id`: `^[a-z0-9][a-z0-9-]{0,62}$`.
 - `credential_ref`: `cred_` plus 16 to 64 URL-safe characters. It is generated with `secrets.token_urlsafe`
@@ -128,7 +128,7 @@ Mount `trato-kv/`. Paths are built from validated identifiers only:
 - `account_id`: `^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$`.
 - Anything that does not match is rejected **before** any request (path traversal such as `..`, `/` or a newline).
 
-Deleting a credential removes all versions through the metadata path (`trato-kv/metadata/...`, `delete`
+Deleting a credential removes all versions through the metadata path (`apex-kv/metadata/...`, `delete`
 capability for the orchestrator).
 
 ### 2.3 Transit keys (service signing)
@@ -152,7 +152,7 @@ capability for the orchestrator).
 The `default` policy is attached as usual. Mint a dev token with one policy:
 
 ```bash
-VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=trato-dev-root-token \
+VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=apex-dev-root-token \
   vault token create -policy=browser-worker -ttl=1h
 ```
 
@@ -168,7 +168,7 @@ only in compose.
 
 ## 3. Client APIs
 
-### 3.1 Python: `trato.platform.vault`
+### 3.1 Python: `apex.platform.vault`
 
 - `VaultClient(base_url, token, *, transport=None, timeout=10, ref_token_source=...)`, or
   `VaultClient.from_env()` (reads `VAULT_ADDR` and `VAULT_TOKEN`). The token is held as `SecretStr`, and `repr`

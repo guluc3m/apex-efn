@@ -20,7 +20,7 @@ from typing import Any, Final, Self
 import httpx
 from pydantic import BaseModel, SecretStr
 
-KV_MOUNT: Final = "trato-kv"
+KV_MOUNT: Final = "apex-kv"
 TRANSIT_MOUNT: Final = "transit"
 
 _TENANT_RE: Final = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")

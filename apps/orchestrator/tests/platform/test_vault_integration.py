@@ -1,7 +1,7 @@
 """Integration tests against a real Vault (dev server, bootstrapped by infra/vault/init.sh).
 
 Skipped unless VAULT_INTEGRATION_ADDR is set. Run with:
-    VAULT_INTEGRATION_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=trato-dev-root-token \
+    VAULT_INTEGRATION_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=apex-dev-root-token \
         uv run pytest -q -m integration -o markers=integration
 """
 
@@ -16,7 +16,7 @@ import pytest
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from trato.platform.vault import VaultClient, VaultError, VaultNotFoundError
+from apex.platform.vault import VaultClient, VaultError, VaultNotFoundError
 
 ADDR = os.environ.get("VAULT_INTEGRATION_ADDR")
 ROOT_TOKEN = os.environ.get("VAULT_INTEGRATION_TOKEN") or os.environ.get("VAULT_TOKEN", "")
