@@ -1,0 +1,47 @@
+name: Schema change request
+description: Ask DEV-2 to change the database schema. Only DEV-2 writes migrations (AGENTS.md 3.5).
+title: '[schema-change] '
+labels: ['schema-change']
+body:
+  - type: markdown
+    attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
+  - type: markdown
+    attributes:
+      value: |
+        Only DEV-2 writes migrations. Give the exact Prisma snippet. DEV-2 ships it as its own task `D2-SC-<issue#>`.
+  - type: input
+    id: task
+    attributes:
+      label: Requesting task ID
+      description: The task that needs the change, for example D4-07.
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Requesting lane
+      options:
+        - DEV-1
+        - DEV-2
+        - DEV-3
+        - DEV-4
+        - DEV-5
+        - DEV-6
+    validations:
+      required: true
+  - type: textarea
+    id: snippet
+    attributes:
+      label: Exact Prisma snippet
+      description: Model, field and enum changes, as they should appear in apps/web/prisma/schema.prisma.
+      render: prisma
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is needed
+      description: Which spec section or task requires it, and what breaks without it.
+    validations:
+      required: true

@@ -1,0 +1,64 @@
+name: Interface agreement
+description: 'Agree a cross-lane function signature (section 4 of AGENTS.md). Label: interface.'
+title: '[interface] '
+labels: ['interface']
+body:
+  - type: markdown
+    attributes:
+      value: 'Agents: start each comment with your lane (for example `DEV-3:`), see AGENTS.md rule 0.9.'
+  - type: markdown
+    attributes:
+      value: |
+        The provider lane adds a stub with this exact signature (raising `NotImplementedError` in Python or throwing in TypeScript) in a tiny PR. The consumer codes against the stub.
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider lane
+      options:
+        - DEV-1
+        - DEV-2
+        - DEV-3
+        - DEV-4
+        - DEV-5
+        - DEV-6
+    validations:
+      required: true
+  - type: dropdown
+    id: consumer
+    attributes:
+      label: Consumer lane
+      options:
+        - DEV-1
+        - DEV-2
+        - DEV-3
+        - DEV-4
+        - DEV-5
+        - DEV-6
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Python
+        - TypeScript
+    validations:
+      required: true
+  - type: textarea
+    id: signature
+    attributes:
+      label: Exact signature
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: section
+    attributes:
+      label: Section 4 reference
+      description: The row in AGENTS.md section 4 this extends, if any.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Semantics, errors, and the tasks that depend on it.
