@@ -8,16 +8,30 @@ from hypothesis import strategies as st
 from apex.tenant_config.resolver import deep_merge, flatten
 
 leaf = st.one_of(st.none(), st.booleans(), st.integers(-1000, 1000), st.text(max_size=8))
-keys = st.sampled_from(["a", "b", "c"])
+
+# Layers are validated against one config schema, so a given path is either always a leaf (a scalar, or
+# ``null`` meaning unset) or always an object, never both. The properties below are stated for such
+# shape-consistent layers (ADR-400 section 2). Across shapes a ``null`` replaces a whole subtree and the
+# merge is not associative; ``test_null_over_object_is_a_replacement_not_associative`` pins that down.
+_OBJECT_KEYS = {"a": {"x": leaf, "y": leaf}, "b": {"x": leaf}}
+_LEAF_KEYS = ("c", "d")
 
 
-def _tree(depth: int = 2) -> st.SearchStrategy[dict]:
-    if depth == 0:
-        return st.dictionaries(keys, leaf, max_size=3)
-    return st.dictionaries(keys, st.one_of(leaf, _tree(depth - 1)), max_size=3)
+def _tree() -> st.SearchStrategy[dict]:
+    objects = {
+        key: st.dictionaries(st.sampled_from(sorted(children)), leaf, max_size=2)
+        for key, children in _OBJECT_KEYS.items()
+    }
+    pairs = {**objects, **dict.fromkeys(_LEAF_KEYS, leaf)}
+    return st.fixed_dictionaries({}, optional=pairs)
 
 
-@settings(max_examples=200, deadline=None)
+def test_null_over_object_is_a_replacement_not_associative() -> None:
+    a, b, c = {"a": {"b": None}}, {"a": None}, {"a": {"a": None}}
+    assert deep_merge(a, deep_merge(b, c)) != deep_merge(deep_merge(a, b), c)
+
+
+@settings(max_examples=1000, deadline=None)
 @given(_tree(), _tree(), _tree())
 def test_deep_merge_is_associative(a: dict, b: dict, c: dict) -> None:
     assert deep_merge(a, deep_merge(b, c)) == deep_merge(deep_merge(a, b), c)

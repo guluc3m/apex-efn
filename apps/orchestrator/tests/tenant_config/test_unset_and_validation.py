@@ -109,3 +109,21 @@ def test_seller_weights_must_sum_to_one_when_set() -> None:
     values["seller"]["weights"] = {"a": 0.5, "b": 0.6}
     with pytest.raises(ValidationError):
         TenantConfig.from_mapping(values)
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [{"llm": {"roles": None}}, {"sanity": None}, {"seller": {"weights": None}}, {"llm": None}],
+)
+def test_null_over_a_whole_object_is_rejected(patch: dict) -> None:
+    """ADR-400 section 2: only leaves may be set to null. This is what keeps deep-merge associative."""
+    import json
+    import pathlib
+
+    from apex.tenant_config.resolver import deep_merge
+    from apex.tenant_config.service import _validate_merged
+
+    path = pathlib.Path(__file__).resolve().parents[4] / "config/defaults/tenant-config.v1.json"
+    values = json.loads(path.read_text())["values"]
+    with pytest.raises(ConfigValidationError):
+        _validate_merged(deep_merge(values, patch))

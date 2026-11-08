@@ -41,7 +41,14 @@ no layer is returned as **explicitly unset** (see §3), never omitted and never 
 - An explicit `null` in a higher layer means **unset**: it overrides the lower layer's value and makes the
   key unset again. This is the only way a tenant can "unset" a key.
 - Deep-merge is associative and idempotent over layers (`merge(a, merge(b, c)) == merge(merge(a, b), c)`,
-  `merge(a, a) == a`). This is checked with property-based tests.
+  `merge(a, a) == a`) **for shape-consistent layers**: every path is either always a leaf (a scalar, or
+  `null` for unset) or always an object. All layers are validated against the same config schema, which
+  guarantees that. Across shapes, a `null` over an object replaces the whole subtree and the merge is not
+  associative (`a={x:{y:null}}, b={x:null}, c={x:{z:null}}` merges to different results in the two
+  groupings). Property tests generate shape-consistent layers and a separate test pins the counterexample.
+  Consequence: the service must reject a layer whose shape differs from the schema; it must not rely on
+  merge order to tolerate it. (Tech lead: confirm that keys that are objects in the schema, such as
+  `llm.roles.*`, may not be set to `null` as a whole, only their leaves.)
 
 ### 3. Unset keys ("sin definir") — loud failure, never a default
 

@@ -37,9 +37,7 @@ def test_unreachable_collector_never_blocks_startup(
     monkeypatch.delenv("OTEL_SDK_DISABLED", raising=False)
     started = time.monotonic()
     handle = build_telemetry(
-        TelemetryConfig(
-            service_name="apex-test", enabled=True, otlp_endpoint="http://127.0.0.1:9"
-        ),
+        TelemetryConfig(service_name="apex-test", enabled=True, otlp_endpoint="http://127.0.0.1:9"),
         log_stream=io.StringIO(),
     )
     with handle.tracer_provider.get_tracer("apex.test").start_as_current_span("startup"):
