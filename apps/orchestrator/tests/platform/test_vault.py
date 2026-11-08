@@ -216,9 +216,7 @@ async def test_session_state_round_trip_uses_browser_sessions_path(
     state = {"cookies": [{"name": "sid", "value": SECRET_VALUE}]}
     await client.put_session_state("tenant-a", "acct-1", state)
 
-    assert (
-        fake.requests[-1].url.path == "/v1/apex-kv/data/tenants/tenant-a/browser-sessions/acct-1"
-    )
+    assert fake.requests[-1].url.path == "/v1/apex-kv/data/tenants/tenant-a/browser-sessions/acct-1"
     payload = await client.get_session_state("tenant-a", "acct-1")
     assert payload.reveal() == state
 
