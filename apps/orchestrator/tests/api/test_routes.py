@@ -40,7 +40,7 @@ def test_route_set_matches_expected_exactly(app: FastAPI) -> None:
     assert _v1_routes(app) == EXPECTED_ROUTES
 
 
-@pytest.mark.parametrize(("method", "path"), sorted(EXPECTED_ROUTES))
+@pytest.mark.parametrize(("method", "path"), sorted(SPEC_ROUTES))
 def test_stub_answers_501_problem_json(app: FastAPI, method: str, path: str) -> None:
     client = TestClient(app, raise_server_exceptions=False)
     response = client.request(method, _concrete(path), json={})
