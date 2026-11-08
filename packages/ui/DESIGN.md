@@ -117,6 +117,43 @@ motion:
   base: "180ms"
   overlay: "220ms"
   easing: "cubic-bezier(0.2, 0, 0, 1)"
+shadcn:
+  note: "Variables de shadcn/ui exportadas desde tweakcn. :root y .dark llevan los mismos valores (solo modo oscuro). Ojo: en shadcn 'accent' es el fondo de hover, no el color de marca; el color de marca es ring/chart-1."
+  background: "{colors.background}"
+  foreground: "{colors.ink}"
+  card: "{colors.surface}"
+  card-foreground: "{colors.ink}"
+  popover: "{colors.surface}"
+  popover-foreground: "{colors.ink}"
+  primary: "{colors.ink}"
+  primary-foreground: "{colors.on-ink}"
+  secondary: "{colors.surface-raised}"
+  secondary-foreground: "{colors.ink}"
+  muted: "{colors.surface-raised}"
+  muted-foreground: "{colors.ink-muted}"
+  accent: "{colors.surface-raised}"
+  accent-foreground: "{colors.ink}"
+  destructive: "{colors.danger-solid}"
+  destructive-foreground: "{colors.white}"
+  border: "{colors.line}"
+  input: "{colors.line-strong}"
+  ring: "{colors.accent}"
+  chart-1: "{colors.accent}"
+  chart-2: "{colors.ink-soft}"
+  chart-3: "{colors.ink-muted}"
+  chart-4: "{colors.line-strong}"
+  chart-5: "{colors.line}"
+  sidebar: "{colors.surface}"
+  sidebar-foreground: "{colors.ink}"
+  sidebar-primary: "{colors.ink}"
+  sidebar-primary-foreground: "{colors.on-ink}"
+  sidebar-accent: "{colors.surface-raised}"
+  sidebar-accent-foreground: "{colors.ink}"
+  sidebar-border: "{colors.line}"
+  sidebar-ring: "{colors.accent}"
+  radius: "0.75rem"
+  font-sans: "Geist, sans-serif"
+  font-mono: "Geist Mono, ui-monospace, monospace"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
@@ -239,7 +276,8 @@ components:
 # TRATO — Sistema de diseño
 
 > Ámbito: `apps/web/**` y `packages/ui/**` (carril DEV-6). El bloque YAML de arriba es la **fuente de
-> verdad de los valores**; este texto explica cómo usarlos. Si este documento contradice a
+> verdad de los valores** (la clave `shadcn` mapea los tokens a las variables de shadcn/ui, tal como se
+> generaron y validaron en tweakcn); este texto explica cómo usarlos. Si este documento contradice a
 > `PROMPT-IMPLEMENTACION.md` en comportamiento de producto, gana el spec. Los tokens se implementan como
 > variables CSS en `@theme` (Tailwind v4) en D6-01 y los componentes en D6-02.
 
