@@ -1,113 +1,247 @@
 name: CI
 
+# Required gates for `main` (see docs/runbooks/branch-protection.md, section "Required checks").
+# Recommended single required check: "CI OK". Jobs skipped by path filters or by a missing
+# target report "skipped", which GitHub counts as passing; "CI OK" fails if any job failed.
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.12'
+  # Pinned to the version used locally (`uv --version`). Bump it here and in the local toolchain together.
+  UV_VERSION: '0.13.7'
+  PIP_AUDIT_VERSION: '2.10.1'
+  TRUFFLEHOG_VERSION: '3.99.8'
 
 jobs:
   # =============================================================================
-  # TypeScript packages
+  # Path filters. On push to main every gate runs; filters only narrow pull requests.
+  # A workflow change on a pull request runs every gate.
+  # =============================================================================
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      all: ${{ github.event_name != 'pull_request' || steps.filter.outputs.workflows == 'true' }}
+      ts: ${{ steps.filter.outputs.ts }}
+      python: ${{ steps.filter.outputs.python }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+      prisma: ${{ steps.filter.outputs.prisma }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ts:
+              - 'packages/**'
+              - 'apps/web/**'
+              - 'apps/browser-worker/**'
+              - 'apps/mock-marketplace/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - 'tsconfig.json'
+              - '.nvmrc'
+            python:
+              - 'apps/orchestrator/**'
+              - 'apps/llm-stub/**'
+              - '.python-version'
+            contracts:
+              - 'contracts/**'
+              - 'packages/shared-types/**'
+              - 'apps/orchestrator/src/trato/contracts/**'
+            prisma:
+              - 'apps/web/prisma/**'
+              - 'apps/orchestrator/src/trato/db/**'
+            web:
+              - 'apps/web/**'
+              - 'infra/**'
+              - 'compose.yaml'
+            workflows:
+              - '.github/**'
+
+  # =============================================================================
+  # TypeScript packages. Affected packages on pull requests, everything on main.
   # =============================================================================
   typescript:
     name: TypeScript
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type check
-        run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
-
-  # =============================================================================
-  # Python orchestrator
-  # =============================================================================
-  python:
-    name: Python
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/orchestrator
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Install dependencies
-        run: uv sync --locked --dev
-
-      - name: Lint
-        run: uv run ruff check .
-
-      - name: Type check
-        run: uv run mypy src/
-
-      - name: Test
-        run: uv run pytest
-
-  # =============================================================================
-  # Security checks
-  # =============================================================================
-  security:
-    name: Security
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check for secrets
-        uses: trufflesecurity/trufflehog@main
-
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Solo aviso durante el scaffold: volver a bloquear antes de la Fase 1 (zod 4, puppeteer)
-      - name: Audit npm dependencies
+      - name: Build, lint, typecheck and test
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Affected packages only (compared with origin/main)"
+            pnpm exec turbo run build lint typecheck test --filter='...[origin/main]'
+          else
+            echo "Full run (push to main)"
+            pnpm exec turbo run build lint typecheck test
+          fi
+
+      - name: Coverage gate (80%)
+        run: bash .github/scripts/ts-coverage.sh
+
+  # =============================================================================
+  # Python orchestrator: lint, types, unit tests with coverage gate.
+  # =============================================================================
+  python:
+    name: Python
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: apps/orchestrator/uv.lock
+
+      - name: Install dependencies
+        working-directory: apps/orchestrator
+        run: uv sync --locked --dev
+
+      - name: Lint
+        working-directory: apps/orchestrator
+        run: uv run ruff check .
+
+      - name: Type check
+        working-directory: apps/orchestrator
+        run: uv run mypy src/
+
+      - name: Unit tests and coverage gate (80%)
+        run: bash .github/scripts/python-unit.sh
+
+  # =============================================================================
+  # Integration tests (Testcontainers). Docker is available on ubuntu-latest.
+  # =============================================================================
+  integration:
+    name: Integration tests
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: apps/orchestrator/uv.lock
+
+      - name: Install dependencies
+        working-directory: apps/orchestrator
+        run: uv sync --locked --dev
+
+      - name: Run integration tests
+        run: bash .github/scripts/python-integration.sh
+
+  # =============================================================================
+  # Secret scan. Always runs. Verified secrets only, to keep the signal high.
+  # PR: base..head of the PR. Push: before..after. Initial push (before = zeros): full history.
+  # =============================================================================
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@v3.99.8
+        with:
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '') }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          version: ${{ env.TRUFFLEHOG_VERSION }}
+          extra_args: --only-verified
+
+  # =============================================================================
+  # Dependency audit. Advisory until the findings listed in
+  # docs/runbooks/branch-protection.md ("Current audit findings") are fixed.
+  # Step-level continue-on-error keeps the job green while the findings stay visible in the log.
+  # =============================================================================
+  dependency-audit:
+    name: Dependency audit (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit (high and critical)
         continue-on-error: true
         run: pnpm audit --audit-level=high
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: apps/orchestrator/uv.lock
+
+      - name: pip-audit against the locked Python environment
+        continue-on-error: true
+        working-directory: apps/orchestrator
+        run: |
+          uv export --locked --no-hashes --no-emit-project --format requirements-txt > "$RUNNER_TEMP/requirements.txt"
+          uvx "pip-audit==${PIP_AUDIT_VERSION}" --progress-spinner off -r "$RUNNER_TEMP/requirements.txt"
+
   # =============================================================================
-  # No proprietary LLM endpoints
+  # No proprietary LLM endpoints (criterion 25). Cheap, always runs.
   # =============================================================================
   llm-portability:
     name: LLM Portability Check
@@ -115,11 +249,193 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check for proprietary endpoints
+      - name: Self-test of the deny-list
+        run: bash .github/scripts/llm-portability.sh --self-test
+
+      - name: Scan the repository
+        run: bash .github/scripts/llm-portability.sh
+
+  # =============================================================================
+  # Contract drift (D2-01). Skips until the root script `contracts:check` exists.
+  # =============================================================================
+  contracts-drift:
+    name: Contracts drift
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.contracts == 'true' || needs.changes.outputs.ts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Check whether the target exists
+        id: target
         run: |
-          # Fail if any proprietary OpenAI endpoints are used
-          if grep -rE "(assistants|threads|batches)\.create|api\.anthropic\.com" --include="*.ts" --include="*.py" .; then
-            echo "ERROR: Proprietary LLM endpoints detected. Use only OpenAI-compatible /v1/chat/completions"
+          if node -e "process.exit(require('./package.json').scripts?.['contracts:check'] ? 0 : 1)"; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: root script 'contracts:check' is not defined yet (activates with D2-01)"
+          fi
+
+      - name: Install dependencies
+        if: steps.target.outputs.active == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for contract drift
+        if: steps.target.outputs.active == 'true'
+        run: pnpm run contracts:check
+
+  # =============================================================================
+  # Migration drift (D2-03). Skips until apps/web/prisma/migrations exists.
+  # The Postgres service is only started when this job runs (path filter on prisma changes).
+  # =============================================================================
+  migration-drift:
+    name: Migration drift
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.prisma == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shadow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check whether the target exists
+        id: target
+        run: |
+          if [ -d apps/web/prisma/migrations ]; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: apps/web/prisma/migrations does not exist yet (activates with D2-03)"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.target.outputs.active == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.target.outputs.active == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.target.outputs.active == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Schema matches migrations
+        if: steps.target.outputs.active == 'true'
+        run: |
+          pnpm --filter @trato/web exec prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "$SHADOW_DATABASE_URL" \
+            --exit-code
+
+  # =============================================================================
+  # Playwright E2E (D6-08). Skips until apps/web has e2e specs.
+  # =============================================================================
+  e2e:
+    name: E2E (Playwright)
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check whether the target exists
+        id: target
+        run: |
+          if [ -n "$(find apps/web -path '*/node_modules' -prune -o -path '*e2e*' -name '*.spec.ts' -print -quit)" ]; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: no Playwright e2e specs under apps/web yet (activates with D6-08)"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.target.outputs.active == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.target.outputs.active == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.target.outputs.active == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Start the local stack
+        if: steps.target.outputs.active == 'true'
+        run: docker compose up -d --wait
+
+      - name: Install Chromium
+        if: steps.target.outputs.active == 'true'
+        run: pnpm --filter @trato/web exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        if: steps.target.outputs.active == 'true'
+        run: pnpm --filter @trato/web test:e2e
+
+      - name: Upload Playwright report
+        if: failure() && steps.target.outputs.active == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
+      - name: Stop the local stack
+        if: always() && steps.target.outputs.active == 'true'
+        run: docker compose down -v
+
+  # =============================================================================
+  # Aggregate. Recommended as the single required check in branch protection.
+  # =============================================================================
+  ci-ok:
+    name: CI OK
+    needs:
+      - changes
+      - typescript
+      - python
+      - integration
+      - secret-scan
+      - dependency-audit
+      - llm-portability
+      - contracts-drift
+      - migration-drift
+      - e2e
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any gate failed or was cancelled
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$NEEDS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' > /dev/null; then
+            echo "::error::at least one gate failed or was cancelled"
             exit 1
           fi
-          echo "OK: No proprietary endpoints found"
+          echo "All gates passed or were skipped"
