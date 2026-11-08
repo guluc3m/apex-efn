@@ -95,3 +95,4 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 filterwarnings = ["ignore:Module already imported so cannot be rewritten:pytest.PytestAssertRewriteWarning"]
+pythonpath = ["tests/tenant_config"]
