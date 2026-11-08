@@ -1,5 +1,5 @@
-import type { Currency, FxRate } from '@trato/shared-types/currency'
-import { FX_PIVOT_CURRENCY } from '@trato/shared-types/currency'
+import type { Currency, FxRate } from '@apex/shared-types/currency'
+import { FX_PIVOT_CURRENCY } from '@apex/shared-types/currency'
 
 import { Money } from './money.js'
 

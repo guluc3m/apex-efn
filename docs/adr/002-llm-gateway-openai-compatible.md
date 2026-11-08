@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-TRATO needs to access LLMs for:
+APEX-EFN needs to access LLMs for:
 - Natural language understanding (sourcing requests)
 - Planning (which platforms to query)
 - Negotiation (conducting chat conversations)
@@ -59,4 +59,4 @@ All LLM access goes through a single `LLMGateway` class that uses **only the Ope
 ## Related
 
 - [Section 5.6 of PROMPT-IMPLEMENTACION.md](../../PROMPT-IMPLEMENTACION.md)
-- [trato/llm/gateway.py](../../apps/orchestrator/src/trato/llm/gateway.py)
+- [apex/llm/gateway.py](../../apps/orchestrator/src/apex/llm/gateway.py)

@@ -1,4 +1,4 @@
-import type { ReviewAnomaly, RawSellerSignals } from '@trato/shared-types/seller'
+import type { ReviewAnomaly, RawSellerSignals } from '@apex/shared-types/seller'
 
 import { zScore } from './statistics.js'
 

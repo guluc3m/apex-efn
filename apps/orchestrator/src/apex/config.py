@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="postgresql+asyncpg://trato:trato@localhost:5432/trato"
+        default="postgresql+asyncpg://apex:apex@localhost:5432/apex"
     )
     database_pool_size: int = Field(default=10)
 
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     s3_endpoint: str = Field(default="http://localhost:9000")
     s3_access_key: str = Field(default="minioadmin")
     s3_secret_key: str = Field(default="minioadmin")
-    s3_bucket_audit: str = Field(default="trato-audit")
+    s3_bucket_audit: str = Field(default="apex-audit")
 
     # LLM Gateway (OpenAI-compatible)
     llm_gateway_url: str = Field(default="http://localhost:8001/v1")

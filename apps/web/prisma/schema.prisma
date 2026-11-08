@@ -1,4 +1,4 @@
-// TRATO Database Schema
+// APEX-EFN Database Schema
 // Single source of truth for migrations
 // Both Prisma (web) and SQLAlchemy (orchestrator) read from this schema
 

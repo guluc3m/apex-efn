@@ -1,5 +1,5 @@
 /**
- * @trato/ui
+ * @apex/ui
  *
  * Design system components built on Radix UI + Tailwind CSS.
  * Based on shadcn/ui patterns.

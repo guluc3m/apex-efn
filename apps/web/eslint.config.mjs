@@ -1,1 +1,1 @@
-export { default } from '@trato/eslint-config/nextjs.js'
+export { default } from '@apex/eslint-config/nextjs.js'

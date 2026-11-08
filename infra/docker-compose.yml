@@ -6,18 +6,18 @@ services:
   # =============================================================================
   postgres:
     image: postgres:16-alpine
-    container_name: trato-postgres
+    container_name: apex-postgres
     environment:
-      POSTGRES_USER: trato
-      POSTGRES_PASSWORD: trato
-      POSTGRES_DB: trato
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: apex
+      POSTGRES_DB: apex
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trato"]
+      test: ["CMD-SHELL", "pg_isready -U apex"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,7 +27,7 @@ services:
   # =============================================================================
   redis:
     image: redis:7-alpine
-    container_name: trato-redis
+    container_name: apex-redis
     ports:
       - "6379:6379"
     volumes:
@@ -43,7 +43,7 @@ services:
   # =============================================================================
   minio:
     image: minio/minio:latest
-    container_name: trato-minio
+    container_name: apex-minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -64,15 +64,15 @@ services:
   # =============================================================================
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
-    container_name: trato-keycloak
+    container_name: apex-keycloak
     command: start-dev
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: trato
-      KC_DB_PASSWORD: trato
+      KC_DB_USERNAME: apex
+      KC_DB_PASSWORD: apex
     ports:
       - "8080:8080"
     depends_on:
@@ -84,9 +84,9 @@ services:
   # =============================================================================
   langfuse:
     image: langfuse/langfuse:2
-    container_name: trato-langfuse
+    container_name: apex-langfuse
     environment:
-      DATABASE_URL: postgresql://trato:trato@postgres:5432/langfuse
+      DATABASE_URL: postgresql://apex:apex@postgres:5432/langfuse
       NEXTAUTH_SECRET: langfuse-secret-change-me
       NEXTAUTH_URL: http://localhost:3001
       SALT: langfuse-salt-change-me
@@ -101,7 +101,7 @@ services:
   # =============================================================================
   llm-stub:
     image: ghcr.io/mockoon/cli:latest
-    container_name: trato-llm-stub
+    container_name: apex-llm-stub
     command: --data /data/openai-stub.json --port 8001
     ports:
       - "8001:8001"
@@ -113,7 +113,7 @@ services:
   # =============================================================================
   grafana:
     image: grafana/grafana:latest
-    container_name: trato-grafana
+    container_name: apex-grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin

@@ -1,4 +1,4 @@
-import type { NormalizedSellerSignals, RawSellerSignals } from '@trato/shared-types/seller'
+import type { NormalizedSellerSignals, RawSellerSignals } from '@apex/shared-types/seller'
 
 import { bayesianRating, linearSaturation, logSaturation } from './statistics.js'
 

@@ -11,7 +11,7 @@ from typing import Any
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from trato.agents.state import MissionState
+from apex.agents.state import MissionState
 
 
 def create_mission_graph() -> CompiledStateGraph[MissionState, None, MissionState, MissionState]:

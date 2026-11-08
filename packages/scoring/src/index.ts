@@ -1,5 +1,5 @@
 /**
- * @trato/scoring
+ * @apex/scoring
  *
  * Deterministic scoring engines for seller confidence, price sanity, and MCDA.
  * All calculations are reproducible and versioned.

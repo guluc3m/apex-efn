@@ -7,7 +7,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TRATO - B2B Sourcing Inteligente',
+  title: 'APEX-EFN - B2B Sourcing Inteligente',
   description: 'Plataforma de sourcing inteligente y negociación automatizada de compras por volumen',
 }
 

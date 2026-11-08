@@ -15,10 +15,10 @@ pregunta**.
 
 # 1. PRODUCTO: QUÉ ES
 
-**Nombre en clave:** TRATO (nombre definitivo pendiente)
+**Nombre:** APEX-EFN (forma abreviada: APEX)
 **Categoría:** plataforma B2B de *sourcing inteligente y negociación automatizada* de compras por volumen.
 
-TRATO no es un comparador de precios. Es un **agente de compras** que:
+APEX-EFN no es un comparador de precios. Es un **agente de compras** que:
 
 1. **Perfila a la empresa** (quién compra, para qué, con qué dinero, con qué restricciones), incluyendo
    la carga de su situación financiera mediante un CSV normalizado durante el onboarding.
@@ -52,7 +52,7 @@ precios falsos, vendedores dudosos o compromisos que no pueda pagar.
 - Recomendación final explicable con pesos configurables por perfil.
 
 **No es el producto:** un ERP, un marketplace transaccional, un CRM, ni un bot de spam a vendedores.
-Las órdenes de compra se emiten contra el proveedor; TRATO no custodia pagos en el MVP.
+Las órdenes de compra se emiten contra el proveedor; APEX-EFN no custodia pagos en el MVP.
 
 ---
 

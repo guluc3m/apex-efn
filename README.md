@@ -5,7 +5,7 @@
 
 ## Descripción
 
-TRATO es un **agente de compras** que:
+APEX-EFN es un **agente de compras** que:
 
 1. **Perfila a la empresa** (quién compra, para qué, con qué dinero, con qué restricciones)
 2. **Busca** productos en múltiples plataformas y proveedores

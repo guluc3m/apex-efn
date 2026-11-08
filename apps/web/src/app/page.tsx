@@ -1,11 +1,11 @@
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@trato/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@apex/ui'
 
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>TRATO</CardTitle>
+          <CardTitle>APEX-EFN</CardTitle>
           <CardDescription>B2B Sourcing Inteligente y Negociación Automatizada</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">

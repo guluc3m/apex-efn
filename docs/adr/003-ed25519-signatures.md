@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-TRATO handles financial decisions (approving purchases, setting thresholds) that require:
+APEX-EFN handles financial decisions (approving purchases, setting thresholds) that require:
 1. Non-repudiation: proof that a specific person made a decision
 2. Integrity: detection of any tampering with the decision record
 3. Audit trail: verifiable chain of all decisions
@@ -58,4 +58,4 @@ Use **Ed25519 (EdDSA)** for all signatures:
 ## Related
 
 - [Section 5.10 of PROMPT-IMPLEMENTACION.md](../../PROMPT-IMPLEMENTACION.md)
-- [@trato/crypto-client](../../packages/crypto-client/)
+- [@apex/crypto-client](../../packages/crypto-client/)

@@ -5,7 +5,7 @@
  * Adding a new platform = new adapter + fixtures + tests + compliance doc.
  */
 
-import type { RawSellerSignals } from '@trato/shared-types/seller'
+import type { RawSellerSignals } from '@apex/shared-types/seller'
 
 /**
  * Transport type for the adapter

@@ -1,5 +1,5 @@
 {
-  "name": "@trato/ui",
+  "name": "@apex/ui",
   "version": "0.1.0",
   "private": true,
   "license": "UNLICENSED",
@@ -47,8 +47,8 @@
     "@storybook/addon-links": "^8.4.0",
     "@storybook/react": "^8.4.0",
     "@storybook/react-vite": "^8.4.0",
-    "@trato/eslint-config": "workspace:*",
-    "@trato/tsconfig": "workspace:*",
+    "@apex/eslint-config": "workspace:*",
+    "@apex/tsconfig": "workspace:*",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "react": "^19.0.0",

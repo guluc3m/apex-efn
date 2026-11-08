@@ -1,5 +1,5 @@
 /**
- * @trato/shared-types
+ * @apex/shared-types
  *
  * Central type definitions shared between all services.
  * Generated from OpenAPI spec where applicable.

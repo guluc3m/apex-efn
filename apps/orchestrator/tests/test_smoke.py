@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from trato.agents.graph import create_mission_graph
-from trato.main import app
+from apex.agents.graph import create_mission_graph
+from apex.main import app
 
 
 def test_health() -> None:

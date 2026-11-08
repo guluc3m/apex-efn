@@ -1,4 +1,4 @@
-import type { FxRate } from '@trato/shared-types/currency'
+import type { FxRate } from '@apex/shared-types/currency'
 import { describe, expect, it } from 'vitest'
 
 import { FxConverter } from './fx.js'
