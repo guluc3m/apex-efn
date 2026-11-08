@@ -24,7 +24,7 @@ from apex.tenant_config.defaults import DEFAULT_PATH, load_global_layer
 from apex.tenant_config.models import TenantConfig
 from apex.tenant_config.ports import ConfigVersionRecord
 from apex.tenant_config.repository import InMemoryConfigRepository
-from apex.tenant_config.resolver import content_hash
+from apex.tenant_config.service import _version_hash
 
 log = logging.getLogger("apex.tenant_config.load_defaults")
 
@@ -59,7 +59,7 @@ async def seed(
     """
     _, global_values = load_global_layer(DEFAULT_PATH)
     TenantConfig.from_mapping(global_values)  # fail fast if the shipped defaults are invalid
-    digest = content_hash(global_values)
+    digest = _version_hash(global_values, {})
     clock = _SystemClock()
     written: list[ConfigVersionRecord] = []
     for tid in tenant_ids:

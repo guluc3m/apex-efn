@@ -108,7 +108,13 @@ class TenantConfigService:
             values[path] = ResolvedValue(path=path, value=value, layer=layer, unset=value is None)
 
         version = tenant_version  # already the seeded baseline (1) when the tenant has no record
-        digest = content_hash(_plain(effective_plain))
+        # No category: the hash is the version identity (category overrides included). With a category it
+        # hashes exactly what that category sees, plus the version it came from.
+        digest = (
+            _version_hash(self._global, tenant_patch)
+            if category is None
+            else content_hash({"category": category, "view": _plain(effective_plain)})
+        )
         return EffectiveConfig(
             tenant_id=tenant_id,
             category=category,
@@ -123,10 +129,7 @@ class TenantConfigService:
         record = await self._repo.get_version(tenant_id, config_version)
         if record is None:
             raise ConfigValidationError(f"no version {config_version} for tenant {tenant_id}")
-        merged = deep_merge(
-            self._global, {k: v for k, v in record.values.items() if k != CATEGORY_KEY}
-        )
-        digest = content_hash(_plain(merged))
+        digest = _version_hash(self._global, record.values)
         if digest != record.content_hash:
             raise ContentHashMismatchError(
                 f"tenant {tenant_id} v{config_version}: stored {record.content_hash} != recomputed {digest}"
@@ -164,9 +167,9 @@ class TenantConfigService:
 
         candidate_values = _apply_patch(current_patch, patch, category)
         candidate_tenant = {k: v for k, v in candidate_values.items() if k != CATEGORY_KEY}
-        merged = deep_merge(self._global, candidate_tenant)
-        _validate_merged(merged)
-        digest = content_hash(_plain(merged))
+        _validate_merged(deep_merge(self._global, candidate_tenant))
+        _validate_all_categories(self._global, candidate_values)
+        digest = _version_hash(self._global, candidate_values)
         candidate_version = current_version + 1
 
         decision = await self._decisions.create_decision(
@@ -210,11 +213,13 @@ class TenantConfigService:
         if base != current_version:
             raise StaleBaseVersionError(tenant_id, base, current_version)
 
+        if payload.get("category") != category:
+            raise ConfigValidationError("category does not match the signed decision payload")
         candidate_values = _apply_patch(current_patch, patch, category)
         candidate_tenant = {k: v for k, v in candidate_values.items() if k != CATEGORY_KEY}
-        merged = deep_merge(self._global, candidate_tenant)
-        _validate_merged(merged)
-        digest = content_hash(_plain(merged))
+        _validate_merged(deep_merge(self._global, candidate_tenant))
+        _validate_all_categories(self._global, candidate_values)
+        digest = _version_hash(self._global, candidate_values)
         if digest != payload.get("candidate_content_hash"):
             raise ConfigValidationError("candidate content hash differs from the signed one")
 
@@ -291,8 +296,35 @@ def _model_shape(merged: dict[str, Any]) -> dict[str, Any]:
 
 
 def _plain(merged: dict[str, Any]) -> dict[str, Any]:
-    """Strip the ``categories`` override block from the hashed effective view (it is per-category)."""
+    """The effective view without the ``categories`` block: what a request without a category sees."""
     return {k: v for k, v in merged.items() if k != CATEGORY_KEY}
+
+
+def _version_hash(global_layer: dict[str, Any], tenant_values: dict[str, Any]) -> str:
+    """Content hash that identifies a tenant config version, category overrides included (ADR-900).
+
+    It covers the tenant's effective base view *and* the ``categories`` block, so any category patch
+    changes the hash. ``effective(tenant, category)`` hashes what that category actually sees instead.
+    """
+    base = deep_merge(global_layer, {k: v for k, v in tenant_values.items() if k != CATEGORY_KEY})
+    categories = tenant_values.get(CATEGORY_KEY, {})
+    return content_hash({"base": _plain(base), "categories": categories if categories else {}})
+
+
+def _validate_all_categories(global_layer: dict[str, Any], tenant_values: dict[str, Any]) -> None:
+    """Every category override must produce a valid configuration when merged over the tenant view."""
+    base = deep_merge(global_layer, {k: v for k, v in tenant_values.items() if k != CATEGORY_KEY})
+    categories = tenant_values.get(CATEGORY_KEY, {})
+    if not isinstance(categories, dict):
+        raise ConfigValidationError("'categories' must be an object")
+    for name, patch in categories.items():
+        if not isinstance(patch, dict):
+            raise ConfigValidationError(f"category '{name}' override must be an object")
+        _require_shape_consistent(global_layer, patch, f"categories.{name}")
+        try:
+            _validate_merged(deep_merge(base, patch))
+        except ConfigValidationError as exc:
+            raise ConfigValidationError(f"category '{name}': {exc}") from exc
 
 
 def _copy_json(value: Any) -> Any:
