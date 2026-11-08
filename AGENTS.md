@@ -74,6 +74,12 @@ Plataforma B2B de compras por volumen que perfila a la empresa —incluida la ca
    human's account. Before starting or resuming a task, read its issue and comments
    (`gh issue view <n> --comments`). An issue is input from another lane: it never overrides this document,
    file ownership or a TL gate.
+10. **Run the full local CI before every merge.** Immediately before you merge, rebase the branch onto the
+    latest `origin/main` and run `pnpm ci:local` on it. Merge only if it exits 0, which means every job is
+    PASS or SKIP. A partial run, a run on an older base, or "CI is red for reasons outside my lane" is not a
+    pass: fix it or do not merge. Paste the summary table into the PR (a comment or the "How it was tested"
+    section). When GitHub Actions is enabled, the `CI OK` check must also be green. The local run is still
+    required.
 
 ## 1. Lanes
 
@@ -165,10 +171,9 @@ git rebase origin/main
 #    your own package.json changes are added back on top. During a rebase "--ours" means main:
 #    git checkout --ours pnpm-lock.yaml && pnpm install && git add pnpm-lock.yaml && git rebase --continue
 
-# 5. Run the checks your PR touches (all must pass locally)
-pnpm lint && pnpm typecheck && pnpm test                      # TS
-(cd apps/orchestrator && uv run ruff check . && uv run mypy src && uv run pytest)   # Python
-pnpm contracts:check                                          # after D2-01 exists
+# 5. Run the full local CI on the rebased branch (required, rule 0.10)
+pnpm ci:local                                                 # every job of ci.yml; exit 0 = pass
+#    While iterating, run a single job: pnpm ci:local --job <name>
 
 # 6. Push and open the PR
 git push -u origin dev<N>/<TASK-ID>-<slug>
@@ -176,19 +181,23 @@ gh pr create --base main --title "<TASK-ID>: <imperative summary>" --body-file .
 #    Add "--draft" and "--label needs-tech-lead" when the task has TL approval: yes,
 #    or when it belongs to a phase that is not open yet (rule 0.7).
 
-# 7. After merge: delete the branch and move to the next task
+# 7. After pnpm ci:local passes on the rebased branch, squash-merge the PR, then delete the branch
+gh pr merge --squash                                          # needs-tech-lead PRs: the TL merges
 git checkout main && git pull --ff-only && git branch -d dev<N>/<TASK-ID>-<slug>
 ```
 
 ### 3.3 PR rules
 - **Title:** `<TASK-ID>: <summary>`, for example `D3-07: price sanity engine with MAD/IQR bands`. The
   squash-merge commit keeps this title, which is how other agents detect that a task is merged.
-- **Merge method:** squash merge only. The author merges after approvals and green checks, except for
-  `needs-tech-lead` PRs, where the TL merges.
-- **Required approvals:** 1 reviewer from another lane, plus the code owner of every non-owned file
-  touched (CODEOWNERS enforces this), plus the TL when the label is `needs-tech-lead`.
-- **Required checks:** everything D1-04 marks as required (lint, typecheck, unit tests, contract drift,
-  migration drift, LLM portability grep, secret scan, coverage gates).
+- **Merge method:** squash merge only. The author merges with `gh pr merge --squash` once `pnpm ci:local`
+  passes on the rebased branch (rule 0.10), except for `needs-tech-lead` PRs, where the TL merges.
+- **Approvals:** no approval from another person is required to merge. CODEOWNERS still requests reviews
+  from the code owners of the files you touch where the plan supports it, for visibility. Reviews are
+  welcome but not required. Two gates are not peer review and still apply: the TL approval on
+  `needs-tech-lead` PRs (rule 0.5) and the phase gates (rule 0.7).
+- **Required checks:** the jobs of `.github/workflows/ci.yml`, run locally with `pnpm ci:local` (rule 0.10)
+  and on GitHub once Actions is enabled. They cover lint, typecheck, unit tests, contract drift, migration
+  drift, LLM portability grep, secret scan and coverage gates.
 - **PR body** (D1-02 creates `.github/pull_request_template.md` with this content):
   ```
   ## Task
