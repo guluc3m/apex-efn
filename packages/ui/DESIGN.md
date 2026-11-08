@@ -1,6 +1,6 @@
 ---
 name: APEX-EFN
-description: Sistema visual oscuro de APEX-EFN, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo puro y esquinas rectas, sin color de acento; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
+description: Sistema visual oscuro de APEX-EFN, plataforma B2B de compras por volumen donde un humano decide y firma. Fondo casi negro y esquinas rectas, con un único color activo (naranja) reservado a lo interactuable y un verde claro para lo que destaca sin poder pulsarse; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
 colors:
   background: "#0b0b0d"
   surface: "#131316"
@@ -11,19 +11,30 @@ colors:
   ink-soft: "#b4b4be"
   ink-muted: "#8e8e9a"
   on-ink: "#0b0b0d"
-  accent: "#ededf0"
-  accent-deep: "#ffffff"
+  accent: "#f3a35f"
+  accent-deep: "#e0904c"
   accent-subtle: "#1b1b20"
   on-accent: "#0b0b0d"
-  success: "#3fbf74"
-  success-subtle: "#0f2419"
-  warning: "#f5873a"
-  warning-subtle: "#2d1a0b"
+  highlight: "#8dd8b2"
+  green-deep: "#0a1a14"
+  green-surface: "#0d2b20"
+  green-line: "#1c5a43"
+  success: "#5aa9ff"
+  success-subtle: "#0d1f35"
+  warning: "#e6c34a"
+  warning-subtle: "#2a2308"
   danger: "#f7566a"
   danger-solid: "#c4271f"
   danger-solid-hover: "#a31f18"
   danger-subtle: "#2e1117"
   white: "#ffffff"
+gradients:
+  note: "Todos lineales y de una sola dirección. Nunca decoran: marcan estructura (filete) o estado (fila seleccionada). El verde no supera green-surface en superficies."
+  hairline-header: "linear-gradient(90deg, {colors.green-line}, {colors.line} 70%)"
+  hairline-panel: "linear-gradient(90deg, {colors.green-line}, {colors.line} 60%)"
+  row-selected: "linear-gradient(90deg, rgba(13, 43, 32, 0.95), transparent 85%)"
+  page-background: "linear-gradient(180deg, {colors.background} 45%, {colors.green-deep} 100%)"
+  page-background-screens: "solo las pantallas que se indiquen expresamente. Hoy: acceso (login)"
 typography:
   display:
     fontFamily: "Geist, sans-serif"
@@ -116,15 +127,15 @@ motion:
   overlay: "220ms"
   easing: "cubic-bezier(0.2, 0, 0, 1)"
 shadcn:
-  note: "Variables de shadcn/ui exportadas desde tweakcn. :root y .dark llevan los mismos valores (solo modo oscuro). Ojo: en shadcn 'accent' es el fondo de hover, no el color de marca; el color de marca es ring/chart-1."
+  note: "Variables de shadcn/ui exportadas desde tweakcn. :root y .dark llevan los mismos valores (solo modo oscuro). Ojo: en shadcn 'accent' es el fondo de hover, no el color de marca; el color activo es primary/ring y el verde claro de lo destacado es chart-1."
   background: "{colors.background}"
   foreground: "{colors.ink}"
   card: "{colors.surface}"
   card-foreground: "{colors.ink}"
   popover: "{colors.surface}"
   popover-foreground: "{colors.ink}"
-  primary: "{colors.ink}"
-  primary-foreground: "{colors.on-ink}"
+  primary: "{colors.accent}"
+  primary-foreground: "{colors.on-accent}"
   secondary: "{colors.surface-raised}"
   secondary-foreground: "{colors.ink}"
   muted: "{colors.surface-raised}"
@@ -136,7 +147,7 @@ shadcn:
   border: "{colors.line}"
   input: "{colors.line-strong}"
   ring: "{colors.accent}"
-  chart-1: "{colors.accent}"
+  chart-1: "{colors.highlight}"
   chart-2: "{colors.ink-soft}"
   chart-3: "{colors.ink-muted}"
   chart-4: "{colors.line-strong}"
@@ -154,14 +165,14 @@ shadcn:
   font-mono: "Geist Mono, ui-monospace, monospace"
 components:
   button-primary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.on-ink}"
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
     rounded: "{rounded.none}"
     padding: "0 14px"
     height: "{spacing.control-height}"
     typography: "{typography.label}"
   button-primary-hover:
-    backgroundColor: "{colors.ink-soft}"
+    backgroundColor: "{colors.accent-deep}"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -188,11 +199,11 @@ components:
   button-destructive-hover:
     backgroundColor: "{colors.danger-solid-hover}"
   link:
-    textColor: "{colors.accent}"
+    textColor: "{colors.ink}"
     textDecoration: "underline"
     underlineOffset: "3px"
   link-hover:
-    textColor: "{colors.accent-deep}"
+    textColor: "{colors.white}"
   focus-ring:
     outline: "2px solid {colors.accent}"
     outlineOffset: "2px"
@@ -211,6 +222,7 @@ components:
   panel:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.line}"
+    topHairline: "{gradients.hairline-panel}"
     rounded: "{rounded.none}"
     padding: "{spacing.panel-padding}"
     shadow: "{shadows.none}"
@@ -230,7 +242,9 @@ components:
   table-row-hover:
     backgroundColor: "{colors.surface-raised}"
   table-row-selected:
-    backgroundColor: "{colors.accent-subtle}"
+    backgroundColor: "{colors.surface}"
+    backgroundImage: "{gradients.row-selected}"
+    indicator: "inset 2px 0 0 {colors.accent}"
   badge-success:
     backgroundColor: "{colors.success-subtle}"
     textColor: "{colors.success}"
@@ -262,8 +276,8 @@ components:
     rounded: "{rounded.none}"
     height: "32px"
   filter-chip-active:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.on-ink}"
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
   dither:
     algorithm: "atkinson"
     dotShape: "{rounded.dot}"
@@ -278,7 +292,7 @@ components:
     revealDuration: "800ms"
   loader-spheres:
     count: 4
-    fill: "{colors.ink}"
+    fill: "{colors.highlight}"
     shading: "none"
     sphereDiameter: "32px"
     gap: "12px"
@@ -332,11 +346,11 @@ components:
 APEX-EFN es una herramienta donde alguien **firma compras con dinero real**. Tiene que parecer un
 instrumento preciso, no una demo.
 
-- **Vercel:** monocromo sobre casi negro, tipografía Geist, bordes finos, botón principal claro, cero adorno.
+- **Vercel:** casi negro, tipografía Geist, bordes finos, un único botón principal por zona, cero adorno.
 - **Render:** esquinas rectas (radio 0 en todo) y bordes de 1 px.
-- **Sin color de acento:** `accent` es el mismo blanco roto que `ink`. Lo que destaca (foco, selección,
-  enlaces, serie principal) lo hace por luminosidad, subrayado o borde, nunca por un tono propio. Así el
-  único color de la interfaz es el de estado, y cuando aparece significa algo.
+- **Un solo color activo:** `accent` (naranja) significa «esto se puede pulsar o está seleccionado». No
+  se usa para nada que no sea interactuable (§4). Lo que destaca sin ser interactuable usa `highlight`
+  (verde claro). Los colores de estado (azul, amarillo, rojo) solo significan estado.
 - **Revolut app:** cifras grandes y seguras (`numeral`), paneles amplios, la cantidad como protagonista.
 
 Solo modo oscuro. No hay tema claro: un único tema evita mantener dos paletas y que una de las dos quede descuidada.
@@ -347,7 +361,8 @@ Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 
 - Modo claro o un segundo tema. APEX-EFN es solo oscuro.
 - Negro puro (`#000`) de fondo o blanco puro para texto: cansan la vista y hacen vibrar el contraste.
-- Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color.
+- Brillos radiales detrás del hero, tarjetas con degradado de relleno, glassmorphism, sombras de color.
+  Los únicos degradados admitidos son los lineales de §4.
 - Titulares que entran con desenfoque.
 - Esquinas redondeadas en la interfaz: todo es recto (`rounded.none`). Lo único circular son los puntos
   del dithering.
@@ -381,8 +396,10 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
    separados por `group-gap`; secciones por `section`. No añadir bordes o paneles para agrupar.
 9. **Titulares concretos.** «3 ofertas esperan tu firma», no «Compras inteligentes, simplificadas».
 10. **Destacar el CTA.** Un solo `button-primary` por zona; el resto `secondary` o `ghost`.
-11. **Monocromo.** No hay color de acento: foco, selección, enlaces y serie principal usan `accent` (= `ink`).
-    Los enlaces se distinguen por subrayado. Los colores de estado no son acentos: solo significan estado.
+11. **El color activo es solo para lo interactuable.** `accent` (naranja) va en botón principal, foco,
+    pestaña o navegación activa y fila o paso seleccionado. Nunca en barras de progreso, indicadores de
+    carga, cifras, iconos decorativos ni nada que no se pueda pulsar: eso es `highlight` (§4). Los
+    enlaces son `ink` con subrayado. Los colores de estado no son acentos: solo significan estado.
 12. **Iconos coherentes.** Solo lucide, mismo trazo (1.75) y tamaño (16 px en texto, 20 px en
     navegación), y solo cuando aportan significado.
 13. **Quitar adornos.** Si algo se puede eliminar sin perder información, se elimina.
@@ -406,8 +423,20 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§13).
 - Jerarquía de superficie: en oscuro, **más elevado = más claro**. `background` (página e inputs) →
   `surface` (paneles) → `surface-raised` (cabeceras de tabla, hover, popovers, badge neutro). Las capas se
   separan con `line` y con ese paso de luminosidad, no con sombra.
-- El botón principal es claro (`ink`) con texto `on-ink`; el destructivo usa `danger-solid` con texto
-  `white`. `danger` (más claro) es solo para texto e iconos de error.
+- **Color activo (`accent`, `#f3a35f`) = interactuable.** Botón principal (relleno `accent`, texto
+  `on-accent`, hover `accent-deep`), anillo de foco, subrayado de pestaña o navegación activa, barra de
+  fila o paso seleccionado y controles nativos (casillas, radios). Si no se puede pulsar o seleccionar,
+  no lleva `accent`.
+- **Destacado no interactuable (`highlight`, `#8dd8b2`, verde claro).** Barras de progreso, indicador de
+  carga, marcador de fase, serie principal de una gráfica, borrador pendiente de aprobar. Se usa con
+  moderación: un elemento por zona. No sustituye a un color de estado.
+- **Color de estado:** `success` azul (`#5aa9ff`), `warning` amarillo (`#e6c34a`), `danger` rojo. El verde
+  no es de estado, así no se confunde con `highlight`. El botón destructivo usa `danger-solid` con texto
+  `white`; `danger` (más claro) es solo para texto e iconos de error.
+- **Degradados** (YAML `gradients`): solo lineales y de una dirección. Filete en cabecera y paneles
+  (`hairline-header`, `hairline-panel`, de `green-line` a `line`) y fila seleccionada (`row-selected`).
+  El **fondo de pantalla** `page-background` (negro a `green-deep`) solo se aplica en las pantallas que se
+  indiquen expresamente; hoy, solo el acceso. Cualquier otra pantalla lleva `background` plano.
 - Los fondos `*-subtle` son tintes muy oscuros: en badges el texto va en el color de estado, nunca en blanco.
 - `line-strong` solo para el borde de controles interactivos (inputs, botón secundario).
 - El color nunca es la única señal: todo estado lleva texto e icono.
@@ -462,7 +491,7 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - **Estados:** skeleton con la forma final; vacío con un icono, un título concreto y una acción; error con
   el `title`/`detail` de problem+json y «Reintentar». `428 reauth_required` abre el flujo de passkey, no
   muestra error.
-- **Gráficas (Recharts):** serie principal `accent`, el resto en grises de `ink-muted`/`line-strong`;
+- **Gráficas (Recharts):** serie principal `highlight` (no interactuable), el resto en grises de `ink-muted`/`line-strong`;
   bandas de sanity como áreas `warning-subtle`/`danger-subtle`; sin degradados ni 3D; tabla alternativa
   para lectores de pantalla.
 
@@ -620,7 +649,8 @@ cambio, con enlace a ese documento.
 ## 13. Checklist de PR
 
 - [ ] Solo tokens de este archivo; ningún gris, color, radio o tamaño fuera del YAML.
-- [ ] Nada de la sección 2 (tema claro, degradados, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
+- [ ] Nada de la sección 2 (tema claro, degradados fuera de §4, eyebrows, titulares a dos tonos, rejillas de tarjetas…).
+- [ ] `accent` solo en lo interactuable; lo destacado que no se pulsa usa `highlight`; el fondo degradado solo en las pantallas indicadas.
 - [ ] Sin badges de relleno ni etiquetas redundantes; mono solo en IDs/hashes.
 - [ ] Un elemento dominante y un único CTA primario por zona; titular concreto y con `balance`.
 - [ ] Radio 0 en todos los elementos de interfaz.
