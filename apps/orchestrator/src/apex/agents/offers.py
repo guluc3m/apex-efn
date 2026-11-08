@@ -34,6 +34,8 @@ class Offer(_Model):
     seller_id: str
     product_id: str
     unit_price_eur_minor: int = Field(ge=0)
+    list_price_eur_minor: int | None = Field(default=None, ge=0)
+    """The seller's list price per unit when the adapter saw one. Used only to report savings."""
     currency: str = Field(pattern="^(EUR|USD|CNY)$")
     quantity: int = Field(gt=0)
     collected_at: datetime
@@ -163,6 +165,7 @@ def offer_payload(offer: Offer) -> Mapping[str, Any]:
         "seller_id": offer.seller_id,
         "product_id": offer.product_id,
         "unit_price_eur_minor": offer.unit_price_eur_minor,
+        "list_price_eur_minor": offer.list_price_eur_minor,
         "currency": offer.currency,
         "quantity": offer.quantity,
         "raw_signals": offer.raw_signals,

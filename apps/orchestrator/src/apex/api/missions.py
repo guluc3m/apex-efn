@@ -14,7 +14,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Depends, Header, Query, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -228,10 +228,104 @@ async def list_mission_offers(
     )
 
 
-@router.get("/{id}/recommendation")
-async def get_mission_recommendation(id: str) -> None:
-    """Explainable ranking (MCDA, D4-12)."""
-    raise not_implemented("recommendation arrives with D4-12")
+class RecommendationItemOut(BaseModel):
+    rank: int
+    offer_id: str
+    platform_id: str
+    seller_id: str
+    unit_price_eur_minor: int
+    seller_confidence_band: str
+    seller_confidence_score: int | None
+    score: str
+    contributions: dict[str, str]
+    savings: dict[str, int | None]
+    excluded_reason: str | None
+
+
+class RecommendationOut(BaseModel):
+    mission_id: str
+    profile: str
+    config_version: str
+    items: list[RecommendationItemOut]
+    narrative: str
+    trade_offs: list[str]
+    generated_at: str
+
+
+def get_evaluator() -> Any:
+    """Overridable dependency. The default refuses: the MCDA engine is not wired into the app yet."""
+    raise not_implemented(
+        "recommendations need the DEV-3 MCDA engine; wire EvaluatorAgent in the app (D3-09)"
+    )
+
+
+@router.get("/{id}/recommendation", response_model=RecommendationOut, tags=["missions"])
+async def get_mission_recommendation(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    nodes: Annotated[Any, Depends(get_analysis_nodes)],
+    evaluator: Annotated[Any, Depends(get_evaluator)],
+    profile: Annotated[str, Query(min_length=1, max_length=64)] = "balanced",
+    language: Annotated[str, Query(pattern="^(es|en|zh)$")] = "en",
+) -> RecommendationOut:
+    """Explainable ranking of the mission's offers. The engine ranks; the model only narrates."""
+    from apex.agents.recommendation import NarrativeUngrounded, NoCandidates
+
+    try:
+        mission = await service.get_mission(tenant_id=tenant_id, mission_id=id)
+    except MissionMissing as exc:
+        raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
+    pairs = await nodes.mission_offers(tenant_id=tenant_id, mission_id=id)
+    analysed = [(offer, analysis) for offer, analysis in pairs if analysis is not None]
+    try:
+        recommendation = await evaluator.recommend(
+            tenant_id=tenant_id,
+            mission_id=id,
+            profile=profile,
+            config_version=mission.config_version,
+            offers=analysed,
+            language=language,
+        )
+    except NoCandidates as exc:
+        raise Problem(
+            409,
+            "Nothing to rank",
+            detail="the mission has no analysed offers yet",
+            reason="no_analysed_offers",
+        ) from exc
+    except NarrativeUngrounded as exc:
+        raise Problem(
+            502,
+            "Narrative not grounded",
+            detail="the narrator used numbers that are not in the ranking",
+            reason="narrative_ungrounded",
+            numbers=sorted(exc.numbers),
+        ) from exc
+    return RecommendationOut(
+        mission_id=recommendation.mission_id,
+        profile=recommendation.profile,
+        config_version=recommendation.config_version,
+        items=[
+            RecommendationItemOut(
+                rank=i.rank,
+                offer_id=i.offer_id,
+                platform_id=i.platform_id,
+                seller_id=i.seller_id,
+                unit_price_eur_minor=i.unit_price_eur_minor,
+                seller_confidence_band=i.seller_confidence_band,
+                seller_confidence_score=i.seller_confidence_score,
+                score=i.score,
+                contributions=i.contributions,
+                savings=i.savings.model_dump(mode="json"),
+                excluded_reason=i.excluded_reason,
+            )
+            for i in recommendation.items
+        ],
+        narrative=recommendation.narrative,
+        trade_offs=recommendation.trade_offs,
+        generated_at=recommendation.generated_at.isoformat(),
+    )
 
 
 async def _stream(mission: Mission, bus: Any, *, after_seq: int) -> AsyncIterator[bytes]:

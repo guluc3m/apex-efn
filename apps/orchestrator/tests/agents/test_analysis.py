@@ -139,7 +139,8 @@ async def test_offer_payload_is_the_single_shape_the_ports_see() -> None:
     payload = offer_payload(_offer())
     assert set(payload) == {
         "offer_id", "tenant_id", "mission_id", "platform_id", "seller_id",
-        "product_id", "unit_price_eur_minor", "currency", "quantity", "raw_signals",
+        "product_id", "unit_price_eur_minor", "list_price_eur_minor", "currency", "quantity",
+        "raw_signals",
     }  # fmt: skip
 
 
