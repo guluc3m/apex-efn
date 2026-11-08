@@ -2,7 +2,8 @@
 
 ## Status
 
-Proposed
+Accepted by the Tech Lead in ADR-900 (issue #99), with the review changes listed under "Decisions from
+the Tech Lead" implemented. The channel for phase 1 is one gate queue item.
 
 ## Context
 
@@ -34,9 +35,18 @@ for every tenant.
    LLM is a cost leak.
 5. **Escalations are structured**, not LLM text: mission, tenant, reason (closed enum), severity,
    `raised_at`, idle seconds, tokens used and budget. One escalation per mission per tick, and a budget
-   stop replaces a stuck escalation for the same mission so humans get one actionable item.
-6. **Idempotent re-runs.** The tick is safe to repeat for the same instant; ports must be idempotent per
-   `(mission_id, reason)`.
+   stop replaces a stuck escalation for the same mission so humans get one actionable item. A stuck
+   mission that is also over budget (with degradation off) yields the budget escalation only, and its
+   actions are `FREEZE_LLM` + `STOP_BUDGET`, never `ESCALATE_STUCK` as well.
+6. **Idempotent re-runs.** The tick is safe to repeat. The incident sink is idempotent per
+   `(tenant_id, mission_id, reason)`: while an open gate item exists for that key, `record` returns `False`
+   and creates nothing, and the tick reports it as deduplicated. Different reasons for one mission are
+   separate items.
+7. **Tenant-scoped reads.** `SupervisorPort.active_missions(tenant_id)` is called once per tenant, so RLS
+   applies. Listing the tenants is a separate system-role operation owned by DEV-2. A mission that comes
+   back with another tenant's id raises `CrossTenantMission` before anything is applied.
+8. **A stuck mission is frozen.** `FREEZE_LLM` makes the budget controller refuse every LLM call for that
+   mission until a human resumes it.
 
 ## Consequences
 
@@ -46,12 +56,17 @@ for every tenant.
 - LLM-assisted quality review of mission transcripts is **not** part of this ADR: it needs prompt and eval
   work (D4-05) and a budget for the reviewer itself, so it is deferred.
 
-## Open questions for the TL
+## Decisions from the Tech Lead (ADR-900, issue #99)
 
-- Config key names and defaults for `supervisor.stuck_after_minutes` (proposal: tenant scope, no default
-  until the TL sets one) and `supervisor.degrade_on_budget_exhausted` (proposal: `true`).
-- Should a stuck mission also be blocked from further LLM calls (budget freeze) or only escalated?
-- Which channel receives escalations in phase 1: gate queue item, notification, or both?
+1. `supervisor.stuck_after_minutes`, tenant scope, default **30**.
+2. `supervisor.degrade_on_budget_exhausted`, default **true**: degrade first, and if degrading fails stop with
+   a CRITICAL escalation.
+3. A stuck mission is escalated **and its LLM calls are frozen** until a human resumes it.
+4. Phase 1 channel: **one gate queue item** (`type=supervisor`, closed reason enum, no LLM text).
+5. Keep D4-13 in one PR; ADR numbers 401 and 402 stand.
+6. Arq approved. FX ingestion is idempotent per slot: `as_of` comes from the scheduled slot
+   (`slot_start`), not from the execution instant, so a late run, a retry or a second replica uses the same
+   `as_of`.
 
 ## Related
 

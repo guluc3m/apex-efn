@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted by the Tech Lead in ADR-900 (issue #99). FX ingestion `as_of` comes from the scheduled slot (`slot_start`).
 
 ## Context
 

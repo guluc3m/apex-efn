@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from functools import partial
 
 import pytest
 
@@ -32,6 +33,7 @@ from apex.workers.ports import (
     StaleFinancialsResult,
     WorkerPorts,
 )
+from apex.workers.scheduler import CronSpec
 
 NOW = datetime(2026, 3, 1, 6, 0, tzinfo=UTC)
 
@@ -142,26 +144,56 @@ def _recorder() -> _Recorder:
 PARAMS = JobParams(snapshot_max_age_days=7, financials_stale_after_days=30)
 
 
-async def test_fx_ingestion_uses_injected_clock_as_as_of() -> None:
+FX_SCHEDULE = CronSpec.parse("0 6 * * *")  # daily at 06:00 UTC
+
+
+async def test_fx_ingestion_as_of_is_the_scheduled_slot() -> None:
     rec = _recorder()
-    clock = FixedClock(NOW)
-    out = await ingest_fx_rates(clock, rec.ports())
+    out = await ingest_fx_rates(FixedClock(NOW), rec.ports(), schedule=FX_SCHEDULE)
     assert rec.fx.calls == [NOW]
     assert out == {
         "job": "fx_ingestion",
+        "slot": "fx_ingestion:20260301T0600",
         "as_of": NOW.isoformat(),
         "inserted": 2,
         "already_present": 1,
     }
 
 
-async def test_fx_ingestion_follows_clock_advance() -> None:
+@pytest.mark.parametrize(
+    "delay",
+    [
+        timedelta(seconds=7),
+        timedelta(minutes=3),
+        timedelta(hours=2),
+        timedelta(hours=17, minutes=59),
+    ],
+)
+async def test_a_late_run_ingests_for_the_same_slot_as_an_on_time_run(delay: timedelta) -> None:
+    """ADR-900 (issue #99 item 6): a restart or retry must not change ``as_of``."""
+    on_time, late = _recorder(), _recorder()
+    await ingest_fx_rates(FixedClock(NOW), on_time.ports(), schedule=FX_SCHEDULE)
+    await ingest_fx_rates(FixedClock(NOW + delay), late.ports(), schedule=FX_SCHEDULE)
+    assert late.fx.calls == on_time.fx.calls == [NOW]
+
+
+async def test_the_next_slot_gets_the_next_as_of() -> None:
     rec = _recorder()
-    clock = FixedClock(NOW)
-    await ingest_fx_rates(clock, rec.ports())
-    clock.advance(timedelta(days=1))
-    await ingest_fx_rates(clock, rec.ports())
+    await ingest_fx_rates(FixedClock(NOW), rec.ports(), schedule=FX_SCHEDULE)
+    await ingest_fx_rates(
+        FixedClock(NOW + timedelta(days=1, minutes=4)), rec.ports(), schedule=FX_SCHEDULE
+    )
     assert rec.fx.calls == [NOW, NOW + timedelta(days=1)]
+
+
+async def test_two_replicas_running_the_same_slot_produce_the_same_slot_key() -> None:
+    a = await ingest_fx_rates(
+        FixedClock(NOW + timedelta(seconds=1)), _recorder().ports(), schedule=FX_SCHEDULE
+    )
+    b = await ingest_fx_rates(
+        FixedClock(NOW + timedelta(seconds=45)), _recorder().ports(), schedule=FX_SCHEDULE
+    )
+    assert a["slot"] == b["slot"] == "fx_ingestion:20260301T0600"
 
 
 async def test_audit_verify_reports_broken_link() -> None:
@@ -219,7 +251,7 @@ async def test_supervisor_port_fails_loudly_when_unwired() -> None:
 @pytest.mark.parametrize(
     ("job", "owner_hint"),
     [
-        (ingest_fx_rates, "D3-03"),
+        (partial(ingest_fx_rates, schedule=FX_SCHEDULE), "D3-03"),
         (verify_audit_chain, "D2-10"),
         (send_gate_sla_reminders, "D4-11"),
     ],

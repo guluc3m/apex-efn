@@ -157,6 +157,23 @@ class InProcessScheduler:
         return [job for job in self._registry.all() if job.schedule.matches(at)]
 
 
+def slot_start(schedule: CronSpec, now: datetime, *, horizon_days: int = 2) -> datetime:
+    """The scheduled slot ``now`` belongs to: the latest minute at or before ``now`` that matches.
+
+    A job that runs a few seconds or minutes late (a restart, a busy worker, a retry) still gets the *same*
+    slot as an on-time run, so anything derived from it (the FX ``as_of``, a dedupe key) is identical for
+    every execution of one scheduled slot. Raises when no slot exists within the horizon (a schedule that
+    only fires less often than that must pass a larger horizon).
+    """
+    candidate = now.astimezone(UTC).replace(second=0, microsecond=0)
+    limit = candidate - timedelta(days=horizon_days)
+    while candidate >= limit:
+        if schedule.matches(candidate):
+            return candidate
+        candidate -= timedelta(minutes=1)
+    raise ScheduleError("no scheduled slot within the horizon before this instant")
+
+
 def slot_key(job_name: str, scheduled_for: datetime) -> str:
     """Deterministic job id for a scheduled slot. Duplicate enqueues from replicas collapse to one."""
     stamp = scheduled_for.astimezone(UTC).strftime("%Y%m%dT%H%M")
@@ -171,4 +188,5 @@ __all__ = [
     "ScheduleError",
     "Scheduler",
     "slot_key",
+    "slot_start",
 ]

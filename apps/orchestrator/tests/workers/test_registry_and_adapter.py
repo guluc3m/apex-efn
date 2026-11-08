@@ -163,7 +163,10 @@ async def test_arq_cron_body_runs_the_job_with_the_context_clock() -> None:
     assert isinstance(fx_job, CronJob)
     later = NOW + timedelta(hours=5)
     out = await fx_job.coroutine({CLOCK_CTX_KEY: FixedClock(later)})
-    assert out["as_of"] == later.isoformat()
+    # The context clock decides which slot the run belongs to; ``as_of`` is that slot, not the instant.
+    assert out["as_of"] == NOW.isoformat()
+    next_day = await fx_job.coroutine({CLOCK_CTX_KEY: FixedClock(NOW + timedelta(days=1, hours=1))})
+    assert next_day["as_of"] == (NOW + timedelta(days=1)).isoformat()
 
 
 async def test_arq_cron_body_falls_back_to_the_captured_clock() -> None:

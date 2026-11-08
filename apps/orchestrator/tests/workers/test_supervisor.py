@@ -9,6 +9,7 @@ import pytest
 
 from apex.agents.supervisor import (
     BudgetState,
+    CrossTenantMission,
     Escalation,
     EscalationReason,
     EscalationSeverity,
@@ -98,7 +99,7 @@ def test_running_mission_with_recent_progress_is_healthy() -> None:
 def test_running_mission_at_exactly_the_window_is_stuck() -> None:
     a = assess_mission(_mission(idle=timedelta(minutes=30)), now=NOW, policy=POLICY)
     assert a.health is MissionHealth.STUCK
-    assert a.actions == (SupervisorAction.ESCALATE_STUCK,)
+    assert a.actions == (SupervisorAction.FREEZE_LLM, SupervisorAction.ESCALATE_STUCK)
     assert a.escalation is not None
     assert a.escalation.reason is EscalationReason.MISSION_STUCK
     assert a.escalation.severity is EscalationSeverity.HIGH
@@ -191,7 +192,10 @@ def test_stuck_and_over_budget_prefers_the_budget_stop_incident() -> None:
         policy=STOP_POLICY,
     )
     assert a.health is MissionHealth.STUCK
-    assert a.actions == (SupervisorAction.ESCALATE_STUCK, SupervisorAction.STOP_BUDGET)
+    # One escalation, the budget stop (ADR-402, ADR-900). The mission is still frozen because it is stuck,
+    # and ESCALATE_STUCK is not requested: it would record a second item for the same mission.
+    assert a.actions == (SupervisorAction.FREEZE_LLM, SupervisorAction.STOP_BUDGET)
+    assert SupervisorAction.ESCALATE_STUCK not in a.actions
     assert a.escalation is not None
     assert a.escalation.reason is EscalationReason.TOKEN_BUDGET_EXHAUSTED
     assert a.escalation.idle_seconds == 2 * 3600
@@ -207,39 +211,69 @@ def test_assess_mission_is_pure_and_repeatable() -> None:
 
 @dataclass
 class _Missions:
-    missions: list[MissionSnapshot]
+    """Tenant-scoped source. ``by_tenant`` maps tenant -> missions; ``asked`` records every tenant asked for."""
 
-    async def active_missions(self) -> list[MissionSnapshot]:
-        return list(self.missions)
+    by_tenant: dict[str, list[MissionSnapshot]]
+    asked: list[str] = field(default_factory=list)
+
+    async def tenants(self) -> list[str]:
+        return list(self.by_tenant)
+
+    async def active_missions(self, tenant_id: str) -> list[MissionSnapshot]:
+        self.asked.append(tenant_id)
+        return list(self.by_tenant[tenant_id])
 
 
 @dataclass
 class _Incidents:
-    recorded: list[Escalation] = field(default_factory=list)
+    """Open-item semantics: one item per (tenant, mission, reason) until it is resolved."""
 
-    async def record(self, escalation: Escalation) -> None:
+    recorded: list[Escalation] = field(default_factory=list)
+    open_keys: set[tuple[str, str, str]] = field(default_factory=set)
+
+    async def record(self, escalation: Escalation) -> bool:
+        key = (escalation.tenant_id, escalation.mission_id, escalation.reason.value)
+        if key in self.open_keys:
+            return False
+        self.open_keys.add(key)
         self.recorded.append(escalation)
+        return True
 
 
 @dataclass
 class _Budget:
-    degraded: list[str] = field(default_factory=list)
-    stopped: list[tuple[str, str]] = field(default_factory=list)
+    degraded: list[tuple[str, str]] = field(default_factory=list)
+    stopped: list[tuple[str, str, str]] = field(default_factory=list)
+    frozen: list[tuple[str, str]] = field(default_factory=list)
 
-    async def degrade(self, mission_id: str) -> None:
-        self.degraded.append(mission_id)
+    async def degrade(self, tenant_id: str, mission_id: str) -> None:
+        self.degraded.append((tenant_id, mission_id))
 
-    async def stop(self, mission_id: str, reason: str) -> None:
-        self.stopped.append((mission_id, reason))
+    async def stop(self, tenant_id: str, mission_id: str, reason: str) -> None:
+        self.stopped.append((tenant_id, mission_id, reason))
+
+    async def freeze(self, tenant_id: str, mission_id: str) -> None:
+        self.frozen.append((tenant_id, mission_id))
 
 
 def _agent(
     missions: list[MissionSnapshot], policy: SupervisorPolicy = POLICY
 ) -> tuple[SupervisorAgent, _Incidents, _Budget]:
+    by_tenant: dict[str, list[MissionSnapshot]] = {}
+    for mission in missions:
+        by_tenant.setdefault(mission.tenant_id, []).append(mission)
+    agent, incidents, budget, _ = _agent_by_tenant(by_tenant, policy)
+    return agent, incidents, budget
+
+
+def _agent_by_tenant(
+    by_tenant: dict[str, list[MissionSnapshot]], policy: SupervisorPolicy = POLICY
+) -> tuple[SupervisorAgent, _Incidents, _Budget, _Missions]:
+    source = _Missions(by_tenant)
     incidents = _Incidents()
     budget = _Budget()
-    ports = SupervisorPorts(missions=_Missions(missions), incidents=incidents, budget=budget)
-    return SupervisorAgent(ports, policy), incidents, budget
+    ports = SupervisorPorts(missions=source, incidents=incidents, budget=budget)
+    return SupervisorAgent(ports, policy), incidents, budget, source
 
 
 async def test_tick_applies_actions_for_stuck_and_over_budget_missions() -> None:
@@ -255,7 +289,8 @@ async def test_tick_applies_actions_for_stuck_and_over_budget_missions() -> None
     assert [a.mission_id for a in report.assessments] == ["m-budget", "m-healthy", "m-stuck"]
     assert report.checked_at == NOW
     assert budget.degraded == []
-    assert budget.stopped == [("m-budget", "token_budget_exhausted")]
+    assert budget.stopped == [("t-1", "m-budget", "token_budget_exhausted")]
+    assert budget.frozen == [("t-1", "m-stuck")]
     assert [e.mission_id for e in incidents.recorded] == ["m-budget", "m-stuck"]
     assert [e.reason for e in report.escalations] == [
         EscalationReason.TOKEN_BUDGET_EXHAUSTED,
@@ -268,7 +303,7 @@ async def test_tick_degrades_instead_of_stopping_when_policy_allows() -> None:
         [_mission(mission_id="m-budget", tokens_used=2000, token_budget=1000)], policy=POLICY
     )
     report = await agent.tick(NOW)
-    assert budget.degraded == ["m-budget"]
+    assert budget.degraded == [("t-1", "m-budget")]
     assert budget.stopped == []
     assert incidents.recorded == []
     assert report.escalations == ()
@@ -281,12 +316,14 @@ async def test_tick_with_no_missions_is_a_no_op() -> None:
     assert incidents.recorded == [] and budget.degraded == [] and budget.stopped == []
 
 
-async def test_tick_is_repeatable_for_the_same_instant() -> None:
+async def test_tick_is_repeatable_and_does_not_duplicate_the_escalation() -> None:
     agent, incidents, _ = _agent([_mission(idle=timedelta(hours=1))])
     first = await agent.tick(NOW)
     second = await agent.tick(NOW)
-    assert first == second
-    assert len(incidents.recorded) == 2  # ports must be idempotent per (mission, reason)
+    assert first.assessments == second.assessments
+    assert len(incidents.recorded) == 1  # the second tick found the open item and created nothing
+    assert first.recorded == (("t-1", "m-1", "mission_stuck"),) and first.deduplicated == ()
+    assert second.recorded == () and second.deduplicated == (("t-1", "m-1", "mission_stuck"),)
 
 
 async def test_tick_rejects_naive_now() -> None:
@@ -297,8 +334,10 @@ async def test_tick_rejects_naive_now() -> None:
 
 async def test_unwired_ports_fail_loudly_naming_the_owner() -> None:
     agent = SupervisorAgent(SupervisorPorts.unwired(), POLICY)
-    with pytest.raises(NotImplementedError, match="D4-06"):
+    with pytest.raises(NotImplementedError, match="DEV-2"):
         await agent.tick(NOW)
+    with pytest.raises(NotImplementedError, match="D4-06"):
+        await UnwiredMissionSource().active_missions("t-1")
     with pytest.raises(NotImplementedError, match="D4-11"):
         await UnwiredIncidentSink().record(
             Escalation(
@@ -312,7 +351,102 @@ async def test_unwired_ports_fail_loudly_naming_the_owner() -> None:
                 token_budget=1,
             )
         )
-    with pytest.raises(NotImplementedError, match="D4-04"):
-        await UnwiredBudgetController().degrade("m")
-    with pytest.raises(NotImplementedError, match="D4-06"):
-        await UnwiredMissionSource().active_missions()
+    for call in (
+        UnwiredBudgetController().degrade("t", "m"),
+        UnwiredBudgetController().stop("t", "m", "token_budget_exhausted"),
+        UnwiredBudgetController().freeze("t", "m"),
+    ):
+        with pytest.raises(NotImplementedError, match="D4-04"):
+            await call
+
+
+# --- ADR-900 / issue #99 review ---------------------------------------------------------------------
+
+
+async def test_stuck_and_over_budget_records_exactly_one_escalation_across_ticks() -> None:
+    """Review of #98: both the stuck and the budget branch used to append an escalation."""
+    agent, incidents, budget = _agent(
+        [_mission(idle=timedelta(hours=2), tokens_used=1000, token_budget=1000)], policy=STOP_POLICY
+    )
+    for _ in range(3):
+        await agent.tick(NOW)
+    assert [e.reason for e in incidents.recorded] == [EscalationReason.TOKEN_BUDGET_EXHAUSTED]
+    assert (
+        budget.stopped == [("t-1", "m-1", "token_budget_exhausted")] * 3
+    )  # stop is idempotent per call
+    assert budget.frozen == [("t-1", "m-1")] * 3
+
+
+async def test_stuck_mission_is_frozen_and_escalated_once() -> None:
+    agent, incidents, budget = _agent([_mission(idle=timedelta(hours=1))])
+    report = await agent.tick(NOW)
+    assert budget.frozen == [("t-1", "m-1")]
+    assert [e.reason for e in incidents.recorded] == [EscalationReason.MISSION_STUCK]
+    assert report.assessments[0].actions == (
+        SupervisorAction.FREEZE_LLM,
+        SupervisorAction.ESCALATE_STUCK,
+    )
+
+
+async def test_healthy_and_waiting_missions_are_not_frozen() -> None:
+    agent, _, budget = _agent(
+        [
+            _mission(mission_id="a"),
+            _mission(mission_id="b", phase=MissionPhase.AWAITING_HUMAN, idle=timedelta(days=3)),
+        ]
+    )
+    await agent.tick(NOW)
+    assert budget.frozen == []
+
+
+async def test_different_reasons_for_the_same_mission_are_separate_items() -> None:
+    """Dedupe is per (mission, reason): a stuck item does not hide a later budget stop."""
+    agent, incidents, _ = _agent([_mission(idle=timedelta(hours=1))], policy=STOP_POLICY)
+    await agent.tick(NOW)
+    assert [e.reason for e in incidents.recorded] == [EscalationReason.MISSION_STUCK]
+    stopped = _mission(idle=timedelta(hours=1), tokens_used=1000, token_budget=1000)
+    agent2, _, _ = _agent([stopped], policy=STOP_POLICY)
+    agent2._ports.incidents.open_keys.add(("t-1", "m-1", "mission_stuck"))  # type: ignore[attr-defined]
+    await agent2.tick(NOW)
+    assert [e.reason for e in agent2._ports.incidents.recorded] == [  # type: ignore[attr-defined]
+        EscalationReason.TOKEN_BUDGET_EXHAUSTED
+    ]
+
+
+async def test_same_mission_id_in_two_tenants_is_deduplicated_per_tenant() -> None:
+    agent, incidents, budget, _ = _agent_by_tenant(
+        {
+            "t-1": [_mission(mission_id="m-1", tenant_id="t-1", idle=timedelta(hours=1))],
+            "t-2": [_mission(mission_id="m-1", tenant_id="t-2", idle=timedelta(hours=1))],
+        }
+    )
+    await agent.tick(NOW)
+    assert sorted((e.tenant_id, e.mission_id) for e in incidents.recorded) == [
+        ("t-1", "m-1"),
+        ("t-2", "m-1"),
+    ]
+    assert sorted(budget.frozen) == [("t-1", "m-1"), ("t-2", "m-1")]
+
+
+async def test_missions_are_read_one_tenant_at_a_time_never_all_at_once() -> None:
+    """Review of #98: ``active_missions()`` was not tenant-scoped, so RLS could not apply."""
+    agent, _, _, source = _agent_by_tenant(
+        {"t-b": [_mission(tenant_id="t-b")], "t-a": [_mission(tenant_id="t-a")]}
+    )
+    await agent.tick(NOW)
+    assert source.asked == ["t-a", "t-b"]  # one scoped call per tenant, in a stable order
+
+
+async def test_a_source_that_leaks_another_tenants_mission_is_refused() -> None:
+    agent, incidents, budget, _ = _agent_by_tenant({"t-1": [_mission(tenant_id="t-2")]})
+    with pytest.raises(CrossTenantMission) as caught:
+        await agent.tick(NOW)
+    assert (caught.value.asked, caught.value.actual) == ("t-1", "t-2")
+    assert incidents.recorded == [] and budget.frozen == []
+
+
+async def test_no_tenants_is_a_no_op() -> None:
+    agent, incidents, budget, source = _agent_by_tenant({})
+    report = await agent.tick(NOW)
+    assert report.assessments == () and source.asked == []
+    assert incidents.recorded == [] and budget.frozen == []

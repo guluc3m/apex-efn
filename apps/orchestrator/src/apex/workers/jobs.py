@@ -5,7 +5,7 @@ parameters. None imports Arq: the adapter in ``arq_adapter.py`` wraps them. Jobs
 clock and never hardcode business numbers; thresholds are passed in from configuration.
 
 Idempotent re-run: every job is safe to execute twice for the same scheduled slot. The FX ingest is
-keyed by the instant of the slot; audit verification is read-only; reminders and refreshes are guarded
+keyed by the scheduled slot (``slot_start``), not by when it ran; audit verification is read-only; reminders and refreshes are guarded
 by their ports, which must be idempotent per ``now`` slot.
 """
 
@@ -16,6 +16,7 @@ from typing import Any
 
 from apex.common.clock import Clock
 from apex.workers.ports import WorkerPorts
+from apex.workers.scheduler import CronSpec, slot_key, slot_start
 
 
 @dataclass(frozen=True)
@@ -26,12 +27,20 @@ class JobParams:
     financials_stale_after_days: int
 
 
-async def ingest_fx_rates(clock: Clock, ports: WorkerPorts) -> dict[str, Any]:
-    """Daily FX ingestion (D3-03). The slot's instant is the ``as_of`` of the rates."""
-    as_of = clock.now()
+async def ingest_fx_rates(
+    clock: Clock, ports: WorkerPorts, *, schedule: CronSpec
+) -> dict[str, Any]:
+    """Daily FX ingestion (D3-03), idempotent per scheduled slot (ADR-900, issue #99 item 6).
+
+    ``as_of`` comes from the scheduled slot (``slot_start``), never from the instant the job happens to run.
+    A late run, a retry or a second replica therefore ingests for the same ``as_of`` and the insert-only FX
+    history sees a duplicate, not a second set of rates.
+    """
+    as_of = slot_start(schedule, clock.now())
     result = await ports.fx.ingest_for(as_of)
     return {
         "job": "fx_ingestion",
+        "slot": slot_key("fx_ingestion", as_of),
         "as_of": result.as_of.isoformat(),
         "inserted": result.inserted,
         "already_present": result.already_present,
@@ -101,6 +110,8 @@ async def supervise_missions(clock: Clock, ports: WorkerPorts) -> dict[str, Any]
         "checked_at": now.isoformat(),
         "missions_checked": len(report.assessments),
         "escalations": len(report.escalations),
+        "escalations_recorded": len(report.recorded),
+        "escalations_deduplicated": len(report.deduplicated),
         "actions": actions,
     }
 

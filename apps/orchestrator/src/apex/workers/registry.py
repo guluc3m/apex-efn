@@ -59,7 +59,11 @@ def build_registry(
     """
     overrides = dict(max_tries or {})
     entries: list[tuple[str, str, JobCallable]] = [
-        (JOB_FX, schedules.fx_ingestion, partial(ingest_fx_rates, ports=ports)),
+        (
+            JOB_FX,
+            schedules.fx_ingestion,
+            partial(ingest_fx_rates, ports=ports, schedule=CronSpec.parse(schedules.fx_ingestion)),
+        ),
         (JOB_AUDIT, schedules.audit_chain_verify, partial(verify_audit_chain, ports=ports)),
         (JOB_GATE, schedules.gate_sla_reminders, partial(send_gate_sla_reminders, ports=ports)),
         (
