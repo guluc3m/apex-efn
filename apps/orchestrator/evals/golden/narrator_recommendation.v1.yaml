@@ -1,0 +1,16 @@
+prompt: narrator_recommendation
+version: 1
+schema: RecommendationNarrative
+cases:
+  - id: keeps-code-ranking
+    variables:
+      language: en
+      ranking_json: '[{"offer_id": "o-17", "unit_price_eur_minor": 412, "seller_confidence": 81}, {"offer_id": "o-04", "unit_price_eur_minor": 389, "seller_confidence": 52}]'
+    expect:
+      - equals: {top_offer_id: "o-17"}
+      - numbers_in_input: [narrative, trade_offs]
+      - mentions_all: ["o-04"]
+    stub_response:
+      top_offer_id: "o-17"
+      narrative: "Offer o-17 ranks first at 412 minor units per unit with seller confidence 81. Offer o-04 is cheaper at 389 but its seller confidence is 52."
+      trade_offs: ["o-04 costs less than o-17 but has lower seller confidence."]

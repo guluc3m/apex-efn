@@ -1,0 +1,26 @@
+prompt: planner_sourcing_plan
+version: 1
+schema: SourcingPlanDraft
+cases:
+  - id: only-catalogue-platforms
+    variables:
+      request_json: '{"spec": "PET bottles 500ml", "destination_country": "ES"}'
+      platforms_json: '[{"platform_id": "mock-a", "regions": ["EU", "CN"]}, {"platform_id": "mock-b", "regions": ["EU"]}]'
+    expect:
+      - min_len: {steps: 1}
+      - list_subset_of: {steps: [mock-a, mock-b]}
+    stub_response:
+      steps:
+        - {platform_id: mock-a, query: "PET bottle 500ml flip-top cap", tier_index: 0}
+        - {platform_id: mock-b, query: "botella PET 500ml tapón flip-top", tier_index: 0}
+      rationale: "Both platforms ship to the EU."
+  - id: skips-region-mismatch
+    variables:
+      request_json: '{"spec": "office chairs", "destination_country": "ES"}'
+      platforms_json: '[{"platform_id": "mock-a", "regions": ["CN"]}, {"platform_id": "mock-b", "regions": ["EU"]}]'
+    expect:
+      - list_subset_of: {steps: [mock-b]}
+    stub_response:
+      steps:
+        - {platform_id: mock-b, query: "ergonomic office chair", tier_index: null}
+      rationale: "Only mock-b serves the EU."

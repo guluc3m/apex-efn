@@ -1,0 +1,23 @@
+prompt: narrator_import_warnings
+version: 1
+schema: ImportWarnings
+cases:
+  - id: copies-numbers-exactly
+    variables:
+      language: es
+      report_json: '{"rows_ok": 34, "rows_rejected": 2, "rejections": [{"row": 7, "reason": "unknown metric"}, {"row": 12, "reason": "duplicate period"}], "projection_enabled": false}'
+    expect:
+      - min_len: {warnings: 1}
+      - numbers_in_input: [warnings]
+    stub_response:
+      warnings:
+        - "Se rechazaron 2 filas: la fila 7 por métrica desconocida y la fila 12 por periodo duplicado."
+        - "La proyección está desactivada."
+  - id: empty-report-no-warnings
+    variables:
+      language: en
+      report_json: '{"rows_ok": 36, "rows_rejected": 0, "rejections": [], "projection_enabled": true}'
+    expect:
+      - equals: {warnings: []}
+    stub_response:
+      warnings: []

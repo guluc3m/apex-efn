@@ -1,0 +1,25 @@
+prompt: extractor_csv_header_mapping
+version: 1
+schema: HeaderMappingSuggestion
+cases:
+  - id: maps-known-synonyms-only
+    variables:
+      canonical_columns: [period, metric, value_minor, value_bp, currency, notes]
+      unknown_headers: [Periodo, Importe, Divisa, Observaciones]
+    expect:
+      - min_len: {mappings: 4}
+    stub_response:
+      mappings:
+        - {source: Periodo, target: period, reason: "month of the data"}
+        - {source: Importe, target: value_minor, reason: "amount"}
+        - {source: Divisa, target: currency, reason: "currency"}
+        - {source: Observaciones, target: notes, reason: "free comment"}
+  - id: unmappable-header-is-null
+    variables:
+      canonical_columns: [period, metric, value_minor, value_bp, currency, notes]
+      unknown_headers: [Favorite colour]
+    expect:
+      - mentions_all: ["Favorite colour"]
+    stub_response:
+      mappings:
+        - {source: "Favorite colour", target: null, reason: "no matching column"}
