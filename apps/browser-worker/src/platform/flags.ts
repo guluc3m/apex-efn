@@ -1,10 +1,10 @@
 /**
  * Feature flags over the Unleash client API. Fail closed: unknown, unreachable or unsupported means off.
- * Naming convention and defaults: docs/observability/flags.md. Mirrors apps/orchestrator/src/trato/platform/flags.py.
+ * Naming convention and defaults: docs/observability/flags.md. Mirrors apps/orchestrator/src/apex/platform/flags.py.
  */
 import { z } from 'zod'
 
-export const DEFAULT_APP_NAME = 'trato-browser-worker'
+export const DEFAULT_APP_NAME = 'apex-browser-worker'
 
 const SEGMENT = '[a-z0-9_-]+'
 const FLAG_PATTERNS: readonly RegExp[] = [

@@ -18,9 +18,9 @@ from typing import Any, Protocol
 import httpx
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger("trato.platform.flags")
+logger = logging.getLogger("apex.platform.flags")
 
-DEFAULT_APP_NAME = "trato-orchestrator"
+DEFAULT_APP_NAME = "apex-orchestrator"
 
 _SEGMENT = r"[a-z0-9_-]+"
 _FLAG_PATTERNS = (

@@ -8,9 +8,9 @@ from typing import Any
 import httpx
 import pytest
 
-from trato.platform.flags import StaticFlags, UnleashFlags, validate_flag_name
+from apex.platform.flags import StaticFlags, UnleashFlags, validate_flag_name
 
-TOKEN = "default:development.trato-dev-unleash-client-SECRET-XYZ"
+TOKEN = "default:development.apex-dev-unleash-client-SECRET-XYZ"
 BASE_URL = "http://unleash.test:4242/api/"
 NOW = datetime(2026, 11, 8, 10, 0, tzinfo=UTC)
 
@@ -90,7 +90,7 @@ FEATURES_PAYLOAD: dict[str, Any] = {
                         {
                             "contextName": "appName",
                             "operator": "IN",
-                            "values": ["trato-orchestrator"],
+                            "values": ["apex-orchestrator"],
                             "caseInsensitive": False,
                             "inverted": False,
                         }
@@ -166,7 +166,7 @@ def test_unreachable_server_is_off_and_does_not_raise(caplog: pytest.LogCaptureF
         raise httpx.ConnectError("connection refused", request=request)
 
     client = _client(refuse)
-    with caplog.at_level(logging.WARNING, logger="trato.platform.flags"):
+    with caplog.at_level(logging.WARNING, logger="apex.platform.flags"):
         assert client.refresh() is False
     assert client.is_enabled("platform.mock-a.enabled") is False
     assert "ConnectError" in caplog.text
@@ -193,7 +193,7 @@ def test_flexible_rollout_100_is_on_and_0_is_off() -> None:
 
 def test_flexible_rollout_partial_is_off_and_logged_once(caplog: pytest.LogCaptureFixture) -> None:
     client = _serving(FEATURES_PAYLOAD)
-    with caplog.at_level(logging.WARNING, logger="trato.platform.flags"):
+    with caplog.at_level(logging.WARNING, logger="apex.platform.flags"):
         assert client.is_enabled("sanity.bands.v1") is False
         assert client.is_enabled("sanity.bands.v1") is False
     assert caplog.text.count("partial rollout 50%") == 1
@@ -248,7 +248,7 @@ def test_last_snapshot_is_kept_after_failed_refresh(caplog: pytest.LogCaptureFix
     responses = iter([httpx.Response(200, json=FEATURES_PAYLOAD), httpx.Response(503)])
     client = _client(lambda request: next(responses))
     assert client.refresh() is True
-    with caplog.at_level(logging.WARNING, logger="trato.platform.flags"):
+    with caplog.at_level(logging.WARNING, logger="apex.platform.flags"):
         assert client.refresh() is False
     assert client.is_platform_enabled("mock-a") is True
     assert "keeping last snapshot of 7 flags" in caplog.text
@@ -274,7 +274,7 @@ def test_request_carries_token_headers_and_trailing_slash_is_normalised() -> Non
     client = UnleashFlags(
         base_url="http://unleash.test/api///",
         client_token=TOKEN,
-        app_name="trato-orchestrator",
+        app_name="apex-orchestrator",
         instance_id="pod-1",
         transport=httpx.MockTransport(handler),
     )
@@ -282,7 +282,7 @@ def test_request_carries_token_headers_and_trailing_slash_is_normalised() -> Non
     request = seen[0]
     assert str(request.url) == "http://unleash.test/api/client/features"
     assert request.headers["Authorization"] == TOKEN
-    assert request.headers["UNLEASH-APPNAME"] == "trato-orchestrator"
+    assert request.headers["UNLEASH-APPNAME"] == "apex-orchestrator"
     assert request.headers["UNLEASH-INSTANCEID"] == "pod-1"
 
 

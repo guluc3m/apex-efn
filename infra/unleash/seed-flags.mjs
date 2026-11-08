@@ -8,7 +8,7 @@
 // Env: UNLEASH_URL (default http://localhost:4242/api), UNLEASH_ADMIN_TOKEN (dev default below).
 
 const BASE_URL = (process.env.UNLEASH_URL ?? 'http://localhost:4242/api').replace(/\/+$/, '')
-const ADMIN_TOKEN = process.env.UNLEASH_ADMIN_TOKEN ?? '*:*.trato-dev-unleash-admin'
+const ADMIN_TOKEN = process.env.UNLEASH_ADMIN_TOKEN ?? '*:*.apex-dev-unleash-admin'
 const PROJECT = 'default'
 const ENVIRONMENT = 'development'
 

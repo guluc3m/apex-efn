@@ -2,7 +2,7 @@
 
 Owner: DEV-1 (task D1-08). Provider: Unleash 8.x (compose service `unleash`, port 4242). Clients:
 
-- Python: `apps/orchestrator/src/trato/platform/flags.py` (`UnleashFlags`, `StaticFlags`, `FlagProvider`).
+- Python: `apps/orchestrator/src/apex/platform/flags.py` (`UnleashFlags`, `StaticFlags`, `FlagProvider`).
 - TypeScript: `apps/browser-worker/src/platform/flags.ts` (`UnleashFlags`, `StaticFlags`, `FlagProvider`).
 
 Both clients have the same behaviour. Change them together.
@@ -47,9 +47,9 @@ client token is never logged.
 ## 3. Clients
 
 ```python
-from trato.platform.flags import UnleashFlags
+from apex.platform.flags import UnleashFlags
 
-flags = UnleashFlags.from_env(app_name="trato-orchestrator")   # UNLEASH_URL, UNLEASH_API_TOKEN
+flags = UnleashFlags.from_env(app_name="apex-orchestrator")   # UNLEASH_URL, UNLEASH_API_TOKEN
 flags.refresh()                                                 # once at start-up, and on a schedule
 if flags.is_platform_enabled("mock-a"):
     ...
@@ -115,8 +115,8 @@ before adding hashing.
   created **disabled**, each with one `default` strategy. Extra names can be given on the command line.
 - The seed script never changes an existing flag. It only creates missing ones.
 - Development tokens (public placeholders, see `infra/docker-compose.yml`):
-  - client: `default:development.trato-dev-unleash-client` (value of `UNLEASH_API_TOKEN`);
-  - admin: `*:*.trato-dev-unleash-admin` (the seed script's default).
+  - client: `default:development.apex-dev-unleash-client` (value of `UNLEASH_API_TOKEN`);
+  - admin: `*:*.apex-dev-unleash-admin` (the seed script's default).
 
 ## 7. Out of scope (this version)
 

@@ -8,7 +8,7 @@ import {
   validateFlagName,
 } from './flags'
 
-const TOKEN = 'default:development.trato-dev-unleash-client-SECRET-XYZ'
+const TOKEN = 'default:development.apex-dev-unleash-client-SECRET-XYZ'
 const BASE_URL = 'http://unleash.test:4242/api/'
 const NOW = new Date('2026-11-08T10:00:00Z')
 
@@ -83,7 +83,7 @@ const FEATURES_PAYLOAD = {
             {
               contextName: 'appName',
               operator: 'IN',
-              values: ['trato-browser-worker'],
+              values: ['apex-browser-worker'],
               caseInsensitive: false,
               inverted: false,
             },
@@ -325,7 +325,7 @@ describe('UnleashFlags', () => {
     const client = new UnleashFlags({
       baseUrl: 'http://unleash.test/api///',
       clientToken: TOKEN,
-      appName: 'trato-browser-worker',
+      appName: 'apex-browser-worker',
       instanceId: 'pod-1',
     })
     await client.refresh()
@@ -333,7 +333,7 @@ describe('UnleashFlags', () => {
     expect(url).toBe('http://unleash.test/api/client/features')
     const headers = init.headers as Record<string, string>
     expect(headers.Authorization).toBe(TOKEN)
-    expect(headers['UNLEASH-APPNAME']).toBe('trato-browser-worker')
+    expect(headers['UNLEASH-APPNAME']).toBe('apex-browser-worker')
     expect(headers['UNLEASH-INSTANCEID']).toBe('pod-1')
   })
 
