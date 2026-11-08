@@ -3,6 +3,7 @@
 Only ``/v1/chat/completions``, ``/v1/embeddings`` and ``/v1/models`` are used. No proprietary SDKs.
 """
 
+from apex.llm.budget import BudgetPolicy, TokenBudget, TokenBudgetExceeded
 from apex.llm.config import (
     CapabilityProfile,
     GuidedDecoding,
@@ -10,13 +11,21 @@ from apex.llm.config import (
     LLMRolesConfig,
     RoleEndpointConfig,
 )
+from apex.llm.gateway import LLMGateway, LLMGatewayError
+from apex.llm.redaction import RedactionViolation
 from apex.llm.structured import StructuredOutputError
 
 __all__ = [
+    "BudgetPolicy",
     "CapabilityProfile",
     "GuidedDecoding",
+    "LLMGateway",
+    "LLMGatewayError",
     "LLMRole",
     "LLMRolesConfig",
+    "RedactionViolation",
     "RoleEndpointConfig",
     "StructuredOutputError",
+    "TokenBudget",
+    "TokenBudgetExceeded",
 ]
