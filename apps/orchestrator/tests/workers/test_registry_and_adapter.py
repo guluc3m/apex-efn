@@ -10,6 +10,7 @@ from arq.connections import RedisSettings
 from arq.cron import CronJob
 from pydantic import ValidationError
 
+from apex.agents.supervisor import SupervisorReport
 from apex.common.clock import FixedClock
 from apex.workers.arq_adapter import (
     CLOCK_CTX_KEY,
@@ -32,6 +33,7 @@ from apex.workers.registry import (
     JOB_FX,
     JOB_GATE,
     JOB_SNAPSHOTS,
+    JOB_SUPERVISOR,
     WorkerSchedules,
     build_registry,
 )
@@ -44,6 +46,7 @@ SCHEDULES = WorkerSchedules(
     gate_sla_reminders="0 8 * * 0,1,2,3",
     seller_snapshot_refresh="30 4 * * *",
     financials_stale_marking="0 5 * * *",
+    supervisor_tick="0,10,20,30,40,50 * * * *",  # every 10 minutes
 )
 PARAMS = JobParams(snapshot_max_age_days=7, financials_stale_after_days=30)
 
@@ -73,9 +76,19 @@ class _Financials:
         return StaleFinancialsResult(marked_stale=0)
 
 
+class _Supervisor:
+    async def tick(self, now: datetime) -> SupervisorReport:
+        return SupervisorReport(checked_at=now, assessments=())
+
+
 def _ports() -> WorkerPorts:
     return WorkerPorts(
-        fx=_Fx(), audit=_Audit(), gate=_Gate(), snapshots=_Snapshots(), financials=_Financials()
+        fx=_Fx(),
+        audit=_Audit(),
+        gate=_Gate(),
+        snapshots=_Snapshots(),
+        financials=_Financials(),
+        supervisor=_Supervisor(),
     )
 
 
@@ -83,9 +96,11 @@ def _registry() -> Any:
     return build_registry(schedules=SCHEDULES, ports=_ports(), params=PARAMS)
 
 
-def test_registry_contains_the_five_jobs() -> None:
+def test_registry_contains_every_job() -> None:
     names = [job.name for job in _registry().all()]
-    assert names == sorted([JOB_AUDIT, JOB_FINANCIALS, JOB_FX, JOB_GATE, JOB_SNAPSHOTS])
+    assert names == sorted(
+        [JOB_AUDIT, JOB_FINANCIALS, JOB_FX, JOB_GATE, JOB_SNAPSHOTS, JOB_SUPERVISOR]
+    )
 
 
 def test_schedules_are_required_and_forbid_extra_keys() -> None:
@@ -109,8 +124,12 @@ def test_duplicate_registration_is_rejected() -> None:
 
 def test_in_process_scheduler_selects_due_jobs_at_injected_instant() -> None:
     scheduler = InProcessScheduler(_registry(), FixedClock(NOW))
-    assert [job.name for job in scheduler.due_jobs()] == [JOB_FX]
+    # 06:00 is the FX slot (and a supervisor slot, since 0 is in its minute list).
+    assert [job.name for job in scheduler.due_jobs()] == [JOB_FX, JOB_SUPERVISOR]
     assert [job.name for job in scheduler.due_jobs(NOW + timedelta(minutes=1))] == []
+    assert [job.name for job in scheduler.due_jobs(NOW + timedelta(minutes=10))] == [
+        JOB_SUPERVISOR
+    ]
 
 
 def test_in_process_scheduler_weekday_field() -> None:
@@ -159,7 +178,7 @@ def test_build_worker_settings_shape() -> None:
     settings = build_worker_settings(_registry(), redis_settings=redis, clock=FixedClock(NOW))
     assert settings["redis_settings"] is redis
     assert settings["functions"] == []
-    assert len(settings["cron_jobs"]) == 5
+    assert len(settings["cron_jobs"]) == 6
     assert settings["ctx"][CLOCK_CTX_KEY].now() == NOW
 
 
@@ -175,4 +194,5 @@ def test_worker_settings_factory_binds_ports_without_side_effects() -> None:
         JOB_FX,
         JOB_GATE,
         JOB_SNAPSHOTS,
+        JOB_SUPERVISOR,
     ]

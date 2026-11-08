@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from apex.agents.supervisor import SupervisorReport
 
 
 @dataclass(frozen=True)
@@ -84,6 +87,12 @@ class FinancialStalenessMarker(Protocol):
     async def mark_stale(self, now: datetime, stale_after_days: int) -> StaleFinancialsResult: ...
 
 
+class MissionSupervisor(Protocol):
+    """Runs one SupervisorAgent tick at ``now`` (D4-13 step 3) and returns its report."""
+
+    async def tick(self, now: datetime) -> SupervisorReport: ...
+
+
 class UnwiredFxRateSource:
     async def ingest_for(self, as_of: datetime) -> FxIngestResult:
         raise NotImplementedError("FX ingestion port is not wired yet (owner: DEV-3, D3-03)")
@@ -109,6 +118,14 @@ class UnwiredFinancialStalenessMarker:
         raise NotImplementedError("financial staleness port is not wired yet (owner: DEV-4, D4-07)")
 
 
+class UnwiredMissionSupervisor:
+    async def tick(self, now: datetime) -> SupervisorReport:
+        raise NotImplementedError(
+            "supervisor mission source/incident sink are not wired yet "
+            "(owner: DEV-4, D4-06 mission graph; D4-11 gate queue)"
+        )
+
+
 @dataclass(frozen=True)
 class WorkerPorts:
     """Everything the jobs need. Build with ``WorkerPorts.unwired()`` and replace fields as lanes land."""
@@ -118,6 +135,7 @@ class WorkerPorts:
     gate: GateReminder
     snapshots: SnapshotRefresher
     financials: FinancialStalenessMarker
+    supervisor: MissionSupervisor
 
     @classmethod
     def unwired(cls) -> WorkerPorts:
@@ -127,6 +145,7 @@ class WorkerPorts:
             gate=UnwiredGateReminder(),
             snapshots=UnwiredSnapshotRefresher(),
             financials=UnwiredFinancialStalenessMarker(),
+            supervisor=UnwiredMissionSupervisor(),
         )
 
 
@@ -138,8 +157,10 @@ __all__ = [
     "FxRateSource",
     "GateReminder",
     "GateReminderResult",
+    "MissionSupervisor",
     "SnapshotRefresher",
     "SnapshotRefreshResult",
     "StaleFinancialsResult",
+    "UnwiredMissionSupervisor",
     "WorkerPorts",
 ]

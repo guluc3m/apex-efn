@@ -1,4 +1,4 @@
-"""Wires the five scheduled jobs into a ``JobRegistry`` from configuration.
+"""Wires the scheduled jobs into a ``JobRegistry`` from configuration.
 
 Schedules are configuration (``WorkerSchedules``): each job's cron expression is a field that
 operations can change without a deploy. The model has no default cron expressions, so a deployment
@@ -18,6 +18,7 @@ from apex.workers.jobs import (
     mark_stale_financials,
     refresh_seller_snapshots,
     send_gate_sla_reminders,
+    supervise_missions,
     verify_audit_chain,
 )
 from apex.workers.ports import WorkerPorts
@@ -28,6 +29,7 @@ JOB_AUDIT = "audit_chain_verify"
 JOB_GATE = "gate_sla_reminders"
 JOB_SNAPSHOTS = "seller_snapshot_refresh"
 JOB_FINANCIALS = "financials_stale_marking"
+JOB_SUPERVISOR = "supervisor_tick"
 
 
 class WorkerSchedules(BaseModel):
@@ -40,6 +42,7 @@ class WorkerSchedules(BaseModel):
     gate_sla_reminders: str
     seller_snapshot_refresh: str
     financials_stale_marking: str
+    supervisor_tick: str
 
 
 def build_registry(
@@ -49,7 +52,7 @@ def build_registry(
     params: JobParams,
     max_tries: Mapping[str, int] | None = None,
 ) -> JobRegistry:
-    """Create a registry with the five jobs. ``max_tries`` may override the default of 1 per job.
+    """Create a registry with every scheduled job. ``max_tries`` may override the default of 1 per job.
 
     The clock is not bound here: the scheduler adapter injects it at run time, so the same registry
     works under ``SystemClock`` in production and ``FixedClock`` in tests.
@@ -69,6 +72,7 @@ def build_registry(
             schedules.financials_stale_marking,
             partial(mark_stale_financials, ports=ports, params=params),
         ),
+        (JOB_SUPERVISOR, schedules.supervisor_tick, partial(supervise_missions, ports=ports)),
     ]
     registry = JobRegistry()
     for name, expression, func in entries:
@@ -89,6 +93,7 @@ __all__ = [
     "JOB_FX",
     "JOB_GATE",
     "JOB_SNAPSHOTS",
+    "JOB_SUPERVISOR",
     "WorkerSchedules",
     "build_registry",
 ]

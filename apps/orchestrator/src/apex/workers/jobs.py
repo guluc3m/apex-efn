@@ -1,6 +1,6 @@
 """Scheduled job bodies (issue #58, step 2).
 
-Each job is a plain async function that takes an injected ``Clock``, the ``WorkerPorts`` and its
+The five infrastructure jobs plus the supervisor tick are plain async functions that takes an injected ``Clock``, the ``WorkerPorts`` and its
 parameters. None imports Arq: the adapter in ``arq_adapter.py`` wraps them. Jobs never read the wall
 clock and never hardcode business numbers; thresholds are passed in from configuration.
 
@@ -88,11 +88,29 @@ async def mark_stale_financials(
     }
 
 
+async def supervise_missions(clock: Clock, ports: WorkerPorts) -> dict[str, Any]:
+    """Run one SupervisorAgent tick (D4-13): stuck missions, token budget, escalation."""
+    now = clock.now()
+    report = await ports.supervisor.tick(now)
+    actions: dict[str, int] = {}
+    for assessment in report.assessments:
+        for action in assessment.actions:
+            actions[action.value] = actions.get(action.value, 0) + 1
+    return {
+        "job": "supervisor_tick",
+        "checked_at": now.isoformat(),
+        "missions_checked": len(report.assessments),
+        "escalations": len(report.escalations),
+        "actions": actions,
+    }
+
+
 __all__ = [
     "JobParams",
     "ingest_fx_rates",
     "mark_stale_financials",
     "refresh_seller_snapshots",
     "send_gate_sla_reminders",
+    "supervise_missions",
     "verify_audit_chain",
 ]

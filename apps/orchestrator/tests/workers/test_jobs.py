@@ -7,6 +7,13 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from apex.agents.supervisor import (
+    BudgetState,
+    MissionAssessment,
+    MissionHealth,
+    SupervisorAction,
+    SupervisorReport,
+)
 from apex.common.clock import FixedClock
 from apex.workers.jobs import (
     JobParams,
@@ -14,6 +21,7 @@ from apex.workers.jobs import (
     mark_stale_financials,
     refresh_seller_snapshots,
     send_gate_sla_reminders,
+    supervise_missions,
     verify_audit_chain,
 )
 from apex.workers.ports import (
@@ -80,12 +88,36 @@ class _FakeFinancials:
 
 
 @dataclass
+class _FakeSupervisor:
+    calls: list[datetime]
+
+    async def tick(self, now: datetime) -> SupervisorReport:
+        self.calls.append(now)
+        stuck = MissionAssessment(
+            mission_id="m-1",
+            health=MissionHealth.STUCK,
+            budget=BudgetState.WITHIN_BUDGET,
+            actions=(SupervisorAction.ESCALATE_STUCK,),
+            escalation=None,
+        )
+        healthy = MissionAssessment(
+            mission_id="m-2",
+            health=MissionHealth.HEALTHY,
+            budget=BudgetState.WITHIN_BUDGET,
+            actions=(SupervisorAction.NONE,),
+            escalation=None,
+        )
+        return SupervisorReport(checked_at=now, assessments=(stuck, healthy))
+
+
+@dataclass
 class _Recorder:
     fx: _FakeFx
     audit: _FakeAudit
     gate: _FakeGate
     snapshots: _FakeSnapshots
     financials: _FakeFinancials
+    supervisor: _FakeSupervisor
 
     def ports(self) -> WorkerPorts:
         return WorkerPorts(
@@ -94,6 +126,7 @@ class _Recorder:
             gate=self.gate,
             snapshots=self.snapshots,
             financials=self.financials,
+            supervisor=self.supervisor,
         )
 
 
@@ -104,6 +137,7 @@ def _recorder() -> _Recorder:
         gate=_FakeGate(calls=[]),
         snapshots=_FakeSnapshots(calls=[]),
         financials=_FakeFinancials(calls=[]),
+        supervisor=_FakeSupervisor(calls=[]),
     )
 
 
@@ -168,6 +202,20 @@ async def test_stale_financials_passes_configured_window() -> None:
     out = await mark_stale_financials(FixedClock(NOW), rec.ports(), PARAMS)
     assert rec.financials.calls == [(NOW, 30)]
     assert out["marked_stale"] == 4
+
+
+async def test_supervisor_tick_uses_injected_clock_and_counts_actions() -> None:
+    rec = _recorder()
+    out = await supervise_missions(FixedClock(NOW), rec.ports())
+    assert rec.supervisor.calls == [NOW]
+    assert out["missions_checked"] == 2
+    assert out["escalations"] == 0
+    assert out["actions"] == {"escalate_stuck": 1, "none": 1}
+
+
+async def test_supervisor_port_fails_loudly_when_unwired() -> None:
+    with pytest.raises(NotImplementedError, match="D4-06"):
+        await supervise_missions(FixedClock(NOW), WorkerPorts.unwired())
 
 
 @pytest.mark.parametrize(
