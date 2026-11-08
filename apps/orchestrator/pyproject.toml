@@ -46,6 +46,7 @@ dev = [
     "apex-llm-stub",
     "types-PyYAML>=6.0.12",
     "jsonschema>=4.26.0",
+    "hypothesis>=6.170.15",
 ]
 
 [tool.uv.sources]
