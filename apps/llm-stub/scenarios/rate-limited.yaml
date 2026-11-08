@@ -1,0 +1,16 @@
+scenarios:
+  - name: rate-limited
+    description: Returns HTTP 429 with Retry-After for the first call, then succeeds.
+    capabilities:
+      "*":
+        supports_json_object: true
+    behaviour:
+      fail_times: 1
+      fail_with:
+        status: 429
+        message: "rate limit exceeded"
+        type: rate_limit_error
+        retry_after: 2
+    response:
+      kind: json
+      content: {"result": "valid"}

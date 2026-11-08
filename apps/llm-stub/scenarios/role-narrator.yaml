@@ -1,0 +1,9 @@
+scenarios:
+  - name: role-narrator
+    description: "Matched by 'role: narrator'; plain prose."
+    role: narrator
+    capabilities:
+      "*": {}
+    response:
+      kind: text
+      content: "The best offer balances price and seller confidence."

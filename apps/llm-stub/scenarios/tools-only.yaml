@@ -1,0 +1,11 @@
+scenarios:
+  - name: tools-only
+    description: Function calling only; the gateway must fall back to tool calls.
+    capabilities:
+      "*":
+        supports_tools: true
+    response:
+      kind: tool_call
+      tool_call:
+        name: emit_result
+        arguments: {"result": "valid"}

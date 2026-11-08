@@ -1,0 +1,12 @@
+scenarios:
+  - name: huge-usage
+    description: Reports very large usage counts so token-budget tests can force budget exhaustion.
+    capabilities:
+      "*":
+        supports_json_object: true
+    response:
+      kind: json
+      content: {"result": "valid"}
+      usage:
+        prompt_tokens: 900000
+        completion_tokens: 100000

@@ -1,0 +1,10 @@
+scenarios:
+  - name: role-extractor
+    description: "Matched by 'role: extractor'; JSON via json_object."
+    role: extractor
+    capabilities:
+      "*":
+        supports_json_object: true
+    response:
+      kind: json
+      content: {"price_eur": 12.5, "currency": "EUR"}

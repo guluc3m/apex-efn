@@ -1,0 +1,10 @@
+scenarios:
+  - name: slow
+    description: Adds 1500 ms latency to every answer (timeout / latency-accounting tests).
+    capabilities:
+      "*":
+        supports_json_object: true
+    response:
+      kind: json
+      content: {"result": "valid"}
+      delay_ms: 1500

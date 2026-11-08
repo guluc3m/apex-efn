@@ -1,0 +1,14 @@
+scenarios:
+  - name: always-malformed
+    description: Every call returns malformed output (trailing prose, fences, wrong schema) to test loud failure.
+    capabilities:
+      "*":
+        supports_json_object: true
+        supports_json_schema: true
+    sequence:
+      - kind: text
+        content: '{"result": "valid"} hope this helps!'
+      - kind: text
+        content: "```json\n{\"result\": \"valid\"}\n```"
+      - kind: json
+        content: {"wrong_field": 1}

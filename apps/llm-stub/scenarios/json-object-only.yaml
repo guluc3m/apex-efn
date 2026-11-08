@@ -1,0 +1,9 @@
+scenarios:
+  - name: json-object-only
+    description: Only json_object; json_schema, tools, stream and guided are rejected with 400.
+    capabilities:
+      "*":
+        supports_json_object: true
+    response:
+      kind: json
+      content: {"result": "valid"}
