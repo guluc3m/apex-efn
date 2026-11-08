@@ -12,9 +12,9 @@ THRESHOLD=80
 # negotiation/guardrails* is a set of files, not a package: the whole negotiation package is measured
 # once any guardrail file exists (the gate is coarser than specified; see the D1-04 report).
 TARGETS=(
-  "trato.domain|src/trato/domain/*.py"
-  "trato.signing|src/trato/signing/*.py"
-  "trato.negotiation|src/trato/negotiation/guardrails*.py"
+  "apex.domain|src/apex/domain/*.py"
+  "apex.signing|src/apex/signing/*.py"
+  "apex.negotiation|src/apex/negotiation/guardrails*.py"
 )
 
 cov_args=()

@@ -63,7 +63,7 @@ self_test() {
     "py-langchain-openai|py-vendor-import|a.py|from langchain_openai import ChatOpenAI"
     "py-langchain-anthropic|py-vendor-import|a.py|import langchain_anthropic"
     "ok-httpx-chat|ok|a.py|resp = httpx.post(f\"{base_url}/v1/chat/completions\", json=body)"
-    "ok-openai-compat-name|ok|a.py|from trato.llm.openai_compat import chat"
+    "ok-openai-compat-name|ok|a.py|from apex.llm.openai_compat import chat"
     "ok-threads-word|ok|a.ts|const threadsCount = 3; // threads of discussion"
   )
 

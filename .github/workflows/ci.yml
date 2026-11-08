@@ -71,10 +71,10 @@ jobs:
             contracts:
               - 'contracts/**'
               - 'packages/shared-types/**'
-              - 'apps/orchestrator/src/trato/contracts/**'
+              - 'apps/orchestrator/src/apex/contracts/**'
             prisma:
               - 'apps/web/prisma/**'
-              - 'apps/orchestrator/src/trato/db/**'
+              - 'apps/orchestrator/src/apex/db/**'
             web:
               - 'apps/web/**'
               - 'infra/**'
@@ -348,7 +348,7 @@ jobs:
       - name: Schema matches migrations
         if: steps.target.outputs.active == 'true'
         run: |
-          pnpm --filter @trato/web exec prisma migrate diff \
+          pnpm --filter @apex/web exec prisma migrate diff \
             --from-migrations prisma/migrations \
             --to-schema-datamodel prisma/schema.prisma \
             --shadow-database-url "$SHADOW_DATABASE_URL" \
@@ -395,11 +395,11 @@ jobs:
 
       - name: Install Chromium
         if: steps.target.outputs.active == 'true'
-        run: pnpm --filter @trato/web exec playwright install --with-deps chromium
+        run: pnpm --filter @apex/web exec playwright install --with-deps chromium
 
       - name: Run E2E tests
         if: steps.target.outputs.active == 'true'
-        run: pnpm --filter @trato/web test:e2e
+        run: pnpm --filter @apex/web test:e2e
 
       - name: Upload Playwright report
         if: failure() && steps.target.outputs.active == 'true'
