@@ -129,6 +129,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # One-shot: enables KV v2 (apex-kv) and Transit, loads the policies and creates the
+  # service signing keys. Idempotent, safe to rerun. Dev only.
+  vault-init:
+    image: hashicorp/vault:1.21.4
+    container_name: apex-vault-init
+    entrypoint: ['/bin/sh', '/scripts/init.sh']
+    environment:
+      VAULT_ADDR: http://vault:8200
+      # DEV ONLY root token (same as the vault service above).
+      VAULT_TOKEN: apex-dev-root-token
+      # DEV DEFAULT service list for Transit ed25519 keys. Owned by D2-07.
+      VAULT_SERVICE_KEYS: ${VAULT_SERVICE_KEYS:-orchestrator,gate-agent,negotiator}
+    volumes:
+      - ./vault:/scripts:ro
+    depends_on:
+      vault:
+        condition: service_healthy
+    restart: 'no'
+
   # =============================================================================
   # Unleash (feature flags, own database "unleash")
   # =============================================================================

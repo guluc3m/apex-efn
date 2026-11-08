@@ -9,11 +9,12 @@
 # A cached binary is re-checked against the hash recorded when it was installed; on mismatch it is
 # discarded and downloaded again.
 # To bump a tool: change its version, then copy the four SHA-256 values from the release's checksum
-# file (trufflehog and actionlint publish one; shellcheck's are the release asset digests).
+# file (trufflehog, actionlint and vault publish one; shellcheck's are the release asset digests).
 
 TRUFFLEHOG_VERSION=3.99.8
 ACTIONLINT_VERSION=1.7.12
 SHELLCHECK_VERSION=0.11.0
+VAULT_VERSION=1.21.4
 
 _tools_fail() {
   echo "ERROR: $*" >&2
@@ -40,6 +41,7 @@ _tool_version() {
     trufflehog) echo "$TRUFFLEHOG_VERSION" ;;
     actionlint) echo "$ACTIONLINT_VERSION" ;;
     shellcheck) echo "$SHELLCHECK_VERSION" ;;
+    vault) echo "$VAULT_VERSION" ;;
     *) _tools_fail "unknown CI tool: $1" ;;
   esac
 }
@@ -56,6 +58,7 @@ _tool_archive() {
       [ "$arch" = arm64 ] && sc_arch=aarch64
       echo "shellcheck-v${SHELLCHECK_VERSION}.${os}.${sc_arch}.tar.xz"
       ;;
+    vault) echo "vault_${VAULT_VERSION}_${os}_${arch}.zip" ;;
   esac
 }
 
@@ -65,6 +68,7 @@ _tool_url() {
     trufflehog) echo "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/${archive}" ;;
     actionlint) echo "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}" ;;
     shellcheck) echo "https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/${archive}" ;;
+    vault) echo "https://releases.hashicorp.com/vault/${VAULT_VERSION}/${archive}" ;;
   esac
 }
 
@@ -83,6 +87,10 @@ _tool_sha256() {
     shellcheck-linux-arm64) echo 12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588 ;;
     shellcheck-darwin-amd64) echo 3c89db4edcab7cf1c27bff178882e0f6f27f7afdf54e859fa041fca10febe4c6 ;;
     shellcheck-darwin-arm64) echo 56affdd8de5527894dca6dc3d7e0a99a873b0f004d7aabc30ae407d3f48b0a79 ;;
+    vault-linux-amd64) echo 889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae ;;
+    vault-linux-arm64) echo 1104ef701aad16e104e2e7b4d2a02a6ec993237559343f3097ac63a00b42e85d ;;
+    vault-darwin-amd64) echo a667be3cf56dd0f21a23ba26b47028d1f51b3ca61e71b0e29ceafef1c2a1dc3a ;;
+    vault-darwin-arm64) echo c79012c1c8aedd682c68b5d9c89149030611c82da57f45383aef004b39a640d2 ;;
     *) _tools_fail "no pinned SHA-256 for $1 on $2" ;;
   esac
 }
@@ -106,6 +114,28 @@ verify_sha256() {
     return 1
   fi
   echo "sha256 ok: $(basename "$1")" >&2
+}
+
+# Unpacks a .tar.gz, .tar.xz or .zip archive. Zip: unzip, then bsdtar, then python3, then uv's python
+# (the first one found). Nothing else is assumed to be installed.
+_extract_archive() {
+  case "$1" in
+    *.zip)
+      if command -v unzip >/dev/null 2>&1; then
+        unzip -q -o "$1" -d "$2"
+      elif command -v bsdtar >/dev/null 2>&1; then
+        bsdtar -xf "$1" -C "$2"
+      elif command -v python3 >/dev/null 2>&1; then
+        python3 -m zipfile -e "$1" "$2"
+      elif command -v uv >/dev/null 2>&1; then
+        uv run --no-project python -m zipfile -e "$1" "$2"
+      else
+        echo "ERROR: no zip extractor found (need unzip, bsdtar, python3 or uv)" >&2
+        return 1
+      fi
+      ;;
+    *) tar -xf "$1" -C "$2" ;;
+  esac
 }
 
 # True when the binary reports exactly the pinned version (not a longer one such as 3.99.80).
@@ -155,7 +185,7 @@ ensure_tool() {
 
   rm -rf "$extract"
   mkdir -p "$extract"
-  tar -xf "$part" -C "$extract" || _tools_fail "could not unpack ${archive}"
+  _extract_archive "$part" "$extract" || _tools_fail "could not unpack ${archive}"
   found="$(find "$extract" -type f -name "$tool" | sed -n '1p')"
   [ -n "$found" ] || _tools_fail "${tool} not found inside ${archive}"
   mv -f "$found" "$bin"

@@ -19,7 +19,7 @@ describe() {
     workflow-lint) echo "actionlint on workflows, shellcheck on scripts" ;;
     typescript) echo "turbo build/lint/typecheck/test (full), coverage ratchet" ;;
     python) echo "ruff, mypy, pytest with coverage gate" ;;
-    integration) echo "pytest -m integration (needs Docker once tests exist)" ;;
+    integration) echo "real Vault (pinned dev server, no Docker) + pytest -m integration (needs Docker once tests exist)" ;;
     secret-scan) echo "TruffleHog, verified secrets, pinned version" ;;
     dependency-audit) echo "pnpm audit + pip-audit (advisory)" ;;
     llm-portability) echo "criterion 25 deny-list (self-test and scan)" ;;

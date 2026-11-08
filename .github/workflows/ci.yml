@@ -156,15 +156,26 @@ jobs:
         run: bash .github/scripts/ci/python.sh
 
   # =============================================================================
-  # Integration tests (Testcontainers). Docker is available on ubuntu-latest.
+  # Integration tests. Two phases in integration.sh: real Vault (pinned dev server, no Docker) and
+  # Testcontainers (Docker is available on ubuntu-latest).
   # =============================================================================
   integration:
     name: Integration tests
     needs: changes
-    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true'
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true' || needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - uses: actions/setup-python@v5
         with:
@@ -177,7 +188,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: apps/orchestrator/uv.lock
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         working-directory: apps/orchestrator
         run: uv sync --locked --dev
 
