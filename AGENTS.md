@@ -1,9 +1,9 @@
 ---
-name: TRATO — Prompt de implementación (export)
-description: Documento maestro exportable para un agente de código (Claude Code / Cursor / Devin) que debe construir desde cero TRATO, una plataforma B2B de sourcing inteligente y negociación automatizada de compras por volumen. Incluye descripción completa del producto, score de confianza del vendedor, validación de precios anómalos con gate humano, dashboard de decisión, firmas criptográficas Ed25519 con sesión de firma de 15 minutos, arquitectura multiagente, stack híbrido Next.js + Python/FastAPI/LangGraph + Node/Puppeteer con gateway LLM compatible con OpenAI para modelos autoalojados, modelo de datos, API, criterios de aceptación y roadmap por fases.
+name: APEX-EFN — Prompt de implementación (export)
+description: Documento maestro exportable para un agente de código (Claude Code / Cursor / Devin) que debe construir desde cero APEX-EFN, una plataforma B2B de sourcing inteligente y negociación automatizada de compras por volumen. Incluye descripción completa del producto, score de confianza del vendedor, validación de precios anómalos con gate humano, dashboard de decisión, firmas criptográficas Ed25519 con sesión de firma de 15 minutos, arquitectura multiagente, stack híbrido Next.js + Python/FastAPI/LangGraph + Node/Puppeteer con gateway LLM compatible con OpenAI para modelos autoalojados, modelo de datos, API, criterios de aceptación y roadmap por fases.
 ---
 
-# TRATO — Prompt de implementación
+# APEX-EFN — Prompt de implementación
 
 Artefacto de exportación. El prompt limpio, listo para pegar en un agente de código, está en:
 
@@ -100,7 +100,7 @@ before you create it.
 | `/packages/eslint-config/**`, `/packages/tsconfig/**` | DEV-1 |
 | `apps/*/Dockerfile`, `apps/*/eslint.config.js` | DEV-1 |
 | `apps/web/src/server/auth/**`, `apps/web/src/middleware.ts`, `apps/web/instrumentation.ts` | DEV-1 |
-| `apps/orchestrator/src/trato/auth/**`, `apps/orchestrator/src/trato/platform/**` (vault, s3, redis, telemetry, flags clients) | DEV-1 |
+| `apps/orchestrator/src/apex/auth/**`, `apps/orchestrator/src/apex/platform/**` (vault, s3, redis, telemetry, flags clients) | DEV-1 |
 | `apps/browser-worker/src/platform/**` (vault, telemetry, flags clients) | DEV-1 |
 | `/tests/load/**` (k6) | DEV-1 |
 | `/docs/observability/**`, `/docs/security/**` | DEV-1 |
@@ -109,19 +109,19 @@ before you create it.
 | `/packages/crypto-client/**` | DEV-2 |
 | `/packages/test-vectors/signing/**` | DEV-2 |
 | `apps/web/prisma/**` (schema, migrations, seed) | DEV-2 |
-| `apps/orchestrator/src/trato/db/**`, `trato/contracts/generated/**`, `trato/signing/**`, `trato/audit/**`, `trato/documents/**` | DEV-2 |
-| `apps/orchestrator/src/trato/api/{signing,decisions,keys,audit}.py` | DEV-2 |
+| `apps/orchestrator/src/apex/db/**`, `apex/contracts/generated/**`, `apex/signing/**`, `apex/audit/**`, `apex/documents/**` | DEV-2 |
+| `apps/orchestrator/src/apex/api/{signing,decisions,keys,audit}.py` | DEV-2 |
 | `/packages/money/**`, `/packages/scoring/**` | DEV-3 |
 | `/packages/test-vectors/**` except `signing/` | DEV-3 |
-| `apps/orchestrator/src/trato/domain/**` (money, fx, finance, csv_import, trust, sanity, gate_matrix, mcda) | DEV-3 |
-| `apps/orchestrator/pyproject.toml`, `src/trato/main.py`, `src/trato/config.py`, `src/trato/common/**` | DEV-4 |
-| `apps/orchestrator/src/trato/api/__init__.py` and `api/{onboarding,sourcing,missions,sellers,dashboard,gate,config}.py` | DEV-4 |
-| `apps/orchestrator/src/trato/{agents,llm,workers,tenant_config}/**`, `apps/orchestrator/prompts/**`, `apps/orchestrator/evals/**` | DEV-4 |
+| `apps/orchestrator/src/apex/domain/**` (money, fx, finance, csv_import, trust, sanity, gate_matrix, mcda) | DEV-3 |
+| `apps/orchestrator/pyproject.toml`, `src/apex/main.py`, `src/apex/config.py`, `src/apex/common/**` | DEV-4 |
+| `apps/orchestrator/src/apex/api/__init__.py` and `api/{onboarding,sourcing,missions,sellers,dashboard,gate,config}.py` | DEV-4 |
+| `apps/orchestrator/src/apex/{agents,llm,workers,tenant_config}/**`, `apps/orchestrator/prompts/**`, `apps/orchestrator/evals/**` | DEV-4 |
 | `/apps/llm-stub/**`, `/infra/mocks/**` | DEV-4 |
 | `/config/defaults/**` (versioned business defaults from spec §7; any change also needs TL approval) | DEV-4 |
 | `/apps/browser-worker/**` except `src/platform/**`, `Dockerfile`, `eslint.config.js` | DEV-5 |
 | `/apps/mock-marketplace/**` | DEV-5 |
-| `apps/orchestrator/src/trato/negotiation/**`, `api/{negotiations,webhooks}.py` | DEV-5 |
+| `apps/orchestrator/src/apex/negotiation/**`, `api/{negotiations,webhooks}.py` | DEV-5 |
 | `/docs/compliance/**` | DEV-5 |
 | `/apps/web/**` except the DEV-1 and DEV-2 paths listed above | DEV-6 |
 | `/packages/ui/**` | DEV-6 |
@@ -238,7 +238,7 @@ TL `900–999`. Existing `001–003` stay as they are. Take the next free number
 
 ### 3.8 Forbidden
 - Pushing to `main`, force-pushing shared branches, merging your own `needs-tech-lead` PR.
-- Editing generated files (`packages/shared-types/src/generated/**`, `trato/contracts/generated/**`).
+- Editing generated files (`packages/shared-types/src/generated/**`, `apex/contracts/generated/**`).
 - Writing DB migrations outside DEV-2.
 - Hardcoding thresholds, weights or currency lists that belong to config.
 - Sending human private keys to the server, or any "sign on server on behalf of the user" design.
@@ -252,13 +252,13 @@ signatures are shown; the TS versions mirror them in camelCase. Types come from 
 
 | Provider → Consumer | Interface |
 |---|---|
-| DEV-4 → all (Python) | `trato.common.clock.Clock` (`now() -> datetime`, injectable `FixedClock`), `trato.common.errors.Problem` (RFC 9457), `trato.common.idempotency` middleware, `trato.common.pagination.Cursor` |
-| DEV-1 → DEV-2/4/5 | `trato.auth.deps.current_principal() -> Principal{user_id, tenant_id, roles}`, `require_role(*roles)`; `trato.platform.{vault,s3,redis,telemetry,flags}` clients; TS: `apps/web/src/server/auth/getSession()`, `getAccessToken()` |
-| DEV-2 → DEV-4/5 | `trato.db.session.tenant_session(tenant_id)` (sets RLS `app.tenant_id`); `trato.signing.api.create_decision(type, subject_ref, payload) -> Decision`; `require_signed(decision_id) -> SignedDecision` (raises `PendingSignature`); `sign_service_event(service: str, payload) -> Signature`; `mark_session_risky(session_id, reason)`; `trato.audit.api.append(event)` |
-| DEV-3 → DEV-4/5/6 | `trato.domain.money.Money`; `trato.domain.fx.convert(money, to, rates, now, cfg) -> Conversion` (carries `fx_provisional`); `trato.domain.finance.csv_import.parse(bytes, base_currency, rates, now) -> ImportResult{report, rows, derived}`; `trato.domain.finance.landed_cost(offer, qty, ctx) -> LandedCostBreakdown`; `financial_fit(breakdown, snapshot, cfg, now) -> FinancialFit`; `trato.domain.trust.compute(snapshot, cfg) -> SellerConfidence`; `trato.domain.sanity.check(offer_price_eur, reference, cfg) -> PriceSanityCheck`; `trato.domain.gate_matrix.combine(price_band, confidence_band, cfg) -> GateOutcome`; `trato.domain.mcda.rank(candidates, profile_weights, cfg) -> RankedRecommendation` |
-| DEV-4 → DEV-5 | `trato.llm.LLMGateway.chat(role="negotiator", …)`; `trato.tenant_config.effective(tenant_id, category) -> EffectiveConfig` (with `config_version`); graph calls `trato.negotiation.node.negotiate_node(state)` |
-| DEV-5 → DEV-4 | browser-worker internal HTTP API (contract file), `trato.negotiation.node.negotiate_node`, `trato.negotiation.api.takeover/resume/abort` |
-| DEV-2/DEV-4/DEV-5 → DEV-6 | the public HTTP API only (`/contracts/openapi.yaml`); `@trato/crypto-client` for signing in the browser |
+| DEV-4 → all (Python) | `apex.common.clock.Clock` (`now() -> datetime`, injectable `FixedClock`), `apex.common.errors.Problem` (RFC 9457), `apex.common.idempotency` middleware, `apex.common.pagination.Cursor` |
+| DEV-1 → DEV-2/4/5 | `apex.auth.deps.current_principal() -> Principal{user_id, tenant_id, roles}`, `require_role(*roles)`; `apex.platform.{vault,s3,redis,telemetry,flags}` clients; TS: `apps/web/src/server/auth/getSession()`, `getAccessToken()` |
+| DEV-2 → DEV-4/5 | `apex.db.session.tenant_session(tenant_id)` (sets RLS `app.tenant_id`); `apex.signing.api.create_decision(type, subject_ref, payload) -> Decision`; `require_signed(decision_id) -> SignedDecision` (raises `PendingSignature`); `sign_service_event(service: str, payload) -> Signature`; `mark_session_risky(session_id, reason)`; `apex.audit.api.append(event)` |
+| DEV-3 → DEV-4/5/6 | `apex.domain.money.Money`; `apex.domain.fx.convert(money, to, rates, now, cfg) -> Conversion` (carries `fx_provisional`); `apex.domain.finance.csv_import.parse(bytes, base_currency, rates, now) -> ImportResult{report, rows, derived}`; `apex.domain.finance.landed_cost(offer, qty, ctx) -> LandedCostBreakdown`; `financial_fit(breakdown, snapshot, cfg, now) -> FinancialFit`; `apex.domain.trust.compute(snapshot, cfg) -> SellerConfidence`; `apex.domain.sanity.check(offer_price_eur, reference, cfg) -> PriceSanityCheck`; `apex.domain.gate_matrix.combine(price_band, confidence_band, cfg) -> GateOutcome`; `apex.domain.mcda.rank(candidates, profile_weights, cfg) -> RankedRecommendation` |
+| DEV-4 → DEV-5 | `apex.llm.LLMGateway.chat(role="negotiator", …)`; `apex.tenant_config.effective(tenant_id, category) -> EffectiveConfig` (with `config_version`); graph calls `apex.negotiation.node.negotiate_node(state)` |
+| DEV-5 → DEV-4 | browser-worker internal HTTP API (contract file), `apex.negotiation.node.negotiate_node`, `apex.negotiation.api.takeover/resume/abort` |
+| DEV-2/DEV-4/DEV-5 → DEV-6 | the public HTTP API only (`/contracts/openapi.yaml`); `@apex/crypto-client` for signing in the browser |
 
 ## 5. Task catalog
 
@@ -298,11 +298,11 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
    Langfuse, Vault (dev mode), Unleash, Grafana/Loki/Tempo/Prometheus, llm-stub (built from
    `apps/llm-stub`, D4-02), mock-marketplace (D5-04), and the app services.
 2. **Separate databases** for Keycloak and Langfuse (init SQL creates `keycloak` and `langfuse` DBs).
-   Today they share `trato`, which breaks Prisma migrations (Langfuse runs its own Prisma migrations).
-3. MinIO bootstrap job: buckets `trato-attachments`, `trato-csv`, and `trato-audit` **with Object Lock**
+   Today they share `apex`, which breaks Prisma migrations (Langfuse runs its own Prisma migrations).
+3. MinIO bootstrap job: buckets `apex-attachments`, `apex-csv`, and `apex-audit` **with Object Lock**
    enabled (`mc mb --with-lock`), default retention in compliance mode.
-4. Keycloak realm import (`infra/keycloak/realm-trato.json`): clients `trato-web` and
-   `trato-orchestrator`, roles `owner|admin|buyer|finance|viewer`, MFA required, one test user per role and
+4. Keycloak realm import (`infra/keycloak/realm-apex.json`): clients `apex-web` and
+   `apex-orchestrator`, roles `owner|admin|buyer|finance|viewer`, MFA required, one test user per role and
    two tenants (for isolation tests).
 5. Scripts: `pnpm dev:up`, `pnpm dev:down`, `pnpm dev:reset` (wipes volumes and reseeds). Document them in
    `docs/runbooks/local-dev.md`. Measure that a cold start takes under 10 minutes (spec §11).
@@ -311,8 +311,8 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 **D1-04 — CI pipeline with required gates** · F0 · Blocked by: D1-01 · TL: no
 1. Path-filtered jobs per lane (turbo `--filter`), caching for pnpm and uv.
 2. Docker-in-CI for Testcontainers (Postgres, Redis).
-3. Coverage gate ≥ 80% on: `packages/money`, `packages/scoring`, `trato/domain/**`, `trato/signing/**`,
-   `trato/negotiation/guardrails*`, `packages/crypto-client`.
+3. Coverage gate ≥ 80% on: `packages/money`, `packages/scoring`, `apex/domain/**`, `apex/signing/**`,
+   `apex/negotiation/guardrails*`, `packages/crypto-client`.
 4. Drift checks: `pnpm contracts:check` (D2-01) and `prisma migrate diff` (schema vs. migrations).
 5. Improve the LLM portability grep (criterion 25): deny-list proprietary paths (`/assistants`,
    `/threads`, `/batches`, vendor SDK imports). Exclude the CI file itself and docs.
@@ -324,7 +324,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 **D1-05 — Identity: OIDC login and RBAC** · F0 · Blocked by: D1-03, D4-01 · TL: no
 1. Web: OIDC login against Keycloak in `apps/web/src/server/auth/**` and `src/middleware.ts` (protect
    app routes, refresh tokens, expose `getSession()` / `getAccessToken()` for the BFF).
-2. Orchestrator: `trato/auth/**` validates JWTs via JWKS, resolves the tenant from the membership claim,
+2. Orchestrator: `apex/auth/**` validates JWTs via JWKS, resolves the tenant from the membership claim,
    and exposes `current_principal()` and `require_role(...)` FastAPI dependencies.
 3. Enforce MFA in the realm. Write the RBAC matrix (which role may call which endpoint) in
    `docs/security/rbac.md`. `viewer` never signs. `override_discard` is limited to `finance|admin|owner`.
@@ -335,12 +335,12 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 1. `sops` + `age` setup (`.sops.yaml`) for secrets that live in the repo.
 2. Vault dev: KV for marketplace credentials and browser session state (per tenant), Transit engine
    with **ed25519** keys for service signing keys (consumed by D2-07).
-3. Clients: `trato/platform/vault.py`, `apps/browser-worker/src/platform/vault.ts`. Credentials are only
+3. Clients: `apex/platform/vault.py`, `apps/browser-worker/src/platform/vault.ts`. Credentials are only
    referenced by opaque IDs (`CredentialRef`), never returned to the LLM or the browser.
 - Done when: DEV-2 and DEV-5 can store and read secrets through the clients in tests.
 
 **D1-07 — Observability and leak prevention** · F0 · Blocked by: D1-03 · TL: no
-1. OpenTelemetry in all apps (`trato/platform/telemetry.py`, `apps/web/instrumentation.ts`, worker), exporting to Tempo/Loki/Prometheus. Add Sentry.
+1. OpenTelemetry in all apps (`apex/platform/telemetry.py`, `apps/web/instrumentation.ts`, worker), exporting to Tempo/Loki/Prometheus. Add Sentry.
 2. `docs/observability/metrics.md`: metric names and labels that each lane must emit (scraping health,
    price-band distribution, seller-confidence distribution, gate health, LLM health).
 3. Grafana dashboards as code in `infra/grafana/` for those five areas.
@@ -349,7 +349,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 - Done when: the dashboards render with local data and the leak test runs in CI.
 
 **D1-08 — Feature flags** · F0 · Blocked by: D1-03 · TL: no
-1. Unleash in compose. Clients in `trato/platform/flags.py` and `browser-worker/src/platform/flags.ts`.
+1. Unleash in compose. Clients in `apex/platform/flags.py` and `browser-worker/src/platform/flags.ts`.
 2. Naming convention in `docs/observability/flags.md`: `platform.<id>.enabled`,
    `negotiation.strategy.<id>`, `negotiation.autonomous_send`, `sanity.bands.<version>`, `trust.model.<version>`.
 - Done when: a platform can be disabled by flag without code changes (verified by a DEV-5 test later).
@@ -377,7 +377,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
    enum `EUR|USD|CNY`, and money as `{amount_minor: int64, currency}`.
 2. Write a skeleton for `/contracts/internal/browser-worker.openapi.yaml` (DEV-5 fills the details in D5-01 via a contract PR).
 3. Codegen: TS + Zod into `packages/shared-types/src/generated/` and Pydantic v2 into
-   `apps/orchestrator/src/trato/contracts/generated/`. Root scripts `pnpm contracts:generate` and
+   `apps/orchestrator/src/apex/contracts/generated/`. Root scripts `pnpm contracts:generate` and
    `pnpm contracts:check` (ask DEV-1 to add them through a `platform-request`, or include them in this PR with DEV-1's review).
 4. Replace the hand-written DTOs in `packages/shared-types/src/*.ts` with re-exports of the generated
    types. They duplicate the contract, which spec §5.1 forbids. Keep only constants that aren't DTOs.
@@ -408,25 +408,25 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 3. Append-only triggers: block `UPDATE`/`DELETE` on `audit_events`, `signatures`, `fx_rates`,
    `seller_signal_snapshots`, `seller_confidences`, and on financial snapshots once they are `active`/`superseded`.
 4. Seed script: two tenants and users matching the Keycloak test users. Config is **not** seeded here.
-   D4-03 provides `python -m trato.tenant_config.load_defaults`, and DEV-1's `dev:reset` runs it after
+   D4-03 provides `python -m apex.tenant_config.load_defaults`, and DEV-1's `dev:reset` runs it after
    this seed (this avoids a circular dependency between D2-03 and D4-03).
 - Done when: `prisma migrate dev` runs from scratch, and the triggers are covered by tests.
 
 **D2-04 — Row-level security and tenant isolation test** · F0 · Blocked by: D2-03 · TL: no
 1. Add `tenant_id` to every tenant-scoped table, with RLS policies using `current_setting('app.tenant_id')`.
    App DB role is not superuser and not table owner. A separate migrator role runs migrations.
-2. Helpers that set the tenant per transaction: a Prisma client extension (web) and a SQLAlchemy session event (`trato/db/session.py`).
+2. Helpers that set the tenant per transaction: a Prisma client extension (web) and a SQLAlchemy session event (`apex/db/session.py`).
 3. **Criterion 30:** an automated test (Testcontainers) that enumerates every tenant table, writes as
    tenant A, and asserts tenant B reads and writes nothing.
 - Done when: the isolation test runs in CI and covers every table automatically, including new ones.
 
 **D2-05 — SQLAlchemy data layer** · F0 · Blocked by: D2-03, D4-01 · TL: no
-1. SQLAlchemy 2 async models in `trato/db/models/` mapped to the Prisma schema. Session factory, and `tenant_session()`.
+1. SQLAlchemy 2 async models in `apex/db/models/` mapped to the Prisma schema. Session factory, and `tenant_session()`.
 2. CI test: migrate a DB with Prisma, then reflect it and compare with the SQLAlchemy metadata (fails on drift).
-- Done when: DEV-3/4/5 can persist and read entities through `trato.db`.
+- Done when: DEV-3/4/5 can persist and read entities through `apex.db`.
 
 **D2-06 — Canonical JSON, hashing and signature test vectors** · F0 · Blocked by: D2-01 · TL: **yes**
-1. RFC 8785 JCS in TS (`packages/crypto-client/src/jcs.ts`, already drafted) and in Python (`trato/signing/jcs.py`).
+1. RFC 8785 JCS in TS (`packages/crypto-client/src/jcs.ts`, already drafted) and in Python (`apex/signing/jcs.py`).
 2. Shared vectors in `packages/test-vectors/signing/`: the RFC 8785 examples, unicode, number edge
    cases, nested objects, and Ed25519 vectors from RFC 8032. Both runners must produce identical bytes and hashes.
 3. Property-based tests (fast-check and hypothesis): canonicalize(parse(canonicalize(x))) == canonicalize(x).
@@ -436,7 +436,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 1. ADR-203: browser Ed25519 support. WebCrypto Ed25519 is not available on every browser version. If it
    is unsupported, **block signing with a clear message**. A server-held human key is never a fallback.
    Key backup/escrow is optional and off by default (TL open question).
-2. Finish `@trato/crypto-client`: non-exportable key generation, IndexedDB storage, signing over the
+2. Finish `@apex/crypto-client`: non-exportable key generation, IndexedDB storage, signing over the
    canonical payload, tests (Node webcrypto + `fake-indexeddb`). Remove `new Date()` (inject a clock).
 3. Endpoints: `GET/POST /v1/keys/me` (register a public key), `POST /v1/keys/{id}/revoke`. Revocation and
    rotation are themselves signed decisions that need immediate reauth. Revoking never invalidates past signatures.
@@ -465,12 +465,12 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 5. Immediate reauth (ignores the window) for: amount > `signing.high_value_reauth_above`, snapshot
    activation, threshold or weight changes, discard overrides, and key operations.
 6. Dual control: above `approval.dual_control_above`, two signatures from **different** signers are required.
-7. `trato.signing.api` for other lanes: `create_decision`, `require_signed`, `sign_service_event`.
+7. `apex.signing.api` for other lanes: `create_decision`, `require_signed`, `sign_service_event`.
 8. Tests: criteria **17, 18, 21, 23**, including tamper tests (flip one byte, change the score in the payload).
 - Done when: those criteria pass and an unsigned decision can't move an offer to `purchased`.
 
 **D2-10 — Audit log and WORM anchoring** · F0 · Blocked by: D2-09 · TL: **yes**
-1. `trato/audit/**`: an append-only hash-chained `AuditEvent` writer for every agent and human action.
+1. `apex/audit/**`: an append-only hash-chained `AuditEvent` writer for every agent and human action.
 2. `GET /v1/audit` (admin/compliance roles only) and `GET /v1/audit/verify` (full chain re-verification).
    A periodic re-verify function (DEV-4 schedules it).
 3. Anchor the chain head to S3 Object Lock (compliance mode). RFC 3161 timestamping is optional (F4).
@@ -478,7 +478,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 - Done when: tampering with any row is detected by `/v1/audit/verify`.
 
 **D2-11 — Documents: RFQ, purchase order, verification certificate** · F2 · Blocked by: D2-09, D4-11 · TL: no
-1. PDF generation in `trato/documents/`: RFQ, purchase order, and a signature verification certificate
+1. PDF generation in `apex/documents/`: RFQ, purchase order, and a signature verification certificate
    that includes signature hashes and the seller's confidence **at decision time**.
 - Done when: the PDFs embed verifiable hashes, checked by a test.
 
@@ -494,7 +494,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 
 > The scaffold engines in `packages/money` and `packages/scoring` are **drafts, not trusted code**.
 > They contain invented constants and bugs (see section 6). Rewrite them test-first against the spec.
-> Python (`trato/domain/**`) is the runtime authority for decisions. The TS packages mirror it for UI
+> Python (`apex/domain/**`) is the runtime authority for decisions. The TS packages mirror it for UI
 > display and what-if previews. **Both must pass the same vectors.**
 
 **D3-01 — Shared test-vector framework and injected clock** · F0 · Blocked by: D1-01 · TL: no
@@ -519,13 +519,13 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 2. Stale rates (> `fx.max_age_hours`) return a conversion flagged `fx_provisional=true`. They do not
    return `null` like the scaffold. Unsupported currencies are rejected.
 3. Conversion records `original_amount`, `original_currency`, `fx_rate`, `fx_as_of`, `fx_source`, `converted`.
-4. `trato/domain/fx/ingest.py`: fetch daily rates (ADR-302 proposes ECB reference rates, TL confirms the
+4. `apex/domain/fx/ingest.py`: fetch daily rates (ADR-302 proposes ECB reference rates, TL confirms the
    source, section 8 Q6) into the immutable `FxRate` history. DEV-4 schedules it.
 5. Tests: criterion **24**, round-trip and triangulation properties.
 - Done when: the vectors pass in both languages.
 
 **D3-04 — Financial CSV importer** · F1 · Blocked by: D3-03 · TL: **yes**
-1. `trato/domain/finance/csv_import.py`: UTF-8, separator autodetection (`,` `;` `\t`), the exact columns
+1. `apex/domain/finance/csv_import.py`: UTF-8, separator autodetection (`,` `;` `\t`), the exact columns
    and closed metric enum from spec §3.1.1, per-row rejection with reasons, rejecting the later duplicate
    (not the whole file), currency conversion with `converted=true`, `projection_enabled` rules (1 period
    with `cash_balance` minimum, 3 periods for projection).
@@ -598,13 +598,13 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 
 **D4-01 — Orchestrator app shell (unblocks other lanes)** · F0 · Blocked by: none · TL: no
 1. Fix `pyproject.toml`: `[tool.ruff.lint]` section, dev dependency group consistent with CI (coordinate with D1-01).
-2. Create empty packages for every lane so nobody creates them concurrently: `trato/{common,auth,platform,
+2. Create empty packages for every lane so nobody creates them concurrently: `apex/{common,auth,platform,
    db,contracts,signing,audit,documents,domain,tenant_config,agents,llm,workers,negotiation}/__init__.py`.
 3. Register **all** routers from spec §8 in `api/__init__.py` with `501 Not Implemented` stubs:
    onboarding, sourcing-requests, missions, sellers, dashboard, gate, negotiations, signing-sessions,
    decisions, keys, audit, webhooks, config. Each router file then belongs to the lane in section 2, so
    nobody needs to touch `api/__init__.py` again.
-4. `trato/common/`: injectable `Clock`, ID generation, RFC 9457 problem+json handler, `Idempotency-Key`
+4. `apex/common/`: injectable `Clock`, ID generation, RFC 9457 problem+json handler, `Idempotency-Key`
    middleware (Redis-backed), cursor pagination helpers.
 5. Fix `agents/graph.py` typing (it returns a compiled graph but is annotated `StateGraph`). Make `mypy --strict` pass.
 - Done when: the app boots, `/health` works, every §8 route answers 501, and the CI Python job is green.
@@ -619,8 +619,8 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 **D4-03 — Tenant configuration service** · F0 · Blocked by: D2-05 · TL: **yes**
 1. `/config/defaults/tenant-config.v1.json` with the defaults from spec §7. Keys marked "sin definir" stay
    **unset** and must be filled by the tenant. Never invent them.
-2. `trato/tenant_config/`: resolves effective config (global → tenant → category override), returns `config_version`.
-   Also ships the CLI `python -m trato.tenant_config.load_defaults` that writes config v1 for the seeded tenants (used by `dev:reset`).
+2. `apex/tenant_config/`: resolves effective config (global → tenant → category override), returns `config_version`.
+   Also ships the CLI `python -m apex.tenant_config.load_defaults` that writes config v1 for the seeded tenants (used by `dev:reset`).
 3. `api/config.py`: read the effective config, and propose a change. **A change is a signed decision**
    (DEV-2) that needs immediate reauth and creates a new version. Add the endpoints to `/contracts` via a contract PR (they are not in §8).
 4. Test: changing `sanity.z_gate` changes the classification without a deploy and produces a signed decision (criterion **5**, together with D3-07).
@@ -742,7 +742,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 3. Fixtures include manipulated-review sellers. Contract suite, flag.
 
 **D5-07 — Negotiation engine and guardrails** · F1 · Blocked by: D5-04, D4-04, D3-07 · TL: **yes**
-1. `trato/negotiation/`: a playbook state machine for spec §3.6 steps 1–8 (open with context, justified
+1. `apex/negotiation/`: a playbook state machine for spec §3.6 steps 1–8 (open with context, justified
    anchor, ask for volume tiers first, decreasing counter-offer ladder up to `target_discount`, authorized
    counterparts only, detect closing signals, written summary, ask for EUR/USD/CNY if the currency is unsupported).
 2. **Deterministic guardrails** checked on every drafted message **before** sending: never exceed
@@ -777,7 +777,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 ### DEV-6 — Frontend & UX
 
 > The UI never computes business results (money, bands, scores, eligibility). It displays what the API
-> returns. `@trato/scoring` may only be used for **previews** that pass the same vectors, and the API stays authoritative.
+> returns. `@apex/scoring` may only be used for **previews** that pass the same vectors, and the API stays authoritative.
 
 **D6-01 — Web foundation** · F0 · Blocked by: D1-01, D2-01 · TL: no
 1. Fix Tailwind v4: use `@tailwindcss/postcss` in `postcss.config.js` and a CSS-first `@theme` in
@@ -787,7 +787,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
    problem+json error mapper, and a global `428 reauth_required` handler hook (used by D6-03).
 4. MSW handlers generated from the OpenAPI examples, so screens can be built before the backend exists.
 5. BFF route handlers in `apps/web/src/app/api/**` that only proxy to the orchestrator (token from DEV-1's `getAccessToken()`), generate `Idempotency-Key`, and pass SSE through.
-- Done when: `pnpm --filter @trato/web build` passes and a mocked page renders in three languages.
+- Done when: `pnpm --filter @apex/web build` passes and a mocked page renders in three languages.
 
 **D6-02 — Design system** · F0 · Blocked by: D6-01 · TL: no
 1. Storybook for `packages/ui`. Add Table (TanStack), Dialog, Tabs, Select, Toast, Tooltip, DropdownMenu, Popover.
@@ -796,7 +796,7 @@ Format of each task: **ID — title** · Phase · Blocked by · TL approval · S
 3. Accessibility checks (axe) in Storybook.
 
 **D6-03 — Signing UX** · F0 · Blocked by: D6-02, D2-08 · TL: **yes**
-1. Key enrollment with `@trato/crypto-client`, and the passkey (WebAuthn) ceremony that opens a signing session.
+1. Key enrollment with `@apex/crypto-client`, and the passkey (WebAuthn) ceremony that opens a signing session.
 2. A persistent header indicator: signer, countdown `mm:ss` computed from the server `expires_at` (corrected
    for clock offset), and signatures remaining. On expiry the panel switches to read-only with a
    "re-authenticate to sign" button, **without a reload or lost context**.
@@ -865,8 +865,8 @@ The scaffold was generated quickly and is **not** spec-compliant in these places
 | Wrong `untrusted` band (scores 20–24 return `low`), hardcoded constants | `packages/scoring/src/seller/*` | D3-06 |
 | Invented `× 1.5` implausible rule, `sampleSize: 0`, `referencePriceEur = price` | `packages/scoring/src/sanity/engine.ts` | D3-07 |
 | Invented MCDA defaults (`0.5` margin, `0.8` spec match), no hard-constraint pre-filter | `packages/scoring/src/mcda/engine.ts` | D3-09 |
-| Graph return type wrong for `mypy --strict` | `trato/agents/graph.py` | D4-01 |
-| Gateway has no capabilities, retries, fallback, budget or accounting | `trato/llm/gateway.py` | D4-04 |
+| Graph return type wrong for `mypy --strict` | `apex/agents/graph.py` | D4-01 |
+| Gateway has no capabilities, retries, fallback, budget or accounting | `apex/llm/gateway.py` | D4-04 |
 | Typo `allowCounterpartites` | `browser-worker/src/jobs/negotiation.ts` | D5-01 |
 | Tailwind v4 set up with v3-style config and PostCSS plugin (build fails) | `apps/web` | D6-01 |
 

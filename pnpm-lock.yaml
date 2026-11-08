@@ -32,7 +32,7 @@ importers:
 
   apps/browser-worker:
     dependencies:
-      '@trato/shared-types':
+      '@apex/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
       bullmq:
@@ -63,10 +63,10 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@types/node':
@@ -93,19 +93,19 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.20.0
         version: 8.21.3(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@trato/crypto-client':
+      '@apex/crypto-client':
         specifier: workspace:*
         version: link:../../packages/crypto-client
-      '@trato/money':
+      '@apex/money':
         specifier: workspace:*
         version: link:../../packages/money
-      '@trato/scoring':
+      '@apex/scoring':
         specifier: workspace:*
         version: link:../../packages/scoring
-      '@trato/shared-types':
+      '@apex/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
-      '@trato/ui':
+      '@apex/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       next:
@@ -139,10 +139,10 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.5
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@types/node':
@@ -175,14 +175,14 @@ importers:
 
   packages/crypto-client:
     dependencies:
-      '@trato/shared-types':
+      '@apex/shared-types':
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
@@ -230,14 +230,14 @@ importers:
 
   packages/money:
     dependencies:
-      '@trato/shared-types':
+      '@apex/shared-types':
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
@@ -255,14 +255,14 @@ importers:
 
   packages/scoring:
     dependencies:
-      '@trato/shared-types':
+      '@apex/shared-types':
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
@@ -284,10 +284,10 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
@@ -362,10 +362,10 @@ importers:
       '@storybook/react-vite':
         specifier: ^8.4.0
         version: 8.6.19(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rollup@4.68.0)(storybook@8.6.19(prettier@3.9.10))(typescript@5.9.3)(vite@5.4.21(@types/node@22.20.5)(lightningcss@1.33.0))
-      '@trato/eslint-config':
+      '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@trato/tsconfig':
+      '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/react':

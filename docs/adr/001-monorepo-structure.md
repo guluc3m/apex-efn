@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-TRATO is a hybrid application with:
+APEX-EFN is a hybrid application with:
 - TypeScript frontend (Next.js) and browser automation (Puppeteer)
 - Python backend (FastAPI, LangGraph) for agent orchestration
 - Shared business logic (money, scoring) needed in both languages

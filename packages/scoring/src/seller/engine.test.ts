@@ -1,4 +1,4 @@
-import type { RawSellerSignals } from '@trato/shared-types/seller'
+import type { RawSellerSignals } from '@apex/shared-types/seller'
 import { describe, expect, it } from 'vitest'
 
 import { SellerConfidenceEngine } from './engine.js'

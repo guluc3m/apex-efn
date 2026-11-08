@@ -1,4 +1,4 @@
-import type { PriceSanityBand, PriceSanityCheck, SanityDecision } from '@trato/shared-types/sanity'
+import type { PriceSanityBand, PriceSanityCheck, SanityDecision } from '@apex/shared-types/sanity'
 
 import { modifiedZScore, relativeDeviation, robustStatistics } from './statistics.js'
 

@@ -1,5 +1,5 @@
-import type { Currency } from '@trato/shared-types/currency'
-import { CURRENCY_MINOR_UNITS } from '@trato/shared-types/currency'
+import type { Currency } from '@apex/shared-types/currency'
+import { CURRENCY_MINOR_UNITS } from '@apex/shared-types/currency'
 
 export interface MoneyInput {
   amountMinor: number

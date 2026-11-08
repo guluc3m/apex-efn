@@ -123,7 +123,7 @@ coste es GPU-segundo: medirlo igual.
 
 1. ¿Qué descuento máximo autorizado por categoría? Sin esto el negociador no puede operar.
 2. ¿Se aceptan contrapartidas (prepago, contrato marco) en el MVP o solo en fase 2?
-3. ¿La orden de compra la emite TRATO o se exporta para el ERP del cliente?
+3. ¿La orden de compra la emite APEX-EFN o se exporta para el ERP del cliente?
 4. ¿Hay un responsable de cumplimiento que firme los docs de ToS por plataforma?
 5. RESUELTO: fuente de datos financieros = CSV en el onboarding.
 6. RESUELTO: divisas soportadas = EUR, USD, CNY.

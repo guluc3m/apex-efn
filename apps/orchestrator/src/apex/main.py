@@ -6,8 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from trato.api import router
-from trato.config import settings
+from apex.api import router
+from apex.config import settings
 
 
 @asynccontextmanager
@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="TRATO Orchestrator",
+    title="APEX-EFN Orchestrator",
     description="Agent orchestration for B2B sourcing and negotiation",
     version="0.1.0",
     lifespan=lifespan,

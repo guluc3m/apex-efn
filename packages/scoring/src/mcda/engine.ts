@@ -1,6 +1,6 @@
-import type { FinancialFit } from '@trato/shared-types/financial'
-import type { Offer } from '@trato/shared-types/offer'
-import type { SellerConfidence } from '@trato/shared-types/seller'
+import type { FinancialFit } from '@apex/shared-types/financial'
+import type { Offer } from '@apex/shared-types/offer'
+import type { SellerConfidence } from '@apex/shared-types/seller'
 
 /**
  * MCDA weights configuration

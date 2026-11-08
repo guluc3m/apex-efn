@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 
-from trato.config import settings
+from apex.config import settings
 
 
 class LLMRole(StrEnum):

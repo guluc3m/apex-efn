@@ -1,5 +1,5 @@
 {
-  "extends": "@trato/tsconfig/library.json",
+  "extends": "@apex/tsconfig/library.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

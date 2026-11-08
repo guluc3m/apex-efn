@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin()
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@trato/ui', '@trato/shared-types', '@trato/money', '@trato/scoring', '@trato/crypto-client'],
+  transpilePackages: ['@apex/ui', '@apex/shared-types', '@apex/money', '@apex/scoring', '@apex/crypto-client'],
   typedRoutes: true,
 }
 

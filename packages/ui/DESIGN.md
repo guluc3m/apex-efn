@@ -1,6 +1,6 @@
 ---
-name: TRATO
-description: Sistema visual oscuro de TRATO, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo puro y esquinas rectas, sin color de acento; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
+name: APEX-EFN
+description: Sistema visual oscuro de APEX-EFN, plataforma B2B de compras por volumen donde un humano decide y firma. Monocromo puro y esquinas rectas, sin color de acento; mezcla de la sobriedad de Vercel, la geometría recta de Render y las cifras grandes de la app de Revolut.
 colors:
   background: "#0b0b0d"
   surface: "#131316"
@@ -291,7 +291,7 @@ components:
     easing: "cubic-bezier(0.65, 0, 0.35, 1)"
 ---
 
-# TRATO — Sistema de diseño
+# APEX-EFN — Sistema de diseño
 
 > Ámbito: `apps/web/**` y `packages/ui/**` (carril DEV-6). El bloque YAML de arriba es la **fuente de
 > verdad de los valores** (la clave `shadcn` mapea los tokens a las variables de shadcn/ui, tal como se
@@ -301,7 +301,7 @@ components:
 
 ## 1. Carácter
 
-TRATO es una herramienta donde alguien **firma compras con dinero real**. Tiene que parecer un
+APEX-EFN es una herramienta donde alguien **firma compras con dinero real**. Tiene que parecer un
 instrumento preciso, no una demo.
 
 - **Vercel:** monocromo sobre casi negro, tipografía Geist, bordes finos, botón principal claro, cero adorno.
@@ -317,7 +317,7 @@ Solo modo oscuro. No hay tema claro: un único tema evita mantener dos paletas y
 
 Patrones que hacen que una interfaz parezca generada y que este sistema excluye:
 
-- Modo claro o un segundo tema. TRATO es solo oscuro.
+- Modo claro o un segundo tema. APEX-EFN es solo oscuro.
 - Negro puro (`#000`) de fondo o blanco puro para texto: cansan la vista y hacen vibrar el contraste.
 - Brillos radiales detrás del hero, tarjetas con degradado, glassmorphism, sombras de color.
 - Titulares que entran con desenfoque.
@@ -344,7 +344,7 @@ Aplican a todo componente y pantalla. Se revisan en cada PR (§12).
 3. **Sin cursivas al azar.** Nunca se resalta una palabra suelta con cursiva o color.
 4. **Mono solo donde hace falta.** `mono` es para IDs, hashes, claves públicas y código. Nunca para
    cifras, titulares ni etiquetas «técnicas».
-5. **Sistema de diseño siempre.** Solo componentes de `@trato/ui` y tokens de este archivo.
+5. **Sistema de diseño siempre.** Solo componentes de `@apex/ui` y tokens de este archivo.
 6. **Mostrar el producto real.** Pantallas, capturas y stories con datos reales del contrato (fixtures),
    no textos de relleno.
 7. **Agrandar lo principal.** Un elemento dominante por vista (el precio, la decisión, el KPI con
@@ -529,9 +529,9 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 ### Prompt base para agentes que tocan UI
 
 ```text
-Eres DEV-6. Construye <componente/vista> para TRATO siguiendo packages/ui/DESIGN.md al pie de la letra:
+Eres DEV-6. Construye <componente/vista> para APEX-EFN siguiendo packages/ui/DESIGN.md al pie de la letra:
 los valores del YAML son los únicos permitidos y las secciones 2 y 3 son obligatorias. Solo modo oscuro.
-Usa componentes de @trato/ui, iconos lucide y textos vía next-intl (es/en/zh). La UI no calcula dinero ni
+Usa componentes de @apex/ui, iconos lucide y textos vía next-intl (es/en/zh). La UI no calcula dinero ni
 bandas: muestra lo que devuelve la API. Usa datos reales de los fixtures del contrato.
 Implementa carga/vacío/error/datos. Entrega componente + story + test axe. Después renderiza, haz una
 captura con Playwright, revísala contra la checklist de la sección 12 y corrige lo que falle antes de
@@ -541,9 +541,9 @@ terminar. Indica qué reglas comprobaste.
 ### Componentes del lienzo
 
 El lienzo de wireframes ya separa las piezas comunes en componentes que importan todas las pantallas. Son el
-borrador de los componentes de `@trato/ui` y deben implementarse con el mismo nombre de concepto:
+borrador de los componentes de `@apex/ui` y deben implementarse con el mismo nombre de concepto:
 
-| Lienzo | `@trato/ui` | Notas |
+| Lienzo | `@apex/ui` | Notas |
 |---|---|---|
 | `UiCabecera` | `AppHeader` | navegación primaria de `apps/web/NAVIGATION.md` §4 |
 | `UiChipFirma` | `SigningSessionIndicator` | estados activa, caduca pronto, caducada, sin firmas, sin sesión |

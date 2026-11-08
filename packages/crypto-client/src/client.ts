@@ -198,7 +198,7 @@ export class SigningClient {
 
   private openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('trato-signing', 1)
+      const request = indexedDB.open('apex-signing', 1)
 
       request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'))
       request.onsuccess = () => resolve(request.result)

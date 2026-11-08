@@ -3,7 +3,7 @@ import type {
   RawSellerSignals,
   SellerConfidence,
   SellerConfidenceBand,
-} from '@trato/shared-types/seller'
+} from '@apex/shared-types/seller'
 
 import { detectReviewAnomalies, hasAnyAnomaly, type ReviewAnomalyDetectorConfig } from './anomalies.js'
 import { normalizeSignals, type NormalizationConfig } from './normalize.js'

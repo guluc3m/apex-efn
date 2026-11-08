@@ -1,5 +1,5 @@
 {
-  "name": "trato",
+  "name": "apex-efn",
   "version": "0.1.0",
   "private": true,
   "description": "B2B sourcing inteligente y negociación automatizada de compras por volumen",
@@ -19,8 +19,8 @@
     "clean": "turbo clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "db:migrate": "pnpm --filter @trato/web db:migrate",
-    "db:generate": "pnpm --filter @trato/web db:generate",
+    "db:migrate": "pnpm --filter @apex/web db:migrate",
+    "db:generate": "pnpm --filter @apex/web db:generate",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",

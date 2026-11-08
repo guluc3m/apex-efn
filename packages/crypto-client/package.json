@@ -1,5 +1,5 @@
 {
-  "name": "@trato/crypto-client",
+  "name": "@apex/crypto-client",
   "version": "0.1.0",
   "private": true,
   "license": "UNLICENSED",
@@ -21,11 +21,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@trato/shared-types": "workspace:*"
+    "@apex/shared-types": "workspace:*"
   },
   "devDependencies": {
-    "@trato/eslint-config": "workspace:*",
-    "@trato/tsconfig": "workspace:*",
+    "@apex/eslint-config": "workspace:*",
+    "@apex/tsconfig": "workspace:*",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
     "vitest": "^3.2.6"
