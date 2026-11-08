@@ -11,7 +11,7 @@ These facts were checked against the GitHub API on the repository itself:
 1. The repository is **private** and the organisation is on the **free plan**.
 2. Branch protection and repository rulesets return **403** with "Upgrade to GitHub Pro or make this repository public". The `main` branch cannot be protected today.
 3. CODEOWNERS is only **enforced** (review required, reviews auto-requested) on private repositories with GitHub Pro, Team or Enterprise, or on public repositories. The file `.github/CODEOWNERS` is in place, but on this plan it does not request reviews or block merges.
-4. GitHub Actions is **disabled for this repository by organisation policy**. The CI jobs in `.github/workflows/ci.yml` do not run, so no required status check can report a result.
+4. GitHub Actions is **disabled for this repository by organisation policy**: the organisation allows Actions only for "selected repositories", and this repository is not selected. The CI jobs in `.github/workflows/ci.yml` do not run, so no required status check can report a result. An organisation admin can fix this under **Organisation Settings → Actions → General → Policies** by adding this repository to the selected list. On the free plan, runs for private repositories consume the organisation's shared Actions minutes.
 
 Consequence: until one of the options below is chosen, the rules in this file are enforced **by convention** only. Every author must still get one approval from another lane, and the Tech Lead must merge `needs-tech-lead` PRs.
 
@@ -58,7 +58,7 @@ These do not need a paid plan. Apply them now under **Settings → General**.
    - Check **Automatically delete head branches**.
 2. Click **Save** for each section if the page shows one.
 
-Verify afterwards with the API: `merge_commit_allowed=false`, `rebase_merge_allowed=false`, `squash_merge_allowed=true`, `delete_branch_on_merge=true`.
+Verify afterwards with the API (`GET /repos/<owner>/<repo>`): `allow_merge_commit=false`, `allow_rebase_merge=false`, `allow_squash_merge=true`, `delete_branch_on_merge=true`.
 
 ## Steps to apply the branch protection (once option A or B is in place)
 
@@ -85,4 +85,4 @@ gh api repos/<owner>/<repo>/rulesets        # 403 on the free plan for a private
 gh api repos/<owner>/<repo>/branches/main/protection   # 403 on the free plan for a private repo
 ```
 
-Replace `<owner>/<repo>` with the repository path. Do not run these with a token that has write permissions.
+Replace `<owner>/<repo>` with the repository path. All three are read-only `GET` calls. The protection endpoint needs a token with admin access to the repository.
