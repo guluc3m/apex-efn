@@ -280,8 +280,8 @@ components:
     count: 4
     fill: "{colors.ink}"
     shading: "none"
-    sphereDiameter: "20px"
-    gap: "28px"
+    sphereDiameter: "32px"
+    gap: "12px"
     arcHeight: "0.31 × distancia"
     swapDuration: "650ms"
     swapPause: "150ms"
