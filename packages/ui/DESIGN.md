@@ -451,7 +451,11 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
 - Animación permitida = feedback: confirmación de firma, guardado, fila nueva resaltada brevemente,
   cambio de banda tras recalcular.
 - Prohibido: entradas de página, desenfoques, rebotes y parallax.
-- Los bucles solo existen en el dithering (§9) y en el indicador de carga (§9.2); nunca en la interfaz.
+- Los bucles solo existen en el campo de puntos (§9), el indicador de carga (§9.2) y `ShiningText`.
+- **`ShiningText`:** un brillo que recorre el texto en bucle (2 s, lineal), de `ink-muted` a `ink`. Solo
+  para trabajo que un agente está haciendo **ahora**: «Redactando la contraoferta…», «Buscando ofertas…»,
+  «Analizando el CSV…». Nunca en títulos, cifras o estados terminados. Lleva `role="status"`; con reduced
+  motion queda estático en `ink-muted`.
 - `prefers-reduced-motion`: se reduce todo a cambios de opacidad instantáneos.
 
 ## 9. Campo de puntos y carga
@@ -470,8 +474,9 @@ La UI **muestra, no calcula**: importes, bandas, puntuaciones y elegibilidad vie
   rejilla y se lee como «burbujeo»; la intensidad mantiene la retícula intacta.
 - **Estabilidad:** Atkinson reordena muchos puntos ante cambios pequeños, así que el patrón se recalcula a
   `recomputeFps` y la transición de intensidad suaviza el resto.
-- **Motivo:** pendiente de decidir (las esferas quedan descartadas). Lo que se dibuje debe ser determinista
-  y, a ser posible, decir algo del producto.
+- **Motivo (en prueba):** autómata celular elemental, regla 30, sembrado con una sola celda. La generación
+  más nueva entra por arriba y el campo baja; las filas antiguas pierden intensidad hacia abajo. Es binario
+  por naturaleza, así que no pasa por Atkinson: la escala de grises sale de la edad de la fila.
 - **Animaciones** acordadas, independientes del motivo:
   1. **Revelado al cargar**, una vez, en `revealDuration`.
   2. **Estado del sistema:** más movimiento mientras algo trabaja; una onda al terminar con éxito.
