@@ -27,6 +27,8 @@ from apex.negotiation.ports import (
     Extraction,
     InMemoryAccountSendLog,
     InMemoryNegotiationStore,
+    InMemorySellerGuard,
+    InMemorySellerSendLog,
 )
 from apex.negotiation.templates import render
 from apex.negotiation.text import find_prices
@@ -158,6 +160,8 @@ class Harness:
     sanity: BandSanity
     store: InMemoryNegotiationStore
     send_log: InMemoryAccountSendLog
+    seller_log: InMemorySellerSendLog
+    seller_guard: InMemorySellerGuard
     clock: FixedClock
 
 
@@ -173,6 +177,8 @@ def harness(
     s = sanity or BandSanity()
     store = InMemoryNegotiationStore()
     log = InMemoryAccountSendLog()
+    seller_log = InMemorySellerSendLog()
+    guard = InMemorySellerGuard()
     clock = FixedClock(NOW)
     counter = itertools.count(1)
     engine = NegotiationEngine(
@@ -182,10 +188,12 @@ def harness(
         sanity=s,
         store=store,
         send_log=log,
+        seller_log=seller_log,
+        seller_guard=guard,
         clock=clock,
         new_id=lambda: f"id-{next(counter)}",
     )
-    return Harness(engine, chat, d, s, store, log, clock)
+    return Harness(engine, chat, d, s, store, log, seller_log, guard, clock)
 
 
 async def run_autonomous(
