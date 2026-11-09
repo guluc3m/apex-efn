@@ -497,6 +497,39 @@ export const zSavings = z.object({
 
 export type savingsZodType = z.infer<typeof zSavings>
 
+/**
+ * `llm` is a draft from the `negotiator` role; `template` is the deterministic playbook text,
+ * used when no draft passed the guardrails.
+ */
+export const zNegotiationDraftSource = z.enum(['llm', 'template'])
+
+export type negotiationDraftSourceZodType = z.infer<typeof zNegotiationDraftSource>
+
+/**
+ * Message the agent wrote but did not send: Phase 1 sends nothing without a human approval
+ * (spec 3.6 step 5). `text` is the exact text that will be sent, so the approver sees no surprise.
+ */
+export const zNegotiationDraft = z.object({
+  id: z.string(),
+  text: z.string(),
+  source: zNegotiationDraftSource,
+  created_at: z.string().datetime(),
+})
+
+export type negotiationDraftZodType = z.infer<typeof zNegotiationDraft>
+
+export const zNegotiationDraftRef = z.object({
+  draft_id: z.string(),
+})
+
+export type negotiationDraftRefZodType = z.infer<typeof zNegotiationDraftRef>
+
+export const zNegotiationHumanMessage = z.object({
+  content: z.string().min(1),
+})
+
+export type negotiationHumanMessageZodType = z.infer<typeof zNegotiationHumanMessage>
+
 export const zNegotiationControlRequest = z.object({
   reason: z.string().max(500).nullish(),
 })
@@ -1138,6 +1171,7 @@ export const zNegotiation = z.object({
   rounds: z.number().int().gte(0),
   max_rounds: z.number().int().nullable(),
   guardrail_hits: z.array(zGuardrailHit),
+  pending_draft: zNegotiationDraft.nullish(),
 })
 
 export type negotiationZodType = z.infer<typeof zNegotiation>
@@ -1152,11 +1186,20 @@ export const zNegotiationMessage = z.object({
   role: zMessageRole,
   content: z.string(),
   at: z.string().datetime(),
+  seq: z.number().int().gte(0).optional(),
+  approved_by: z.string().nullish(),
   screenshot_ref: z.string().nullish(),
   redactions: z.number().int().gte(0).optional(),
 })
 
 export type negotiationMessageZodType = z.infer<typeof zNegotiationMessage>
+
+export const zNegotiationMessagePage = z.object({
+  items: z.array(zNegotiationMessage),
+  next_cursor: z.string().nullable(),
+})
+
+export type negotiationMessagePageZodType = z.infer<typeof zNegotiationMessagePage>
 
 export const zDealState = z.enum([
   'open',
@@ -2012,6 +2055,74 @@ export const zAbortNegotiationPath = z.object({
  * Negotiation aborted.
  */
 export const zAbortNegotiationResponse = zNegotiation
+
+export const zGetNegotiationPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Negotiation.
+ */
+export const zGetNegotiationResponse = zNegotiation
+
+export const zListNegotiationMessagesPath = z.object({
+  id: z.string().min(1),
+})
+
+export const zListNegotiationMessagesQuery = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().gte(1).lte(200).optional().default(50),
+})
+
+/**
+ * Page of messages, oldest first.
+ */
+export const zListNegotiationMessagesResponse = zNegotiationMessagePage
+
+export const zSendHumanNegotiationMessageBody = zNegotiationHumanMessage
+
+export const zSendHumanNegotiationMessageHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zSendHumanNegotiationMessagePath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Message sent and recorded in the transcript.
+ */
+export const zSendHumanNegotiationMessageResponse = zNegotiationMessage
+
+export const zApproveNegotiationDraftBody = zNegotiationDraftRef
+
+export const zApproveNegotiationDraftHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zApproveNegotiationDraftPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Draft sent. The negotiation shows the state after sending.
+ */
+export const zApproveNegotiationDraftResponse = zNegotiation
+
+export const zRejectNegotiationDraftBody = zNegotiationDraftRef
+
+export const zRejectNegotiationDraftHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zRejectNegotiationDraftPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Draft replaced by the template and sent.
+ */
+export const zRejectNegotiationDraftResponse = zNegotiation
 
 export const zOpenSigningSessionBody = zOpenSigningSessionRequest
 

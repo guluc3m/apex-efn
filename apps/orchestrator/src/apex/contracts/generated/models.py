@@ -470,6 +470,32 @@ class Savings(BaseModel):
     vs_market_median: NullableMoney | None
 
 
+class NegotiationDraftSource(StrEnum):
+    """
+    `llm` is a draft from the `negotiator` role; `template` is the deterministic playbook text,
+    used when no draft passed the guardrails.
+    """
+
+    llm = "llm"
+    template = "template"
+
+
+class NegotiationDraftRef(BaseModel):
+    draft_id: Annotated[
+        str, Field(description="Id of the `pending_draft` being approved or rejected.")
+    ]
+
+
+class NegotiationHumanMessage(BaseModel):
+    content: Annotated[
+        str,
+        Field(
+            description="Text to send, as written. It must respect the negotiation's configured message length\nlimit; a longer message is rejected rather than truncated.",
+            min_length=1,
+        ),
+    ]
+
+
 class NegotiationControlRequest(BaseModel):
     reason: Annotated[str | None, Field(max_length=500)] = None
 
@@ -1271,6 +1297,18 @@ class ScoreBreakdown(BaseModel):
     penalty: Annotated[float | None, Field(ge=0.0)] = None
 
 
+class NegotiationDraft(BaseModel):
+    """
+    Message the agent wrote but did not send: Phase 1 sends nothing without a human approval
+    (spec 3.6 step 5). `text` is the exact text that will be sent, so the approver sees no surprise.
+    """
+
+    id: str
+    text: str
+    source: NegotiationDraftSource
+    created_at: AwareDatetime
+
+
 class GuardrailHit(BaseModel):
     code: GuardrailCode
     at: AwareDatetime
@@ -1283,6 +1321,19 @@ class NegotiationMessage(BaseModel):
     role: MessageRole
     content: str
     at: AwareDatetime
+    seq: Annotated[
+        int | None,
+        Field(
+            description="Monotonic position in the conversation. The transcript is ordered by it.",
+            ge=0,
+        ),
+    ] = None
+    approved_by: Annotated[
+        str | None,
+        Field(
+            description="Principal that approved an agent message in semi-automatic mode. Null otherwise."
+        ),
+    ] = None
     screenshot_ref: str | None = None
     redactions: Annotated[int | None, Field(ge=0)] = None
 
@@ -1586,6 +1637,17 @@ class Negotiation(BaseModel):
     rounds: Annotated[int, Field(ge=0)]
     max_rounds: int | None
     guardrail_hits: list[GuardrailHit]
+    pending_draft: Annotated[
+        NegotiationDraft | None,
+        Field(
+            description="Draft waiting for a human. Present when `state` is `awaiting_approval`."
+        ),
+    ] = None
+
+
+class NegotiationMessagePage(BaseModel):
+    items: list[NegotiationMessage]
+    next_cursor: str | None
 
 
 class FinancialImport(BaseModel):
