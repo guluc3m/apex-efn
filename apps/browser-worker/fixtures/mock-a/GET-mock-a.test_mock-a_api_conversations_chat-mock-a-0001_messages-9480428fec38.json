@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/conversations/chat-mock-a-0001/messages?after=0"
+  },
+  "response": {
+    "body": "{\"conversation_id\":\"chat-mock-a-0001\",\"messages\":[{\"id\":1,\"from\":\"buyer\",\"body\":\"Hello, what volume tiers do you offer for 5000 units?\",\"sent_at\":1794248243},{\"id\":2,\"from\":\"vendor\",\"body\":\"Our volume tiers are: 500-1999 units: EUR 4.45; 2000+ units: EUR 4.15.\",\"sent_at\":1794248243}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "285",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

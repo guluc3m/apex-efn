@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-standard-gbp/metrics"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-standard-gbp\",\"registered_at\":1613347200,\"first_order_at\":1615334400,\"active_months_12\":12,\"orders\":{\"lifetime\":980,\"last_12m\":210},\"turnover_12m\":{\"amount\":\"120000.00\",\"currency\":\"GBP\"},\"repeat_customers_pct\":33,\"catalog\":{\"listings\":120,\"churn_30d_pct\":5,\"completeness_pct\":78},\"feedback\":{\"count\":95,\"count_12m\":40,\"score_0_100\":90,\"rated_orders\":95,\"verified_pct\":75},\"reply_rate_pct\":91,\"badges\":{\"kyc\":true,\"buyer_protection\":false,\"escrow\":true},\"disputes_pct\":2,\"refunds_pct\":3}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "502",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

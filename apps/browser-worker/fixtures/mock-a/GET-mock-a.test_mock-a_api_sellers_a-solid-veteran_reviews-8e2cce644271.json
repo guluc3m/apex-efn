@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-solid-veteran/reviews"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-solid-veteran\",\"reviews\":[{\"review_id\":\"rv-a-solid-veteran-1\",\"stars\":5,\"comment\":\"Second order of the same gloves. Stitching is consistent and the packaging survived ocean freight without damage.\",\"posted_at\":1789344000,\"verified_order\":true},{\"review_id\":\"rv-a-solid-veteran-2\",\"stars\":5,\"comment\":\"Samples matched the production run closely. Lead time was 3 days longer than quoted but they messaged ahead.\",\"posted_at\":1782950400,\"verified_order\":true},{\"review_id\":\"rv-a-solid-veteran-3\",\"stars\":4,\"comment\":\"Good quality overall, two cartons arrived with dented corners. Refund for the damaged units was processed in a week.\",\"posted_at\":1776729600,\"verified_order\":true},{\"review_id\":\"rv-a-solid-veteran-4\",\"stars\":5,\"comment\":\"Repeat purchase for our warehouse team. Spec sheet is accurate, certificates attached without asking.\",\"posted_at\":1765238400,\"verified_order\":true},{\"review_id\":\"rv-a-solid-veteran-5\",\"stars\":4,\"comment\":\"Price is competitive for the volume. Communication is slow on weekends, otherwise fine.\",\"posted_at\":1761782400,\"verified_order\":true},{\"review_id\":\"rv-a-solid-veteran-6\",\"stars\":5,\"comment\":\"Very professional. Tiered pricing applied automatically on the second PO.\",\"posted_at\":1755475200,\"verified_order\":false},{\"review_id\":\"rv-a-solid-veteran-7\",\"stars\":5,\"comment\":\"Used them for a pilot batch before scaling. Quality control photos before dispatch were a nice touch.\",\"posted_at\":1748304000,\"verified_order\":true},{\"review_id\":\"rv-a-solid-veteran-8\",\"stars\":4,\"comment\":\"Solid supplier. Minor labelling mistake on the inner boxes, corrected in the reprint at no cost.\",\"posted_at\":1739232000,\"verified_order\":true}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "1679",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

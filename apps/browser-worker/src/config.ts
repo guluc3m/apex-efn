@@ -24,6 +24,7 @@ const envSchema = z.object({
   ADAPTER_MIN_INTERVAL_MS: z.coerce.number().int().min(0).default(1000),
   ADAPTER_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
   ADAPTER_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  MOCK_A_BASE_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
 })
 
 export interface WorkerConfig {
@@ -44,6 +45,8 @@ export interface WorkerConfig {
   adapterMinIntervalMs: number
   adapterMaxRetries: number
   adapterTimeoutMs: number
+  /** Origin of the mock marketplace JSON API (`mock-a`). Unset means the adapter is not registered. */
+  mockABaseUrl: string | undefined
 }
 
 /** Throws with the names of the invalid keys only. Values (the token, proxy credentials) never appear in the message. */
@@ -72,5 +75,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): WorkerConfig {
     adapterMinIntervalMs: values.ADAPTER_MIN_INTERVAL_MS,
     adapterMaxRetries: values.ADAPTER_MAX_RETRIES,
     adapterTimeoutMs: values.ADAPTER_TIMEOUT_MS,
+    mockABaseUrl: values.MOCK_A_BASE_URL,
   }
 }

@@ -300,6 +300,35 @@ describe('PoliteHttpClient: status mapping', () => {
     expect(transport.requests).toHaveLength(1)
   })
 
+  it('uses a classifier on the 4xx body, and falls back to the defaults when it returns nothing', async () => {
+    const classify = (_status: number, body: string) =>
+      body.includes('unknown_chat') ? ('unknown_chat' as const) : undefined
+    const transport = new ScriptedTransport([
+      response(404, '{"error":"unknown_chat"}'),
+      response(404, '{"error":"something_else"}'),
+      response(400, '{"error":"unknown_chat"}'),
+    ])
+    const { client } = clientWith(transport)
+    await expect(
+      failureOf(client.getJson(`${ORIGIN}/c/1`, OK, { classify, notFound: 'unknown_seller' }))
+    ).resolves.toMatchObject({ code: 'unknown_chat', status: 404, retryable: false })
+    await expect(
+      failureOf(client.getJson(`${ORIGIN}/c/2`, OK, { classify, notFound: 'unknown_seller' }))
+    ).resolves.toMatchObject({ code: 'unknown_seller', status: 404 })
+    await expect(
+      failureOf(client.getJson(`${ORIGIN}/c/3`, OK, { classify }))
+    ).resolves.toMatchObject({ code: 'unknown_chat', status: 400 })
+    expect(transport.requests).toHaveLength(3)
+  })
+
+  it('never classifies a 5xx or 429 answer, so retries still apply to them', async () => {
+    const classify = () => 'unknown_chat' as const
+    const transport = new ScriptedTransport([response(503, 'down'), response(200, '{"ok":true}')])
+    const { client } = clientWith(transport)
+    await expect(client.getJson(`${ORIGIN}/p/1`, OK, { classify })).resolves.toEqual({ ok: true })
+    expect(transport.requests).toHaveLength(2)
+  })
+
   it('returns the body as text without parsing it', async () => {
     const transport = new ScriptedTransport([response(200, '<html>plain</html>')])
     const { client } = clientWith(transport)

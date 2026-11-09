@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-gloves-03"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-gloves-03\",\"name\":\"Nitrile Gloves Size M, Box of 100 Medical Use\",\"url\":\"/mock-a/api/products/a-gloves-03\",\"price\":{\"amount\":\"4.30\",\"currency\":\"EUR\"},\"min_order_qty\":200,\"vendor\":{\"vendor_id\":\"a-single-review\",\"display_name\":\"Madrid Quick Goods S.L. (mock)\"},\"sku_group\":\"nitrile-gloves-m-box100\",\"details\":\"Nitrile medical examination gloves, size M, box of 100. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"nitrile\"},{\"key\":\"size\",\"value\":\"M\"},{\"key\":\"thickness\",\"value\":\"4 mil\"},{\"key\":\"powder\",\"value\":\"powder-free\"},{\"key\":\"pieces_per_box\",\"value\":\"100\"}],\"certs\":[\"CE\"],\"images\":[\"/static/img/a-gloves-03.png\"],\"bulk_pricing\":[{\"from_qty\":200,\"to_qty\":999,\"price\":\"4.30\"},{\"from_qty\":1000,\"to_qty\":null,\"price\":\"4.05\"}],\"delivery\":{\"fee\":\"10.00\",\"currency\":\"EUR\",\"eta_days\":[6,12]},\"trade_term\":\"DAP\",\"production_days\":12}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "866",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

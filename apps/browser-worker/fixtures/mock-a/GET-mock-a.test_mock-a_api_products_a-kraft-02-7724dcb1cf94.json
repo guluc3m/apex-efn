@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-kraft-02"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-kraft-02\",\"name\":\"Corrugated Kraft Box 30x20x15 cm, Export Carton\",\"url\":\"/mock-a/api/products/a-kraft-02\",\"price\":{\"amount\":\"2.90\",\"currency\":\"CNY\"},\"min_order_qty\":5000,\"vendor\":{\"vendor_id\":\"a-standard-offplatform\",\"display_name\":\"Dongguan Harbor Hardware (mock)\"},\"sku_group\":\"kraft-box-30x20x15\",\"details\":\"Export corrugated kraft box, 30x20x15 cm, priced in CNY per unit. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"corrugated kraft\"},{\"key\":\"dimensions_cm\",\"value\":\"30x20x15\"},{\"key\":\"wall\",\"value\":\"single\"},{\"key\":\"units_per_bundle\",\"value\":\"20\"}],\"certs\":[],\"images\":[\"/static/img/a-kraft-02.png\"],\"bulk_pricing\":[{\"from_qty\":5000,\"to_qty\":19999,\"price\":\"2.90\"},{\"from_qty\":20000,\"to_qty\":null,\"price\":\"2.65\"}],\"delivery\":null,\"trade_term\":\"FOB\",\"production_days\":20}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "816",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-gloves-06"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-gloves-06\",\"name\":\"Nitrile Gloves Size M, 100 per Box, Export Packing\",\"url\":\"/mock-a/api/products/a-gloves-06\",\"price\":{\"amount\":\"34.50\",\"currency\":\"CNY\"},\"min_order_qty\":2000,\"vendor\":{\"vendor_id\":\"a-standard-offplatform\",\"display_name\":\"Dongguan Harbor Hardware (mock)\"},\"sku_group\":\"nitrile-gloves-m-box100\",\"details\":\"Export-packed nitrile gloves, size M, box of 100, priced in CNY. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"nitrile\"},{\"key\":\"size\",\"value\":\"M\"},{\"key\":\"thickness\",\"value\":\"4 mil\"},{\"key\":\"powder\",\"value\":\"powder-free\"},{\"key\":\"pieces_per_box\",\"value\":\"100\"}],\"certs\":[\"EN 455\",\"CE\"],\"images\":[\"/static/img/a-gloves-06.png\"],\"bulk_pricing\":[{\"from_qty\":2000,\"to_qty\":4999,\"price\":\"34.50\"},{\"from_qty\":5000,\"to_qty\":null,\"price\":\"33.00\"}],\"delivery\":null,\"trade_term\":\"FOB\",\"production_days\":20}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "857",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

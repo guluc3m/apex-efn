@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/search?q=kraft&page=1"
+  },
+  "response": {
+    "body": "{\"query\":\"kraft\",\"total\":2,\"page\":1,\"results\":[{\"listing_id\":\"a-kraft-01\",\"name\":\"Corrugated Kraft Box 30x20x15 cm, Single Wall\",\"url\":\"/mock-a/api/products/a-kraft-01\",\"price\":{\"amount\":\"0.37\",\"currency\":\"EUR\"},\"min_order_qty\":2000,\"vendor\":{\"vendor_id\":\"a-solid-veteran\",\"display_name\":\"Shenzhen Bright Gloves Co. (mock)\"}},{\"listing_id\":\"a-kraft-02\",\"name\":\"Corrugated Kraft Box 30x20x15 cm, Export Carton\",\"url\":\"/mock-a/api/products/a-kraft-02\",\"price\":{\"amount\":\"2.90\",\"currency\":\"CNY\"},\"min_order_qty\":5000,\"vendor\":{\"vendor_id\":\"a-standard-offplatform\",\"display_name\":\"Dongguan Harbor Hardware (mock)\"}}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "613",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-kraft-01"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-kraft-01\",\"name\":\"Corrugated Kraft Box 30x20x15 cm, Single Wall\",\"url\":\"/mock-a/api/products/a-kraft-01\",\"price\":{\"amount\":\"0.37\",\"currency\":\"EUR\"},\"min_order_qty\":2000,\"vendor\":{\"vendor_id\":\"a-solid-veteran\",\"display_name\":\"Shenzhen Bright Gloves Co. (mock)\"},\"sku_group\":\"kraft-box-30x20x15\",\"details\":\"Single-wall corrugated kraft shipping box, 30x20x15 cm, sold per unit. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"corrugated kraft\"},{\"key\":\"dimensions_cm\",\"value\":\"30x20x15\"},{\"key\":\"wall\",\"value\":\"single\"},{\"key\":\"units_per_bundle\",\"value\":\"25\"}],\"certs\":[\"FSC\"],\"images\":[\"/static/img/a-kraft-01.png\"],\"bulk_pricing\":[{\"from_qty\":2000,\"to_qty\":9999,\"price\":\"0.37\"},{\"from_qty\":10000,\"to_qty\":null,\"price\":\"0.34\"}],\"delivery\":{\"fee\":\"15.00\",\"currency\":\"EUR\",\"eta_days\":[5,9]},\"trade_term\":\"DAP\",\"production_days\":9}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "862",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

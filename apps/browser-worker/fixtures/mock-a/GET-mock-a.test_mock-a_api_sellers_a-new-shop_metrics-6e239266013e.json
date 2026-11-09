@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-new-shop/metrics"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-new-shop\",\"registered_at\":1792022400,\"first_order_at\":null,\"active_months_12\":null,\"orders\":{\"lifetime\":null,\"last_12m\":null},\"turnover_12m\":null,\"repeat_customers_pct\":null,\"catalog\":{\"listings\":2,\"churn_30d_pct\":null,\"completeness_pct\":null},\"feedback\":{\"count\":null,\"count_12m\":null,\"score_0_100\":null,\"rated_orders\":null,\"verified_pct\":null},\"reply_rate_pct\":null,\"badges\":{\"kyc\":null,\"buyer_protection\":null,\"escrow\":null},\"disputes_pct\":null,\"refunds_pct\":null}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "483",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

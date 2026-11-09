@@ -65,6 +65,23 @@ describe('loadConfig', () => {
     expect(config.proxyDatacenterUrl).toBeUndefined()
   })
 
+  it('leaves the mock-a adapter unset by default, and reads its origin when given', () => {
+    expect(loadConfig({ BROWSER_WORKER_TOKEN: TOKEN }).mockABaseUrl).toBeUndefined()
+    expect(loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, MOCK_A_BASE_URL: '' }).mockABaseUrl).toBe(
+      undefined
+    )
+    expect(
+      loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, MOCK_A_BASE_URL: 'http://127.0.0.1:8002' })
+        .mockABaseUrl
+    ).toBe('http://127.0.0.1:8002')
+  })
+
+  it('rejects a malformed mock-a origin and names only the key', () => {
+    expect(() => loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, MOCK_A_BASE_URL: 'not a url' })).toThrow(
+      'MOCK_A_BASE_URL'
+    )
+  })
+
   it('rejects a missing token and names only the key', () => {
     expect(() => loadConfig({})).toThrow('BROWSER_WORKER_TOKEN')
   })

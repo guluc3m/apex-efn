@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": "{\"body\":\"Could you confirm the MOQ for 5000 units?\"}",
+    "method": "POST",
+    "url": "http://mock-a.test/mock-a/api/conversations/chat-mock-a-0002/messages"
+  },
+  "response": {
+    "body": "{\"message\":{\"id\":1,\"from\":\"buyer\",\"body\":\"Could you confirm the MOQ for 5000 units?\",\"sent_at\":1794248243}}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "107",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 201
+  }
+}

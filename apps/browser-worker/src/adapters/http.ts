@@ -94,6 +94,18 @@ export interface PoliteHttpClientOptions {
 export interface RequestOptions {
   /** Code for a 404 answer. Defaults to `unknown_product`; seller calls pass `unknown_seller`. */
   notFound?: WorkerErrorCode
+  /**
+   * Maps a 4xx answer to a closed code from the platform's own error body, for example `{"error":"unknown_chat"}`.
+   * Return undefined to keep the default mapping. Never called for 429 or 5xx answers.
+   */
+  classify?: (status: number, body: string) => WorkerErrorCode | undefined
+}
+
+interface SendRequest extends RequestOptions {
+  method: 'GET' | 'POST'
+  url: string
+  headers?: Record<string, string>
+  body?: string
 }
 
 type Outcome =
@@ -151,16 +163,16 @@ export class PoliteHttpClient {
 
   async getJson<T>(url: string, schema: z.ZodTypeAny, options: RequestOptions = {}): Promise<T> {
     const response = await this.send({
+      ...options,
       method: 'GET',
       url,
       headers: { accept: 'application/json' },
-      notFound: options.notFound,
     })
     return parseJsonBody<T>(response.body, schema)
   }
 
   async getText(url: string, options: RequestOptions = {}): Promise<string> {
-    const response = await this.send({ method: 'GET', url, notFound: options.notFound })
+    const response = await this.send({ ...options, method: 'GET', url })
     return response.body
   }
 
@@ -171,22 +183,16 @@ export class PoliteHttpClient {
     options: RequestOptions = {}
   ): Promise<T> {
     const response = await this.send({
+      ...options,
       method: 'POST',
       url,
       headers: { accept: 'application/json', 'content-type': 'application/json' },
       body: JSON.stringify(payload),
-      notFound: options.notFound,
     })
     return parseJsonBody<T>(response.body, schema)
   }
 
-  private async send(req: {
-    method: 'GET' | 'POST'
-    url: string
-    headers?: Record<string, string>
-    body?: string
-    notFound?: WorkerErrorCode
-  }): Promise<HttpResponse> {
+  private async send(req: SendRequest): Promise<HttpResponse> {
     for (let retry = 0; ; retry += 1) {
       const outcome = await this.attempt(req)
       if (outcome.ok) {
@@ -205,13 +211,7 @@ export class PoliteHttpClient {
     }
   }
 
-  private async attempt(req: {
-    method: 'GET' | 'POST'
-    url: string
-    headers?: Record<string, string>
-    body?: string
-    notFound?: WorkerErrorCode
-  }): Promise<Outcome> {
+  private async attempt(req: SendRequest): Promise<Outcome> {
     if (this.options.robots !== null) {
       await this.options.robots.assertAllowed(req.url, this.options.userAgent)
     }
@@ -236,10 +236,10 @@ export class PoliteHttpClient {
     if (response.status >= 200 && response.status < 300) {
       return { ok: true, response }
     }
-    return this.failureFor(response, req.notFound)
+    return this.failureFor(response, req)
   }
 
-  private failureFor(response: HttpResponse, notFound: WorkerErrorCode | undefined): Outcome {
+  private failureFor(response: HttpResponse, req: RequestOptions): Outcome {
     const { status } = response
     if (status === 429) {
       const seconds = retryAfterSeconds(response.headers['retry-after'], this.options.clock)
@@ -254,6 +254,11 @@ export class PoliteHttpClient {
         }),
       }
     }
+    const classified =
+      status >= 400 && status < 500 ? req.classify?.(status, response.body) : undefined
+    if (classified !== undefined) {
+      return this.final(new WorkerError(classified, status, { retryable: false }))
+    }
     if (status === 401 || status === 403) {
       if (CAPTCHA_MARKER.test(response.body)) {
         return this.final(new WorkerError('captcha', CAPTCHA_STATUS, { retryable: true }))
@@ -261,7 +266,9 @@ export class PoliteHttpClient {
       return this.final(new WorkerError('session_invalid', 401, { retryable: false }))
     }
     if (status === 404) {
-      return this.final(new WorkerError(notFound ?? 'unknown_product', 404, { retryable: false }))
+      return this.final(
+        new WorkerError(req.notFound ?? 'unknown_product', 404, { retryable: false })
+      )
     }
     if (status >= 500) {
       return {

@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-review-burst/reviews"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-review-burst\",\"reviews\":[{\"review_id\":\"rv-a-review-burst-1\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780444800,\"verified_order\":true},{\"review_id\":\"rv-a-review-burst-2\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780444800,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-3\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780531200,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-4\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780617600,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-5\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780617600,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-6\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780704000,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-7\",\"stars\":5,\"comment\":\"Great product, fast shipping, highly recommend!\",\"posted_at\":1780790400,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-8\",\"stars\":5,\"comment\":\"Great product fast shipping highly recommended.\",\"posted_at\":1780876800,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-9\",\"stars\":5,\"comment\":\"Great product, fast ship, highly recommend!!\",\"posted_at\":1780963200,\"verified_order\":false},{\"review_id\":\"rv-a-review-burst-10\",\"stars\":5,\"comment\":\"Great product. Fast shipping. Highly recommend\",\"posted_at\":1781049600,\"verified_order\":false}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "1558",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

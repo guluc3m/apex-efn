@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-single-review/reviews"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-single-review\",\"reviews\":[{\"review_id\":\"rv-a-single-review-1\",\"stars\":5,\"comment\":\"Fast reply and the order was exactly as described. Only one order so far but very happy.\",\"posted_at\":1788393600,\"verified_order\":true}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "236",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}
