@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
@@ -23,6 +24,8 @@ from apex.config import Settings, settings
 from apex.platform.telemetry import setup_telemetry
 from apex.wiring import AppServices, build_app_services, seed_demo_tenants
 
+logger = structlog.get_logger(__name__)
+
 
 def build_idempotency_store(cfg: Settings) -> IdempotencyStore:
     """Select the idempotency store from settings. Redis is only constructed when selected."""
@@ -38,13 +41,14 @@ def create_app(
 ) -> FastAPI:
     """Build the application. Tests pass their own settings, store and service graph."""
     active = cfg or settings
-    active_services = services or build_app_services(active)
+    active_services = services if services is not None else _safe_services(active)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         """Application lifespan handler."""
         # Startup: the demo tenants get their config baseline, so reads and proposals have a version.
-        await seed_demo_tenants(active_services)
+        if active_services is not None:
+            await seed_demo_tenants(active_services)
         yield
         # Shutdown
 
@@ -72,7 +76,8 @@ def create_app(
     )
 
     application.include_router(router, prefix="/v1")
-    _wire_services(application, active_services)
+    if active_services is not None:
+        _wire_services(application, active_services)
     setup_telemetry(application, service_name="apex-orchestrator")
 
     @application.get("/health")
@@ -81,6 +86,20 @@ def create_app(
         return {"status": "healthy"}
 
     return application
+
+
+def _safe_services(cfg: Settings) -> AppServices | None:
+    """Build the service graph, or boot without one.
+
+    The graph reads ``config/defaults/tenant-config.v1.json``. If that file is not where the app expects it
+    (a container image built from ``apps/orchestrator`` alone, for instance), the app must still start and
+    answer 501 with a reason: crashing at import would take the whole process down with no diagnosis.
+    """
+    try:
+        return build_app_services(cfg)
+    except (FileNotFoundError, KeyError, RuntimeError) as exc:
+        logger.error("service graph unavailable, routes will answer 501", extra={"error": str(exc)})
+        return None
 
 
 def _wire_services(application: FastAPI, services: AppServices) -> None:

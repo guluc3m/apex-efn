@@ -230,3 +230,39 @@ def test_a_csv_upload_says_the_importer_is_not_wired(app: FastAPI) -> None:
     # once that lands the importer (D3-04) is next. Either way the answer names the owning lane.
     assert "not wired yet" in response.json()["detail"]
     assert "owner: DEV-" in response.json()["detail"]
+
+
+# ----- the app boots even when the config defaults are not there ----------------------------------
+
+
+def test_the_app_boots_when_the_config_defaults_are_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A container image built from apps/orchestrator alone has no config/defaults. It must not crash.
+
+    The service graph reads that file while it is built, so the failure is simulated at the seam that reads
+    it: ``build_app_services`` itself.
+    """
+    import apex.main as main_module
+
+    def _missing(_cfg: Any) -> Any:
+        raise FileNotFoundError("config/defaults/tenant-config.v1.json")
+
+    monkeypatch.setattr(main_module, "build_app_services", _missing)
+    app = create_app(Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore())
+    with TestClient(app) as client:
+        assert client.get("/health").status_code == 200
+        sourcing = client.post("/v1/sourcing-requests", json={"text": "x"}, headers=_h())
+        missions = client.post("/v1/missions", json={}, headers=_h())
+    # The routes that depend on the service graph answer 501 with a reason instead of crashing the process.
+    assert sourcing.status_code == 501, sourcing.text
+    assert "wire SourcingService" in sourcing.json()["detail"]
+    assert missions.status_code == 501
+
+
+def test_the_app_still_boots_when_the_service_graph_is_unavailable() -> None:
+    app = create_app(
+        Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore(), services=None
+    )
+    with TestClient(app) as client:
+        assert client.get("/health").status_code == 200
