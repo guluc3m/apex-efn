@@ -1,13 +1,17 @@
-"""Human controls for a negotiation (D5-08) and their wire mapping.
+"""Human controls and the contract view of a negotiation (D5-07c, on top of D5-08).
 
 The engine owns the state machine; this module is the seam DEV-4's graph and DEV-6's UI call:
 
 - :func:`takeover`, :func:`resume`, :func:`abort` return control between a human and the agent.
-  ``POST /v1/negotiations/{id}/takeover|resume|abort`` in ``apex.api.negotiations`` is the HTTP face of
-  the same three calls, so behaviour cannot drift between the two callers.
-- :func:`to_contract` maps the domain session onto the contract's ``Negotiation`` schema. It is the only
-  place that knows which internal outcome is which public state and which internal guardrail hit has a
-  counterpart in the contract's closed enum.
+- :class:`NegotiationControlService` adds the rest of the semi-automatic loop: read the negotiation, read
+  its transcript, approve or reject the drafted message, and send a message as a human.
+- :func:`to_contract` and :func:`transcript_page` map the domain session onto the contract's
+  ``Negotiation`` and ``NegotiationMessage``. This is the only place that knows which internal outcome is
+  which public state, which internal guardrail hit has a counterpart in the contract's closed enum, and
+  how a transcript message gets its stable public id.
+
+``POST /v1/negotiations/...`` in ``apex.api.negotiations`` is the HTTP face of the same calls, so the
+behaviour cannot drift between the graph and the browser.
 
 The seller stays claimed while a human holds the chat: no other mission of the tenant may open a second
 conversation with the same seller (D5-08 anti-abuse, see :class:`~apex.negotiation.ports.SellerGuard`).
@@ -23,7 +27,11 @@ from apex.common.ids import IdGenerator
 from apex.contracts.generated.models import (
     GuardrailCode,
     GuardrailHit,
+    MessageRole,
     Negotiation,
+    NegotiationDraft,
+    NegotiationDraftSource,
+    NegotiationMessage,
     NegotiationState,
 )
 from apex.negotiation.engine import NegotiationEngine
@@ -31,6 +39,8 @@ from apex.negotiation.models import (
     NEGOTIATION_STRATEGY,
     NegotiationOutcome,
     NegotiationSession,
+    PendingDraft,
+    TranscriptMessage,
 )
 from apex.negotiation.ports import (
     ChatLine,
@@ -41,14 +51,25 @@ from apex.negotiation.ports import (
 )
 
 __all__ = [
+    "DEFAULT_PAGE_SIZE",
+    "MAX_PAGE_SIZE",
     "NegotiationControlService",
     "abort",
     "build_default_control",
+    "message_id",
     "resume",
     "state_of",
     "takeover",
     "to_contract",
+    "to_message",
+    "transcript_page",
 ]
+
+DEFAULT_PAGE_SIZE = 50
+"""Messages per transcript page when the caller does not ask for a size (contract ``Limit`` default)."""
+
+MAX_PAGE_SIZE = 200
+"""Upper bound of the contract's ``Limit`` parameter."""
 
 ABORT_REASON_DEFAULT = "human_abort"
 """``stop_reason`` recorded when the caller aborts without a reason. A closed label, not a business value."""
@@ -123,6 +144,60 @@ def _hits_of(session: NegotiationSession) -> list[GuardrailHit]:
     return [GuardrailHit(code=code, at=at) for code, at in latest.items()]
 
 
+def _draft_of(pending: PendingDraft | None) -> NegotiationDraft | None:
+    """The draft waiting for a human, if any. Absent means nothing is waiting."""
+    if pending is None:
+        return None
+    return NegotiationDraft(
+        id=pending.id,
+        text=pending.text,
+        source=NegotiationDraftSource(pending.source),
+        created_at=pending.created_at,
+    )
+
+
+def message_id(session: NegotiationSession, message: TranscriptMessage) -> str:
+    """Stable public id of a transcript message.
+
+    The engine numbers messages with ``seq`` inside the negotiation and does not need a global id; the
+    contract asks for one, so it is derived from the pair that is already unique.
+    """
+    return f"{session.id}:{message.seq}"
+
+
+def to_message(session: NegotiationSession, message: TranscriptMessage) -> NegotiationMessage:
+    """One transcript message in the contract's shape."""
+    return NegotiationMessage(
+        id=message_id(session, message),
+        negotiation_id=session.id,
+        role=MessageRole(message.role),
+        content=message.text,
+        at=message.at,
+        seq=message.seq,
+        approved_by=message.approved_by,
+        screenshot_ref=None,
+        redactions=0,
+    )
+
+
+def transcript_page(
+    session: NegotiationSession, *, cursor: str | None, limit: int
+) -> tuple[list[NegotiationMessage], str | None]:
+    """A page of the transcript, oldest first, with the cursor of the next page.
+
+    The cursor is the ``seq`` of the last message already delivered, which is why it is opaque to the
+    client but stable across pages even while the conversation grows. A cursor that is not a number is a
+    client error and raises ``ValueError``; the router turns it into a 400.
+    """
+    after = 0 if cursor is None else int(cursor)
+    if after < 0:
+        raise ValueError("cursor must not be negative")
+    rows = [message for message in session.transcript if message.seq > after]
+    page = rows[:limit]
+    next_cursor = str(page[-1].seq) if len(rows) > limit else None
+    return [to_message(session, message) for message in page], next_cursor
+
+
 def to_contract(session: NegotiationSession) -> Negotiation:
     """The contract's ``Negotiation`` view of a session.
 
@@ -137,6 +212,7 @@ def to_contract(session: NegotiationSession) -> Negotiation:
         rounds=session.rounds_sent,
         max_rounds=session.params.max_rounds,
         guardrail_hits=_hits_of(session),
+        pending_draft=_draft_of(session.pending),
     )
 
 
@@ -162,6 +238,29 @@ class NegotiationControlService:
     ) -> NegotiationSession:
         return await self._engine.abort(
             negotiation_id, tenant_id=tenant_id, reason=reason or ABORT_REASON_DEFAULT
+        )
+
+    async def get(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:
+        """Read one negotiation. Same tenant check as every other call (``not_found`` for a stranger)."""
+        return await self._engine.get(negotiation_id, tenant_id=tenant_id)
+
+    async def approve(
+        self, negotiation_id: str, draft_id: str, *, approver: str, tenant_id: str
+    ) -> NegotiationSession:
+        return await self._engine.approve(
+            negotiation_id, draft_id, approver=approver, tenant_id=tenant_id
+        )
+
+    async def reject(
+        self, negotiation_id: str, draft_id: str, *, tenant_id: str
+    ) -> NegotiationSession:
+        return await self._engine.reject(negotiation_id, draft_id, tenant_id=tenant_id)
+
+    async def send_human(
+        self, negotiation_id: str, text: str, *, author: str, tenant_id: str
+    ) -> NegotiationSession:
+        return await self._engine.send_human(
+            negotiation_id, text, author=author, tenant_id=tenant_id
         )
 
 

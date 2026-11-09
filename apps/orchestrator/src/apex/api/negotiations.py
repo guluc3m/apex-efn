@@ -1,45 +1,89 @@
-"""Negotiation control endpoints (owner: DEV-5, D5-08).
+"""Negotiation endpoints (owner: DEV-5): human controls, transcript and the approval loop.
 
 - ``POST /v1/negotiations/{id}/takeover``  a human takes the chat; the agent stops sending.
 - ``POST /v1/negotiations/{id}/resume``    control returns to the agent.
 - ``POST /v1/negotiations/{id}/abort``     stop cleanly; terminal and idempotent.
+- ``GET  /v1/negotiations/{id}``           state, including the draft waiting for a human.
+- ``GET  /v1/negotiations/{id}/messages``  transcript, oldest first, cursor-paginated.
+- ``POST /v1/negotiations/{id}/messages``  a human holding the chat writes to the seller.
+- ``POST /v1/negotiations/{id}/approve``   approve the drafted message and send it.
+- ``POST /v1/negotiations/{id}/reject``    discard the draft and send the playbook template instead.
 
-Every response is the contract's ``Negotiation`` view (:func:`apex.negotiation.api.to_contract`). Refusals
-are RFC 9457 problems with a closed ``reason``:
+Every negotiation response is the contract's ``Negotiation`` view (:func:`apex.negotiation.api.to_contract`).
+Refusals are RFC 9457 problems with a closed ``reason``:
 
-- ``not_found``            the id does not exist for this tenant (another tenant's is indistinguishable).
-- ``terminal``             the negotiation already finished; it cannot be taken over or resumed.
-- ``not_in_human_control`` ``resume`` without a previous ``takeover``.
+- ``not_found``             the id does not exist for this tenant (another tenant's is indistinguishable).
+- ``terminal``              the negotiation already finished; it cannot be taken over, resumed or written to.
+- ``not_in_human_control``  ``resume`` or a human message without a previous ``takeover``.
+- ``human_in_control``      approving a draft while a person holds the chat; resume first.
+- ``draft_not_pending``     the draft id is unknown, already sent, or the negotiation is finished.
+- ``draft_superseded``      new seller messages arrived; the draft is stale, review the new state.
+- ``rate_limited``          the configured hourly cap (per account or per seller) is reached.
+- ``empty_message`` / ``message_too_long``  the human text breaks the configured limits (422).
 
 Authorization is provisional: the tenant comes from the dev-only header until DEV-1's D1-05 lands, and the
 role check (``buyer|admin|owner``) belongs to the same task. The contract already declares the 403 for it.
+The approver/author identity is provisional in the same way; see :func:`get_actor_id`.
 """
 
 from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, Query
 
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
-from apex.contracts.generated.models import Negotiation, NegotiationControlRequest
-from apex.negotiation.api import NegotiationControlService, build_default_control, to_contract
+from apex.contracts.generated.models import (
+    Negotiation,
+    NegotiationControlRequest,
+    NegotiationDraftRef,
+    NegotiationHumanMessage,
+    NegotiationMessage,
+    NegotiationMessagePage,
+)
+from apex.negotiation.api import (
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
+    NegotiationControlService,
+    build_default_control,
+    to_contract,
+    to_message,
+    transcript_page,
+)
 from apex.negotiation.engine import NegotiationError
 
 router = APIRouter()
 
 _control: NegotiationControlService = build_default_control()
 
+ACTOR_HEADER = "X-Actor-Id"
+"""Header carrying who approves or writes, until DEV-1's D1-05 supplies the authenticated principal."""
+
+LOCAL_ACTOR = "local-user"
+"""Recorded as approver/author when the caller sends no actor. Replaced by the principal in D1-05."""
+
 
 def get_negotiation_control() -> NegotiationControlService:
     """Overridable dependency.
 
-    Defaults to an in-process engine over an in-memory store, which serves the control calls but cannot see
-    negotiations created by another process. When DEV-4 wires the mission graph, it injects the shared
-    engine here (or in ``apex.wiring``), exactly like the gate router's dependency.
+    Defaults to an in-process engine over an in-memory store, which serves every call in this router but
+    cannot see negotiations created by another process. When DEV-4 wires the mission graph, it injects the
+    shared engine here (or in ``apex.wiring``), exactly like the gate router's dependency.
     """
     return _control
+
+
+def get_actor_id(
+    x_actor_id: Annotated[str | None, Header(alias=ACTOR_HEADER)] = None,
+) -> str:
+    """Who approved the draft or wrote the message.
+
+    Temporary, like the tenant header: there is no authenticated principal until DEV-1's D1-05 lands, so the
+    caller states the actor and a fixed local identity is used when it does not. D1-05 replaces this
+    dependency with ``current_principal().user_id``; nothing else in this file changes.
+    """
+    return x_actor_id or LOCAL_ACTOR
 
 
 #: Closed error code -> (HTTP status, problem title).
@@ -48,11 +92,27 @@ _ERRORS: dict[str, tuple[int, str]] = {
     "terminal": (409, "Conflict"),
     "not_in_human_control": (409, "Conflict"),
     "seller_busy": (409, "Conflict"),
+    "human_in_control": (409, "Conflict"),
+    "draft_not_pending": (409, "Conflict"),
+    "draft_superseded": (409, "Conflict"),
+    "rate_limited": (409, "Conflict"),
+    "no_chat": (409, "Conflict"),
+    "empty_message": (422, "Unprocessable Entity"),
+    "message_too_long": (422, "Unprocessable Entity"),
 }
 
 
 def _problem(exc: NegotiationError) -> Problem:
     status, title = _ERRORS.get(exc.code, (409, "Conflict"))
+    if status == 422:
+        # The contract's validation problem carries the offending field, not just a message.
+        return Problem(
+            status,
+            title,
+            detail=str(exc),
+            reason=exc.code,
+            errors=[{"field": "content", "code": exc.code, "message": str(exc)}],
+        )
     return Problem(status, title, detail=str(exc), reason=exc.code)
 
 
@@ -103,35 +163,85 @@ async def abort_negotiation(
     return to_contract(session)
 
 
-# D5-07c contract: these five operations are declared in contracts/openapi.yaml and are implemented in
-# the D5-07c branch. They answer 501 until then, like every other unfinished route in this app.
-
-
-@router.get("/{id}")
-async def get_negotiation(id: str) -> None:
+@router.get("/{id}", response_model=Negotiation)
+async def get_negotiation(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    control: Annotated[NegotiationControlService, Depends(get_negotiation_control)],
+) -> Negotiation:
     """State of a negotiation, including the draft waiting for a human."""
-    raise not_implemented()
+    try:
+        session = await control.get(id, tenant_id=tenant_id)
+    except NegotiationError as exc:
+        raise _problem(exc) from exc
+    return to_contract(session)
 
 
-@router.get("/{id}/messages")
-async def list_negotiation_messages(id: str) -> None:
-    """Transcript of the chat with the seller, oldest first."""
-    raise not_implemented()
+@router.get("/{id}/messages", response_model=NegotiationMessagePage)
+async def list_negotiation_messages(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    control: Annotated[NegotiationControlService, Depends(get_negotiation_control)],
+    cursor: Annotated[str | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE,
+) -> NegotiationMessagePage:
+    """Transcript of the chat with the seller, oldest first.
+
+    Pending drafts are not here: they are ``pending_draft`` on the negotiation until a human decides.
+    """
+    try:
+        session = await control.get(id, tenant_id=tenant_id)
+    except NegotiationError as exc:
+        raise _problem(exc) from exc
+    try:
+        items, next_cursor = transcript_page(session, cursor=cursor, limit=limit)
+    except ValueError as exc:
+        raise Problem(400, "Bad Request", detail=str(exc), reason="invalid_cursor") from exc
+    return NegotiationMessagePage(items=items, next_cursor=next_cursor)
 
 
-@router.post("/{id}/messages")
-async def send_human_negotiation_message(id: str) -> None:
-    """A human holding the chat writes to the seller."""
-    raise not_implemented()
+@router.post("/{id}/messages", response_model=NegotiationMessage, status_code=201)
+async def send_human_negotiation_message(
+    id: str,
+    body: NegotiationHumanMessage,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    control: Annotated[NegotiationControlService, Depends(get_negotiation_control)],
+    actor: Annotated[str, Depends(get_actor_id)],
+) -> NegotiationMessage:
+    """A human holding the chat writes to the seller. The text is sent as written."""
+    try:
+        session = await control.send_human(id, body.content, author=actor, tenant_id=tenant_id)
+    except NegotiationError as exc:
+        raise _problem(exc) from exc
+    return to_message(session, session.transcript[-1])
 
 
-@router.post("/{id}/approve")
-async def approve_negotiation_draft(id: str) -> None:
-    """A human approves the drafted message and it is sent to the seller."""
-    raise not_implemented()
+@router.post("/{id}/approve", response_model=Negotiation)
+async def approve_negotiation_draft(
+    id: str,
+    body: NegotiationDraftRef,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    control: Annotated[NegotiationControlService, Depends(get_negotiation_control)],
+    actor: Annotated[str, Depends(get_actor_id)],
+) -> Negotiation:
+    """A human approves the drafted message; it is sent, and the negotiation moves on."""
+    try:
+        session = await control.approve(id, body.draft_id, approver=actor, tenant_id=tenant_id)
+    except NegotiationError as exc:
+        raise _problem(exc) from exc
+    return to_contract(session)
 
 
-@router.post("/{id}/reject")
-async def reject_negotiation_draft(id: str) -> None:
-    """A human rejects the drafted message; the deterministic template is sent instead."""
-    raise not_implemented()
+@router.post("/{id}/reject", response_model=Negotiation)
+async def reject_negotiation_draft(
+    id: str,
+    body: NegotiationDraftRef,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    control: Annotated[NegotiationControlService, Depends(get_negotiation_control)],
+) -> Negotiation:
+    """A human rejects the drafted message; the deterministic playbook template is sent instead."""
+    try:
+        session = await control.reject(id, body.draft_id, tenant_id=tenant_id)
+    except NegotiationError as exc:
+        raise _problem(exc) from exc
+    return to_contract(session)
