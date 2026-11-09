@@ -81,7 +81,7 @@ paths:
     post:
       tags: [chats]
       operationId: openChat
-      summary: Open (or reuse) the conversation with a seller about a product, from a connected account.
+      summary: Open the conversation with a seller about a product, from a connected account. A replay with the same Idempotency-Key returns the same chat.
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
