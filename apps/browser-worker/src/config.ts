@@ -16,6 +16,14 @@ const envSchema = z.object({
   PROXY_RESIDENTIAL_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   PROXY_DATACENTER_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   ARTIFACT_DIR: z.string().min(1).default('./artifacts'),
+  ADAPTER_USER_AGENT: z
+    .string()
+    .min(1)
+    .max(200)
+    .default('APEX-EFN-bot/0.1 (+https://example.invalid/bot)'),
+  ADAPTER_MIN_INTERVAL_MS: z.coerce.number().int().min(0).default(1000),
+  ADAPTER_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
+  ADAPTER_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
 })
 
 export interface WorkerConfig {
@@ -32,6 +40,10 @@ export interface WorkerConfig {
   proxyResidentialUrl: string | undefined
   proxyDatacenterUrl: string | undefined
   artifactDir: string
+  adapterUserAgent: string
+  adapterMinIntervalMs: number
+  adapterMaxRetries: number
+  adapterTimeoutMs: number
 }
 
 /** Throws with the names of the invalid keys only. Values (the token, proxy credentials) never appear in the message. */
@@ -56,5 +68,9 @@ export function loadConfig(env: NodeJS.ProcessEnv): WorkerConfig {
     proxyResidentialUrl: values.PROXY_RESIDENTIAL_URL,
     proxyDatacenterUrl: values.PROXY_DATACENTER_URL,
     artifactDir: values.ARTIFACT_DIR,
+    adapterUserAgent: values.ADAPTER_USER_AGENT,
+    adapterMinIntervalMs: values.ADAPTER_MIN_INTERVAL_MS,
+    adapterMaxRetries: values.ADAPTER_MAX_RETRIES,
+    adapterTimeoutMs: values.ADAPTER_TIMEOUT_MS,
   }
 }
