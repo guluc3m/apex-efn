@@ -118,6 +118,7 @@ class SourcingService:
             id=self._deps.ids.new_id(),
             tenant_id=tenant_id,
             sourcing_request_id=request.id,
+            quantity=max(1, request.total_quantity),
             status=MissionStatus.QUEUED,
             config_version=config_version,
             created_at=now,

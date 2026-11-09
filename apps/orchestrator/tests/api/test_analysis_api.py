@@ -184,6 +184,7 @@ def _seed_mission(app: FastAPI, *, tenant: str = TENANT) -> None:
                 id="m-1",
                 tenant_id=tenant,
                 sourcing_request_id="sr-1",
+                quantity=100,
                 status=MissionStatus.PLANNED,
                 config_version="cfg-7",
                 created_at=NOW,
