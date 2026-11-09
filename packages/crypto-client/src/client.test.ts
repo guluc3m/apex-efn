@@ -15,12 +15,6 @@ async function signPayload(payload: unknown) {
   return { signature: toBase64(signature), publicKey: toBase64(publicKey) }
 }
 
-describe('canonicalize', () => {
-  it('sorts keys recursively and keeps array order', () => {
-    expect(canonicalize({ b: 1, a: { d: [2, 1], c: null } })).toBe('{"a":{"c":null,"d":[2,1]},"b":1}')
-  })
-})
-
 describe('SigningClient.verifyWithPublicKey', () => {
   const client = new SigningClient()
   const decision = { offerId: 'o1', amountMinor: 1000, action: 'approve' }

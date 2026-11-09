@@ -1,0 +1,58 @@
+{
+  "description": "End to end: parse `input.payload` (JSON text), canonicalize (RFC 8785), hash with SHA-256 (hex), sign the canonical UTF-8 bytes with Ed25519 using `input.secret_key` (hex) and compare with `expected.signature` (standard Base64, padded, as in the API). `input.public_key` is the raw 32-byte key in Base64. Changing any byte of the canonical payload must make verification fail.",
+  "source": "Keys from RFC 8032 TEST 1 and TEST 2. Canonical text from the RFC 8785 reference implementation (npm canonicalize 2.1.0); signatures from pyca/cryptography.",
+  "vectors": [
+    {
+      "name": "gate decision: follow",
+      "input": {
+        "payload": "{\n \"decision_type\": \"follow\",\n \"subject_ref\": \"offer:01JC0MISSION0000000000000A:01JC0OFFER00000000000000A\",\n \"amount\": {\n  \"amount_minor\": 1250000,\n  \"currency\": \"EUR\"\n },\n \"offer\": {\n  \"id\": \"01JC0OFFER00000000000000A\",\n  \"platform\": \"mock-a\",\n  \"unit_price\": {\n   \"amount_minor\": 125,\n   \"currency\": \"CNY\"\n  },\n  \"quantity\": 10000\n },\n \"price_sanity\": {\n  \"band\": \"normal\",\n  \"modified_z\": -0.42,\n  \"sample_size\": 17,\n  \"config_version\": 3\n },\n \"seller_confidence\": {\n  \"score\": 78,\n  \"band\": \"high\",\n  \"model_version\": \"trust-v1\"\n },\n \"financial_verdict\": \"within_budget\",\n \"config_version\": 3,\n \"signing_session_id\": \"01JC0SESSION000000000000A\",\n \"auth_at\": \"2026-11-09T10:00:00Z\"\n}",
+        "secret_key": "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
+        "public_key": "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="
+      },
+      "expected": {
+        "canonical": "{\"amount\":{\"amount_minor\":1250000,\"currency\":\"EUR\"},\"auth_at\":\"2026-11-09T10:00:00Z\",\"config_version\":3,\"decision_type\":\"follow\",\"financial_verdict\":\"within_budget\",\"offer\":{\"id\":\"01JC0OFFER00000000000000A\",\"platform\":\"mock-a\",\"quantity\":10000,\"unit_price\":{\"amount_minor\":125,\"currency\":\"CNY\"}},\"price_sanity\":{\"band\":\"normal\",\"config_version\":3,\"modified_z\":-0.42,\"sample_size\":17},\"seller_confidence\":{\"band\":\"high\",\"model_version\":\"trust-v1\",\"score\":78},\"signing_session_id\":\"01JC0SESSION000000000000A\",\"subject_ref\":\"offer:01JC0MISSION0000000000000A:01JC0OFFER00000000000000A\"}",
+        "payload_hash": "d2de734a368450dea57961bef2237813c3dd58e1c03ad81276f67b986c9e5681",
+        "signature": "72EtNMubaiLauzpWoHSrR7wjVydUQJrFS8Of2mQdvqckvMnODxocxPZtkaxwnjAVURmuscx8IpI5hOrz6NGgCw=="
+      }
+    },
+    {
+      "name": "gate decision: discard with a comment in Spanish and Chinese",
+      "input": {
+        "payload": "{\n \"decision_type\": \"discard\",\n \"reason_code\": \"seller_untrusted\",\n \"comment\": \"Reseñas infladas; 评论可疑\",\n \"subject_ref\": \"offer:m1:o2\",\n \"seller_confidence\": {\n  \"score\": 12.5,\n  \"band\": \"untrusted\",\n  \"model_version\": \"trust-v1\"\n },\n \"config_version\": 4\n}",
+        "secret_key": "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb",
+        "public_key": "PUAXw+hDiVqStwqnTRt+vJyYLM8uxJaMwM1V8Sr0Zgw="
+      },
+      "expected": {
+        "canonical": "{\"comment\":\"Reseñas infladas; 评论可疑\",\"config_version\":4,\"decision_type\":\"discard\",\"reason_code\":\"seller_untrusted\",\"seller_confidence\":{\"band\":\"untrusted\",\"model_version\":\"trust-v1\",\"score\":12.5},\"subject_ref\":\"offer:m1:o2\"}",
+        "payload_hash": "e0dd79f4a6f125028fd0447e66c9a162917931044297fd13abd5f0648a0bba17",
+        "signature": "oOlEpuUTXMRLwnNjcu/cXjHiVNHJVKpzAlRhE6XN4rxla4or/w30/GIwWPPyI+JlClIBgM5/qfxsmQlhzpgKCg=="
+      }
+    },
+    {
+      "name": "config change: sanity threshold",
+      "input": {
+        "payload": "{\n \"decision_type\": \"change_pricing_threshold\",\n \"category\": null,\n \"before\": {\n  \"sanity.z_gate\": 3.5\n },\n \"after\": {\n  \"sanity.z_gate\": 3\n },\n \"config_version\": 5\n}",
+        "secret_key": "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
+        "public_key": "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="
+      },
+      "expected": {
+        "canonical": "{\"after\":{\"sanity.z_gate\":3},\"before\":{\"sanity.z_gate\":3.5},\"category\":null,\"config_version\":5,\"decision_type\":\"change_pricing_threshold\"}",
+        "payload_hash": "551c6e9d3d671ac59504b03888c5cf774a81401b1cb2e6ff813d300cfe437982",
+        "signature": "FbiLf9Vn15rq1nG0LUtMVfzJY9OsHRa8R1jjjrrbEfX1DZyu/h9GkhWDPIF7blOQCXAPpQRMksa9ObbxlGuKDg=="
+      }
+    },
+    {
+      "name": "service event: graph transition",
+      "input": {
+        "payload": "{\n \"event\": \"offer.transition\",\n \"from\": \"sanity_checked\",\n \"to\": \"negotiating\",\n \"actor\": {\n  \"type\": \"agent\",\n  \"id\": \"gate-agent\"\n },\n \"prev_signature_hash\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n \"seq\": 42\n}",
+        "secret_key": "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb",
+        "public_key": "PUAXw+hDiVqStwqnTRt+vJyYLM8uxJaMwM1V8Sr0Zgw="
+      },
+      "expected": {
+        "canonical": "{\"actor\":{\"id\":\"gate-agent\",\"type\":\"agent\"},\"event\":\"offer.transition\",\"from\":\"sanity_checked\",\"prev_signature_hash\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"seq\":42,\"to\":\"negotiating\"}",
+        "payload_hash": "f73759c79e6f2729d210f5d9e0bb15689a8380a6fd7baa6af71f169e526effd7",
+        "signature": "llI+eZ9i/zCje6AmHhrqY24z1zmAosxgwbJtcEGZ00rn0etE9JJHS+Zu44eaKpdEN2Ke1fdWwibL/4tIXCtiBA=="
+      }
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { sha256Hex } from './hash.js'
-import { canonicalize } from './jcs.js'
+import { canonicalBytes } from './jcs.js'
 
 export interface SigningClientOptions {
   keyId: string
@@ -84,7 +84,8 @@ export class SigningClient {
 
       return new Promise((resolve, reject) => {
         request.onsuccess = () => {
-          const result = request.result as { keyPair: CryptoKeyPair; metadata: StoredKey } | undefined
+          const result = request.result as
+            { keyPair: CryptoKeyPair; metadata: StoredKey } | undefined
           if (result) {
             this.keyPair = result.keyPair
             this.keyId = result.metadata.keyId
@@ -117,12 +118,11 @@ export class SigningClient {
     }
 
     // Canonicalize and hash
-    const canonical = canonicalize(payload)
+    const canonical = canonicalBytes(payload)
     const payloadHash = await sha256Hex(canonical)
 
     // Sign the canonical payload (not the hash)
-    const encoder = new TextEncoder()
-    const signatureBuffer = await crypto.subtle.sign(ALGORITHM, this.keyPair.privateKey, encoder.encode(canonical))
+    const signatureBuffer = await crypto.subtle.sign(ALGORITHM, this.keyPair.privateKey, canonical)
 
     return {
       payloadHash,
@@ -140,25 +140,32 @@ export class SigningClient {
       throw new Error('No key loaded')
     }
 
-    const canonical = canonicalize(payload)
-    const encoder = new TextEncoder()
     const signatureBuffer = this.base64ToBuffer(signature)
 
-    return crypto.subtle.verify(ALGORITHM, this.keyPair.publicKey, signatureBuffer, encoder.encode(canonical))
+    return crypto.subtle.verify(
+      ALGORITHM,
+      this.keyPair.publicKey,
+      signatureBuffer,
+      canonicalBytes(payload)
+    )
   }
 
   /**
    * Verify a signature using a provided public key (for server-side verification).
    */
-  async verifyWithPublicKey(payload: unknown, signature: string, publicKeyBase64: string): Promise<boolean> {
+  async verifyWithPublicKey(
+    payload: unknown,
+    signature: string,
+    publicKeyBase64: string
+  ): Promise<boolean> {
     const publicKeyBuffer = this.base64ToBuffer(publicKeyBase64)
-    const publicKey = await crypto.subtle.importKey('raw', publicKeyBuffer, ALGORITHM, true, ['verify'])
+    const publicKey = await crypto.subtle.importKey('raw', publicKeyBuffer, ALGORITHM, true, [
+      'verify',
+    ])
 
-    const canonical = canonicalize(payload)
-    const encoder = new TextEncoder()
     const signatureBuffer = this.base64ToBuffer(signature)
 
-    return crypto.subtle.verify(ALGORITHM, publicKey, signatureBuffer, encoder.encode(canonical))
+    return crypto.subtle.verify(ALGORITHM, publicKey, signatureBuffer, canonicalBytes(payload))
   }
 
   /**
