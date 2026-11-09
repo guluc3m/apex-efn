@@ -70,6 +70,21 @@
     "passkey": "Entrar con passkey",
     "pending": "Pendiente de conectar: el acceso aún no está disponible.",
     "sso": "¿Tu empresa usa SSO? Entra con tu proveedor (pendiente de conectar).",
-    "ed25519": "La firma requiere un navegador compatible con Ed25519."
+    "ed25519": "La firma requiere un navegador compatible con Ed25519.",
+    "queue": {
+      "title": "Cola de decisión",
+      "count": "{count} pendientes",
+      "ready": "Listo para decidir",
+      "lowBand": "Vendedor en banda baja",
+      "sla": "SLA {time}",
+      "seller": "Vendedor {name}",
+      "priceNormal": "Precio normal",
+      "pending": "Pendiente",
+      "sample": "Muestra ilustrativa, no son datos reales.",
+      "confidence": {
+        "high": "Confianza alta · {score}",
+        "low": "Confianza baja · {score}"
+      }
+    }
   }
 }
