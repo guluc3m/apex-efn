@@ -281,3 +281,20 @@ class TestFinding14WrittenAcceptance:
     )
     def test_conditional_or_different_terms_go_to_a_human(self, text: str) -> None:
         assert not confirms(text, self.Q, 5000)
+
+
+class TestFinding15EchoInsideARefusal:
+    async def test_truncated_refusal_is_not_an_acceptance(self) -> None:
+        """The mock's ``truncated`` persona cuts "Sorry, EUR 3.79 is too low for us. Our best..." short."""
+
+        def seller(agent: str, n: int) -> str | None:
+            prices = find_prices(agent)
+            if not prices:
+                return "Our volume tiers are: 500-1999 units: EUR 4.45; 2000+ units: EUR 4.15."
+            return f"Sorry, EUR {prices[-1].minor / 100:.2f} is too low for us. O"
+
+        h = harness(seller, sanity=BandSanity(floor=100))
+        p = params(semi_automatic=False, reference_price_minor=445)
+        s = await run_autonomous(h, await h.engine.start(request(p), idempotency_key="k"))
+        assert all(m.intent is not Intent.SUMMARY for m in s.transcript)
+        assert s.status is NegotiationOutcome.NO_AGREEMENT
