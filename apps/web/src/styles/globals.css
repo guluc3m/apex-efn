@@ -31,6 +31,11 @@
   --bad-subtle: #2e1117;
   --danger: #c4271f;
   --danger-hover: #cf2a22;
+  /* Halo del chat (DESIGN §6): única excepción decorativa, solo en chats. */
+  --halo-1: #8fbb8b;
+  --halo-2: #5aa9ff;
+  --halo-3: #a58bf0;
+  --halo-4: #e07f9c;
   --press: 60ms;
   --fast: 120ms;
   --base: 180ms;
@@ -112,3 +117,43 @@
 @keyframes ap-shine { from { background-position: 200% 0 } to { background-position: -200% 0 } }
 @keyframes ap-pulso { 50% { opacity: 0.6 } }
 @keyframes ap-bota { 0%, 40%, 100% { transform: translateY(0) } 20% { transform: translateY(-16px) } }
+@keyframes ap-msg { from { opacity: 0; transform: translateY(4px) } }
+@keyframes ap-sello { from { transform: scaleX(0) } }
+@keyframes ap-revela { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0) } }
+@keyframes ap-giro { to { --ap-ang: 360deg } }
+@property --ap-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+/* Halo de IA: detrás del compositor y fuera de su panel opaco. Apagado en reposo, tenue con foco, intenso al pensar. */
+.ap-halo { position: relative; isolation: isolate; }
+.ap-halo::before {
+  content: '';
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(from var(--ap-ang), var(--halo-1), var(--halo-2), var(--halo-3), var(--halo-4), var(--halo-1));
+  filter: blur(18px);
+  transition: opacity var(--overlay) var(--easing);
+  animation: ap-giro 16s linear infinite;
+}
+.ap-halo[data-halo='focus']::before { opacity: 0.22; }
+.ap-halo[data-halo='thinking']::before { opacity: 0.55; }
+.ap-halo[data-paused='true']::before { animation-play-state: paused; }
+
+/* Firma (600 ms, una vez): línea de 1 px y revelado del hash. */
+.ap-seal[data-seal='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  background: var(--accent);
+  transform-origin: left;
+  animation: ap-sello 400ms var(--easing-move) both;
+}
+.ap-seal[data-seal='true'] .ap-hash { animation: ap-revela 600ms var(--easing) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-halo::before { animation: none; transition: none; }
+  .ap-seal[data-seal='true']::after, .ap-seal[data-seal='true'] .ap-hash { animation: none; }
+}

@@ -1,1 +1,6 @@
-{}
+{
+  "language": {
+    "menu": "Interface language",
+    "button": "Language: {name}. Change language"
+  }
+}
