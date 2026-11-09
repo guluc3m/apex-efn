@@ -50,9 +50,19 @@ class RawOffer(_Model):
     raw_signals: dict[str, Any] = Field(default_factory=dict)
 
 
+class SkippedListing(_Model):
+    """A listing the adapter found but did not return as an offer, with the contract's closed reason."""
+
+    platform_id: str
+    platform_offer_id: str
+    reason: str
+    currency_raw: str | None = None
+
+
 class WorkerSearchResult(_Model):
     platform_id: str
     offers: list[RawOffer]
+    skipped: list[SkippedListing] = Field(default_factory=list)
     truncated: bool = False
 
 
@@ -92,6 +102,8 @@ class ScrapeResult(_Model):
     collected: int
     kept: int
     duplicates: list[DuplicateOffer]
+    skipped: list[SkippedListing] = Field(default_factory=list)
+    """Listings the adapters refused, with the reason. Visible, never silently dropped."""
     fx_provisional: bool
 
 
@@ -119,12 +131,14 @@ class ScrapingService:
         """Run every step of the plan, then normalise, deduplicate, convert and persist."""
         raw: list[RawOffer] = []
         platforms: list[str] = []
+        skipped: list[SkippedListing] = []
         for step in plan.steps:
             result = await self._deps.worker.search(
                 tenant_id=tenant_id, mission_id=mission_id, step=step, quantity=quantity
             )
             platforms.append(result.platform_id)
             raw.extend(result.offers)
+            skipped.extend(result.skipped)
         kept, duplicates, provisional = await self._normalise(
             tenant_id=tenant_id, mission_id=mission_id, raw=raw
         )
@@ -136,6 +150,7 @@ class ScrapingService:
             collected=len(raw),
             kept=len(kept),
             duplicates=duplicates,
+            skipped=skipped,
             fx_provisional=provisional,
         )
         return outcome
@@ -255,6 +270,7 @@ __all__ = [
     "FxPort",
     "RawOffer",
     "ScrapeResult",
+    "SkippedListing",
     "ScrapingDeps",
     "SUPPORTED_CURRENCIES",
     "ScrapingService",

@@ -106,6 +106,7 @@ class MissionRunner:
                 "offers_kept": scrape.kept,
                 "platforms": scrape.platforms,
                 "duplicates": len(scrape.duplicates),
+                "skipped": len(scrape.skipped),
                 "fx_provisional": scrape.fx_provisional,
             },
         )
