@@ -66,6 +66,103 @@
       "activate": "Activar con passkey",
       "pending": "Pendiente de conectar: la firma y la activación aún no tienen backend",
       "allOrNothing": "Todo o nada: no hay activación parcial."
+    },
+    "page": {
+      "title": "Datos financieros",
+      "intro": "Snapshot activo a {date}.",
+      "lastImport": "Última importación"
     }
+  },
+  "rules": {
+    "title": "Reglas de decisión · versión {version}",
+    "intro": "Cada cambio es una decisión firmada con passkey y crea una versión nueva. Las evaluaciones antiguas guardan la suya.",
+    "scope": "Ámbito",
+    "scopes": {
+      "all": "Toda la empresa",
+      "bearings": "Rodamientos",
+      "valves": "Válvulas"
+    },
+    "caption": "Reglas de decisión efectivas",
+    "rule": "Regla",
+    "value": "Valor",
+    "origin": "Origen",
+    "action": "Acción",
+    "change": "Cambiar",
+    "undefined": "Sin definir",
+    "groups": {
+      "sanity": "Cordura de precio",
+      "seller": "Confianza del vendedor",
+      "signing": "Firma y aprobación",
+      "negotiation": "Negociación"
+    },
+    "values": {
+      "goGate": "Ir a gate",
+      "medium": "media"
+    },
+    "origins": {
+      "template": "Plantilla",
+      "proposed": "Cambio propuesto",
+      "policy": "Tu política",
+      "category": "Por categoría",
+      "required": "Obligatorio"
+    },
+    "proposalTitle": "Cambio propuesto",
+    "impact": "Según el servidor, con las ofertas abiertas: {n} pasarían de normal a atípico y entrarían en la cola de gate.",
+    "reason": "Motivo (obligatorio)",
+    "sign": "Firmar con passkey",
+    "signNote": "Pendiente de conectar: la firma y el cambio de reglas aún no tienen backend",
+    "pending": "Pendiente de conectar",
+    "history": "Historial",
+    "by": {
+      "finance": "Finanzas",
+      "owner": "Owner",
+      "template": "Plantilla"
+    },
+    "names": {
+      "sanity_z_ok": "Precio normal hasta",
+      "sanity_z_gate": "Precio atípico hasta",
+      "sanity_on_insufficient_reference": "Sin referencia suficiente",
+      "sanity_floor_per_unit": "Suelo absoluto por unidad",
+      "seller_min_accepted_band": "Banda mínima sin gate",
+      "seller_hard_block_below": "Descarte automático por debajo de",
+      "approval_dual_control_above": "Doble firma a partir de",
+      "signing_high_value_reauth_above": "Passkey inmediata a partir de",
+      "signing_session_minutes": "Duración de la sesión de firma",
+      "neg_max_rounds": "Rondas máximas",
+      "neg_max_discount": "Descuento máximo · Rodamientos"
+    }
+  },
+  "audit": {
+    "title": "Registro de auditoría",
+    "intro": "Cadena de hashes por empresa, anclada en almacenamiento WORM.",
+    "pending": "Pendiente de conectar",
+    "noAccessTitle": "Sin permiso",
+    "noAccessBody": "El registro de auditoría solo está disponible para los roles admin y owner.",
+    "verifyChain": "Verificar la cadena completa",
+    "status": "Estado",
+    "intact": "Cadena íntegra",
+    "broken": "Cadena rota",
+    "events": "Eventos",
+    "lastVerified": "Última verificación",
+    "anchor": "Último ancla",
+    "when": "Cuándo",
+    "actor": "Actor",
+    "event": "Evento",
+    "hash": "Hash",
+    "caption": "Eventos de auditoría",
+    "empty": "Sin eventos",
+    "actors": {
+      "negotiator": "Agente negociador",
+      "sanity": "Servicio de cordura",
+      "human": "Responsable",
+      "fx": "Servicio FX"
+    },
+    "verifyTitle": "Verificar una decisión",
+    "verifyLabel": "Identificador o hash",
+    "verify": "Verificar"
+  },
+  "accounts": {
+    "title": "Cuentas de plataformas",
+    "intro": "Conecta las plataformas donde busca y negocia el agente. Las credenciales nunca salen de tu navegador hacia el modelo."
   }
 }
