@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import re
 from collections import defaultdict
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
@@ -34,6 +34,7 @@ from apex.negotiation.guardrails import (
     check_outgoing,
 )
 from apex.negotiation.models import (
+    GuardrailEvent,
     Intent,
     NegotiationOutcome,
     NegotiationParams,
@@ -52,6 +53,8 @@ from apex.negotiation.ports import (
     Extractor,
     NegotiationStore,
     SanityRecheck,
+    SellerGuard,
+    SellerSendLog,
 )
 from apex.negotiation.templates import render
 from apex.negotiation.text import find_percentages, find_prices, find_quantities
@@ -80,6 +83,8 @@ class OpenRequest:
     account_id: str
     config_version: str
     params: NegotiationParams
+    offer_id: str = ""
+    """Offer the caller opened this negotiation for. Reported in the API view."""
 
 
 _REFUSAL_RE = re.compile(
@@ -137,6 +142,8 @@ class NegotiationEngine:
         sanity: SanityRecheck,
         store: NegotiationStore,
         send_log: AccountSendLog,
+        seller_log: SellerSendLog,
+        seller_guard: SellerGuard,
         clock: Clock,
         new_id: Callable[[], str],
     ) -> None:
@@ -146,6 +153,8 @@ class NegotiationEngine:
         self._sanity = sanity
         self._store = store
         self._send_log = send_log
+        self._seller_log = seller_log
+        self._seller_guard = seller_guard
         self._clock = clock
         self._new_id = new_id
         # One operation at a time per negotiation (approve, advance, takeover...). In-process only;
@@ -179,9 +188,19 @@ class NegotiationEngine:
                     account_id=request.account_id,
                     config_version=request.config_version,
                     params=request.params,
+                    offer_id=request.offer_id,
                 )
                 session.ladder = build_ladder(session)
+                # Claim before persisting: a refused claim leaves no half-created negotiation behind.
+                await self._claim_seller(session)
                 await self._store.save(session, idempotency_key=idempotency_key)
+            elif session.terminal:
+                # A retry after a terminal outcome must not reopen the chat, and must not keep the seller.
+                await self._release_seller(session)
+                return session
+            else:
+                # Idempotent for the holder; refuses when another mission of this tenant has the seller.
+                await self._claim_seller(session)
             async with self._locked(session.id):
                 if session.terminal:
                     return session
@@ -331,19 +350,30 @@ class NegotiationEngine:
             return session
 
     async def take_over(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:
-        """A human takes the chat. Any pending draft is dropped; the agent sends nothing until resume."""
+        """A human takes the chat. Any pending draft is dropped; the agent sends nothing until resume.
+
+        The seller stays claimed: the human is still talking to that seller, so no other mission of the
+        tenant may open a second chat with them (D5-08). Idempotent while the negotiation is live.
+        """
         async with self._locked(negotiation_id):
             session = await self._load(negotiation_id, tenant_id)
+            if session.terminal:
+                raise NegotiationError("terminal", "negotiation already finished")
             session.human_in_control = True
             session.pending = None
             await self._store.save(session)
             return session
 
     async def resume(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:
+        """Return control to the agent. Only valid while a human holds it (taken over first)."""
         async with self._locked(negotiation_id):
             session = await self._load(negotiation_id, tenant_id)
             if session.terminal:
                 raise NegotiationError("terminal", "negotiation already finished")
+            if not session.human_in_control:
+                raise NegotiationError(
+                    "not_in_human_control", "nobody has taken this negotiation over"
+                )
             session.human_in_control = False
             session.status = NegotiationOutcome.AWAITING_SELLER
             await self._store.save(session)
@@ -367,6 +397,46 @@ class NegotiationEngine:
             raise NegotiationError("not_found", f"unknown negotiation {negotiation_id}")
         return session
 
+    async def seller_holder(self, *, tenant_id: str, platform: str, seller_id: str) -> str | None:
+        """Id of the negotiation that currently holds this seller, if any (D5-08 anti-abuse)."""
+        return await self._seller_guard.holder(
+            tenant_id=tenant_id, platform=platform, seller_id=seller_id
+        )
+
+    async def _claim_seller(self, session: NegotiationSession) -> None:
+        """Admission test for the seller (D5-08): one active negotiation per seller, across missions."""
+        claimed = await self._seller_guard.claim(
+            tenant_id=session.tenant_id,
+            platform=session.platform,
+            seller_id=session.seller_id,
+            negotiation_id=session.id,
+        )
+        if not claimed:
+            raise NegotiationError(
+                "seller_busy",
+                f"another active negotiation of this tenant is talking to {session.seller_id} "
+                f"on {session.platform}",
+            )
+
+    async def _release_seller(self, session: NegotiationSession) -> None:
+        await self._seller_guard.release(
+            tenant_id=session.tenant_id,
+            platform=session.platform,
+            seller_id=session.seller_id,
+            negotiation_id=session.id,
+        )
+
+    def _hit(self, session: NegotiationSession, code: str, detail: str | None = None) -> None:
+        """Records one guardrail hit, with the clock reading, so the API can report ``{code, at}``."""
+        session.guardrail_hits.append(code)
+        session.guardrail_events.append(
+            GuardrailEvent(code=code, at=self._clock.now(), detail=detail)
+        )
+
+    def _hits(self, session: NegotiationSession, codes: Iterable[str]) -> None:
+        for code in codes:
+            self._hit(session, code)
+
     async def _finish(
         self, session: NegotiationSession, outcome: NegotiationOutcome, reason: str
     ) -> None:
@@ -376,6 +446,7 @@ class NegotiationEngine:
         if outcome is not NegotiationOutcome.AGREED:
             session.agreed = None
         await self._store.save(session)
+        await self._release_seller(session)
 
     async def _quote(
         self, session: NegotiationSession, text: str, verdict: IncomingVerdict
@@ -401,12 +472,12 @@ class NegotiationEngine:
             for p in verdict.prices
         )
         if not grounded:
-            session.guardrail_hits.append("extraction_not_grounded")
+            self._hit(session, "extraction_not_grounded")
             return fallback
         if extraction.unit_price_minor in offered and (
             fallback is not None or _REFUSAL_RE.search(text)
         ):
-            session.guardrail_hits.append("extraction_echoes_agent_price")
+            self._hit(session, "extraction_echoes_agent_price")
             return fallback
         return Quote(
             unit_price_minor=extraction.unit_price_minor,
@@ -420,6 +491,13 @@ class NegotiationEngine:
             tokens_used=session.tokens_used,
             human_in_control=session.human_in_control,
             account_sends=tuple(await self._send_log.sends(session.account_id)),
+            seller_sends=tuple(
+                await self._seller_log.sends(
+                    tenant_id=session.tenant_id,
+                    platform=session.platform,
+                    seller_id=session.seller_id,
+                )
+            ),
         )
 
     async def _check(self, session: NegotiationSession, text: str, tokens: int) -> GuardrailVerdict:
@@ -440,17 +518,17 @@ class NegotiationEngine:
             try:
                 draft = await self._drafter.draft(plan, session, seller_text)
             except Exception:
-                session.guardrail_hits.append("draft_failed")
+                self._hit(session, "draft_failed")
                 break
             session.tokens_used += draft.tokens
             if not plan_matches(draft.text, plan, currency):
-                session.guardrail_hits.append("draft_off_plan")
+                self._hit(session, "draft_off_plan")
                 continue
             verdict = await self._check(session, draft.text, 0)
             if verdict.allowed:
                 await self._park_or_send(session, plan, draft.text, draft.tokens, "llm")
                 return
-            session.guardrail_hits.extend(h.code.value for h in verdict.hits)
+            self._hits(session, (h.code.value for h in verdict.hits))
             if verdict.escalate:
                 await self._finish(
                     session, NegotiationOutcome.ESCALATED, "draft_guardrail_escalation"
@@ -467,10 +545,11 @@ class NegotiationEngine:
         source: str,
     ) -> None:
         verdict = await self._check(session, text, 0)
-        # Rate limiting only delays a message: park it and send it once the window allows.
-        blocking = verdict.codes - {HitCode.ACCOUNT_RATE_LIMITED}
+        # Rate limiting only delays a message: park it and send it once the window allows. Both windows
+        # (the platform account and the seller account, D5-08) delay, they never fail a negotiation.
+        blocking = verdict.codes - {HitCode.ACCOUNT_RATE_LIMITED, HitCode.SELLER_RATE_LIMITED}
         if blocking:
-            session.guardrail_hits.extend(h.code.value for h in verdict.hits)
+            self._hits(session, (h.code.value for h in verdict.hits))
             outcome = (
                 NegotiationOutcome.NO_AGREEMENT
                 if blocking <= {HitCode.MAX_ROUNDS_REACHED}
@@ -506,13 +585,19 @@ class NegotiationEngine:
         """The single send path. Re-checks the guardrails right before the transport call."""
         verdict = await self._check(session, text, 0)
         if not verdict.allowed:
-            session.guardrail_hits.extend(h.code.value for h in verdict.hits)
+            self._hits(session, (h.code.value for h in verdict.hits))
             raise NegotiationError("guardrail_blocked", ",".join(sorted(verdict.codes)))
         if session.chat_id is None:
             raise NegotiationError("no_chat", "negotiation has no open chat")
         await self._transport.send(session.chat_id, text)
         now = self._clock.now()
         await self._send_log.record(session.account_id, now)
+        await self._seller_log.record(
+            tenant_id=session.tenant_id,
+            platform=session.platform,
+            seller_id=session.seller_id,
+            at=now,
+        )
         session.rounds_sent += 1
         session.pending = None
         session.status = NegotiationOutcome.AWAITING_SELLER

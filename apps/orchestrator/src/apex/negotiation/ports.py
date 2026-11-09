@@ -6,7 +6,9 @@ testable without a browser, an LLM or a database:
 - ``ChatTransport``: the seller chat, through the browser worker (D5-01/D5-03) or the mock marketplace.
 - ``Drafter`` / ``Extractor``: the LLM (role ``negotiator``, D4-04), see ``apex.negotiation.llm``.
 - ``SanityRecheck``: DEV-3's ``sanity.check`` on the negotiated price in EUR (criterion 13).
-- ``NegotiationStore`` / ``AccountSendLog``: persistence (D2-05). In-memory versions live here.
+- ``NegotiationStore`` / ``AccountSendLog`` / ``SellerSendLog``: persistence (D2-05). In-memory versions
+  live here.
+- ``SellerGuard``: one active negotiation per seller across missions (D5-08 anti-abuse).
 """
 
 from __future__ import annotations
@@ -80,6 +82,38 @@ class AccountSendLog(Protocol):
     async def record(self, account_id: str, at: datetime) -> None: ...
 
 
+class SellerGuard(Protocol):
+    """One active negotiation per seller, across missions (D5-08 anti-abuse).
+
+    ``claim`` is the admission test: it returns ``False`` when another non-terminal negotiation of the same
+    tenant is already talking to that seller on that platform, and the engine then refuses to open a chat.
+    ``claim`` is idempotent for the negotiation that already holds the seller, so a resumed start keeps
+    working. The holder must ``release`` when it reaches a terminal outcome.
+    """
+
+    async def claim(
+        self, *, tenant_id: str, platform: str, seller_id: str, negotiation_id: str
+    ) -> bool: ...
+
+    async def release(
+        self, *, tenant_id: str, platform: str, seller_id: str, negotiation_id: str
+    ) -> None: ...
+
+    async def holder(self, *, tenant_id: str, platform: str, seller_id: str) -> str | None: ...
+
+
+class SellerSendLog(Protocol):
+    """Agent messages already sent to one seller account, across missions (D5-08 rate limit)."""
+
+    async def sends(
+        self, *, tenant_id: str, platform: str, seller_id: str
+    ) -> Sequence[datetime]: ...
+
+    async def record(
+        self, *, tenant_id: str, platform: str, seller_id: str, at: datetime
+    ) -> None: ...
+
+
 class InMemoryNegotiationStore:
     def __init__(self) -> None:
         self._items: dict[str, NegotiationSession] = {}
@@ -110,3 +144,41 @@ class InMemoryAccountSendLog:
 
     async def record(self, account_id: str, at: datetime) -> None:
         self._sends[account_id].append(at)
+
+
+class InMemorySellerGuard:
+    """Process-local seller lease. Production needs Redis or a DB constraint (D2-05, multi-worker)."""
+
+    def __init__(self) -> None:
+        self._holders: dict[tuple[str, str, str], str] = {}
+
+    async def claim(
+        self, *, tenant_id: str, platform: str, seller_id: str, negotiation_id: str
+    ) -> bool:
+        key = (tenant_id, platform, seller_id)
+        holder = self._holders.get(key)
+        if holder is None or holder == negotiation_id:
+            self._holders[key] = negotiation_id
+            return True
+        return False
+
+    async def release(
+        self, *, tenant_id: str, platform: str, seller_id: str, negotiation_id: str
+    ) -> None:
+        key = (tenant_id, platform, seller_id)
+        if self._holders.get(key) == negotiation_id:
+            del self._holders[key]
+
+    async def holder(self, *, tenant_id: str, platform: str, seller_id: str) -> str | None:
+        return self._holders.get((tenant_id, platform, seller_id))
+
+
+class InMemorySellerSendLog:
+    def __init__(self) -> None:
+        self._sends: dict[tuple[str, str, str], list[datetime]] = defaultdict(list)
+
+    async def sends(self, *, tenant_id: str, platform: str, seller_id: str) -> Sequence[datetime]:
+        return tuple(self._sends[(tenant_id, platform, seller_id)])
+
+    async def record(self, *, tenant_id: str, platform: str, seller_id: str, at: datetime) -> None:
+        self._sends[(tenant_id, platform, seller_id)].append(at)
