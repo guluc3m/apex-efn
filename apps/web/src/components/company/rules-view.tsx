@@ -16,7 +16,6 @@ export function RulesView() {
   const [selected, setSelected] = useState<Rule | null>(null)
   const { proposal } = rulesConfig
   const key = selected?.key ?? proposal.key
-  const change = selected ? selected.value ?? t('undefined') : proposal.change
 
   return (
     <div className="flex flex-wrap items-start">
@@ -25,13 +24,17 @@ export function RulesView() {
           <h1 className="m-0 text-2xl font-semibold">{t('title', { version: rulesConfig.version })}</h1>
           <p className="m-0 mt-1.5 text-ink-soft">{t('intro')}</p>
         </div>
-        {/* //todo_#167: el ámbito filtra las reglas por categoría; aquí solo se muestra */}
-        <Select
-          label={t('scope')}
-          defaultValue="all"
-          options={rulesConfig.scopes.map((s) => ({ value: s, label: t(`scopes.${s}`) }))}
-          className="w-44"
-        />
+        {/* //todo_#167: el ámbito filtrará las reglas por categoría cuando haya backend */}
+        <div className="flex items-end gap-3">
+          <Select
+            label={t('scope')}
+            disabled
+            defaultValue="all"
+            options={rulesConfig.scopes.map((s) => ({ value: s, label: t(`scopes.${s}`) }))}
+            className="w-44"
+          />
+          <span className="pb-2 text-[13px] text-ink-muted">{t('pending')}</span>
+        </div>
         <table className="w-full border-collapse">
           <caption className="sr-only">{t('caption')}</caption>
           <thead>
@@ -56,7 +59,7 @@ export function RulesView() {
                   </td>
                   <td className={`${td} text-[13px] text-ink-muted`}>{t(`origins.${r.origin}`)}</td>
                   <td className={`${td} text-right`}>
-                    <Button variant="ghost" size="sm" onClick={() => setSelected(r)}>
+                    <Button variant="ghost" size="sm" aria-label={t('changeRule', { rule: t(`names.${r.key.replace('.', '_')}`) })} onClick={() => setSelected(r)}>
                       <Icon icon={Pencil} />{t('change')}
                     </Button>
                   </td>
@@ -69,7 +72,7 @@ export function RulesView() {
       <aside className="flex min-w-0 flex-[1_1_360px] flex-col gap-6 p-6">
         <div className="flex flex-col gap-3 border border-line bg-panel p-5">
           <h2 className="m-0 flex items-center gap-2 text-base font-semibold"><Icon icon={FilePen} />{t('proposalTitle')}</h2>
-          <div className="flex justify-between gap-4"><span className="text-ink-muted">{t(`names.${key.replace('.', '_')}`)}</span><span>{change}</span></div>
+          <div className="flex justify-between gap-4"><span className="text-ink-muted">{t(`names.${key.replace('.', '_')}`)}</span><span className={selected ? 'text-ink-muted' : undefined}>{selected ? t('noNewValue') : proposal.change}</span></div>
           {/* //todo_#167: el impacto lo calcula el servidor con las ofertas abiertas */}
           {selected ? null : <p className="m-0 text-ink-muted">{t('impact', { n: proposal.impactCount })}</p>}
           <label className="flex flex-col gap-1">

@@ -130,7 +130,9 @@
       "signing_session_minutes": "签名会话时长",
       "neg_max_rounds": "最大谈判轮数",
       "neg_max_discount": "最大折扣 · 轴承"
-    }
+    },
+    "noNewValue": "尚未选择新值",
+    "changeRule": "更改 {rule}"
   },
   "audit": {
     "title": "审计日志",
@@ -159,7 +161,8 @@
     },
     "verifyTitle": "验证决策",
     "verifyLabel": "标识符或哈希",
-    "verify": "验证"
+    "verify": "验证",
+    "verifyPlaceholder": "dec_…"
   },
   "accounts": {
     "title": "平台账户",

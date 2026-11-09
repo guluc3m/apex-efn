@@ -130,7 +130,9 @@
       "signing_session_minutes": "Duración de la sesión de firma",
       "neg_max_rounds": "Rondas máximas",
       "neg_max_discount": "Descuento máximo · Rodamientos"
-    }
+    },
+    "noNewValue": "Nuevo valor pendiente de elegir",
+    "changeRule": "Cambiar {rule}"
   },
   "audit": {
     "title": "Registro de auditoría",
@@ -159,7 +161,8 @@
     },
     "verifyTitle": "Verificar una decisión",
     "verifyLabel": "Identificador o hash",
-    "verify": "Verificar"
+    "verify": "Verificar",
+    "verifyPlaceholder": "dec_…"
   },
   "accounts": {
     "title": "Cuentas de plataformas",

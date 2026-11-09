@@ -2,12 +2,13 @@
 
 import { Badge, Button, Icon, Input, Label, Table, type TableColumn } from '@apex/ui'
 import { BadgeCheck, Link2, OctagonAlert, SearchCheck, ShieldAlert } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { auditData, auditRoles, type AuditRow } from '@/fixtures/company'
 
 export function AuditView({ role }: { role: string }) {
   const t = useTranslations('company.audit')
+  const locale = useLocale()
   const pending = t('pending')
 
   if (!auditRoles.includes(role)) {
@@ -51,7 +52,7 @@ export function AuditView({ role }: { role: string }) {
             <Badge tone="bad" icon={OctagonAlert}>{t('broken')}</Badge>
           )}
         </div>
-        <div><div className="text-ink-muted">{t('events')}</div><strong>{auditData.events.toLocaleString('es-ES')}</strong></div>
+        <div><div className="text-ink-muted">{t('events')}</div><strong>{auditData.events.toLocaleString(locale)}</strong></div>
         <div><div className="text-ink-muted">{t('lastVerified')}</div><strong>{auditData.lastVerified}</strong></div>
         <div><div className="text-ink-muted">{t('anchor')}</div><span className="font-mono">{auditData.anchor}</span></div>
       </div>
@@ -64,7 +65,7 @@ export function AuditView({ role }: { role: string }) {
           <h2 className="m-0 flex items-center gap-2 text-base font-semibold"><Icon icon={BadgeCheck} />{t('verifyTitle')}</h2>
           <div className="flex flex-col gap-1">
             <Label htmlFor="audit-verify-id">{t('verifyLabel')}</Label>
-            <Input id="audit-verify-id" className="font-mono" placeholder="dec_…" />
+            <Input id="audit-verify-id" className="font-mono" placeholder={t('verifyPlaceholder')} />
           </div>
           {/* //todo_#166: POST /v1/decisions/{id}/verify */}
           <Button variant="sec" disabledReason={pending}><Icon icon={SearchCheck} />{t('verify')}</Button>

@@ -130,7 +130,9 @@
       "signing_session_minutes": "Signing session length",
       "neg_max_rounds": "Maximum rounds",
       "neg_max_discount": "Maximum discount · Bearings"
-    }
+    },
+    "noNewValue": "New value not chosen yet",
+    "changeRule": "Change {rule}"
   },
   "audit": {
     "title": "Audit log",
@@ -159,7 +161,8 @@
     },
     "verifyTitle": "Verify a decision",
     "verifyLabel": "Identifier or hash",
-    "verify": "Verify"
+    "verify": "Verify",
+    "verifyPlaceholder": "dec_…"
   },
   "accounts": {
     "title": "Platform accounts",
