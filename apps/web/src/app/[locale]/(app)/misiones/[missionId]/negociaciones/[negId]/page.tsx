@@ -10,13 +10,13 @@ export default async function NegotiationPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ locale: string }>
+  params: Promise<{ locale: string; missionId: string }>
   searchParams: Promise<{ estado?: string }>
 }) {
-  const { locale } = await params
+  const { locale, missionId } = await params
   setRequestLocale(locale)
   const { estado } = await searchParams
   const state = STATES.find((s) => s === estado) ?? 'active'
 
-  return <NegotiationView neg={getNegotiation(state)} />
+  return <NegotiationView neg={getNegotiation(state)} missionId={missionId} />
 }

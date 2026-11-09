@@ -38,7 +38,7 @@ export interface NegotiationFixture {
   messages: TranscriptMessage[]
   /** Separador «Reabierta por X a las 12:40»; solo si la fixture lo trae. */
   reopened?: { by: string; time: string }
-  draft: { text: string; guardrails: string[]; note: string }
+  draft: { initials: string; text: string; guardrails: string[]; note: string }
   offer: { current: string; initial: string; delta: string; target: string }
   confidence: { band: ConfidenceBand; score: number; signals: { k: string; v: string }[] }
   price: { band: PriceBand; signals: { k: string; v: string }[] }
@@ -81,6 +81,7 @@ export function getNegotiation(state: NegotiationState): NegotiationFixture {
     ],
     reopened: state === 'reopened' ? { by: 'Responsable', time: '12:40' } : undefined,
     draft: {
+      initials: 'AG',
       text: 'Gracias. Podemos confirmar esta semana a 1,72 €/ud con entrega antes del 15/12. ¿Lo dejáis por escrito con las condiciones de pago a 60 días?',
       guardrails: ['Descuento pedido 5 %, máximo 8 %', 'Volumen sin cambios', 'Sin prepago ni penalizaciones'],
       note: '"Si confirmáis hoy": el agente no acepta compromisos; te avisará antes de cerrar.',

@@ -41,7 +41,7 @@ function Signals({ rows }: { rows: { k: string; v: string }[] }) {
   )
 }
 
-export function NegotiationView({ neg }: { neg: NegotiationFixture }) {
+export function NegotiationView({ neg, missionId }: { neg: NegotiationFixture; missionId: string }) {
   const t = useTranslations('negotiation')
   const [showTr, setShowTr] = useState(true)
   const [dialog, setDialog] = useState<DialogKind | null>(null)
@@ -104,7 +104,7 @@ export function NegotiationView({ neg }: { neg: NegotiationFixture }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" asChild>
-            <AppLink href="/misiones">
+            <AppLink href={`/misiones/${missionId}`}>
               <Icon icon={ArrowLeft} />
               {t('back')}
             </AppLink>
@@ -152,7 +152,7 @@ export function NegotiationView({ neg }: { neg: NegotiationFixture }) {
             {!aborted && !human && (
               <li className="flex max-w-[80%] flex-col gap-3 self-end border border-dashed border-accent p-3">
                 <span className="inline-flex items-center gap-2 text-[13px] text-ink-muted">
-                  <span aria-hidden="true" className="inline-flex size-6 items-center justify-center border border-accent-line bg-bg text-[11px] text-ink-soft">AG</span>
+                  <span aria-hidden="true" className="inline-flex size-6 items-center justify-center border border-accent-line bg-bg text-[11px] text-ink-soft">{neg.draft.initials}</span>
                   {t('draft.title')}
                 </span>
                 <label className="flex flex-col gap-1">
