@@ -359,3 +359,45 @@ def test_an_unreachable_llm_endpoint_is_a_502_with_a_reason() -> None:
     assert mission.status_code == 502, mission.text
     assert mission.json()["reason"] == "llm_unavailable"
     assert "planner" in mission.json()["detail"]
+
+
+# ----- writes are idempotent when the caller sends the key (the BFF always does) -------------------
+
+
+def test_replaying_a_mission_creation_returns_the_same_mission(app: FastAPI) -> None:
+    """The BFF generates an Idempotency-Key per user action; a retry must not create a second mission."""
+    body = {"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]}
+    headers = {**_h(), "Idempotency-Key": "bff-abc-123"}
+    with TestClient(app) as client:
+        first = client.post("/v1/missions", json=body, headers=headers)
+        second = client.post("/v1/missions", json=body, headers=headers)
+    assert first.status_code == second.status_code == 201
+    assert first.json()["id"] == second.json()["id"]
+    assert second.headers.get("idempotent-replayed") == "true"
+
+
+def test_the_same_key_with_a_different_body_is_refused(app: FastAPI) -> None:
+    """Reusing a key for a different request is a client bug and must not silently return the old answer."""
+    headers = {**_h(), "Idempotency-Key": "bff-abc-456"}
+    with TestClient(app) as client:
+        first = client.post(
+            "/v1/missions",
+            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
+            headers=headers,
+        )
+        conflict = client.post(
+            "/v1/missions",
+            json={"sourcing_request_id": "sr-2", "spec": "chairs", "quantity_tiers": [10]},
+            headers=headers,
+        )
+    assert first.status_code == 201
+    assert conflict.status_code == 422
+
+
+def test_replaying_a_sourcing_request_returns_the_same_request(app: FastAPI) -> None:
+    headers = {**_h(), "Idempotency-Key": "bff-sr-1"}
+    with TestClient(app) as client:
+        first = client.post("/v1/sourcing-requests", json={"text": "gloves"}, headers=headers)
+        second = client.post("/v1/sourcing-requests", json={"text": "gloves"}, headers=headers)
+    assert first.status_code == second.status_code == 201
+    assert first.json()["id"] == second.json()["id"]
