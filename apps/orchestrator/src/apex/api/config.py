@@ -17,10 +17,18 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
-from pydantic import BaseModel, ConfigDict, Field
 
 from apex.common.clock import Clock, SystemClock
 from apex.common.errors import Problem, not_implemented
+from apex.contracts.generated.models import (
+    ConfigChangeRequest,
+    ConfigLayer,
+    ConfigValueStatus,
+    DecisionAccepted,
+    DecisionStatus,
+    EffectiveConfig,
+    EffectiveConfigValue,
+)
 from apex.tenant_config.deps import get_tenant_id
 from apex.tenant_config.errors import (
     ConfigValidationError,
@@ -29,7 +37,7 @@ from apex.tenant_config.errors import (
 )
 from apex.tenant_config.ports import ConfigRepository, Decision, DecisionPort
 from apex.tenant_config.repository import InMemoryConfigRepository
-from apex.tenant_config.resolver import EffectiveConfig
+from apex.tenant_config.resolver import EffectiveConfig as DomainEffectiveConfig
 from apex.tenant_config.service import TenantConfigService
 
 router = APIRouter()
@@ -57,73 +65,49 @@ def get_config_service() -> TenantConfigService:
     return TenantConfigService(_repository, _decisions, _clock)
 
 
-class EffectiveValueOut(BaseModel):
-    model_config = ConfigDict(frozen=True)
+def _to_out(eff: DomainEffectiveConfig) -> EffectiveConfig:
+    """Domain resolution -> the contract's ``EffectiveConfig`` (``contracts/openapi.yaml``).
 
-    value: Any
-    status: str = Field(description="'set' or 'unset' ('sin definir')")
-    layer: str = Field(description="global | tenant | category")
-
-
-class EffectiveConfigOut(BaseModel):
-    tenant_id: str
-    category: str | None
-    config_version: int = Field(ge=1)
-    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    resolved_at: str
-    values: dict[str, EffectiveValueOut]
-
-
-class ConfigChangeIn(BaseModel):
-    base_config_version: int = Field(ge=1)
-    category: str | None = None
-    patch: dict[str, Any] = Field(description="Deep-merge patch. Explicit null unsets a key.")
-
-
-class DecisionAcceptedOut(BaseModel):
-    decision_id: str
-    status: str = "pending_signature"
-
-
-def _to_out(eff: EffectiveConfig) -> EffectiveConfigOut:
-    return EffectiveConfigOut(
+    The shapes are the generated models, so the frontend's generated client matches the server (spec §5.1).
+    """
+    return EffectiveConfig(
         tenant_id=eff.tenant_id,
         category=eff.category,
         config_version=eff.config_version,
         content_hash=eff.content_hash,
-        resolved_at=eff.resolved_at.isoformat(),
+        resolved_at=eff.resolved_at,
         values={
-            path: EffectiveValueOut(
+            path: EffectiveConfigValue(
                 value=rv.value,
-                status="unset" if rv.unset else "set",
-                layer=rv.layer.value,
+                status=ConfigValueStatus.unset if rv.unset else ConfigValueStatus.set,
+                layer=ConfigLayer(rv.layer.value),
             )
             for path, rv in eff.values.items()
         },
     )
 
 
-@router.get("/effective", response_model=EffectiveConfigOut, tags=["config"])
+@router.get("/effective", response_model=EffectiveConfig, tags=["config"])
 async def get_effective(
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[TenantConfigService, Depends(get_config_service)],
     category: Annotated[str | None, Query(max_length=64)] = None,
-) -> EffectiveConfigOut:
+) -> EffectiveConfig:
     eff = await service.effective(tenant_id, category)
     return _to_out(eff)
 
 
 @router.post(
     "/proposals",
-    response_model=DecisionAcceptedOut,
+    response_model=DecisionAccepted,
     status_code=status.HTTP_202_ACCEPTED,
     tags=["config"],
 )
 async def propose_change(
-    body: ConfigChangeIn,
+    body: ConfigChangeRequest,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[TenantConfigService, Depends(get_config_service)],
-) -> DecisionAcceptedOut:
+) -> DecisionAccepted:
     try:
         decision_id = await service.propose_change(
             tenant_id,
@@ -145,4 +129,4 @@ async def propose_change(
         ) from exc
     except NotImplementedError as exc:
         raise not_implemented(str(exc)) from exc
-    return DecisionAcceptedOut(decision_id=decision_id)
+    return DecisionAccepted(decision_id=decision_id, status=DecisionStatus.pending_signature)
