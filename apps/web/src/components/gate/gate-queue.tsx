@@ -63,7 +63,7 @@ export function GateQueue({ items, role }: { items: GateItem[]; role: string }) 
       ),
     },
     { id: 'cause', header: t('cols.cause'), sortValue: (r) => t(`causes.${r.cause}`), cell: (r) => t(`causes.${r.cause}`) },
-    { id: 'amount', header: t('cols.amount'), num: true, sortValue: (r) => r.amount ?? '', cell: (r) => r.amount ?? '—' },
+    { id: 'amount', header: t('cols.amount'), num: true, sortValue: (r) => r.amountMinor ?? -1, cell: (r) => r.amount ?? '—' },
     {
       id: 'sla',
       header: t('cols.sla'),
@@ -148,6 +148,7 @@ export function GateQueue({ items, role }: { items: GateItem[]; role: string }) 
       <Dialog open={dialog !== null} onOpenChange={(o) => !o && setDialog(null)}>
         {dialog && (
           <DialogContent title={t(`dialog.${dialog.action}.title`)} description={t(`dialog.${dialog.action}.body`, { item: dialog.item.title })} closeLabel={t('close')}>
+            <p className="mt-0 mb-3 text-ink-muted">{t('pending')}</p>
             <div className="flex items-center justify-end gap-2">
               {/* //todo_#163: firmar la decisión (reautenticación inmediata) cuando exista el endpoint */}
               <DisabledReason reason={t('pending')}>
