@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
 import { WorkerError } from '../errors.js'
+import { RecordingScrapingMetrics } from '../metrics.js'
 import { InMemoryContractAdapter } from '../testing/contract-fake.js'
 import { FixedClock } from '../testing/fakes.js'
 
@@ -392,6 +393,107 @@ describe('PoliteHttpClient: parsing', () => {
     })
     expect(sleeper.waits).toEqual([1000])
     expect(transport.requests).toHaveLength(2)
+  })
+})
+
+describe('PoliteHttpClient: metrics', () => {
+  const labels = { metricsPlatform: 'mock-a', metricsTransport: 'http' } as const
+
+  it('records exactly one sample per logical call with the final outcome after retries', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport([
+      response(429, '', { 'retry-after': '2' }),
+      response(429, '', { 'retry-after': '2' }),
+      okJson({ ok: true }),
+    ])
+    const { client } = clientWith(transport, { metrics, ...labels })
+    await expect(client.getJson(`${ORIGIN}/products/1`, OK)).resolves.toEqual({ ok: true })
+    expect(transport.requests).toHaveLength(3)
+    expect(metrics.requests).toEqual([
+      { platform: 'mock-a', transport: 'http', outcome: 'ok', durationSeconds: 4 },
+    ])
+  })
+
+  it('records the final failure after the retries are exhausted, as one sample', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport(
+      Array.from({ length: 4 }, () => response(429, '', { 'retry-after': '5' }))
+    )
+    const { client } = clientWith(transport, { metrics, ...labels })
+    await failureOf(client.getJson(`${ORIGIN}/products/1`, OK))
+    expect(metrics.requests).toEqual([
+      { platform: 'mock-a', transport: 'http', outcome: 'blocked', durationSeconds: 15 },
+    ])
+  })
+
+  it('records a timeout after retries as timeout', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const timeout = () => new WorkerError('timeout', 504, { retryable: true })
+    const transport = new ScriptedTransport([timeout(), timeout(), timeout(), timeout()])
+    const { client } = clientWith(transport, { metrics, ...labels })
+    await failureOf(client.getText(`${ORIGIN}/a`))
+    expect(metrics.requests.map((sample) => sample.outcome)).toEqual(['timeout'])
+  })
+
+  it('records a robots.txt refusal as blocked, without a request reaching the platform', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport([])
+    const { client } = clientWith(transport, {
+      metrics,
+      ...labels,
+      robotsText: 'User-agent: *\nDisallow: /private',
+    })
+    await failureOf(client.getJson(`${ORIGIN}/private/x`, OK))
+    expect(metrics.requests.map((sample) => sample.outcome)).toEqual(['blocked'])
+    expect(transport.requests).toEqual([])
+  })
+
+  it('records a response that does not match the schema as error, after the request succeeded', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport([response(200, 'not json')])
+    const { client } = clientWith(transport, { metrics, ...labels })
+    await failureOf(client.getJson(`${ORIGIN}/products/1`, OK))
+    expect(metrics.requests.map((sample) => sample.outcome)).toEqual(['error'])
+  })
+
+  it('records a 401 as session_invalid and a CAPTCHA page as captcha', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport([
+      response(401, 'login please'),
+      response(403, '<html>Are you a robot?</html>'),
+    ])
+    const { client } = clientWith(transport, { metrics, ...labels })
+    await failureOf(client.getText(`${ORIGIN}/a`))
+    await failureOf(client.getText(`${ORIGIN}/b`))
+    expect(metrics.requests.map((sample) => sample.outcome)).toEqual(['session_invalid', 'captcha'])
+    expect(metrics.sessionInvalidations).toEqual(['mock-a'])
+    expect(metrics.captchas).toEqual(['mock-a'])
+  })
+
+  it('uses other for platform and http for transport when no labels are given', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport([response(200, 'a')])
+    const { client } = clientWith(transport, { metrics })
+    await client.getText(`${ORIGIN}/a`)
+    expect(metrics.requests).toEqual([
+      { platform: 'other', transport: 'http', outcome: 'ok', durationSeconds: 0 },
+    ])
+  })
+
+  it('measures the duration with the injected clock, from the first attempt to completion', async () => {
+    const metrics = new RecordingScrapingMetrics()
+    const transport = new ScriptedTransport([response(503), response(200, 'a')])
+    const { client } = clientWith(transport, { metrics, ...labels, baseBackoffMs: 100 })
+    await client.getText(`${ORIGIN}/a`)
+    expect(metrics.requests).toEqual([
+      { platform: 'mock-a', transport: 'http', outcome: 'ok', durationSeconds: 0.05 },
+    ])
+  })
+
+  it('records nothing and behaves the same when no metrics are given', async () => {
+    const transport = new ScriptedTransport([response(200, 'a')])
+    const { client } = clientWith(transport)
+    await expect(client.getText(`${ORIGIN}/a`)).resolves.toBe('a')
   })
 })
 

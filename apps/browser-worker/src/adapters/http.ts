@@ -4,6 +4,12 @@ import type { z } from 'zod'
 import type { Clock } from '../clock.js'
 import { KeyedMutex } from '../concurrency.js'
 import { WorkerError } from '../errors.js'
+import {
+  outcomeOf,
+  type MetricTransport,
+  type Outcome as MetricOutcome,
+  type ScrapingMetrics,
+} from '../metrics.js'
 
 import type { RobotsCache } from './robots.js'
 
@@ -89,6 +95,12 @@ export interface PoliteHttpClientOptions {
   sleep: Sleep
   /** Injected so jitter is deterministic in tests. Production passes `Math.random`. */
   random: () => number
+  /** When set, one `apex.scraping.requests` sample is recorded per logical request. */
+  metrics?: ScrapingMetrics
+  /** Metric label `platform`. Defaults to `other`. */
+  metricsPlatform?: string
+  /** Metric label `transport`. Defaults to `http`. */
+  metricsTransport?: MetricTransport
 }
 
 export interface RequestOptions {
@@ -162,18 +174,22 @@ export class PoliteHttpClient {
   constructor(private readonly options: PoliteHttpClientOptions) {}
 
   async getJson<T>(url: string, schema: z.ZodTypeAny, options: RequestOptions = {}): Promise<T> {
-    const response = await this.send({
-      ...options,
-      method: 'GET',
-      url,
-      headers: { accept: 'application/json' },
+    return this.observed(async () => {
+      const response = await this.send({
+        ...options,
+        method: 'GET',
+        url,
+        headers: { accept: 'application/json' },
+      })
+      return parseJsonBody<T>(response.body, schema)
     })
-    return parseJsonBody<T>(response.body, schema)
   }
 
   async getText(url: string, options: RequestOptions = {}): Promise<string> {
-    const response = await this.send({ ...options, method: 'GET', url })
-    return response.body
+    return this.observed(async () => {
+      const response = await this.send({ ...options, method: 'GET', url })
+      return response.body
+    })
   }
 
   async postJson<T>(
@@ -182,14 +198,41 @@ export class PoliteHttpClient {
     schema: z.ZodTypeAny,
     options: RequestOptions = {}
   ): Promise<T> {
-    const response = await this.send({
-      ...options,
-      method: 'POST',
-      url,
-      headers: { accept: 'application/json', 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
+    return this.observed(async () => {
+      const response = await this.send({
+        ...options,
+        method: 'POST',
+        url,
+        headers: { accept: 'application/json', 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      return parseJsonBody<T>(response.body, schema)
     })
-    return parseJsonBody<T>(response.body, schema)
+  }
+
+  /** Records one sample per logical request: after the retries, with the final outcome, including parse failures. */
+  private async observed<T>(call: () => Promise<T>): Promise<T> {
+    const { metrics, clock } = this.options
+    if (metrics === undefined) {
+      return call()
+    }
+    const startedMs = clock.now().getTime()
+    const record = (outcome: MetricOutcome): void => {
+      metrics.request({
+        platform: this.options.metricsPlatform ?? 'other',
+        transport: this.options.metricsTransport ?? 'http',
+        outcome,
+        durationSeconds: Math.max(0, clock.now().getTime() - startedMs) / 1000,
+      })
+    }
+    try {
+      const result = await call()
+      record(outcomeOf())
+      return result
+    } catch (error) {
+      record(outcomeOf(error))
+      throw error
+    }
   }
 
   private async send(req: SendRequest): Promise<HttpResponse> {
