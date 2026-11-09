@@ -553,6 +553,10 @@ class LLMGateway:
                 return breaker.state.value
         return BreakerState.CLOSED.value
 
+    def tokens_used(self, mission_id: str) -> int:
+        """Tokens committed for a mission so far (criterion 28). Read-only: the budget owns the number."""
+        return self._budget.state(mission_id).committed
+
     def breaker_state(self, *, tenant_id: str, endpoint_id: str) -> str:
         """Current circuit-breaker state for an endpoint (observability and tests)."""
         roles = self._roles(tenant_id)

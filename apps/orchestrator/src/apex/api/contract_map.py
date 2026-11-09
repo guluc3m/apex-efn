@@ -96,7 +96,9 @@ def _tier(tier: QuantityTier) -> ContractTier:
     return ContractTier(quantity=tier.min_quantity, priority=QuantityPriority.primary)
 
 
-def to_contract_mission(mission: DomainMission, *, token_budget: int) -> Mission:
+def to_contract_mission(
+    mission: DomainMission, *, token_budget: int, tokens_used: int = 0
+) -> Mission:
     """Domain mission -> wire shape. Counts come from the event log, never from a guess."""
     discovered = _last_count(mission, "offers_collected")
     in_gate = _last_count(mission, "gate_items")
@@ -116,7 +118,7 @@ def to_contract_mission(mission: DomainMission, *, token_budget: int) -> Mission
         offers_discovered=discovered,
         offers_negotiated=0,
         offers_in_gate=in_gate,
-        tokens_used=0,
+        tokens_used=tokens_used,
         token_budget=token_budget,
         started_at=mission.created_at,
         completed_at=mission.updated_at if mission.status is MissionStatus.COMPLETED else None,

@@ -503,3 +503,32 @@ async def test_the_runner_reaches_the_worker_and_stops_at_the_next_unwired_port(
     assert result.failed_reason is not None
     assert "D3-03" in result.failed_reason  # FX, the step after scraping
     assert "D5-01" not in result.failed_reason  # the worker is wired
+
+
+# ----- the mission reports the tokens the gateway actually committed ------------------------------
+
+
+def test_a_mission_reports_the_tokens_its_planning_used(app: FastAPI) -> None:
+    """Criterion 28: the token budget is a hard limit, so the number the UI shows must be the real one."""
+    with TestClient(app) as client:
+        request = client.post(
+            "/v1/sourcing-requests",
+            json={"natural_language": "guantes", "delivery_country": "ES"},
+            headers=_h(),
+        ).json()
+        mission = client.post(
+            "/v1/missions", json={"sourcing_request_id": request["id"]}, headers=_h()
+        ).json()
+        fetched = client.get(f"/v1/missions/{mission['id']}", headers=_h()).json()
+    # The stub reports usage, so the gateway committed something for the planning call.
+    assert mission["tokens_used"] > 0
+    assert fetched["tokens_used"] == mission["tokens_used"]
+    assert mission["tokens_used"] < mission["token_budget"]
+
+
+def test_a_mission_without_llm_calls_reports_zero_tokens() -> None:
+    """A mission that never reached the model must not invent usage."""
+    from apex.wiring import build_app_services
+
+    services = build_app_services(Settings(idempotency_backend="memory"), clock=FixedClock(NOW))
+    assert services.gateway.tokens_used("mission-that-never-ran") == 0

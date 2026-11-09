@@ -64,6 +64,16 @@ def get_token_budget(request: Request) -> int:
     return budget
 
 
+def _tokens_used(request: Request, mission_id: str) -> int:
+    """What the gateway has committed for this mission. Zero when no gateway is wired."""
+    services = getattr(request.app.state, "app_services", None)
+    gateway = getattr(services, "gateway", None)
+    if gateway is None:
+        return 0
+    used: int = gateway.tokens_used(mission_id)
+    return used
+
+
 @router.post("", response_model=Mission, status_code=status.HTTP_201_CREATED, tags=["missions"])
 async def create_mission(
     body: CreateMissionRequest,
@@ -102,7 +112,9 @@ async def create_mission(
             429, "Token budget exhausted", detail=exc.warning, reason="token_budget_exhausted"
         ) from exc
     mission = await _maybe_autorun(http_request, tenant_id=tenant_id, mission=mission)
-    return to_contract_mission(mission, token_budget=token_budget)
+    return to_contract_mission(
+        mission, token_budget=token_budget, tokens_used=_tokens_used(http_request, mission.id)
+    )
 
 
 async def _maybe_autorun(
@@ -128,6 +140,7 @@ async def _maybe_autorun(
 @router.get("/{id}", response_model=Mission, tags=["missions"])
 async def get_mission(
     id: str,
+    http_request: Request,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[SourcingService, Depends(get_sourcing_service)],
     token_budget: Annotated[int, Depends(get_token_budget)],
@@ -136,7 +149,9 @@ async def get_mission(
         mission = await service.get_mission(tenant_id=tenant_id, mission_id=id)
     except MissionMissing as exc:
         raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
-    return to_contract_mission(mission, token_budget=token_budget)
+    return to_contract_mission(
+        mission, token_budget=token_budget, tokens_used=_tokens_used(http_request, mission.id)
+    )
 
 
 @router.get("/{id}/events", tags=["missions"])
