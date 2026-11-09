@@ -93,6 +93,8 @@ class Mission(BaseModel):
     id: str
     tenant_id: str
     sourcing_request_id: str
+    quantity: int = Field(gt=0)
+    """The quantity the mission searches for: the largest tier of its sourcing request, at least 1."""
     status: MissionStatus
     config_version: str
     created_at: datetime

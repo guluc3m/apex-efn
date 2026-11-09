@@ -39,6 +39,7 @@ def _mission(**overrides: Any) -> Mission:
         "id": "m-1",
         "tenant_id": TENANT,
         "sourcing_request_id": "sr-1",
+        "quantity": 100,
         "status": MissionStatus.QUEUED,
         "config_version": "v7",
         "created_at": NOW,
