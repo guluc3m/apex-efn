@@ -8,6 +8,6 @@
  */
 
 export { SigningClient, type SigningClientOptions } from './client.js'
-export { canonicalize } from './jcs.js'
-export { sha256Hex } from './hash.js'
+export { CanonicalizationError, canonicalBytes, canonicalize } from './jcs.js'
+export { payloadHash, sha256, sha256Hex } from './hash.js'
 export type { SigningKey, Signature, SigningSession } from '@apex/shared-types/signing'

@@ -1,0 +1,221 @@
+{
+  "description": "RFC 8785 (JCS) canonicalization. `input` is JSON text: parse it with the platform JSON parser (I-JSON numbers), canonicalize, and compare the UTF-8 text and its SHA-256. `errors` must be rejected.",
+  "source": "Expected values from the RFC 8785 reference implementation (npm canonicalize 2.1.0); the first two vectors also match the literal outputs of RFC 8785 sections 3.2.2-3.2.4.",
+  "vectors": [
+    {
+      "name": "rfc8785 3.2.2 primitives",
+      "input": "{\n  \"numbers\": [333333333.33333329, 1E30, 4.50,\n              2e-3, 0.000000000000000000000000001],\n  \"string\": \"\\u20ac$\\u000F\\u000aA'\\u0042\\u0022\\u005c\\\\\\\"\\/\",\n  \"literals\": [null, true, false]\n}",
+      "expected": {
+        "canonical": "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"€$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}",
+        "sha256": "2d5e01a318d0f0879ab568c4be289c8b1f64ef8921a53c6277d5e069978baacb",
+        "utf8_hex": "7b226c69746572616c73223a5b6e756c6c2c747275652c66616c73655d2c226e756d62657273223a5b3333333333333333332e333333333333332c31652b33302c342e352c302e3030322c31652d32375d2c22737472696e67223a22e282ac245c75303030665c6e4127425c225c5c5c5c5c222f227d"
+      }
+    },
+    {
+      "name": "rfc8785 3.2.3 property sorting",
+      "input": "{\n  \"\\u20ac\": \"Euro Sign\",\n  \"\\r\": \"Carriage Return\",\n  \"\\ufb33\": \"Hebrew Letter Dalet With Dagesh\",\n  \"1\": \"One\",\n  \"\\ud83d\\ude00\": \"Emoji: Grinning Face\",\n  \"\\u0080\": \"Control\",\n  \"\\u00f6\": \"Latin Small Letter O With Diaeresis\"\n}",
+      "expected": {
+        "canonical": "{\"\\r\":\"Carriage Return\",\"1\":\"One\",\"\":\"Control\",\"ö\":\"Latin Small Letter O With Diaeresis\",\"€\":\"Euro Sign\",\"😀\":\"Emoji: Grinning Face\",\"דּ\":\"Hebrew Letter Dalet With Dagesh\"}",
+        "sha256": "5e321556d22018a9656991a9e94f77ec175fa193e52a2429d312f8419ec8b08c"
+      }
+    },
+    {
+      "name": "empty object",
+      "input": "{}",
+      "expected": {
+        "canonical": "{}",
+        "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      }
+    },
+    {
+      "name": "empty array",
+      "input": "[]",
+      "expected": {
+        "canonical": "[]",
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    {
+      "name": "empty string",
+      "input": "\"\"",
+      "expected": {
+        "canonical": "\"\"",
+        "sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+      }
+    },
+    {
+      "name": "top-level null",
+      "input": "null",
+      "expected": {
+        "canonical": "null",
+        "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      }
+    },
+    {
+      "name": "top-level true",
+      "input": "true",
+      "expected": {
+        "canonical": "true",
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      }
+    },
+    {
+      "name": "top-level false",
+      "input": "false",
+      "expected": {
+        "canonical": "false",
+        "sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      }
+    },
+    {
+      "name": "top-level zero",
+      "input": "0",
+      "expected": {
+        "canonical": "0",
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      }
+    },
+    {
+      "name": "insignificant whitespace is removed",
+      "input": " { \"b\" : [ 1 , 2 , { \"d\" : 4 , \"c\" : 3 } ] ,\n\t\"a\" : \"x y\" } ",
+      "expected": {
+        "canonical": "{\"a\":\"x y\",\"b\":[1,2,{\"c\":3,\"d\":4}]}",
+        "sha256": "cbb5c03ff5500481d61c1c160e2d3ef01465479fcd5aea5f0c9608ac4fd2f341"
+      }
+    },
+    {
+      "name": "empty key sorts first",
+      "input": "{\"a\":1,\"\":0,\"aa\":2,\"ab\":3}",
+      "expected": {
+        "canonical": "{\"\":0,\"a\":1,\"aa\":2,\"ab\":3}",
+        "sha256": "a1b790cba5eab93219cff19e365101da3f474f88f881e27fd173f94e1bb1d4f4"
+      }
+    },
+    {
+      "name": "integer-like keys sort as strings, uppercase before lowercase",
+      "input": "{\"10\":1,\"9\":2,\"1\":3,\"a\":4,\"B\":5,\"_\":6}",
+      "expected": {
+        "canonical": "{\"1\":3,\"10\":1,\"9\":2,\"B\":5,\"_\":6,\"a\":4}",
+        "sha256": "2736046c84b985b039add92e1c0d4ff57970c721087e6d0be57c0b290098a7f5"
+      }
+    },
+    {
+      "name": "every ASCII control character",
+      "input": "\"\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\u0008\\u0009\\u000a\\u000b\\u000c\\u000d\\u000e\\u000f\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\"",
+      "expected": {
+        "canonical": "\"\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\"",
+        "sha256": "f144bcffbdbaea0a670956fb0a3edd44ce6bc4dedc77c30cfc14f40034044739"
+      }
+    },
+    {
+      "name": "DEL, slash and line separators stay raw",
+      "input": "\"\\u007f / \\/ \\u2028 \\u2029\"",
+      "expected": {
+        "canonical": "\" / /    \"",
+        "sha256": "811f39c562b842aea6bfdcb46caea7016cda2296e6ceecf41274d32a22bae89a"
+      }
+    },
+    {
+      "name": "quote and backslash are escaped",
+      "input": "{\"k\\\"ey\\\\\":\"v\\\"al\\\\ue\"}",
+      "expected": {
+        "canonical": "{\"k\\\"ey\\\\\":\"v\\\"al\\\\ue\"}",
+        "sha256": "e5158ba472c6394a29046c84155454690de33b2ecec797ac3444c4b821626a9d"
+      }
+    },
+    {
+      "name": "non-ASCII text is UTF-8, not escaped",
+      "input": "{\"producto\":\"Guantes de nitrilo\",\"采购\":\"丁腈手套\",\"emoji\":\"\\ud83e\\udde4\"}",
+      "expected": {
+        "canonical": "{\"emoji\":\"🧤\",\"producto\":\"Guantes de nitrilo\",\"采购\":\"丁腈手套\"}",
+        "sha256": "19a74f21f22d06acca825daaa9c0c08044ce7304dfd093b63e9b308a6f07355d"
+      }
+    },
+    {
+      "name": "no Unicode normalization: precomposed and combining keys differ",
+      "input": "{\"e\\u0301\":\"combining\",\"\\u00e9\":\"precomposed\"}",
+      "expected": {
+        "canonical": "{\"é\":\"combining\",\"é\":\"precomposed\"}",
+        "sha256": "916971b1fdd27bc5ee264f9db7b77726b280de91141a3f98ca4bd2876bbf3165"
+      }
+    },
+    {
+      "name": "astral key sorts by UTF-16 code units, before U+FB33",
+      "input": "{\"\\ufb33\":1,\"\\ud83d\\ude00\":2,\"\\uffff\":3}",
+      "expected": {
+        "canonical": "{\"😀\":2,\"דּ\":1,\"￿\":3}",
+        "sha256": "460c3563e80d4d09f5754e081d81e5c11aa2f3d0325f0f0c77a120275058db62"
+      }
+    },
+    {
+      "name": "nested objects in arrays keep array order",
+      "input": "[{\"b\":2,\"a\":1},[{\"d\":4,\"c\":3}],[],{}]",
+      "expected": {
+        "canonical": "[{\"a\":1,\"b\":2},[{\"c\":3,\"d\":4}],[],{}]",
+        "sha256": "d8bfd097bae2713b269d364aa1b34a4c01ff47ba0c388be49af723a55b62bfe8"
+      }
+    },
+    {
+      "name": "deep nesting",
+      "input": "{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"b\":true,\"a\":false}}}}}}}}}}}}}}}}}}}}}",
+      "expected": {
+        "canonical": "{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"z\":{\"a\":false,\"b\":true}}}}}}}}}}}}}}}}}}}}}",
+        "sha256": "291b2de2bf7d503c3b59ef314a8bb8e86e8ec5f59c19f8b9ec34db76dbe04818"
+      }
+    },
+    {
+      "name": "number forms",
+      "input": "[1.0,-0,0.0,-0.0,1e21,1e20,1E-7,0.000001,100,1.5e300,-1.5e-300,0.1,0.30000000000000004]",
+      "expected": {
+        "canonical": "[1,0,0,0,1e+21,100000000000000000000,1e-7,0.000001,100,1.5e+300,-1.5e-300,0.1,0.30000000000000004]",
+        "sha256": "f8baaa3d2554c2544438a1689a818318d721458e2a70a9285eda7d0dbe3a3944"
+      }
+    },
+    {
+      "name": "integers beyond 2^53 are doubles",
+      "input": "[9007199254740991,9007199254740992,9007199254740993,-9007199254740993,18446744073709551615]",
+      "expected": {
+        "canonical": "[9007199254740991,9007199254740992,9007199254740992,-9007199254740992,18446744073709552000]",
+        "sha256": "8b6fe4c7a0b569eb7c8f4bffc168bec7e5b2e480d63fb0b7402f94d4a9916e76"
+      }
+    },
+    {
+      "name": "gate decision payload",
+      "input": "{\"type\":\"follow\",\"subject_ref\":\"offer:01JBK7Q2M4mission:01JBK7Q2M5offer\",\"amount\":{\"amount_minor\":1250000,\"currency\":\"EUR\"},\"offer\":{\"id\":\"01JBK7Q2M5offer\",\"unit_price\":{\"amount_minor\":125,\"currency\":\"CNY\"},\"quantity\":10000},\"price_sanity\":{\"band\":\"normal\",\"config_version\":3,\"modified_z\":-0.42,\"sample_size\":17},\"seller_confidence\":{\"score\":78,\"band\":\"high\",\"model_version\":\"trust-v1\"},\"financial_verdict\":\"within_budget\",\"config_version\":3,\"fx\":{\"rate\":\"7.812345678901\",\"as_of\":\"2026-11-09T00:00:00Z\",\"provisional\":false}}",
+      "expected": {
+        "canonical": "{\"amount\":{\"amount_minor\":1250000,\"currency\":\"EUR\"},\"config_version\":3,\"financial_verdict\":\"within_budget\",\"fx\":{\"as_of\":\"2026-11-09T00:00:00Z\",\"provisional\":false,\"rate\":\"7.812345678901\"},\"offer\":{\"id\":\"01JBK7Q2M5offer\",\"quantity\":10000,\"unit_price\":{\"amount_minor\":125,\"currency\":\"CNY\"}},\"price_sanity\":{\"band\":\"normal\",\"config_version\":3,\"modified_z\":-0.42,\"sample_size\":17},\"seller_confidence\":{\"band\":\"high\",\"model_version\":\"trust-v1\",\"score\":78},\"subject_ref\":\"offer:01JBK7Q2M4mission:01JBK7Q2M5offer\",\"type\":\"follow\"}",
+        "sha256": "65d90e1356d17ab2b54b9b5be7612281d40cf699a0650381a2c80146bc622a0f"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "name": "lone high surrogate in a value",
+      "input": "{\"a\":\"\\ud800\"}",
+      "expected": {
+        "error": "lone_surrogate"
+      }
+    },
+    {
+      "name": "lone low surrogate in a key",
+      "input": "{\"\\udc00\":1}",
+      "expected": {
+        "error": "lone_surrogate"
+      }
+    },
+    {
+      "name": "surrogates in the wrong order",
+      "input": "[\"\\ude00\\ud83d\"]",
+      "expected": {
+        "error": "lone_surrogate"
+      }
+    },
+    {
+      "name": "lone surrogate deep inside",
+      "input": "[{\"a\":[{\"b\":\"ok \\udbff\"}]}]",
+      "expected": {
+        "error": "lone_surrogate"
+      }
+    }
+  ]
+}
