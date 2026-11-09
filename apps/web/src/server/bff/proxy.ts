@@ -15,6 +15,22 @@ const FORWARDED_RESPONSE_HEADERS = ['content-type', 'etag', 'retry-after', 'loca
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
+/**
+ * CSRF guard for cookie-authenticated writes: a browser always sends `Origin` on cross-origin
+ * POST/PUT/PATCH/DELETE, so a mismatching host is refused. A missing `Origin` (server-to-server,
+ * curl) is allowed because it cannot come from a cross-site form or fetch.
+ */
+export function isSameOrigin(request: Request): boolean {
+  const origin = request.headers.get('origin')
+  if (origin === null) return true
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? new URL(request.url).host
+  try {
+    return new URL(origin).host === host
+  } catch {
+    return false
+  }
+}
+
 export function orchestratorUrl(): string {
   return (process.env.ORCHESTRATOR_URL || DEFAULT_ORCHESTRATOR_URL).replace(/\/+$/, '')
 }
@@ -40,6 +56,7 @@ export async function proxyToOrchestrator(
   fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
   if (!isSafeSegments(segments)) return problem(400, 'Invalid path')
+  if (WRITE_METHODS.has(request.method) && !isSameOrigin(request)) return problem(403, 'Cross-origin write refused')
 
   const source = new URL(request.url)
   const target = `${orchestratorUrl()}/v1/${segments.map(encodeURIComponent).join('/')}${source.search}`

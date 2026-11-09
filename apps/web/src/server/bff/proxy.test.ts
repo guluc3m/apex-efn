@@ -85,6 +85,26 @@ describe('proxyToOrchestrator', () => {
     expect(lastCall(c.fetchMock).headers.get('idempotency-key')).toBeNull()
   })
 
+  it('refuses a write whose Origin is another site, and allows same-origin and no Origin', async () => {
+    const post = (headers: Record<string, string>) =>
+      new Request('http://web.test/api/v1/missions', { method: 'POST', body: '{}', headers })
+
+    const evil = upstream()
+    const refused = await proxyToOrchestrator(post({ origin: 'https://evil.test', host: 'web.test' }), ['missions'], evil.impl)
+    expect(refused.status).toBe(403)
+    expect(evil.fetchMock).not.toHaveBeenCalled()
+
+    const same = upstream()
+    expect((await proxyToOrchestrator(post({ origin: 'http://web.test', host: 'web.test' }), ['missions'], same.impl)).status).toBe(200)
+
+    const none = upstream()
+    expect((await proxyToOrchestrator(post({}), ['missions'], none.impl)).status).toBe(200)
+
+    const read = upstream()
+    const get = new Request('http://web.test/api/v1/missions/1', { headers: { origin: 'https://evil.test' } })
+    expect((await proxyToOrchestrator(get, ['missions', '1'], read.impl)).status).toBe(200)
+  })
+
   it('passes an SSE body through as a stream with buffering disabled', async () => {
     const sse = new Response('id: 1\ndata: {}\n\n', { headers: { 'content-type': 'text/event-stream' } })
     const { impl } = upstream(sse)
