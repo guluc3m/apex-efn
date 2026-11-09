@@ -16,7 +16,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from apex.negotiation.engine import NegotiationEngine, OpenRequest
+from apex.negotiation.engine import NegotiationEngine, NegotiationError, OpenRequest
 from apex.negotiation.models import NegotiationOutcome, NegotiationParams, NegotiationSession
 from apex.negotiation.ports import NegotiationStore
 
@@ -82,16 +82,36 @@ class EngineNegotiationPort:
             return to_result(await self._engine.advance(existing.id, tenant_id=tenant_id))
         data = OfferInput.model_validate(dict(offer))
         params, config_version, account_id = await self._resolve(data, tenant_id)
-        session = await self._engine.start(
-            OpenRequest(
-                tenant_id=tenant_id,
-                platform=data.platform,
-                seller_id=data.seller_id,
-                product_id=data.product_id,
-                account_id=account_id,
-                config_version=config_version,
-                params=params,
-            ),
-            idempotency_key=idempotency_key,
-        )
+        try:
+            session = await self._engine.start(
+                OpenRequest(
+                    tenant_id=tenant_id,
+                    platform=data.platform,
+                    seller_id=data.seller_id,
+                    product_id=data.product_id,
+                    account_id=account_id,
+                    config_version=config_version,
+                    params=params,
+                    offer_id=data.offer_id,
+                ),
+                idempotency_key=idempotency_key,
+            )
+        except NegotiationError as exc:
+            if exc.code != "seller_busy":
+                raise
+            # D5-08: never open a second chat with a seller an active negotiation is already talking to.
+            # The graph treats the result as terminal and routes the offer to the human gate.
+            return NegotiationResult(
+                outcome=NegotiationOutcome.ESCALATED,
+                negotiation_id=await self._engine.seller_holder(
+                    tenant_id=tenant_id,
+                    platform=data.platform,
+                    seller_id=data.seller_id,
+                )
+                or "",
+                price_minor=None,
+                currency=None,
+                quantity=None,
+                reason="seller_busy",
+            )
         return to_result(session)
