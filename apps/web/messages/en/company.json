@@ -1,1 +1,70 @@
-{}
+{
+  "finance": {
+    "report": {
+      "title": "Review the import of {file}",
+      "subtitle": "Company setup · step 7 of 7 · {rows} rows · nothing is activated until you sign.",
+      "upload": "Upload another file",
+      "pending": "Not connected yet",
+      "accepted": "Accepted rows",
+      "rejected": "Rejected",
+      "duplicated": "Duplicated",
+      "periods": "Periods",
+      "converted": "Converted to EUR",
+      "range": "{range} · projection enabled",
+      "mappingTitle": "Confirm the mapping of {n} headers",
+      "mappingHint": "The assistant suggests the field; numbers are always interpreted by the importer, never by the AI.",
+      "column": "Column in your file",
+      "field": "APEX field",
+      "origin": "Source",
+      "suggested": "Suggested by the assistant",
+      "confirmMapping": "Confirm mapping",
+      "rejectionsTitle": "Rows that do not make it",
+      "rejectionsCaption": "Rejected CSV rows",
+      "metric": "Metric",
+      "period": "Period",
+      "line": "Line",
+      "value": "Value",
+      "reason": "Reason",
+      "reasons": {
+        "decimals": "Amount with decimals",
+        "period": "Malformed period (YYYY-MM)",
+        "metric": "Unknown metric",
+        "currency": "Unsupported currency",
+        "duplicate": "Duplicate: line {line} is kept"
+      },
+      "warningsTitle": "Warnings",
+      "warnings": {
+        "fx": "{n} USD amounts were converted to EUR at each month-end rate. The original is kept.",
+        "taxReserve": "There is no tax_reserve in {month}: buying capacity does not deduct a tax reserve that month."
+      },
+      "review": "Review result and activate",
+      "rejectedDontBlock": "The {n} rejected rows do not block activation."
+    },
+    "summary": {
+      "title": "This is what you will be able to buy with October's data",
+      "subtitle": "Reference date {date} · new snapshot, replaces the previous one.",
+      "capacity": "Net buying capacity",
+      "capacityHint": "After a {buffer} % buffer and committed payments",
+      "score": "Buying Power Score",
+      "scoreHint": "Formula pending approval",
+      "envelopes": "Envelopes by category",
+      "chartCaption": "Budget use against limit, this month. The full bar is the limit.",
+      "category": "Category",
+      "used": "Used this month",
+      "available": "Available",
+      "limit": "Limit",
+      "nearlyExhausted": "Nearly exhausted",
+      "activateTitle": "Activate snapshot",
+      "activateBody": "Activating is a signed decision and asks for your passkey now, even with an open signing session.",
+      "rows": "Rows",
+      "rowsValue": "{n} accepted",
+      "replaces": "Replaces",
+      "replacesValue": "{month} (gets archived)",
+      "expires": "Expires",
+      "back": "Back to the CSV review",
+      "activate": "Activate with passkey",
+      "pending": "Not connected yet: signing and activation have no backend",
+      "allOrNothing": "All or nothing: no partial activation."
+    }
+  }
+}
