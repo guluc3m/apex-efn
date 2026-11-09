@@ -27,6 +27,13 @@ class NegotiationOutcome(StrEnum):
 PHASE1_COUNTERPARTS = frozenset({Counterpart.HIGHER_VOLUME, Counterpart.FRAMEWORK_CONTRACT})
 """Counterparts a profile may enable in Phase 1 (ADR-900, Q15). The rest wait for Phase 2."""
 
+NEGOTIATION_STRATEGY = "playbook-v1"
+"""Strategy identifier reported to the client (contract ``Negotiation.strategy``).
+
+It names the playbook in ADR-502. It is a technical label, not a business parameter: changing how many
+rungs the ladder has is a code change in the playbook, so the value moves with it.
+"""
+
 TERMINAL_OUTCOMES = frozenset(
     {
         NegotiationOutcome.AGREED,
@@ -163,6 +170,20 @@ class PendingDraft(BaseModel):
     source: Literal["llm", "template"]
 
 
+class GuardrailEvent(BaseModel):
+    """A guardrail hit and the instant it happened.
+
+    ``guardrail_hits`` keeps the bare codes (internal diagnostics included); this list carries the clock
+    reading so the API can answer the contract's ``GuardrailHit {code, at}`` without inventing a timestamp.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    code: str
+    at: datetime
+    detail: str | None = None
+
+
 class NegotiationSession(BaseModel):
     """Full, serialisable state of one negotiation. Persisted after every step."""
 
@@ -174,6 +195,8 @@ class NegotiationSession(BaseModel):
     account_id: str
     config_version: str
     params: NegotiationParams
+    offer_id: str = ""
+    """Offer the negotiation was opened for, as the caller knows it. Empty only on engine-level tests."""
     status: NegotiationOutcome = NegotiationOutcome.IN_PROGRESS
     chat_id: str | None = None
     last_seller_seq: int = 0
@@ -190,6 +213,7 @@ class NegotiationSession(BaseModel):
     transcript: list[TranscriptMessage] = Field(default_factory=list)
     notices: list[str] = Field(default_factory=list)
     guardrail_hits: list[str] = Field(default_factory=list)
+    guardrail_events: list[GuardrailEvent] = Field(default_factory=list)
     stop_reason: str | None = None
 
     @property
