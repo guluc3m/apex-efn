@@ -12,6 +12,8 @@ export function AppLink({ href, ...props }: Props) {
   const locale = useLocale()
   const target = href.startsWith('/') ? `/${locale}${href === '/' ? '' : href}` : href
   // typedRoutes no ve las rutas de fases siguientes ni el prefijo dinámico.
+  // Sin .next/types el href es string y la regla marcaría el cast que sí hace falta tras generar los tipos.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   return <Link href={target as never} {...props} />
 }
 
