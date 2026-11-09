@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Icon,
+  Logo,
   SigningSessionIndicator,
   type NavItem,
 } from '@apex/ui'
@@ -75,8 +76,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         items={items}
         renderLink={renderLink}
         brand={
-          <AppLink href="/decisiones" aria-label={t('nav.home')} className="inline-flex items-center text-[17px] font-semibold tracking-[-0.04em] text-ink no-underline">
-            TRATO
+          <AppLink href="/decisiones" aria-label={t('nav.home')} className="inline-flex items-center no-underline">
+            <Logo size="sm" variant="isotipo" />
           </AppLink>
         }
         trailing={
