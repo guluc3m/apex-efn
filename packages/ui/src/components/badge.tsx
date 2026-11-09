@@ -1,38 +1,43 @@
-import { cva, type VariantProps } from 'class-variance-authority'
+import { CircleCheck, CircleHelp, OctagonAlert, type LucideIcon } from 'lucide-react'
 import * as React from 'react'
 
 import { cn } from '../lib/utils.js'
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80',
-        secondary: 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive: 'border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80',
-        outline: 'text-foreground',
-        // Confidence bands
-        high: 'border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
-        medium: 'border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100',
-        low: 'border-transparent bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100',
-        untrusted: 'border-transparent bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100',
-        // Price bands
-        normal: 'border-transparent bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100',
-        atypical: 'border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100',
-        implausible: 'border-transparent bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-)
+import { Icon } from './icon.js'
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+const TONES = {
+  ok: { cls: 'bg-good-subtle text-good', icon: CircleCheck },
+  warn: { cls: 'bg-warn-subtle text-warn', icon: null },
+  bad: { cls: 'bg-bad-subtle text-bad', icon: OctagonAlert },
+  neutro: { cls: 'bg-raised text-ink-soft', icon: CircleHelp },
+  plano: { cls: 'bg-raised text-ink-soft', icon: null },
+} as const
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  tone?: keyof typeof TONES
+  /** Sustituye el icono del tono (conceptos de dominio). */
+  icon?: LucideIcon
 }
 
-export { Badge, badgeVariants }
+/** Estado = icono + color + texto. `warn` sin icono propio usa un triángulo relleno. */
+function Badge({ tone = 'neutro', icon, className, children, ...props }: BadgeProps) {
+  const t = TONES[tone]
+  const glyph = icon ?? t.icon
+  return (
+    <span
+      className={cn('inline-flex items-center gap-1.5 px-2 py-0.5 text-[13px] leading-[1.45] whitespace-nowrap', t.cls, className)}
+      {...props}
+    >
+      {glyph ? (
+        <Icon icon={glyph} />
+      ) : tone === 'warn' ? (
+        <svg width="8.5" height="8" viewBox="0 0 8.5 8" aria-hidden="true" focusable="false" className="flex-none">
+          <path d="M4.25 0 8.5 8H0Z" fill="currentColor" />
+        </svg>
+      ) : null}
+      {children}
+    </span>
+  )
+}
+
+export { Badge }

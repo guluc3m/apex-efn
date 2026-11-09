@@ -1,0 +1,78 @@
+{
+  "context": "{code} · {seller} · {platform}",
+  "title": "Negotiation · round {round} of {max}",
+  "titleAborted": "Negotiation · aborted in round {round} of {max}",
+  "back": "Back to mission",
+  "take": "Take control",
+  "resume": "Hand back to agent",
+  "abort": "Abort",
+  "reopen": "Reopen negotiation",
+  "pending": "Not connected yet",
+  "humanBanner": "You have control of the chat. The agent will not send anything until you hand it back.",
+  "abortedBanner": "Negotiation aborted. The transcript is saved.",
+  "transcript": "Negotiation transcript",
+  "translationHide": "Hide translation",
+  "translationShow": "Show translation",
+  "translationIcon": "Translated",
+  "translationRequest": "Request a new translation",
+  "reopenedSeparator": "Reopened by {by} at {time}",
+  "agentSending": "Agent",
+  "draft": {
+    "title": "Agent draft · awaiting your approval",
+    "textLabel": "Draft text",
+    "checked": "Checked before sending:",
+    "approve": "Approve and send",
+    "discard": "Discard draft"
+  },
+  "bands": {
+    "price": {
+      "normal": "normal",
+      "atypical": "atypical",
+      "implausible": "implausible",
+      "insufficient_reference": "no reference"
+    },
+    "confidence": {
+      "high": "High confidence",
+      "medium": "Medium confidence",
+      "low": "Low confidence",
+      "untrusted": "Untrusted",
+      "insufficient_data": "Insufficient data"
+    }
+  },
+  "side": {
+    "current": "Current offer",
+    "summary": "Initial {initial} · {delta} · target {target}",
+    "confidenceTitle": "Seller confidence",
+    "confidenceLabel": "{band} · {score}",
+    "priceTitle": "Price band",
+    "priceLabel": "Price {band}",
+    "escalationTitle": "Escalated in another negotiation",
+    "escalationOpen": "Open {seller}",
+    "screenshots": "View screenshots ({count})"
+  },
+  "chart": {
+    "caption": "Seller price by round, with target and limit",
+    "round": "Round {n}",
+    "draft": "Draft",
+    "target": "target {value}",
+    "max": "maximum at 8% discount: {value}",
+    "table": "Round {round}: {value}",
+    "tableDraft": "Draft (not sent): {value}",
+    "tableTarget": "Target: {value}",
+    "tableMax": "Maximum: {value}"
+  },
+  "dialog": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "takeTitle": "Take control",
+    "takeText": "The agent stops sending messages until you hand it back. You will be able to write to the seller yourself.",
+    "resumeTitle": "Hand back to agent",
+    "resumeText": "The agent goes back to drafting in semi-automatic mode: every message waits for your approval.",
+    "abortTitle": "Abort negotiation",
+    "abortText": "The agent stops writing. The transcript is saved and you can reopen it later.",
+    "reopenTitle": "Reopen negotiation",
+    "reopenText": "The agent goes back to drafting in semi-automatic mode: every message waits for your approval. This is recorded in the audit log.",
+    "reason": "Reason",
+    "reopenConfirm": "Reopen"
+  }
+}

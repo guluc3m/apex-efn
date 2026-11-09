@@ -1,0 +1,202 @@
+{
+  "header": {
+    "home": "APEX, go to Decisions",
+    "title": "Set up company · step {n} of {total}",
+    "draft": "Local draft · not yet saved to the server"
+  },
+  "stepsLabel": "Setup steps",
+  "steps": {
+    "empresa": {
+      "label": "Tax identity",
+      "title": "Tax identity",
+      "lead": "Used in RFQs, purchase orders and customs."
+    },
+    "sector": {
+      "label": "Sector and activity",
+      "title": "Sector and activity",
+      "lead": "Helps choose platforms and price references."
+    },
+    "cuentas": {
+      "label": "Platform accounts",
+      "title": "Platform accounts",
+      "lead": "The agent searches and negotiates with these accounts. Credentials never leave the encrypted vault."
+    },
+    "presupuesto": {
+      "label": "Budget and currency",
+      "title": "Budget and currency",
+      "lead": "Every offer is checked against these limits and your real treasury."
+    },
+    "politica": {
+      "label": "Purchase policy",
+      "title": "Purchase policy",
+      "lead": "Sets when your signature is needed, when two are, and which sellers are accepted."
+    },
+    "negociacion": {
+      "label": "Negotiation",
+      "title": "Negotiation",
+      "lead": "Hard limits for the agent. It never exceeds them."
+    },
+    "finanzas": {
+      "label": "Financial data",
+      "title": "Financial data",
+      "lead": "No mission can be launched without an active snapshot."
+    }
+  },
+  "stepState": {
+    "done": "Done",
+    "warnings": "{count, plural, one {# warning} other {# warnings}}",
+    "pending": "{count, plural, one {# pending} other {# pending}}"
+  },
+  "blocking": "You cannot launch missions until a financial snapshot is activated (step 7).",
+  "nav": {
+    "prev": "Previous",
+    "next": "Next",
+    "firstStep": "You are already on the first step",
+    "toImport": "Go to the import"
+  },
+  "pending": "Not connected yet",
+  "errors": {
+    "required": "Required field",
+    "amount": "Enter a valid amount",
+    "percent": "Enter a valid percentage"
+  },
+  "options": {
+    "country": {
+      "es": "Spain"
+    },
+    "customs": {
+      "eori": "Regular importer (EORI)"
+    },
+    "frequency": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "occasional": "Occasional"
+    },
+    "currency": {
+      "EUR": "EUR",
+      "USD": "USD",
+      "CNY": "CNY"
+    },
+    "payment": {
+      "d30": "30 days",
+      "d60": "60 days",
+      "d90": "90 days",
+      "prepaid": "Prepayment"
+    },
+    "trust": {
+      "medium": "Medium",
+      "high": "High"
+    },
+    "lateness": {
+      "none": "No delay",
+      "late5": "Up to 5 days late",
+      "late10": "Up to 10 days late"
+    },
+    "aggressiveness": {
+      "balanced": "Balanced",
+      "conservative": "Conservative",
+      "aggressive": "Aggressive"
+    },
+    "tone": {
+      "formal": "Formal",
+      "close": "Friendly"
+    },
+    "language": {
+      "seller": "Seller's language",
+      "es": "Spanish",
+      "en": "English"
+    },
+    "counterparts": {
+      "volume": "Higher volume (never above what the mission requests)",
+      "prepay": "Prepayment",
+      "framework": "Framework contract",
+      "longerTerm": "Longer payment term"
+    }
+  },
+  "fields": {
+    "legalName": "Legal name",
+    "taxId": "Tax ID / VAT",
+    "country": "Country",
+    "customs": "Customs regime",
+    "shipping": "Shipping address",
+    "billingSame": "Billing address is the same",
+    "cnae": "Industry code (CNAE)",
+    "frequency": "Purchase frequency",
+    "purchases": "What you buy",
+    "seasonality": "Seasonality",
+    "currency": "Base currency",
+    "payment": "Preferred payment terms",
+    "buffer": "Treasury buffer (%)",
+    "category": "Category",
+    "envelope": "Monthly envelope",
+    "maxPerOrder": "Maximum per order",
+    "addCategory": "Add category",
+    "approvalFrom": "Human approval from",
+    "dualFrom": "Dual signature from",
+    "amountRequired": "Amount required",
+    "minTrust": "Minimum seller confidence",
+    "lateness": "Delivery tolerance",
+    "certifications": "Required certifications",
+    "excludedCountries": "Excluded countries",
+    "bannedSellers": "Banned suppliers",
+    "none": "None",
+    "effective": "Effective thresholds (read-only)",
+    "unset": "Not set: your company decides",
+    "thresholds": {
+      "referenceWeights": "Price reference weights",
+      "approval": "Human approval",
+      "dual": "Dual signature"
+    },
+    "targetDiscount": "Target discount",
+    "maxDiscount": "Maximum discount",
+    "discountNote": "No default values. The agent does not negotiate a category until it has both.",
+    "aggressiveness": "Aggressiveness",
+    "tone": "Tone",
+    "language": "Language",
+    "counterparts": "Counterparts the agent may offer",
+    "sendMode": "Sending mode: semi-automatic. Every agent message waits for your approval (phase 1)."
+  },
+  "accounts": {
+    "platform": "Platform",
+    "connection": "Connection",
+    "status": "Status",
+    "action": "Action",
+    "connections": {
+      "oauth": "OAuth",
+      "password": "Username and password"
+    },
+    "states": {
+      "connected": "Connected",
+      "expired": "Session expired",
+      "none": "Not connected"
+    },
+    "disconnect": "Disconnect",
+    "relogin": "Sign in again",
+    "connect": "Connect",
+    "connectTitle": "Connect {name}",
+    "user": "Username",
+    "password": "Password",
+    "vaultNote": "They go straight to the encrypted vault. Neither the agent nor this screen ever sees them again: only an account identifier.",
+    "save": "Save credentials",
+    "pending": "Not connected yet: credentials cannot be sent to the encrypted vault"
+  },
+  "finance": {
+    "drop": "Drop your financial CSV here",
+    "format": "Long format, UTF-8, amounts in cents. Separator detected automatically.",
+    "choose": "Choose file",
+    "selected": "File selected ({size}). Not uploaded or read yet.",
+    "template": "Download template",
+    "pending": "Not connected yet"
+  },
+  "assistant": {
+    "title": "Setup assistant",
+    "subtitle": "Fills in the form for you; you confirm every field.",
+    "agent": "Assistant",
+    "you": "You",
+    "input": "Message to the assistant",
+    "placeholder": "Write to the assistant",
+    "send": "Send",
+    "stop": "Stop",
+    "sendReason": "Not connected yet: the assistant cannot receive messages."
+  }
+}

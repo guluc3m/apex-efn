@@ -1,26 +1,13 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-
-import '@/styles/globals.css'
-import { Providers } from './providers'
-
-const inter = Inter({ subsets: ['latin'] })
+import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
-  title: 'APEX-EFN - B2B Sourcing Inteligente',
+  title: 'Apex',
+  icons: { icon: '/brand/apex-icono.svg' },
   description: 'Plataforma de sourcing inteligente y negociación automatizada de compras por volumen',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="es" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  )
+// El <html> y el <body> viven en app/[locale]/layout.tsx.
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return children
 }

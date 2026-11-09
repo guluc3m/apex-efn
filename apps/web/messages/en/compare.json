@@ -1,0 +1,30 @@
+{
+  "back": "Back to mission",
+  "context": "{code} · {n} finalists",
+  "profile": "Profile",
+  "profiles": { "operative": "Operational buyer", "cfo": "CFO / finance" },
+  "export": "Export comparison",
+  "decide": "Decide on {name}",
+  "pending": "Not connected yet",
+  "tableCaption": "Comparison of the finalists",
+  "rank": "#{n}",
+  "rows": { "criterion": "Criterion", "price": "Unit price", "band": "Price band", "confidence": "Confidence", "verdict": "Verdict", "signature": "Signature", "landed": "Landed cost", "lead": "Lead time", "score": "Score", "vsFirst": "Versus #1" },
+  "delta": { "down": "Below the median", "up": "Above the median" },
+  "deltaNote": "Arrow: price difference versus the median of {median}/unit. Blue, below; red, above.",
+  "price": { "normal": "Normal", "atypical": "Atypical", "implausible": "Implausible" },
+  "confidence": { "high": "high", "medium": "medium", "low": "low", "untrusted": "untrusted", "insufficient_data": "insufficient data" },
+  "verdict": { "within_budget": "Within budget", "stretch": "Stretch", "out_of_budget": "Out of budget" },
+  "signature": { "signed": "Signed", "pending": "Unsigned", "invalid": "Invalid" },
+  "chart": {
+    "caption": "Contribution of each criterion to the score",
+    "criteria": { "price": "Price", "trust": "Confidence", "lead": "Lead time", "verdict": "Verdict" },
+    "row": "{name}: score {score} ({parts})"
+  },
+  "savings": {
+    "title": "Savings",
+    "list": "Versus list price, this mission",
+    "median": "Versus market median",
+    "year": "{category}, in 2026",
+    "memory": "Price memory"
+  }
+}

@@ -1,46 +1,65 @@
+'use client'
+
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 
 import { cn } from '../lib/utils.js'
 
+import { shiningClass } from './shining-text.js'
+import { Tooltip } from './tooltip.js'
+
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex box-border items-center justify-center gap-2 border font-medium whitespace-nowrap no-underline transition-[background-color,border-color,color,translate] duration-(--fast) ease-apex active:translate-y-px active:duration-(--press) [&_svg]:flex-none',
   {
     variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
-        outline: 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-10 rounded-md px-8',
-        icon: 'h-9 w-9',
+      variant: { pri: '', sec: '', ghost: '', danger: '' },
+      size: { sm: 'min-h-8 px-2.5', md: 'min-h-9 px-3.5', lg: 'min-h-11 px-4' },
+      state: {
+        ready: 'cursor-pointer',
+        inert: 'cursor-not-allowed border-line bg-transparent text-ink-muted active:translate-y-0',
+        busy: 'cursor-progress border-control-border bg-raised text-ink active:translate-y-0',
       },
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  }
+    compoundVariants: [
+      { state: 'ready', variant: 'sec', class: 'border-control-border bg-panel text-ink hover:border-ink-muted hover:bg-raised' },
+      { state: 'ready', variant: 'pri', class: 'border-accent bg-accent text-on-accent hover:border-accent-hover hover:bg-accent-hover' },
+      { state: 'ready', variant: 'ghost', class: 'border-transparent bg-transparent text-ink-soft hover:bg-panel hover:text-ink' },
+      { state: 'ready', variant: 'danger', class: 'border-danger bg-danger text-white hover:border-danger-hover hover:bg-danger-hover' },
+    ],
+    defaultVariants: { variant: 'sec', size: 'md', state: 'ready' },
+  },
 )
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+    Omit<VariantProps<typeof buttonVariants>, 'state'> {
   asChild?: boolean
+  /** Ocupado: conserva el ancho, ShiningText en el texto y sin spinner. */
+  busy?: boolean
+  /** Deshabilitado con motivo: sigue enfocable y el motivo llega por aria-describedby (tooltip). */
+  disabledReason?: string
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild, busy, disabledReason, disabled, onClick, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button'
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
-  }
+    const inert = Boolean(disabled || disabledReason)
+    const state = inert ? 'inert' : busy ? 'busy' : 'ready'
+    const button = (
+      <Comp
+        ref={ref}
+        className={cn(buttonVariants({ variant, size, state }), className)}
+        {...(disabledReason ? { 'aria-disabled': true } : { disabled })}
+        aria-busy={busy || undefined}
+        onClick={disabledReason || busy ? (e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault() : onClick}
+        {...props}
+      >
+        {busy && typeof children === 'string' ? <span className={shiningClass}>{children}</span> : children}
+      </Comp>
+    )
+    return disabledReason ? <Tooltip text={disabledReason}>{button}</Tooltip> : button
+  },
 )
 Button.displayName = 'Button'
 

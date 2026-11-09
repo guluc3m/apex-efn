@@ -1,54 +1,159 @@
 @import 'tailwindcss';
-@config '../../tailwind.config.ts';
+@source '../../../../packages/ui/src';
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-  }
+/* Tokens del lienzo (apex-ui.css §1). Solo modo oscuro, radio 0.
+   Relleno de acento = se pulsa; línea o barra de acento = solo señala. */
+:root {
+  color-scheme: dark;
+  --gutter-page: 40px;
+  --gutter-panel: 24px;
+  --bg: #0b0b0d;
+  --panel: #131316;
+  --raised: #1b1b20;
+  --line: #26262c;
+  --line-strong: #36363e;
+  --control-border: #6b6b77;
+  --ink: #ededf0;
+  --ink-soft: #b4b4be;
+  --ink-muted: #8e8e9a;
+  --on-accent: #0b0b0d;
+  --white: #ffffff;
+  --accent: #8fbb8b;
+  --accent-hover: #a0c99c;
+  --accent-subtle: #16211a;
+  --accent-line: #3a4a3b;
+  --accent-row: rgba(22, 33, 26, 0.95);
+  --good: #5aa9ff;
+  --good-subtle: #0d1f35;
+  --warn: #e6c34a;
+  --warn-subtle: #2a2308;
+  --bad: #f7566a;
+  --bad-subtle: #2e1117;
+  --danger: #c4271f;
+  --danger-hover: #cf2a22;
+  /* Halo del chat (DESIGN §6): única excepción decorativa, solo en chats. */
+  --halo-1: #8fbb8b;
+  --halo-2: #5aa9ff;
+  --halo-3: #a58bf0;
+  --halo-4: #e07f9c;
+  --press: 60ms;
+  --fast: 120ms;
+  --base: 180ms;
+  --overlay: 220ms;
+  --exit: 90ms;
+  --easing: cubic-bezier(0.2, 0, 0, 1);
+  --easing-move: cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+/* Utilidades Tailwind: bg-panel, text-ink-soft, border-line, etc. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-control-border: var(--control-border);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-on-accent: var(--on-accent);
+  --color-white: var(--white);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-line: var(--accent-line);
+  --color-good: var(--good);
+  --color-good-subtle: var(--good-subtle);
+  --color-warn: var(--warn);
+  --color-warn-subtle: var(--warn-subtle);
+  --color-bad: var(--bad);
+  --color-bad-subtle: var(--bad-subtle);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+
+  --spacing-gutter-page: var(--gutter-page);
+  --spacing-gutter-panel: var(--gutter-panel);
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --ease-apex: var(--easing);
+  --ease-apex-move: var(--easing-move);
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--line);
   }
   body {
-    @apply bg-background text-foreground;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
   }
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Movimiento de @apex/ui (DESIGN §8). Entradas y salidas de capas; con reduced motion los componentes las quitan. */
+@keyframes ap-in { from { opacity: 0 } }
+@keyframes ap-out { to { opacity: 0 } }
+@keyframes ap-dlg { from { opacity: 0; transform: translateY(4px) } }
+@keyframes ap-persiana { from { clip-path: inset(0 0 100% 0) } to { clip-path: inset(0) } }
+@keyframes ap-entra { from { opacity: 0; transform: translateX(12px) } }
+@keyframes ap-toast-out { to { opacity: 0; transform: translateX(12px) } }
+@keyframes ap-shine { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+@keyframes ap-pulso { 50% { opacity: 0.6 } }
+@keyframes ap-bota { 0%, 40%, 100% { transform: translateY(0) } 20% { transform: translateY(-16px) } }
+@keyframes ap-msg { from { opacity: 0; transform: translateY(4px) } }
+@keyframes ap-sello { from { transform: scaleX(0) } }
+@keyframes ap-revela { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0) } }
+@keyframes ap-giro { to { --ap-ang: 360deg } }
+@property --ap-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+/* Halo de IA: detrás del compositor y fuera de su panel opaco. Apagado en reposo, tenue con foco, intenso al pensar. */
+.ap-halo { position: relative; isolation: isolate; }
+.ap-halo::before {
+  content: '';
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(from var(--ap-ang), var(--halo-1), var(--halo-2), var(--halo-3), var(--halo-4), var(--halo-1));
+  filter: blur(18px);
+  transition: opacity var(--overlay) var(--easing);
+  animation: ap-giro 16s linear infinite;
+}
+.ap-halo[data-halo='focus']::before { opacity: 0.22; }
+.ap-halo[data-halo='thinking']::before { opacity: 0.55; }
+.ap-halo[data-paused='true']::before { animation-play-state: paused; }
+
+/* Firma (600 ms, una vez): línea de 1 px y revelado del hash. */
+.ap-seal[data-seal='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  background: var(--accent);
+  transform-origin: left;
+  animation: ap-sello 400ms var(--easing-move) both;
+}
+.ap-seal[data-seal='true'] .ap-hash { animation: ap-revela 600ms var(--easing) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-halo::before { animation: none; transition: none; }
+  .ap-seal[data-seal='true']::after, .ap-seal[data-seal='true'] .ap-hash { animation: none; }
 }

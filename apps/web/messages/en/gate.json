@@ -1,0 +1,33 @@
+{
+  "title": "Gate queue · {count} pending",
+  "subtitle": "Nothing leaves here without a signed decision. 24 h SLA from entry.",
+  "order": "Order: most urgent first (SLA).",
+  "caption": "Items pending in the gate queue",
+  "empty": "No items match these filters",
+  "legend": "SLA as hours and minutes left. Yellow under 3 h; red under 1 h.",
+  "slaBar": "SLA remaining",
+  "pending": "Pending connection",
+  "close": "Close",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "reminderSent": "Sent at {time}",
+  "cols": { "item": "Item", "cause": "Cause", "amount": "Amount", "sla": "SLA", "assignee": "Assigned", "reminder": "Reminder", "actions": "Actions" },
+  "causes": {
+    "negotiator": "Escalated by the negotiator",
+    "price": "Atypical price or no reference",
+    "confidence": "Low confidence or no data",
+    "second_signature": "Second signature missing",
+    "high_amount": "High amount",
+    "discard": "Discards to review",
+    "company": "Company"
+  },
+  "flags": { "no_reference": "No reference", "new_seller": "New seller" },
+  "slaSoon": { "bad": "due in under 1 h", "warn": "due in under 3 h" },
+  "assignee": { "owner": "Owner", "finance": "Finance", "none": "Unassigned" },
+  "filters": { "cause": "Cause", "assignee": "Assignee", "all": "All", "me": "Me", "today": "Due today only" },
+  "actions": { "unblock": "Unblock", "override_discard": "Override discard" },
+  "dialog": {
+    "unblock": { "title": "Unblock item", "body": "A signed decision will be recorded to unblock: {item}." },
+    "override_discard": { "title": "Override discard", "body": "A signed decision will be recorded to reverse the discard: {item}." }
+  }
+}

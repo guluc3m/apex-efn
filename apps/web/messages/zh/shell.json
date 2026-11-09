@@ -1,0 +1,90 @@
+{
+  "language": {
+    "menu": "界面语言",
+    "button": "语言：{name}。切换语言"
+  },
+  "skip": "跳到正文",
+  "loading": "加载中…",
+  "nav": {
+    "label": "主导航",
+    "home": "APEX，前往决策",
+    "decisions": "决策",
+    "missions": "任务",
+    "approvals": "审批",
+    "company": "公司"
+  },
+  "companyNav": {
+    "label": "公司",
+    "rules": "决策规则",
+    "finance": "财务数据",
+    "accounts": "平台账户",
+    "signing": "签名与密钥",
+    "audit": "审计"
+  },
+  "signing": {
+    "label": "签名",
+    "none": "无会话",
+    "expiring": "即将到期",
+    "expired": "会话已过期",
+    "exhausted": "签名次数已用完",
+    "open": "开启签名会话",
+    "reauth": "重新验证以签名",
+    "timer": "剩余时间：{time}"
+  },
+  "userMenu": {
+    "trigger": "用户菜单：{name}",
+    "menu": "用户",
+    "roleTenant": "{role} · {tenant}",
+    "roles": {
+      "viewer": "查看者",
+      "buyer": "采购员",
+      "finance": "财务",
+      "admin": "管理员",
+      "owner": "所有者"
+    },
+    "signOut": "退出登录",
+    "signOutReason": "尚未连接：目前没有登录服务。"
+  },
+  "errors": {
+    "home": "前往决策",
+    "retry": "重试",
+    "forbidden": {
+      "title": "你无权查看此页面",
+      "body": "你的角色不包含此权限。请联系公司管理员核实。"
+    },
+    "notFound": {
+      "title": "找不到此页面",
+      "body": "该地址不存在或已不可用。"
+    },
+    "error": {
+      "title": "出错了",
+      "body": "无法加载此页面。没有任何内容被签名或发送。请重试。"
+    }
+  },
+  "login": {
+    "title": "登录以审核并签署你的交易",
+    "lead": "每一项采购决策都会用你的密钥签名并记录在案。",
+    "email": "工作邮箱",
+    "emailPlaceholder": "name@company.com",
+    "continue": "继续",
+    "passkey": "使用通行密钥登录",
+    "pending": "尚未连接：暂时无法登录。",
+    "sso": "贵公司使用 SSO？请通过身份提供商登录（尚未连接）。",
+    "ed25519": "签名需要支持 Ed25519 的浏览器。",
+    "queue": {
+      "title": "决策队列",
+      "count": "{count} 项待处理",
+      "ready": "可供决策",
+      "lowBand": "卖家处于低档",
+      "sla": "SLA {time}",
+      "seller": "卖家 {name}",
+      "priceNormal": "价格正常",
+      "pending": "待处理",
+      "sample": "示例，仅作说明，并非真实数据。",
+      "confidence": {
+        "high": "可信度高 · {score}",
+        "low": "可信度低 · {score}"
+      }
+    }
+  }
+}

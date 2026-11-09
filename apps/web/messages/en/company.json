@@ -1,0 +1,171 @@
+{
+  "finance": {
+    "report": {
+      "title": "Review the import of {file}",
+      "subtitle": "Company setup · step 7 of 7 · {rows} rows · nothing is activated until you sign.",
+      "upload": "Upload another file",
+      "pending": "Not connected yet",
+      "accepted": "Accepted rows",
+      "rejected": "Rejected",
+      "duplicated": "Duplicated",
+      "periods": "Periods",
+      "converted": "Converted to EUR",
+      "range": "{range} · projection enabled",
+      "mappingTitle": "Confirm the mapping of {n} headers",
+      "mappingHint": "The assistant suggests the field; numbers are always interpreted by the importer, never by the AI.",
+      "column": "Column in your file",
+      "field": "APEX field",
+      "origin": "Source",
+      "suggested": "Suggested by the assistant",
+      "confirmMapping": "Confirm mapping",
+      "rejectionsTitle": "Rows that do not make it",
+      "rejectionsCaption": "Rejected CSV rows",
+      "metric": "Metric",
+      "period": "Period",
+      "line": "Line",
+      "value": "Value",
+      "reason": "Reason",
+      "reasons": {
+        "decimals": "Amount with decimals",
+        "period": "Malformed period (YYYY-MM)",
+        "metric": "Unknown metric",
+        "currency": "Unsupported currency",
+        "duplicate": "Duplicate: line {line} is kept"
+      },
+      "warningsTitle": "Warnings",
+      "warnings": {
+        "fx": "{n} USD amounts were converted to EUR at each month-end rate. The original is kept.",
+        "taxReserve": "There is no tax_reserve in {month}: buying capacity does not deduct a tax reserve that month."
+      },
+      "review": "Review result and activate",
+      "rejectedDontBlock": "The {n} rejected rows do not block activation."
+    },
+    "summary": {
+      "title": "This is what you will be able to buy with October's data",
+      "subtitle": "Reference date {date} · new snapshot, replaces the previous one.",
+      "capacity": "Net buying capacity",
+      "capacityHint": "After a {buffer} % buffer and committed payments",
+      "score": "Buying Power Score",
+      "scoreHint": "Formula pending approval",
+      "envelopes": "Envelopes by category",
+      "chartCaption": "Budget use against limit, this month. The full bar is the limit.",
+      "category": "Category",
+      "used": "Used this month",
+      "available": "Available",
+      "limit": "Limit",
+      "nearlyExhausted": "Nearly exhausted",
+      "activateTitle": "Activate snapshot",
+      "activateBody": "Activating is a signed decision and asks for your passkey now, even with an open signing session.",
+      "rows": "Rows",
+      "rowsValue": "{n} accepted",
+      "replaces": "Replaces",
+      "replacesValue": "{month} (gets archived)",
+      "expires": "Expires",
+      "payloadHash": "Content hash (payload_hash)",
+      "back": "Back to the CSV review",
+      "activate": "Activate with passkey",
+      "pending": "Not connected yet: signing and activation have no backend",
+      "allOrNothing": "All or nothing: no partial activation."
+    },
+    "page": {
+      "title": "Financial data",
+      "intro": "Active snapshot as of {date}.",
+      "lastImport": "Latest import"
+    }
+  },
+  "rules": {
+    "title": "Decision rules · version {version}",
+    "intro": "Every change is a decision signed with a passkey and creates a new version. Past evaluations keep theirs.",
+    "scope": "Scope",
+    "scopes": {
+      "all": "Whole company",
+      "bearings": "Bearings",
+      "valves": "Valves"
+    },
+    "caption": "Effective decision rules",
+    "rule": "Rule",
+    "value": "Value",
+    "origin": "Origin",
+    "action": "Action",
+    "change": "Change",
+    "undefined": "Not set",
+    "groups": {
+      "sanity": "Price sanity",
+      "seller": "Seller confidence",
+      "signing": "Signing and approval",
+      "negotiation": "Negotiation"
+    },
+    "values": {
+      "goGate": "Go to gate",
+      "medium": "medium"
+    },
+    "origins": {
+      "template": "Template",
+      "proposed": "Proposed change",
+      "policy": "Your policy",
+      "category": "Per category",
+      "required": "Required"
+    },
+    "proposalTitle": "Proposed change",
+    "impact": "According to the server, with the open offers: {n} would go from normal to atypical and enter the gate queue.",
+    "reason": "Reason (required)",
+    "sign": "Sign with passkey",
+    "signNote": "Pending connection: signing and rule changes have no backend yet",
+    "pending": "Pending connection",
+    "history": "History",
+    "by": {
+      "finance": "Finance",
+      "owner": "Owner",
+      "template": "Template"
+    },
+    "names": {
+      "sanity_z_ok": "Normal price up to",
+      "sanity_z_gate": "Atypical price up to",
+      "sanity_on_insufficient_reference": "Insufficient reference",
+      "sanity_floor_per_unit": "Absolute floor per unit",
+      "seller_min_accepted_band": "Minimum band without gate",
+      "seller_hard_block_below": "Automatic discard below",
+      "approval_dual_control_above": "Dual signature from",
+      "signing_high_value_reauth_above": "Immediate passkey from",
+      "signing_session_minutes": "Signing session length",
+      "neg_max_rounds": "Maximum rounds",
+      "neg_max_discount": "Maximum discount · Bearings"
+    },
+    "noNewValue": "New value not chosen yet",
+    "changeRule": "Change {rule}"
+  },
+  "audit": {
+    "title": "Audit log",
+    "intro": "Per-company hash chain, anchored in WORM storage.",
+    "pending": "Pending connection",
+    "noAccessTitle": "No permission",
+    "noAccessBody": "The audit log is only available to the admin and owner roles.",
+    "verifyChain": "Verify the whole chain",
+    "status": "Status",
+    "intact": "Chain intact",
+    "broken": "Chain broken",
+    "events": "Events",
+    "lastVerified": "Last verification",
+    "anchor": "Last anchor",
+    "when": "When",
+    "actor": "Actor",
+    "event": "Event",
+    "hash": "Hash",
+    "caption": "Audit events",
+    "empty": "No events",
+    "actors": {
+      "negotiator": "Negotiator agent",
+      "sanity": "Sanity service",
+      "human": "Manager",
+      "fx": "FX service"
+    },
+    "verifyTitle": "Verify a decision",
+    "verifyLabel": "Identifier or hash",
+    "verify": "Verify",
+    "verifyPlaceholder": "dec_…"
+  },
+  "accounts": {
+    "title": "Platform accounts",
+    "intro": "Connect the platforms where the agent searches and negotiates. Credentials never leave your browser toward the model."
+  }
+}

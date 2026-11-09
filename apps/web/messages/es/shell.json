@@ -1,0 +1,90 @@
+{
+  "language": {
+    "menu": "Idioma de la interfaz",
+    "button": "Idioma: {name}. Cambiar idioma"
+  },
+  "skip": "Saltar al contenido",
+  "loading": "Cargando…",
+  "nav": {
+    "label": "Navegación principal",
+    "home": "APEX, ir a Decisiones",
+    "decisions": "Decisiones",
+    "missions": "Misiones",
+    "approvals": "Aprobaciones",
+    "company": "Empresa"
+  },
+  "companyNav": {
+    "label": "Empresa",
+    "rules": "Reglas de decisión",
+    "finance": "Datos financieros",
+    "accounts": "Cuentas de plataformas",
+    "signing": "Firma y claves",
+    "audit": "Auditoría"
+  },
+  "signing": {
+    "label": "Firma",
+    "none": "Sin sesión",
+    "expiring": "Caduca pronto",
+    "expired": "Sesión caducada",
+    "exhausted": "Sin firmas",
+    "open": "Abrir sesión de firma",
+    "reauth": "Reautenticar para firmar",
+    "timer": "Tiempo restante: {time}"
+  },
+  "userMenu": {
+    "trigger": "Menú de usuario: {name}",
+    "menu": "Usuario",
+    "roleTenant": "{role} · {tenant}",
+    "roles": {
+      "viewer": "Lector",
+      "buyer": "Comprador",
+      "finance": "Finanzas",
+      "admin": "Administrador",
+      "owner": "Propietario"
+    },
+    "signOut": "Cerrar sesión",
+    "signOutReason": "Pendiente de conectar: aún no hay servicio de acceso."
+  },
+  "errors": {
+    "home": "Ir a Decisiones",
+    "retry": "Reintentar",
+    "forbidden": {
+      "title": "No tienes permiso para ver esta pantalla",
+      "body": "Tu rol no incluye este acceso. Pide a un administrador de tu empresa que lo revise."
+    },
+    "notFound": {
+      "title": "No encontramos esta página",
+      "body": "La dirección no existe o ya no está disponible."
+    },
+    "error": {
+      "title": "Algo ha fallado",
+      "body": "No hemos podido cargar la pantalla. No se ha firmado ni enviado nada. Inténtalo de nuevo."
+    }
+  },
+  "login": {
+    "title": "Entra para revisar y firmar tus tratos",
+    "lead": "Cada decisión de compra queda firmada con tu clave y registrada.",
+    "email": "Correo de trabajo",
+    "emailPlaceholder": "nombre@empresa.com",
+    "continue": "Continuar",
+    "passkey": "Entrar con passkey",
+    "pending": "Pendiente de conectar: el acceso aún no está disponible.",
+    "sso": "¿Tu empresa usa SSO? Entra con tu proveedor (pendiente de conectar).",
+    "ed25519": "La firma requiere un navegador compatible con Ed25519.",
+    "queue": {
+      "title": "Cola de decisión",
+      "count": "{count} pendientes",
+      "ready": "Listo para decidir",
+      "lowBand": "Vendedor en banda baja",
+      "sla": "SLA {time}",
+      "seller": "Vendedor {name}",
+      "priceNormal": "Precio normal",
+      "pending": "Pendiente",
+      "sample": "Muestra ilustrativa, no son datos reales.",
+      "confidence": {
+        "high": "Confianza alta · {score}",
+        "low": "Confianza baja · {score}"
+      }
+    }
+  }
+}

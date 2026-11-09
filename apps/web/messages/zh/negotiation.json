@@ -1,0 +1,78 @@
+{
+  "context": "{code} · {seller} · {platform}",
+  "title": "谈判 · 第 {round} 轮，共 {max} 轮",
+  "titleAborted": "谈判 · 在第 {round} 轮（共 {max} 轮）中止",
+  "back": "返回任务",
+  "take": "接管",
+  "resume": "交还给代理",
+  "abort": "中止",
+  "reopen": "重新开启谈判",
+  "pending": "尚未连接",
+  "humanBanner": "您已接管聊天。在您交还之前，代理不会发送任何内容。",
+  "abortedBanner": "谈判已中止。对话记录已保存。",
+  "transcript": "谈判对话记录",
+  "translationHide": "隐藏译文",
+  "translationShow": "显示译文",
+  "translationIcon": "已翻译",
+  "translationRequest": "请求新译文",
+  "reopenedSeparator": "{by} 于 {time} 重新开启",
+  "agentSending": "代理",
+  "draft": {
+    "title": "代理草稿 · 等待您的批准",
+    "textLabel": "草稿内容",
+    "checked": "发送前已检查：",
+    "approve": "批准并发送",
+    "discard": "放弃草稿"
+  },
+  "bands": {
+    "price": {
+      "normal": "正常",
+      "atypical": "异常",
+      "implausible": "不合理",
+      "insufficient_reference": "无参照"
+    },
+    "confidence": {
+      "high": "信任度高",
+      "medium": "信任度中",
+      "low": "信任度低",
+      "untrusted": "不可信",
+      "insufficient_data": "数据不足"
+    }
+  },
+  "side": {
+    "current": "当前报价",
+    "summary": "初始 {initial} · {delta} · 目标 {target}",
+    "confidenceTitle": "卖家信任度",
+    "confidenceLabel": "{band} · {score}",
+    "priceTitle": "价格区间",
+    "priceLabel": "价格{band}",
+    "escalationTitle": "其他谈判中的升级事项",
+    "escalationOpen": "打开 {seller}",
+    "screenshots": "查看截图（{count}）"
+  },
+  "chart": {
+    "caption": "卖家每轮报价，含目标与上限",
+    "round": "第 {n} 轮",
+    "draft": "草稿",
+    "target": "目标 {value}",
+    "max": "折扣 8% 时的上限：{value}",
+    "table": "第 {round} 轮：{value}",
+    "tableDraft": "草稿（未发送）：{value}",
+    "tableTarget": "目标：{value}",
+    "tableMax": "上限：{value}"
+  },
+  "dialog": {
+    "close": "关闭",
+    "cancel": "取消",
+    "takeTitle": "接管",
+    "takeText": "在您交还之前，代理将停止发送消息。您可以亲自给卖家写信。",
+    "resumeTitle": "交还给代理",
+    "resumeText": "代理将以半自动模式继续起草：每条消息都需等待您的批准。",
+    "abortTitle": "中止谈判",
+    "abortText": "代理停止写信。对话记录会保存，之后可以重新开启。",
+    "reopenTitle": "重新开启谈判",
+    "reopenText": "代理将以半自动模式继续起草：每条消息都需等待您的批准。此操作会记入审计日志。",
+    "reason": "原因",
+    "reopenConfirm": "重新开启"
+  }
+}

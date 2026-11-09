@@ -1,0 +1,171 @@
+{
+  "finance": {
+    "report": {
+      "title": "Revisa la importación de {file}",
+      "subtitle": "Alta de empresa · paso 7 de 7 · {rows} filas · nada se activa hasta que firmes.",
+      "upload": "Subir otro archivo",
+      "pending": "Pendiente de conectar",
+      "accepted": "Filas aceptadas",
+      "rejected": "Rechazadas",
+      "duplicated": "Duplicadas",
+      "periods": "Periodos",
+      "converted": "Convertidas a EUR",
+      "range": "{range} · proyección activada",
+      "mappingTitle": "Confirma el mapeo de {n} cabeceras",
+      "mappingHint": "El asistente sugiere el campo; los números los interpreta siempre el importador, no la IA.",
+      "column": "Columna en tu archivo",
+      "field": "Campo de APEX",
+      "origin": "Origen",
+      "suggested": "Sugerido por el asistente",
+      "confirmMapping": "Confirmar mapeo",
+      "rejectionsTitle": "Filas que no entran",
+      "rejectionsCaption": "Filas rechazadas del CSV",
+      "metric": "Métrica",
+      "period": "Periodo",
+      "line": "Línea",
+      "value": "Valor",
+      "reason": "Motivo",
+      "reasons": {
+        "decimals": "Importe con decimales",
+        "period": "Periodo mal formado (YYYY-MM)",
+        "metric": "Métrica desconocida",
+        "currency": "Divisa no soportada",
+        "duplicate": "Duplicada: se mantiene la línea {line}"
+      },
+      "warningsTitle": "Avisos",
+      "warnings": {
+        "fx": "{n} importes en USD se han convertido a EUR con el tipo de cierre de cada mes. Se conserva el original.",
+        "taxReserve": "No hay tax_reserve en {month}: la capacidad de compra no descuenta reserva de impuestos ese mes."
+      },
+      "review": "Revisar resultado y activar",
+      "rejectedDontBlock": "Las {n} filas rechazadas no bloquean la activación."
+    },
+    "summary": {
+      "title": "Esto es lo que podréis comprar con los datos de octubre",
+      "subtitle": "Fecha de referencia {date} · snapshot nuevo, sustituye al anterior.",
+      "capacity": "Capacidad de compra neta",
+      "capacityHint": "Tras colchón del {buffer} % y pagos comprometidos",
+      "score": "Buying Power Score",
+      "scoreHint": "Fórmula pendiente de aprobar",
+      "envelopes": "Envelopes por categoría",
+      "chartCaption": "Uso del presupuesto frente a límite, este mes. La barra completa es el límite.",
+      "category": "Categoría",
+      "used": "Usado este mes",
+      "available": "Disponible",
+      "limit": "Límite",
+      "nearlyExhausted": "Casi agotado",
+      "activateTitle": "Activar snapshot",
+      "activateBody": "Activar es una decisión firmada y pide tu passkey ahora, aunque tengas una sesión de firma abierta.",
+      "rows": "Filas",
+      "rowsValue": "{n} aceptadas",
+      "replaces": "Sustituye a",
+      "replacesValue": "{month} (queda archivado)",
+      "expires": "Caduca",
+      "payloadHash": "Hash del contenido (payload_hash)",
+      "back": "Volver a revisar el CSV",
+      "activate": "Activar con passkey",
+      "pending": "Pendiente de conectar: la firma y la activación aún no tienen backend",
+      "allOrNothing": "Todo o nada: no hay activación parcial."
+    },
+    "page": {
+      "title": "Datos financieros",
+      "intro": "Snapshot activo a {date}.",
+      "lastImport": "Última importación"
+    }
+  },
+  "rules": {
+    "title": "Reglas de decisión · versión {version}",
+    "intro": "Cada cambio es una decisión firmada con passkey y crea una versión nueva. Las evaluaciones antiguas guardan la suya.",
+    "scope": "Ámbito",
+    "scopes": {
+      "all": "Toda la empresa",
+      "bearings": "Rodamientos",
+      "valves": "Válvulas"
+    },
+    "caption": "Reglas de decisión efectivas",
+    "rule": "Regla",
+    "value": "Valor",
+    "origin": "Origen",
+    "action": "Acción",
+    "change": "Cambiar",
+    "undefined": "Sin definir",
+    "groups": {
+      "sanity": "Cordura de precio",
+      "seller": "Confianza del vendedor",
+      "signing": "Firma y aprobación",
+      "negotiation": "Negociación"
+    },
+    "values": {
+      "goGate": "Ir a gate",
+      "medium": "media"
+    },
+    "origins": {
+      "template": "Plantilla",
+      "proposed": "Cambio propuesto",
+      "policy": "Tu política",
+      "category": "Por categoría",
+      "required": "Obligatorio"
+    },
+    "proposalTitle": "Cambio propuesto",
+    "impact": "Según el servidor, con las ofertas abiertas: {n} pasarían de normal a atípico y entrarían en la cola de gate.",
+    "reason": "Motivo (obligatorio)",
+    "sign": "Firmar con passkey",
+    "signNote": "Pendiente de conectar: la firma y el cambio de reglas aún no tienen backend",
+    "pending": "Pendiente de conectar",
+    "history": "Historial",
+    "by": {
+      "finance": "Finanzas",
+      "owner": "Owner",
+      "template": "Plantilla"
+    },
+    "names": {
+      "sanity_z_ok": "Precio normal hasta",
+      "sanity_z_gate": "Precio atípico hasta",
+      "sanity_on_insufficient_reference": "Sin referencia suficiente",
+      "sanity_floor_per_unit": "Suelo absoluto por unidad",
+      "seller_min_accepted_band": "Banda mínima sin gate",
+      "seller_hard_block_below": "Descarte automático por debajo de",
+      "approval_dual_control_above": "Doble firma a partir de",
+      "signing_high_value_reauth_above": "Passkey inmediata a partir de",
+      "signing_session_minutes": "Duración de la sesión de firma",
+      "neg_max_rounds": "Rondas máximas",
+      "neg_max_discount": "Descuento máximo · Rodamientos"
+    },
+    "noNewValue": "Nuevo valor pendiente de elegir",
+    "changeRule": "Cambiar {rule}"
+  },
+  "audit": {
+    "title": "Registro de auditoría",
+    "intro": "Cadena de hashes por empresa, anclada en almacenamiento WORM.",
+    "pending": "Pendiente de conectar",
+    "noAccessTitle": "Sin permiso",
+    "noAccessBody": "El registro de auditoría solo está disponible para los roles admin y owner.",
+    "verifyChain": "Verificar la cadena completa",
+    "status": "Estado",
+    "intact": "Cadena íntegra",
+    "broken": "Cadena rota",
+    "events": "Eventos",
+    "lastVerified": "Última verificación",
+    "anchor": "Último ancla",
+    "when": "Cuándo",
+    "actor": "Actor",
+    "event": "Evento",
+    "hash": "Hash",
+    "caption": "Eventos de auditoría",
+    "empty": "Sin eventos",
+    "actors": {
+      "negotiator": "Agente negociador",
+      "sanity": "Servicio de cordura",
+      "human": "Responsable",
+      "fx": "Servicio FX"
+    },
+    "verifyTitle": "Verificar una decisión",
+    "verifyLabel": "Identificador o hash",
+    "verify": "Verificar",
+    "verifyPlaceholder": "dec_…"
+  },
+  "accounts": {
+    "title": "Cuentas de plataformas",
+    "intro": "Conecta las plataformas donde busca y negocia el agente. Las credenciales nunca salen de tu navegador hacia el modelo."
+  }
+}
