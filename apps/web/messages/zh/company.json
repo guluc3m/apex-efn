@@ -66,6 +66,106 @@
       "activate": "使用 passkey 启用",
       "pending": "尚未连接:签名和启用暂无后端",
       "allOrNothing": "全有或全无:不支持部分启用。"
+    },
+    "page": {
+      "title": "财务数据",
+      "intro": "截至 {date} 的有效快照。",
+      "lastImport": "最近一次导入"
     }
+  },
+  "rules": {
+    "title": "决策规则 · 版本 {version}",
+    "intro": "每次更改都是用通行密钥签署的决策,并生成新版本。旧的评估保留其原有版本。",
+    "scope": "范围",
+    "scopes": {
+      "all": "整个公司",
+      "bearings": "轴承",
+      "valves": "阀门"
+    },
+    "caption": "生效的决策规则",
+    "rule": "规则",
+    "value": "值",
+    "origin": "来源",
+    "action": "操作",
+    "change": "更改",
+    "undefined": "未设置",
+    "groups": {
+      "sanity": "价格合理性",
+      "seller": "卖家可信度",
+      "signing": "签名与审批",
+      "negotiation": "谈判"
+    },
+    "values": {
+      "goGate": "进入审核",
+      "medium": "中"
+    },
+    "origins": {
+      "template": "模板",
+      "proposed": "拟议更改",
+      "policy": "你的政策",
+      "category": "按类别",
+      "required": "必填"
+    },
+    "proposalTitle": "拟议更改",
+    "impact": "据服务器计算,按当前未结报价:{n} 项将由正常变为异常,并进入审核队列。",
+    "reason": "原因(必填)",
+    "sign": "用通行密钥签名",
+    "signNote": "待连接:签名和规则更改尚无后端",
+    "pending": "待连接",
+    "history": "历史",
+    "by": {
+      "finance": "财务",
+      "owner": "所有者",
+      "template": "模板"
+    },
+    "names": {
+      "sanity_z_ok": "正常价格上限",
+      "sanity_z_gate": "异常价格上限",
+      "sanity_on_insufficient_reference": "参考样本不足",
+      "sanity_floor_per_unit": "每单位绝对底价",
+      "seller_min_accepted_band": "无需审核的最低等级",
+      "seller_hard_block_below": "低于此值自动淘汰",
+      "approval_dual_control_above": "超过此金额需双重签名",
+      "signing_high_value_reauth_above": "超过此金额需立即通行密钥验证",
+      "signing_session_minutes": "签名会话时长",
+      "neg_max_rounds": "最大谈判轮数",
+      "neg_max_discount": "最大折扣 · 轴承"
+    },
+    "noNewValue": "尚未选择新值",
+    "changeRule": "更改 {rule}"
+  },
+  "audit": {
+    "title": "审计日志",
+    "intro": "按公司划分的哈希链,锚定在 WORM 存储中。",
+    "pending": "待连接",
+    "noAccessTitle": "无权限",
+    "noAccessBody": "审计日志仅对 admin 和 owner 角色开放。",
+    "verifyChain": "验证完整链",
+    "status": "状态",
+    "intact": "链完整",
+    "broken": "链已断裂",
+    "events": "事件",
+    "lastVerified": "上次验证",
+    "anchor": "最近锚点",
+    "when": "时间",
+    "actor": "操作者",
+    "event": "事件",
+    "hash": "哈希",
+    "caption": "审计事件",
+    "empty": "暂无事件",
+    "actors": {
+      "negotiator": "谈判代理",
+      "sanity": "合理性服务",
+      "human": "负责人",
+      "fx": "汇率服务"
+    },
+    "verifyTitle": "验证决策",
+    "verifyLabel": "标识符或哈希",
+    "verify": "验证",
+    "verifyPlaceholder": "dec_…"
+  },
+  "accounts": {
+    "title": "平台账户",
+    "intro": "连接代理搜索和谈判所用的平台。凭据不会从你的浏览器传给模型。"
   }
 }

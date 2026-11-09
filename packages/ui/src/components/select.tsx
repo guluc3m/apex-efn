@@ -22,6 +22,8 @@ export interface SelectProps {
   placeholder?: string
   /** Oculta la etiqueta visible; sigue siendo el nombre accesible. */
   hideLabel?: boolean
+  /** Deshabilitado: la página debe mostrar el motivo junto al control. */
+  disabled?: boolean
   className?: string
 }
 
@@ -34,7 +36,7 @@ export function Select({ label, options, hideLabel, placeholder, className, ...r
         <SelectPrimitive.Trigger
           id={id}
           aria-label={hideLabel ? label : undefined}
-          className="group flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 border border-control-border bg-bg px-2.5 text-ink transition-[border-color] duration-(--press) ease-apex data-[state=open]:border-accent"
+          className="group flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 border border-control-border bg-bg px-2.5 text-ink transition-[border-color] duration-(--press) ease-apex data-[state=open]:border-accent disabled:cursor-not-allowed disabled:border-line disabled:text-ink-muted"
         >
           <SelectPrimitive.Value placeholder={placeholder} />
           <SelectPrimitive.Icon className="flex text-ink-muted transition-transform duration-(--fast) ease-apex-move group-data-[state=open]:rotate-180 motion-reduce:transition-none">
