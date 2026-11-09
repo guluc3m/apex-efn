@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
-  title: 'APEX-EFN - B2B Sourcing Inteligente',
+  title: 'Apex',
+  icons: { icon: '/brand/apex-icono.svg' },
   description: 'Plataforma de sourcing inteligente y negociación automatizada de compras por volumen',
 }
 

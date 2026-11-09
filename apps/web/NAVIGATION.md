@@ -1,6 +1,6 @@
 ---
-name: TRATO navegación
-description: Mapa de pantallas, rutas, guardas, modales y flujos de la app web de TRATO. Complementa a packages/ui/DESIGN.md (cómo se ve) con cómo se llega a cada sitio.
+name: APEX navegación
+description: Mapa de pantallas, rutas, guardas, modales y flujos de la app web de APEX. Complementa a packages/ui/DESIGN.md (cómo se ve) con cómo se llega a cada sitio.
 locales: [es, en, zh]
 routePrefix: "/[locale]"
 landing:
@@ -22,10 +22,10 @@ modalDepthMax: 1
 toastDuration: 6s
 ---
 
-# Navegación de TRATO
+# Navegación de APEX
 
 Este documento fija **qué pantallas existen, cómo se llega a cada una, qué overlays hay y cuándo se usan**. El aspecto
-(colores, tipografía, componentes) está en `packages/ui/DESIGN.md`. Los wireframes están en el lienzo "TRATO wireframes";
+(colores, tipografía, componentes) está en `packages/ui/DESIGN.md`. Los wireframes están en el lienzo "APEX wireframes";
 cada pantalla de la tabla 2 indica su artboard.
 
 Reglas de producto que condicionan la navegación (de `PROMPT-IMPLEMENTACION.md`):
@@ -100,14 +100,14 @@ la UI espera):
 
 **Cabecera** (todas las pantallas autenticadas salvo el onboarding):
 
-- Izquierda: `TRATO` (enlace a `/decisiones`), navegación primaria del YAML, badge `financials_stale` si aplica.
+- Izquierda: Logo de APEX (enlace a `/decisiones`), navegación primaria del YAML, badge `financials_stale` si aplica.
 - Derecha: **indicador de sesión de firma**, siempre visible. Estados: sin sesión (botón "Abrir sesión de firma"),
   activa (`mm:ss` + firmas restantes), caduca pronto (< 2 min, badge naranja), caducada o sin firmas (badge rojo y botón
   "Reautenticar para firmar"). Pulsarlo abre el diálogo **Abrir sesión de firma**.
 - Después, menú de usuario: idioma, tema del sistema, cerrar sesión.
 - La pestaña activa se marca con subrayado de 2 px en `ink`; los contadores de badge usan cifras tabulares.
 
-**Onboarding:** cabecera reducida (`TRATO` + "Configurar empresa · paso N de 7" + estado de guardado). Lista de pasos a la
+**Onboarding:** cabecera reducida (logo de APEX + "Configurar empresa · paso N de 7" + estado de guardado). Lista de pasos a la
 izquierda, navegable en cualquier orden. Panel del asistente a la derecha (en móvil, pestaña "Asistente").
 
 **Empresa:** subnavegación horizontal bajo la cabecera con `companyNav`.
@@ -208,7 +208,7 @@ Reglas de overlays:
 
 ## 9. Cómo verlo en el lienzo
 
-En el lienzo "TRATO wireframes", pulsa ▶ en cualquier artboard marcado como interactivo. La navegación primaria, los
+En el lienzo "APEX wireframes", pulsa ▶ en cualquier artboard marcado como interactivo. La navegación primaria, los
 pasos del onboarding y los botones que cambian de pantalla son enlaces reales entre artboards. Los overlays de la
 sección 6 se ven en `Estilo` (panel de confirmación y reautenticación), `Firma` y `Negociacion`.
 
