@@ -1,1 +1,123 @@
-{}
+{
+  "list": {
+    "title": "Missions",
+    "subtitle": "Each mission searches, filters anomalous prices and negotiates. Nothing is bought without your signature.",
+    "new": "New mission",
+    "emptyTitle": "No missions yet",
+    "emptyBody": "Describe what you need to buy and the first mission will start looking for offers.",
+    "caption": "Purchasing missions",
+    "noMatch": "No mission matches this filter",
+    "cols": { "mission": "Mission", "state": "Status", "phase": "Phase", "offers": "Offers", "finalists": "Finalists", "launched": "Launched" },
+    "state": { "running": "In progress", "valuation": "Under evaluation", "closed": "Closed", "cancelled": "Cancelled" },
+    "phase": { "search": "Search", "filter": "Trust and price", "negotiation": "Negotiation", "valuation": "Evaluation" },
+    "filters": { "state": "Status", "all": "All" }
+  },
+  "request": {
+    "title": "New purchasing mission",
+    "pending": "Not connected yet",
+    "reinterpret": "Interpret again",
+    "chat": {
+      "title": "What you need, in your own words",
+      "you": "You",
+      "agent": "Assistant",
+      "reply": "I understood the request. Review the fields on the right and fix whatever is needed before launching the mission.",
+      "placeholder": "Describe what you need",
+      "send": "Send",
+      "stop": "Stop",
+      "hint": "Enter sends · Shift + Enter for a new line",
+      "pending": "Not connected yet: sending is unavailable.",
+      "phrases": {
+        "interpreting": "Interpreting the request",
+        "spec": "Identifying the specification",
+        "budget": "Checking the budget",
+        "platforms": "Choosing platforms",
+        "plan": "Preparing the plan"
+      }
+    },
+    "review": {
+      "title": "Review what we understood",
+      "product": "Product",
+      "category": "Category",
+      "categories": { "bearings": "Bearings" },
+      "quantity": "Quantity",
+      "destination": "Destination",
+      "deadline": "Deliver before",
+      "payment": "Payment",
+      "payments": { "net60": "60 days" },
+      "spec": "Specification",
+      "tolerances": "Tolerances",
+      "tolerancesMissing": "You did not say",
+      "tolerancesHelp": "Without a tolerance, the technician cannot validate the specification. Add one or confirm that any will do."
+    },
+    "platforms": {
+      "title": "Platforms",
+      "p1": "Platform 1",
+      "p2": "Platform 2",
+      "p3": "Platform 3",
+      "expired": "(session expired: sign in again under Company)",
+      "disabled": "disabled by the administrator"
+    },
+    "envelope": { "label": "Bearings envelope", "available": "available" },
+    "profile": { "label": "Ranking profile", "operational": "Operational buyer", "cfo": "CFO / finance" },
+    "noSnapshot": {
+      "title": "The financial snapshot is not active",
+      "body": "It cannot be launched: the offers would have nothing to be compared against.",
+      "action": "Import financial CSV",
+      "reason": "Activate a financial snapshot first"
+    },
+    "launch": "Launch mission",
+    "launchHint": "It searches, filters anomalous prices and negotiates. Nothing is bought without your signature."
+  },
+  "detail": {
+    "meta": "Mission {id} · launched {minutes} min ago",
+    "new": "New mission",
+    "compare": "View comparison",
+    "pause": "Pause",
+    "cancel": "Cancel mission",
+    "pending": "Not connected yet",
+    "side": "Mission funnel and activity",
+    "phases": {
+      "label": "Mission phases",
+      "state": { "done": "Completed", "running": "In progress", "pending": "Pending" },
+      "search": { "title": "Search", "done": "{n} offers on {p} platforms" },
+      "filter": { "title": "Trust and price", "done": "{pass} pass · {out} filtered" },
+      "negotiation": { "title": "Negotiation", "running": "{n} of {total} in progress" },
+      "valuation": { "title": "Evaluation", "pending": "Starts when negotiations close" }
+    },
+    "funnel": {
+      "caption": "Mission funnel: offers reaching each stage",
+      "aria": "Mission funnel: {found} offers found, {passed} pass the filters, {negotiated} negotiated and {finalists} finalists.",
+      "stages": { "found": "Found", "passed": "Pass filters", "negotiated": "Negotiated", "finalists": "Finalists" }
+    },
+    "activity": {
+      "title": "Activity",
+      "live": "Live",
+      "review": "Review",
+      "working": "Checking the trust of {n} sellers…",
+      "reply": "{seller} replies with a volume tier.",
+      "draft": "A draft for {seller} is waiting for your approval.",
+      "discarded": "{seller} discarded: implausible price, {pct} % below the median.",
+      "gate": "{seller} sent to gate: low confidence ({score}).",
+      "offers": "{platform}: {n} offers."
+    },
+    "offers": {
+      "caption": "Mission offers by seller",
+      "empty": "No offers match these filters",
+      "footer": "Showing {shown} of {total}. Confidence always sits next to the price. The arrow is the difference from the median: blue, below; red, above.",
+      "cols": { "seller": "Seller", "platform": "Platform", "price": "Price/unit", "band": "Price band", "confidence": "Confidence", "verdict": "Verdict", "signature": "Signature", "status": "Status", "landed": "Landed cost" },
+      "platform": { "p1": "Platform 1", "p2": "Platform 2" },
+      "band": { "normal": "Normal", "atypical": "Atypical", "implausible": "Implausible", "insufficient_reference": "No reference" },
+      "confidence": { "high": "high · {score}", "medium": "medium · {score}", "low": "low · {score}", "untrusted": "untrusted · {score}", "insufficient_data": "no data" },
+      "verdict": { "within_budget": "Within budget", "stretch": "Stretch", "out_of_budget": "Out of budget" },
+      "signature": { "signed": "Signed", "pending": "Unsigned", "invalid": "Invalid signature" },
+      "status": {
+        "awaiting_approval": "Message awaiting approval",
+        "negotiating": "Negotiating · round {round}",
+        "aborted": "Aborted · round {round}",
+        "gate_low_confidence": "In gate: low confidence",
+        "filtered_implausible": "Filtered: implausible price"
+      },
+      "filters": { "status": "Status", "band": "Price", "verdict": "Verdict", "platform": "Platform", "all": "All" }
+    }
+  }
+}

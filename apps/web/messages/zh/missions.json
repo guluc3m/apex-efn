@@ -1,1 +1,123 @@
-{}
+{
+  "list": {
+    "title": "采购任务",
+    "subtitle": "每个任务都会搜索报价、过滤异常价格并进行谈判。没有您的签名，不会购买任何东西。",
+    "new": "新建任务",
+    "emptyTitle": "还没有任务",
+    "emptyBody": "描述您要采购的物品，第一个任务就会开始寻找报价。",
+    "caption": "采购任务",
+    "noMatch": "没有符合此筛选条件的任务",
+    "cols": { "mission": "任务", "state": "状态", "phase": "阶段", "offers": "报价", "finalists": "入围", "launched": "启动时间" },
+    "state": { "running": "进行中", "valuation": "评估中", "closed": "已关闭", "cancelled": "已取消" },
+    "phase": { "search": "搜索", "filter": "信任与价格", "negotiation": "谈判", "valuation": "评估" },
+    "filters": { "state": "状态", "all": "全部" }
+  },
+  "request": {
+    "title": "新建采购任务",
+    "pending": "尚未接入",
+    "reinterpret": "重新理解",
+    "chat": {
+      "title": "用您自己的话说明需求",
+      "you": "您",
+      "agent": "助手",
+      "reply": "我已理解您的需求。请检查右侧字段，启动任务前按需修改。",
+      "placeholder": "描述您的需求",
+      "send": "发送",
+      "stop": "停止",
+      "hint": "回车发送 · Shift + 回车换行",
+      "pending": "尚未接入：暂时无法发送。",
+      "phrases": {
+        "interpreting": "正在理解需求",
+        "spec": "正在识别规格",
+        "budget": "正在核对预算",
+        "platforms": "正在选择平台",
+        "plan": "正在准备方案"
+      }
+    },
+    "review": {
+      "title": "请核对我们的理解",
+      "product": "产品",
+      "category": "类别",
+      "categories": { "bearings": "轴承" },
+      "quantity": "数量",
+      "destination": "目的地",
+      "deadline": "最迟交付日期",
+      "payment": "付款方式",
+      "payments": { "net60": "60 天" },
+      "spec": "规格",
+      "tolerances": "公差",
+      "tolerancesMissing": "您未填写",
+      "tolerancesHelp": "没有公差，技术人员无法验证规格。请补充，或确认任意公差均可。"
+    },
+    "platforms": {
+      "title": "平台",
+      "p1": "平台 1",
+      "p2": "平台 2",
+      "p3": "平台 3",
+      "expired": "（会话已过期：请在“公司”中重新登录）",
+      "disabled": "已被管理员停用"
+    },
+    "envelope": { "label": "轴承预算额度", "available": "可用" },
+    "profile": { "label": "排名方案", "operational": "业务采购员", "cfo": "CFO / 财务" },
+    "noSnapshot": {
+      "title": "财务快照未激活",
+      "body": "无法启动：报价将没有可比较的基准。",
+      "action": "导入财务 CSV",
+      "reason": "请先激活财务快照"
+    },
+    "launch": "启动任务",
+    "launchHint": "搜索、过滤异常价格并谈判。没有您的签名，不会购买任何东西。"
+  },
+  "detail": {
+    "meta": "任务 {id} · {minutes} 分钟前启动",
+    "new": "新建任务",
+    "compare": "查看对比",
+    "pause": "暂停",
+    "cancel": "取消任务",
+    "pending": "尚未接入",
+    "side": "任务漏斗与动态",
+    "phases": {
+      "label": "任务阶段",
+      "state": { "done": "已完成", "running": "进行中", "pending": "待开始" },
+      "search": { "title": "搜索", "done": "{p} 个平台共 {n} 条报价" },
+      "filter": { "title": "信任与价格", "done": "{pass} 条通过 · {out} 条被过滤" },
+      "negotiation": { "title": "谈判", "running": "{total} 条中 {n} 条进行中" },
+      "valuation": { "title": "评估", "pending": "谈判结束后开始" }
+    },
+    "funnel": {
+      "caption": "任务漏斗：到达各阶段的报价数",
+      "aria": "任务漏斗：找到 {found} 条报价，{passed} 条通过过滤，{negotiated} 条已谈判，{finalists} 条入围。",
+      "stages": { "found": "已找到", "passed": "通过过滤", "negotiated": "已谈判", "finalists": "入围" }
+    },
+    "activity": {
+      "title": "动态",
+      "live": "实时",
+      "review": "查看",
+      "working": "正在核查 {n} 位卖家的信任度…",
+      "reply": "{seller} 回复了批量阶梯价。",
+      "draft": "给 {seller} 的草稿等待您批准。",
+      "discarded": "{seller} 已剔除：价格不合理，比中位数低 {pct} %。",
+      "gate": "{seller} 进入审核：信任度低（{score}）。",
+      "offers": "{platform}：{n} 条报价。"
+    },
+    "offers": {
+      "caption": "按卖家列出的任务报价",
+      "empty": "没有符合这些筛选条件的报价",
+      "footer": "显示 {shown} / {total}。信任度始终紧邻价格。箭头表示与中位数的差异：蓝色为低于，红色为高于。",
+      "cols": { "seller": "卖家", "platform": "平台", "price": "单价", "band": "价格区间", "confidence": "信任度", "verdict": "结论", "signature": "签名", "status": "状态", "landed": "到岸成本" },
+      "platform": { "p1": "平台 1", "p2": "平台 2" },
+      "band": { "normal": "正常", "atypical": "异常", "implausible": "不合理", "insufficient_reference": "无参考" },
+      "confidence": { "high": "高 · {score}", "medium": "中 · {score}", "low": "低 · {score}", "untrusted": "不可信 · {score}", "insufficient_data": "数据不足" },
+      "verdict": { "within_budget": "预算内", "stretch": "接近上限", "out_of_budget": "超出预算" },
+      "signature": { "signed": "已签名", "pending": "未签名", "invalid": "签名无效" },
+      "status": {
+        "awaiting_approval": "消息待批准",
+        "negotiating": "谈判中 · 第 {round} 轮",
+        "aborted": "已中止 · 第 {round} 轮",
+        "gate_low_confidence": "审核中：信任度低",
+        "filtered_implausible": "已过滤：价格不合理"
+      },
+      "filters": { "status": "状态", "band": "价格", "verdict": "结论", "platform": "平台", "all": "全部" }
+    }
+  }
+}
