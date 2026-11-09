@@ -322,3 +322,31 @@ def test_the_service_graph_exposes_a_runner_with_named_unwired_ports() -> None:
     services = build_app_services(Settings())
     assert isinstance(services.runner, MissionRunner)
     assert services.settings.mission_autorun is False
+
+
+# ----- an unreachable model endpoint is a 502 with a reason, not a bare 500 -----------------------
+
+
+def test_an_unreachable_llm_endpoint_is_a_502_with_a_reason() -> None:
+    """The default endpoint is the LLM stub. If it is not running, the caller must learn why."""
+    from apex.wiring import build_app_services
+
+    services = build_app_services(
+        Settings(idempotency_backend="memory", llm_gateway_url="http://127.0.0.1:9/v1")
+    )
+    application = create_app(
+        Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore(), services=services
+    )
+    with TestClient(application, raise_server_exceptions=False) as client:
+        sourcing = client.post("/v1/sourcing-requests", json={"text": "gloves"}, headers=_h())
+        mission = client.post(
+            "/v1/missions",
+            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
+            headers=_h(),
+        )
+    assert sourcing.status_code == 502, sourcing.text
+    assert sourcing.json()["reason"] == "llm_unavailable"
+    assert sourcing.headers["content-type"].startswith("application/problem+json")
+    assert mission.status_code == 502, mission.text
+    assert mission.json()["reason"] == "llm_unavailable"
+    assert "planner" in mission.json()["detail"]

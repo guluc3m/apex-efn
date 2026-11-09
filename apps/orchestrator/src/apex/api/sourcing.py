@@ -18,7 +18,10 @@ from apex.agents.sourcing_service import SourcingService
 from apex.common.clock import Clock, get_clock
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
+from apex.llm.budget import TokenBudgetExceeded
+from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
+from apex.llm.transport import LLMHTTPError, LLMTransportError
 
 router = APIRouter()
 
@@ -72,6 +75,14 @@ class SourcingRequestOut(BaseModel):
         )
 
 
+def _llm_detail(exc: Exception) -> str:
+    """A short, safe description of an LLM failure. Never the prompt, never a credential."""
+    causes = getattr(exc, "causes", None)
+    if causes:
+        return str(causes)
+    return f"{type(exc).__name__}: {exc}"
+
+
 def get_sourcing_service() -> SourcingService:
     """Overridable dependency. The default refuses: no LLM gateway is wired into the app yet."""
     raise not_implemented(
@@ -105,6 +116,20 @@ async def create_sourcing_request(
             "Model output unusable",
             detail="the intake model did not return a valid sourcing request",
             reason="structured_output_failed",
+        ) from exc
+    except (AllEndpointsUnavailableError, LLMTransportError, LLMHTTPError) as exc:
+        raise Problem(
+            502,
+            "Model endpoint unavailable",
+            detail=f"the extractor endpoint could not be reached: {_llm_detail(exc)}",
+            reason="llm_unavailable",
+        ) from exc
+    except TokenBudgetExceeded as exc:
+        raise Problem(
+            429,
+            "Token budget exhausted",
+            detail=exc.warning,
+            reason="token_budget_exhausted",
         ) from exc
     return SourcingRequestOut.of(request)
 
