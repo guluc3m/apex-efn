@@ -1,1 +1,194 @@
-{}
+{
+  "title": "Decisiones",
+  "nav": {
+    "deals": "Tratos",
+    "gate": "Cola de gate"
+  },
+  "kpi": {
+    "label": "Indicadores",
+    "pending": "Pendientes de decidir",
+    "signed": "Decisiones firmadas",
+    "sla": "SLA más próximo",
+    "savings": "Ahorro frente a mercado",
+    "savingsWeekly": "Ahorro acumulado por semana",
+    "week": "Semana",
+    "trend": "Tendencia: {values}"
+  },
+  "views": {
+    "label": "Vista de la lista",
+    "cola": "Cola · {n}",
+    "tratos": "Tratos · {n}"
+  },
+  "filter": {
+    "all": "Todos",
+    "profile": "Perfil de ranking",
+    "price": "Precio",
+    "confidence": "Confianza",
+    "verdict": "Veredicto",
+    "platform": "Plataforma",
+    "signature": "Firma"
+  },
+  "profile": {
+    "comprador": "Comprador operativo",
+    "cfo": "CFO / finanzas"
+  },
+  "whyRank": {
+    "comprador": "Comprador: pesa más el plazo, así que Vendedor E pasa al 1.º.",
+    "cfo": "CFO: pesa más el encaje financiero, así que Vendedor A pasa al 1.º y Vendedor E (al límite) baja."
+  },
+  "empty": "Ningún trato coincide con los filtros.",
+  "cause": {
+    "atypicalPrice": "Precio atípico",
+    "lowConfidence": "Vendedor con confianza baja",
+    "secondSignature": "Falta segunda firma (1 de 2)",
+    "escalatedDiscard": "Descartado por regla de escalada",
+    "staleSnapshot": "Datos financieros caducados",
+    "ready": "Listo para decidir",
+    "highAmount": "Importe alto"
+  },
+  "sla": "SLA {time}",
+  "perUnit": "/ud",
+  "rank": "{n}.º · score {score}",
+  "band": {
+    "normal": "Precio normal",
+    "atypical": "Precio atípico",
+    "implausible": "Precio implausible",
+    "insufficient_reference": "Sin referencia suficiente"
+  },
+  "conf": {
+    "high": "alta",
+    "medium": "media",
+    "low": "baja",
+    "untrusted": "no fiable",
+    "insufficient_data": "datos insuficientes"
+  },
+  "confLabel": "Confianza {band} · {score}",
+  "verdict": {
+    "within_budget": "En presupuesto",
+    "stretch": "Al límite",
+    "out_of_budget": "Fuera de presupuesto"
+  },
+  "sig": {
+    "pending": "Pendiente",
+    "pending12": "Pendiente 1/2",
+    "none": "Sin firma",
+    "signed": "Firmado"
+  },
+  "detail": {
+    "priceInitial": "Precio inicial",
+    "priceNegotiated": "Precio negociado",
+    "initial": "Inicial",
+    "notNegotiated": "Sin negociar",
+    "confidence": "Confianza del vendedor",
+    "landed": "Landed cost",
+    "expires": "Oferta caduca en {n} d",
+    "fullTranscript": "Ver transcripción completa",
+    "noNegotiation": "Aún sin negociar: no hay precio negociado ni transcripción.",
+    "whyConfidence": "Por qué esta confianza",
+    "sanity": "Cordura de precio",
+    "chartPending": "Gráfico: distribución de precios con la banda marcada (pendiente de conectar)",
+    "landedBreakdown": "Landed cost desglosado",
+    "priceQty": "Precio × cantidad",
+    "total": "Total",
+    "contribution": "Contribución al score",
+    "unscored": "Sin puntuar: todavía no es un trato final.",
+    "risks": "Banderas de riesgo",
+    "terms": "Producto, plazo y condiciones",
+    "termsPending": "Especificación, plazo de entrega y condiciones de pago: pendiente de conectar."
+  },
+  "signal": {
+    "age": "Antigüedad",
+    "ageV": "{n} días",
+    "sales": "Ventas",
+    "salesV": "{n} ventas · {pct} % repetición",
+    "catalog": "Catálogo",
+    "catalogV": "{n} productos · ficha {pct} %",
+    "reviews": "Reseñas",
+    "reviewsV": "{rating} de {n} · {pct} % verificadas",
+    "institutional": "Garantía institucional",
+    "institutionalV": "{kyc, select, true {KYC} other {Sin KYC}} · {escrow, select, true {escrow} other {sin escrow}} · disputas {pct} %"
+  },
+  "stale": {
+    "body": "El snapshot financiero activo ha caducado. Las compras directas quedan bloqueadas hasta reimportar el CSV.",
+    "cta": "Reimportar CSV"
+  },
+  "reason": {
+    "blockLow": "Vendedor con confianza baja: hace falta una decisión firmada de desbloqueo.",
+    "staleFinancials": "Snapshot financiero caducado: la compra directa queda bloqueada hasta reimportar el CSV."
+  },
+  "action": {
+    "follow": "Seguir y comprar",
+    "renegotiate": "Renegociar",
+    "takeover": "Tomar el control",
+    "hold": "Aparcar",
+    "discard": "Descartar",
+    "unblock": "Desbloquear",
+    "override_discard": "Anular descarte",
+    "sign2": "Añadir segunda firma"
+  },
+  "passkey": "passkey",
+  "line": {
+    "shipping": "Envío",
+    "insurance": "Seguro",
+    "duties": "Aranceles e IVA",
+    "capital": "Coste de capital",
+    "fees": "Comisiones de pago",
+    "fx": "FX y riesgo"
+  },
+  "criterion": {
+    "landed": "Landed cost",
+    "lead": "Plazo",
+    "confidence": "Confianza",
+    "fit": "Encaje financiero",
+    "margin": "Margen",
+    "spec": "Especificación",
+    "compliance": "Cumplimiento",
+    "gain": "Ganancia negociación"
+  },
+  "sanity": {
+    "atypical": "Índice fuera del rango normal en el lado barato.",
+    "normal": "Dentro de la banda normal.",
+    "escalated": "Escalado a precio implausible por la combinación precio y confianza."
+  },
+  "risk": {
+    "below60": "Más de un 60 % por debajo de la mediana",
+    "burst": "Reseñas concentradas en pocos días",
+    "escalated": "Precio atípico y vendedor no fiable: escalado a descarte",
+    "none": "Sin banderas"
+  },
+  "discardReason": {
+    "price_too_high": "Precio demasiado alto",
+    "seller_not_trusted": "Vendedor no fiable",
+    "spec_mismatch": "No cumple la especificación",
+    "lead_time": "Plazo de entrega",
+    "out_of_budget": "Fuera de presupuesto",
+    "duplicate": "Duplicada",
+    "other": "Otro"
+  },
+  "dialog": {
+    "close": "Cerrar",
+    "reasonCode": "Motivo",
+    "choose": "Elige un motivo",
+    "commentRequired": "Comentario (obligatorio)",
+    "reviewDate": "Fecha de revisión",
+    "instructions": "Instrucciones para la renegociación",
+    "overrideReason": "Motivo de la anulación (obligatorio)",
+    "payloadIntro": "Vas a firmar exactamente esto:",
+    "decision": "Decisión",
+    "amount": "Importe",
+    "offer": "Oferta",
+    "band": "Banda de precio",
+    "confidence": "Confianza",
+    "verdict": "Veredicto",
+    "passkeyNote": "Esta decisión exige passkey aunque la ventana de firma siga abierta.",
+    "sign": "Firmar decisión",
+    "cancel": "Cancelar"
+  },
+  "pending": "Pendiente de conectar",
+  "transcript": {
+    "back": "Volver a la lista",
+    "title": "Transcripción: {seller}",
+    "agent": "Agente",
+    "seller": "Vendedor"
+  }
+}
