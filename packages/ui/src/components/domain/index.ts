@@ -22,3 +22,4 @@ export {
   type MoneyValue,
 } from './money-display.js'
 export { DisabledReason, type DisabledReasonProps } from './disabled-reason.js'
+export { EdgeWarningBadge, type EdgeWarning, type EdgeWarningBadgeProps } from './edge-warning-badge.js'
