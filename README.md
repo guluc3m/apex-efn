@@ -1,4 +1,4 @@
-# APEX-EFN (Apex Platform Entresprise Xchange - Element Fintech Network)
+# APEX-EFN (Apex Platform Enterprise Xchange - Element Fintech Network)
 <img width="635" height="234" alt="image" src="https://github.com/user-attachments/assets/bd27c208-3a83-4609-abc6-8b46dd22e1b8" />
 
 > Plataforma B2B de sourcing inteligente y negociación automatizada de compras por volumen
