@@ -54,7 +54,7 @@ from apex.negotiation.ports import (
     SanityRecheck,
 )
 from apex.negotiation.templates import render
-from apex.negotiation.text import find_percentages, find_prices
+from apex.negotiation.text import find_percentages, find_prices, find_quantities
 
 __all__ = ["NegotiationEngine", "NegotiationError", "OpenRequest", "confirms", "plan_matches"]
 
@@ -84,23 +84,29 @@ class OpenRequest:
 
 _REFUSAL_RE = re.compile(
     r"\b(?:no|not|cannot|can't|can not|unable|impossible|sorry|but)\b|\bno\s+podemos\b|\blo\s+siento\b|"
-    r"不能|无法|不行|抱歉|但是",
+    r"不能|无法|不行|抱歉|但是|"
+    # A conditional acceptance is not a confirmation: a human reads the condition.
+    r"\b(?:if|provided|unless|only|subject\s+to)\b|\bsi\b|\bsiempre\s+que\b|\bsalvo\b|\bsolo\b|如果|只要|除非",
     re.IGNORECASE,
 )
 _CONFIRM_RE = re.compile(
     r"\bconfirm(?:ed|s)?\b|\bwe\s+agree\b|\bagreed\b|\bconfirmad[oa]s?\b|\bconfirmamos\b|"
-    r"\bde\s+acuerdo\b|确认|同意",
+    r"\bde\s+acuerdo\b|确认|同意|"
+    r"\b(?:we|i)\s+(?:can\s+|will\s+)?accept\b|\baccepted\b|\baceptamos\b|\baceptad[oa]\b|接受",
     re.IGNORECASE,
 )
 
 
-def confirms(text: str, agreed: Quote) -> bool:
+def confirms(text: str, agreed: Quote, quantity: int | None = None) -> bool:
     """True when the seller confirms the summarised price in writing (spec 3.6 step 7).
 
-    Deliberately strict: an explicit confirmation word, the exact summarised price, no other price in the
-    negotiation currency and no refusal word. Anything else goes to a human.
+    Deliberately strict: an explicit confirmation or acceptance word, the exact summarised price, no other
+    price in the negotiation currency, no refusal or condition word, and, when the reply states a quantity,
+    the summarised quantity. Anything else goes to a human.
     """
     if _REFUSAL_RE.search(text) or not _CONFIRM_RE.search(text):
+        return False
+    if quantity is not None and any(q != quantity for q in find_quantities(text)):
         return False
     prices = [p for p in find_prices(text) if p.currency == agreed.currency]
     return bool(prices) and all(p.minor == agreed.unit_price_minor for p in prices)
@@ -224,7 +230,9 @@ class NegotiationEngine:
 
         if session.summary_sent:
             # Only an explicit written confirmation of the summarised conditions counts (step 7).
-            if session.agreed is not None and confirms(text, session.agreed):
+            if session.agreed is not None and confirms(
+                text, session.agreed, session.params.quantity
+            ):
                 await self._finish(
                     session, NegotiationOutcome.AGREED, "seller_confirmed_in_writing"
                 )

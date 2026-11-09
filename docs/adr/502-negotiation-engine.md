@@ -33,6 +33,13 @@ for a human approval (spec 10).
      price is the only one in the message, it counts as the seller accepting it, and the written summary
      must still be confirmed before anything is agreed. The D5-09 suite found this against the mock
      marketplace.
+   - **Written confirmation** (step 7) is accepted only when every condition holds:
+     - the reply has an explicit confirmation or acceptance word ("confirmed", "we accept", "aceptamos", 接受);
+     - it states the exact summarised price and no other price;
+     - it states no other quantity;
+     - it has no refusal or condition word ("if", "provided", "only", "siempre que", 如果).
+
+     Anything else escalates to a human.
 3. **Single send path.** `_send` re-runs `check_outgoing` right before the transport call, so an approved
    draft cannot be sent if the situation changed after approval. The situation includes rounds, tokens,
    hourly rate, a human in control and the limits.
