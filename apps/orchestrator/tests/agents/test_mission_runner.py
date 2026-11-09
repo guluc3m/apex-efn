@@ -240,14 +240,18 @@ async def test_the_mission_quantity_is_what_the_worker_is_asked_for() -> None:
     assert worker.calls == [{"platform": "mock-a", "quantity": 500}]
 
 
-async def test_the_mission_emits_stage_events_for_the_stream() -> None:
+async def test_the_mission_emits_one_named_event_per_step() -> None:
     runner, store, _, _, _ = _runner()
     await _seed(store)
     result = await runner.run(tenant_id=TENANT, mission_id="m-1")
-    stages = [
-        e.payload.get("stage") for e in result.mission.events if e.payload.get("stage") is not None
+    assert [e.type for e in result.mission.events] == [
+        MissionEventType.SOURCING_STARTED,
+        MissionEventType.OFFERS_COLLECTED,
+        MissionEventType.ANALYSIS_COMPLETED,
     ]
-    assert stages == ["sourcing", "sourced", "analysed"]
+    assert result.mission.events[0].payload["platforms"] == ["mock-a"]
+    assert result.mission.events[1].payload["offers_kept"] == 1
+    assert result.mission.events[2].payload["gate_items"] == 0
 
 
 async def test_the_mission_stays_running_because_the_deals_await_humans() -> None:
