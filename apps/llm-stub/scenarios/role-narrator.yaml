@@ -1,9 +1,16 @@
 scenarios:
   - name: role-narrator
-    description: "Matched by 'role: narrator'; plain prose."
+    description: >-
+      Matched by the 'role: narrator' marker. Returns a valid RecommendationNarrative. The import-warnings
+      prompt shares this role and gets the same document; the eval suite pins its own scenarios by hash.
     role: narrator
     capabilities:
-      "*": {}
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
     response:
-      kind: text
-      content: "The best offer balances price and seller confidence."
+      kind: json
+      content:
+        top_offer_id: "mock-a:a-gloves-01"
+        narrative: "The first offer ranks highest on price and seller confidence."
+        trade_offs: ["The second offer is cheaper but its seller has less history."]
