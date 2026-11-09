@@ -72,12 +72,21 @@ class _SearchJobResult(_Model):
     truncated: bool = False
 
 
+class _JobError(_Model):
+    """Contract ``JobError``: a closed code, a message and whether a retry could help."""
+
+    code: str
+    message: str = ""
+    retryable: bool = False
+
+
 class _JobState(_Model):
+    """Contract ``JobState``. Only the fields this client acts on are declared; the rest are ignored."""
+
     job_id: str
     status: str
     result: Mapping[str, Any] | None = None
-    error_code: str | None = None
-    error_message: str | None = None
+    error: _JobError | None = None
 
 
 class _JobAccepted(_Model):
@@ -89,10 +98,11 @@ class _JobAccepted(_Model):
 class BrowserWorkerError(Exception):
     """The worker refused the job, failed it, or never finished. ``code`` is the contract's closed code."""
 
-    def __init__(self, code: str, detail: str = "") -> None:
+    def __init__(self, code: str, detail: str = "", *, retryable: bool = False) -> None:
         super().__init__(f"browser worker: {code}{': ' + detail if detail else ''}")
         self.code = code
         self.detail = detail
+        self.retryable = retryable
 
 
 class HttpClientFactory(Protocol):
@@ -169,8 +179,11 @@ class HttpBrowserWorker:
                 raise BrowserWorkerError("invalid_response", str(exc)) from exc
             if state.status in {"succeeded", "failed", "dead_lettered"}:
                 if state.status != "succeeded":
+                    error = state.error
                     raise BrowserWorkerError(
-                        state.error_code or state.status, state.error_message or ""
+                        error.code if error else state.status,
+                        error.message if error else "",
+                        retryable=error.retryable if error else False,
                     )
                 return state
             await self.sleep(self.poll_interval_s)
