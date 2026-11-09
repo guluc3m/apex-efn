@@ -1,1 +1,30 @@
-{}
+{
+  "back": "返回任务",
+  "context": "{code} · {n} 个入围供应商",
+  "profile": "偏好方案",
+  "profiles": { "operative": "运营采购员", "cfo": "首席财务官 / 财务" },
+  "export": "导出对比",
+  "decide": "就 {name} 做决定",
+  "pending": "尚未连接",
+  "tableCaption": "入围供应商对比",
+  "rank": "第 {n}",
+  "rows": { "criterion": "标准", "price": "单价", "band": "价格区间", "confidence": "可信度", "verdict": "财务结论", "signature": "签名", "landed": "到岸成本", "lead": "交期", "score": "评分", "vsFirst": "与第 1 名相比" },
+  "delta": { "down": "低于中位数", "up": "高于中位数" },
+  "deltaNote": "箭头：价格相对于中位数 {median}/件 的差异。蓝色为低于，红色为高于。",
+  "price": { "normal": "正常", "atypical": "异常", "implausible": "不合理" },
+  "confidence": { "high": "高", "medium": "中", "low": "低", "untrusted": "不可信", "insufficient_data": "数据不足" },
+  "verdict": { "within_budget": "预算内", "stretch": "接近上限", "out_of_budget": "超出预算" },
+  "signature": { "signed": "已签名", "pending": "未签名", "invalid": "无效" },
+  "chart": {
+    "caption": "各标准对评分的贡献",
+    "criteria": { "price": "价格", "trust": "可信度", "lead": "交期", "verdict": "财务结论" },
+    "row": "{name}：评分 {score}（{parts}）"
+  },
+  "savings": {
+    "title": "节省",
+    "list": "相对标价，本次任务",
+    "median": "相对市场中位数",
+    "year": "{category}，2026 年",
+    "memory": "价格记忆"
+  }
+}
