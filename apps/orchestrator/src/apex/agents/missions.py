@@ -69,9 +69,14 @@ def check_status(source: MissionStatus, target: MissionStatus) -> None:
 
 
 class MissionEventType(StrEnum):
+    """What the SSE stream can carry. One name per thing that actually happened."""
+
     MISSION_CREATED = "mission_created"
     PLANNING_STARTED = "planning_started"
     PLAN_READY = "plan_ready"
+    SOURCING_STARTED = "sourcing_started"
+    OFFERS_COLLECTED = "offers_collected"
+    ANALYSIS_COMPLETED = "analysis_completed"
     MISSION_FAILED = "mission_failed"
     MISSION_CANCELLED = "mission_cancelled"
 

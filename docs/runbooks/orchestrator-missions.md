@@ -33,6 +33,9 @@ browser worker (D5-01) and the DEV-3 engines.
   stream ends at `planned` on purpose (planning is the last step the sourcing service performs); reconnect
   when the mission starts running.
 
+  Event types, one per thing that happened: `mission_created`, `planning_started`, `plan_ready`,
+  `sourcing_started`, `offers_collected`, `analysis_completed`, `mission_failed`, `mission_cancelled`.
+
 ## When a mission is `failed`
 
 `failure_reason` is a stable code followed by a detail. The codes:
@@ -55,8 +58,8 @@ until D5-01 lands.
 
 The offers are in the gate queue awaiting signed human decisions. Check
 `GET /v1/gate/queue` (needs D3-* and D2-09). If the queue is empty and the mission is still `running`,
-the runner stopped between analysis and the queue: look at the last `stage` event in
-`GET /v1/missions/{id}/events`.
+the runner stopped between analysis and the queue: the last event should be `analysis_completed`, whose
+payload carries `offers_analysed` and `gate_items`.
 
 ## Invariants that must hold
 

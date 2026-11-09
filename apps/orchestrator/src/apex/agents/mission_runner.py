@@ -82,8 +82,8 @@ class MissionRunner:
 
         mission = await self._publish(
             transition(mission, MissionStatus.RUNNING, at=self._deps.clock.now()),
-            MissionEventType.PLANNING_STARTED,
-            payload={"stage": "sourcing"},
+            MissionEventType.SOURCING_STARTED,
+            payload={"platforms": [step.platform_id for step in plan.steps]},
         )
         try:
             return await self._run(mission, plan)
@@ -100,9 +100,8 @@ class MissionRunner:
         )
         mission = await self._publish(
             mission,
-            MissionEventType.PLAN_READY,
+            MissionEventType.OFFERS_COLLECTED,
             payload={
-                "stage": "sourced",
                 "offers_collected": scrape.collected,
                 "offers_kept": scrape.kept,
                 "platforms": scrape.platforms,
@@ -127,12 +126,8 @@ class MissionRunner:
                 gate_items += 1
         mission = await self._publish(
             mission,
-            MissionEventType.PLAN_READY,
-            payload={
-                "stage": "analysed",
-                "offers_analysed": analysed,
-                "gate_items": gate_items,
-            },
+            MissionEventType.ANALYSIS_COMPLETED,
+            payload={"offers_analysed": analysed, "gate_items": gate_items},
         )
         return MissionRunResult(
             mission=mission,
