@@ -84,7 +84,7 @@ export function DealDetail({ deal, profile }: { deal: Deal; profile: Profile }) 
         <div className="flex flex-wrap items-start gap-4">
           <div className="box-border flex flex-[2_1_320px] flex-wrap gap-10 border border-line bg-panel px-6 py-5">
             <div>
-              <div className="text-[13px] text-ink-muted">{t(deal.initialMinor === deal.unitMinor ? 'detail.priceInitial' : 'detail.priceNegotiated')}</div>
+              <div className="text-[13px] text-ink-muted">{t(deal.negotiated ? 'detail.priceNegotiated' : 'detail.priceInitial')}</div>
               <div className="my-1 flex items-baseline gap-1">
                 {eur(deal.unitMinor ?? 0)}
                 <span className="text-[13px] text-ink-muted">{t('perUnit')}</span>
@@ -183,7 +183,7 @@ export function DealDetail({ deal, profile }: { deal: Deal; profile: Profile }) 
                 <div className="h-1.5 flex-1 overflow-hidden bg-raised" aria-hidden="true">
                   <div className="h-1.5 bg-accent" style={{ width: `${c.pct}%` }} />
                 </div>
-                <span className="tabular-nums">{(c.value / 100).toFixed(2)}</span>
+                <span className="tabular-nums">{c.value}</span>
               </div>
             ))
           ) : (
