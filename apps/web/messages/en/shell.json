@@ -2,5 +2,74 @@
   "language": {
     "menu": "Interface language",
     "button": "Language: {name}. Change language"
+  },
+  "skip": "Skip to content",
+  "loading": "Loading…",
+  "nav": {
+    "label": "Main navigation",
+    "home": "TRATO, go to Decisions",
+    "decisions": "Decisions",
+    "missions": "Missions",
+    "approvals": "Approvals",
+    "company": "Company"
+  },
+  "companyNav": {
+    "label": "Company",
+    "rules": "Decision rules",
+    "finance": "Financial data",
+    "accounts": "Platform accounts",
+    "signing": "Signing and keys",
+    "audit": "Audit"
+  },
+  "signing": {
+    "label": "Signing",
+    "none": "No session",
+    "expiring": "Expires soon",
+    "expired": "Session expired",
+    "exhausted": "No signatures left",
+    "open": "Open signing session",
+    "reauth": "Re-authenticate to sign",
+    "timer": "Time left: {time}"
+  },
+  "userMenu": {
+    "trigger": "User menu: {name}",
+    "menu": "User",
+    "roleTenant": "{role} · {tenant}",
+    "roles": {
+      "viewer": "Viewer",
+      "buyer": "Buyer",
+      "finance": "Finance",
+      "admin": "Admin",
+      "owner": "Owner"
+    },
+    "signOut": "Sign out",
+    "signOutReason": "Not connected yet: there is no sign-in service."
+  },
+  "errors": {
+    "home": "Go to Decisions",
+    "retry": "Try again",
+    "forbidden": {
+      "title": "You do not have permission to view this screen",
+      "body": "Your role does not include this access. Ask an administrator at your company to review it."
+    },
+    "notFound": {
+      "title": "We could not find this page",
+      "body": "The address does not exist or is no longer available."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "body": "We could not load the screen. Nothing was signed or sent. Please try again."
+    }
+  },
+  "login": {
+    "title": "Sign in to review and sign your deals",
+    "lead": "Every purchase decision is signed with your key and recorded.",
+    "email": "Work email",
+    "emailPlaceholder": "name@company.com",
+    "continue": "Continue",
+    "passkey": "Sign in with passkey",
+    "pending": "Not connected yet: sign-in is not available.",
+    "sso": "Does your company use SSO? Sign in with your provider (not connected yet).",
+    "ed25519": "Signing requires a browser that supports Ed25519."
   }
 }
