@@ -30,9 +30,9 @@ def test_store_selected_from_settings() -> None:
 def test_writes_without_key_pass_through_by_default() -> None:
     """The middleware must not reject a write that omits the header; the route's own answer comes through.
 
-    Uses a route that is still a 501 stub (D4-08 implemented ``/v1/missions``, which now answers 401
-    because the dev tenant header is closed).
+    Uses a negotiation control route: it is implemented (D5-08) but its tenant dependency answers 401
+    while the dev tenant header is closed, which still proves the middleware let the write through.
     """
     app = create_app(Settings(), store=InMemoryIdempotencyStore())
     response = TestClient(app).post("/v1/negotiations/n-1/takeover", json={})
-    assert response.status_code == 501
+    assert response.status_code in {401, 501}

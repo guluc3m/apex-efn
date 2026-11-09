@@ -80,6 +80,7 @@ class HitCode(StrEnum):
     MAX_ROUNDS_REACHED = "max_rounds_reached"
     TOKEN_BUDGET_EXHAUSTED = "token_budget_exhausted"
     ACCOUNT_RATE_LIMITED = "account_rate_limited"
+    SELLER_RATE_LIMITED = "seller_rate_limited"
     HUMAN_IN_CONTROL = "human_in_control"
     # Incoming (seller messages)
     SELLER_ASKS_SENSITIVE_DATA = "seller_asks_sensitive_data"
@@ -119,7 +120,12 @@ class GuardrailLimits:
     max_tokens: int
     """LLM tokens per conversation."""
     max_messages_per_hour: int
-    """Agent messages per platform account in any rolling hour."""
+    """Agent messages per platform account in any rolling hour.
+
+    D5-08 applies the same configured number to one more scope: the agent never sends more than this many
+    messages **to the same seller account** in any rolling hour, across missions. Same key, stricter scope:
+    no new business number is introduced (AGENTS.md rule 0.6).
+    """
     max_message_chars: int
 
     def __post_init__(self) -> None:
@@ -149,6 +155,8 @@ class ConversationState:
     human_in_control: bool = False
     account_sends: Sequence[datetime] = field(default_factory=tuple)
     """Timestamps of agent messages sent from this platform account (all conversations)."""
+    seller_sends: Sequence[datetime] = field(default_factory=tuple)
+    """Timestamps of agent messages sent to this seller account (all missions, D5-08 anti-abuse)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,6 +269,13 @@ def check_outgoing(
             HitCode.ACCOUNT_RATE_LIMITED,
             Severity.BLOCK,
             f"{recent}/{limits.max_messages_per_hour} messages in the last hour",
+        )
+    to_seller = _sends_in_last_hour(state.seller_sends, now)
+    if to_seller >= limits.max_messages_per_hour:
+        hit(
+            HitCode.SELLER_RATE_LIMITED,
+            Severity.BLOCK,
+            f"{to_seller}/{limits.max_messages_per_hour} messages to this seller in the last hour",
         )
 
     stripped = text.strip()
