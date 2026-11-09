@@ -47,7 +47,7 @@ export function Select({ label, options, hideLabel, placeholder, className, ...r
             sideOffset={4}
             className={cn(
               raised,
-              'z-50 w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) py-1 data-[state=closed]:animate-[ap-out_var(--exit)_var(--easing)_forwards] data-[state=open]:animate-[ap-persiana_var(--fast)_var(--easing-move)] motion-reduce:animate-none',
+              'z-60 w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) py-1 data-[state=closed]:animate-[ap-out_var(--exit)_var(--easing)_forwards] data-[state=open]:animate-[ap-persiana_var(--fast)_var(--easing-move)] motion-reduce:animate-none',
             )}
           >
             <SelectPrimitive.Viewport>

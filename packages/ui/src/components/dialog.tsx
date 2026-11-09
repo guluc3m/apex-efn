@@ -23,14 +23,14 @@ export interface DialogContentProps extends Omit<React.ComponentPropsWithoutRef<
 export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
   ({ title, description, closeLabel, className, children, ...props }, ref) => (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-100 bg-bg/70 data-[state=closed]:animate-[ap-out_var(--exit)_var(--easing)_forwards] data-[state=open]:animate-[ap-in_var(--fast)_var(--easing)] motion-reduce:animate-none" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-bg/70 data-[state=closed]:animate-[ap-out_var(--exit)_var(--easing)_forwards] data-[state=open]:animate-[ap-in_var(--fast)_var(--easing)] motion-reduce:animate-none" />
       <DialogPrimitive.Content
         ref={ref}
         onInteractOutside={(e) => e.preventDefault()}
         {...(description ? {} : { 'aria-describedby': undefined })}
         className={cn(
           raised,
-          'fixed top-1/2 left-1/2 z-100 box-border w-[calc(100%-64px)] max-w-140 -translate-x-1/2 -translate-y-1/2 p-6 text-ink outline-none data-[state=closed]:animate-[ap-out_var(--exit)_var(--easing)_forwards] data-[state=open]:animate-[ap-dlg_var(--overlay)_var(--easing)] motion-reduce:animate-none',
+          'fixed top-1/2 left-1/2 z-50 box-border w-[calc(100%-64px)] max-w-140 -translate-x-1/2 -translate-y-1/2 p-6 text-ink outline-none data-[state=closed]:animate-[ap-out_var(--exit)_var(--easing)_forwards] data-[state=open]:animate-[ap-dlg_var(--overlay)_var(--easing)] motion-reduce:animate-none',
           className,
         )}
         {...props}
