@@ -266,3 +266,59 @@ def test_the_app_still_boots_when_the_service_graph_is_unavailable() -> None:
     )
     with TestClient(app) as client:
         assert client.get("/health").status_code == 200
+
+
+# ----- mission autorun is a flag, off by default -------------------------------------------------
+
+
+def test_missions_are_not_run_automatically_by_default(app: FastAPI) -> None:
+    """The runner needs D5-01 and the DEV-3 engines; with them missing every mission would fail."""
+    with TestClient(app) as client:
+        mission = client.post(
+            "/v1/missions",
+            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
+            headers=_h(),
+        ).json()
+    assert mission["status"] == "planned"
+    assert mission["failure_reason"] is None
+
+
+def test_turning_autorun_on_advances_the_mission_and_reports_the_missing_owner() -> None:
+    """With the flag on, the mission does not sit at `planned`: it fails naming the port it needs."""
+    import asyncio
+
+    from apex.wiring import build_app_services
+
+    stub = asyncio.run(_open_stub())
+    services = build_app_services(
+        Settings(idempotency_backend="memory", mission_autorun=True),
+        clock=FixedClock(NOW),
+        http_client_factory=lambda cfg: _scoped(stub, _scenario_for(cfg)),
+    )
+    application = create_app(
+        Settings(idempotency_backend="memory", mission_autorun=True),
+        store=InMemoryIdempotencyStore(),
+        services=services,
+    )
+    application.state.stub = stub
+    try:
+        with TestClient(application) as client:
+            mission = client.post(
+                "/v1/missions",
+                json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
+                headers=_h(),
+            ).json()
+        assert mission["status"] == "failed"
+        assert mission["failure_reason"] is not None
+        assert "D5-01" in mission["failure_reason"]
+    finally:
+        asyncio.run(stub.aclose())
+
+
+def test_the_service_graph_exposes_a_runner_with_named_unwired_ports() -> None:
+    from apex.agents.mission_runner import MissionRunner
+    from apex.wiring import build_app_services
+
+    services = build_app_services(Settings())
+    assert isinstance(services.runner, MissionRunner)
+    assert services.settings.mission_autorun is False

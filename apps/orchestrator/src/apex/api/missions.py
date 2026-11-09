@@ -93,6 +93,12 @@ def get_sourcing_service() -> SourcingService:
     )
 
 
+def get_mission_runner(request: Request) -> Any:
+    """The runner is optional: it exists once the service graph is built."""
+    services = getattr(request.app.state, "app_services", None)
+    return getattr(services, "runner", None)
+
+
 def get_event_bus(request: Request) -> Any:
     """The bus lives on the app state so the SSE route and the service share one instance."""
     bus = getattr(request.app.state, "mission_event_bus", None)
@@ -104,6 +110,7 @@ def get_event_bus(request: Request) -> Any:
 @router.post("", response_model=MissionOut, status_code=status.HTTP_201_CREATED, tags=["missions"])
 async def create_mission(
     body: MissionIn,
+    http_request: Request,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[SourcingService, Depends(get_sourcing_service)],
 ) -> MissionOut:
@@ -127,7 +134,25 @@ async def create_mission(
             detail="the planner did not return a valid plan",
             reason="structured_output_failed",
         ) from exc
+    mission = await _maybe_autorun(http_request, tenant_id=tenant_id, mission=mission)
     return MissionOut.of(mission)
+
+
+async def _maybe_autorun(request: Request, *, tenant_id: str, mission: Mission) -> Mission:
+    """Advance the mission right away when ``mission_autorun`` is on.
+
+    Off by default: the runner needs the browser worker (D5-01) and the DEV-3 engines, so with them missing
+    every mission would fail at its first step. The flag makes turning it on a configuration change.
+    """
+    settings = getattr(request.app.state, "settings", None)
+    runner = get_mission_runner(request)
+    if settings is None or runner is None or not settings.mission_autorun:
+        return mission
+    if mission.status is not MissionStatus.PLANNED:
+        return mission
+    result = await runner.run(tenant_id=tenant_id, mission_id=mission.id)
+    advanced: Mission = result.mission
+    return advanced
 
 
 @router.get("/{id}", response_model=MissionOut, tags=["missions"])

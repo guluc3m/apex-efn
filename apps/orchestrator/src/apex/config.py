@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     llm_gateway_url: str = Field(default="http://localhost:8001/v1")
     llm_gateway_api_key: str = Field(default="")
 
+    # Run a mission as soon as it is created. Off by default: the runner needs the browser worker (D5-01)
+    # and the DEV-3 engines, so with them missing it would fail every mission at its first step. Turn it on
+    # once those ports are real; the flag exists so that is a configuration change, not a code change.
+    mission_autorun: bool = Field(default=False)
+
     # LLM token budget per mission (criterion 28). An operator limit, not a business threshold: the
     # business limits live in tenant config. Kept here until tenant config carries it.
     llm_mission_token_budget: int = Field(default=200_000, ge=1)

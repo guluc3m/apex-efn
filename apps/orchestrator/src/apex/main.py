@@ -115,6 +115,7 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     application.dependency_overrides[missions_api.get_sourcing_service] = lambda: services.sourcing
     application.dependency_overrides[config_api.get_config_service] = lambda: services.tenant_config
     application.dependency_overrides[onboarding_api.get_onboarding] = lambda: services.onboarding
+    application.state.settings = services.settings
 
 
 app: FastAPI = create_app()
