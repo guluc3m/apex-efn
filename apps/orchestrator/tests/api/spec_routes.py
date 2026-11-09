@@ -70,5 +70,13 @@ CONFIG_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
+# Routes DEV-4 added that section 8 does not list (progressive form backend for D4-07). Same situation as the
+# config routes: they need a contract PR once /contracts exists.
+DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("PATCH", "/v1/onboarding/sessions/{id}"),
+    }
+)
+
 # The exact-set check covers both. The 501 stub check covers only SPEC_ROUTES minus IMPLEMENTED_ROUTES.
-EXPECTED_ROUTES: frozenset[tuple[str, str]] = SPEC_ROUTES | CONFIG_ROUTES
+EXPECTED_ROUTES: frozenset[tuple[str, str]] = SPEC_ROUTES | CONFIG_ROUTES | DEV4_EXTRA_ROUTES
