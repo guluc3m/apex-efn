@@ -1,3 +1,8 @@
+/**
+ * @deprecated Hand-written DTO kept only so existing imports keep compiling.
+ * Use the generated types from `@apex/shared-types/contracts` (source: contracts/openapi.yaml).
+ * This folder is deleted once DEV-3 and DEV-5 migrate off it (D2-01 follow-up issues).
+ */
 import { z } from 'zod'
 
 import { ConvertedMoneySchema, CurrencySchema } from './currency.js'

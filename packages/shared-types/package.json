@@ -11,37 +11,45 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./contracts": {
+      "types": "./dist/generated/index.d.ts",
+      "import": "./dist/generated/index.js"
+    },
+    "./contracts/zod": {
+      "types": "./dist/generated/zod.gen.d.ts",
+      "import": "./dist/generated/zod.gen.js"
+    },
     "./currency": {
-      "types": "./dist/currency.d.ts",
-      "import": "./dist/currency.js"
+      "types": "./dist/legacy/currency.d.ts",
+      "import": "./dist/legacy/currency.js"
     },
     "./seller": {
-      "types": "./dist/seller.d.ts",
-      "import": "./dist/seller.js"
+      "types": "./dist/legacy/seller.d.ts",
+      "import": "./dist/legacy/seller.js"
     },
     "./sanity": {
-      "types": "./dist/sanity.d.ts",
-      "import": "./dist/sanity.js"
+      "types": "./dist/legacy/sanity.d.ts",
+      "import": "./dist/legacy/sanity.js"
     },
     "./signing": {
-      "types": "./dist/signing.d.ts",
-      "import": "./dist/signing.js"
+      "types": "./dist/legacy/signing.d.ts",
+      "import": "./dist/legacy/signing.js"
     },
     "./config": {
-      "types": "./dist/config.d.ts",
-      "import": "./dist/config.js"
+      "types": "./dist/legacy/config.d.ts",
+      "import": "./dist/legacy/config.js"
     },
     "./financial": {
-      "types": "./dist/financial.d.ts",
-      "import": "./dist/financial.js"
+      "types": "./dist/legacy/financial.d.ts",
+      "import": "./dist/legacy/financial.js"
     },
     "./mission": {
-      "types": "./dist/mission.d.ts",
-      "import": "./dist/mission.js"
+      "types": "./dist/legacy/mission.d.ts",
+      "import": "./dist/legacy/mission.js"
     },
     "./offer": {
-      "types": "./dist/offer.d.ts",
-      "import": "./dist/offer.js"
+      "types": "./dist/legacy/offer.d.ts",
+      "import": "./dist/legacy/offer.js"
     }
   },
   "scripts": {
@@ -58,6 +66,7 @@
   "devDependencies": {
     "@apex/eslint-config": "workspace:*",
     "@apex/tsconfig": "workspace:*",
+    "@hey-api/openapi-ts": "0.99.0",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
     "vitest": "^3.2.6"
