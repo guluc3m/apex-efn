@@ -29,7 +29,7 @@
     set text(size: 8pt, fill: c.accent)
     grid(
       columns: (1fr, auto), align: (left + horizon, right + horizon),
-      logo(25pt), [*Hack Quesitos*: Resumen de proyecto],
+      logo(25pt), [Apex Platform Entresprise eXchange - Element Fintech Network],
     )
   },
   footer: {
