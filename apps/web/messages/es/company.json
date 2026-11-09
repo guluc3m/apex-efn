@@ -61,6 +61,7 @@
       "replaces": "Sustituye a",
       "replacesValue": "{month} (queda archivado)",
       "expires": "Caduca",
+      "payloadHash": "Hash del contenido (payload_hash)",
       "back": "Volver a revisar el CSV",
       "activate": "Activar con passkey",
       "pending": "Pendiente de conectar: la firma y la activación aún no tienen backend",

@@ -11,8 +11,9 @@ export interface FinanceImport {
   periodRange: string
   converted: number
   mapping: { column: string; field: string }[]
-  rejections: { metric: string; period: string; line: number; value: string; reason: RejectReason }[]
+  rejections: { metric: string; period: string; line: number; value: string; reason: RejectReason; keptLine?: number }[]
   warnings: ('fx' | 'taxReserve')[]
+  taxReserveMonth: string
 }
 
 export interface FinanceSummary {
@@ -26,6 +27,7 @@ export interface FinanceSummary {
   envelopes: { key: string; name: string; used: string; usedPct: number; available: string; limit: string; nearlyExhausted: boolean }[]
 }
 
+// //todo_#153: ImportReport real del backend
 export const financeImport: FinanceImport = {
   file: 'finanzas_2026-10.csv',
   rows: 48,
@@ -44,11 +46,13 @@ export const financeImport: FinanceImport = {
     { metric: 'revenue', period: '2026-9', line: 19, value: '18200000', reason: 'period' },
     { metric: 'inventory', period: '2026-10', line: 27, value: '920000', reason: 'metric' },
     { metric: 'accounts_payable', period: '2026-10', line: 33, value: '2100000 GBP', reason: 'currency' },
-    { metric: 'cash_balance', period: '2026-10', line: 41, value: '6400000', reason: 'duplicate' },
+    { metric: 'cash_balance', period: '2026-10', line: 41, value: '6400000', reason: 'duplicate', keptLine: 8 },
   ],
   warnings: ['fx', 'taxReserve'],
+  taxReserveMonth: '2026-10',
 }
 
+// //todo_#153: snapshot derivado real del backend
 export const financeSummary: FinanceSummary = {
   referenceDate: '31/10/2026',
   netCapacity: '41.300,00 €',

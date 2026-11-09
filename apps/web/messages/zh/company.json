@@ -61,6 +61,7 @@
       "replaces": "取代",
       "replacesValue": "{month}(将归档)",
       "expires": "到期",
+      "payloadHash": "内容哈希(payload_hash)",
       "back": "返回检查 CSV",
       "activate": "使用 passkey 启用",
       "pending": "尚未连接:签名和启用暂无后端",

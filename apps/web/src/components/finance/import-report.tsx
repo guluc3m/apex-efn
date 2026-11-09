@@ -66,7 +66,7 @@ export function ImportReport({ data }: { data: FinanceImport }) {
                 <td className={`${TD} font-mono`}>{r.period}</td>
                 <td className={`${TD} text-right`}>{r.line}</td>
                 <td className={`${TD} text-right font-mono`}>{r.value}</td>
-                <td className={TD}><Badge tone={r.reason === 'duplicate' ? 'warn' : 'bad'}>{t(`reasons.${r.reason}`, { line: 8 })}</Badge></td>
+                <td className={TD}><Badge tone={r.reason === 'duplicate' ? 'warn' : 'bad'}>{t(`reasons.${r.reason}`, { line: r.keptLine ?? 0 })}</Badge></td>
               </tr>
             ))}
           </tbody>
@@ -75,7 +75,7 @@ export function ImportReport({ data }: { data: FinanceImport }) {
 
       <section className="flex max-w-[760px] flex-col gap-2">
         <h2 className="m-0 flex items-center gap-2 text-base font-semibold"><Icon icon={TriangleAlert} />{t('warningsTitle')}</h2>
-        {data.warnings.map((w) => <p key={w} className="m-0">{t(`warnings.${w}`, { n: data.converted, month: '2026-10' })}</p>)}
+        {data.warnings.map((w) => <p key={w} className="m-0">{t(`warnings.${w}`, { n: data.converted, month: data.taxReserveMonth })}</p>)}
       </section>
     </div>
   )

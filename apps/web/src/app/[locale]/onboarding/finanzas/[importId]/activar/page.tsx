@@ -16,7 +16,7 @@ export default async function FinanceActivatePage({ params }: { params: Promise<
     { k: t('rows'), v: t('rowsValue', { n: financeImport.accepted }) },
     { k: t('replaces'), v: t('replacesValue', { month: s.replaces }) },
     { k: t('expires'), v: s.expires },
-    { k: 'payload_hash', v: s.payloadHash, mono: true },
+    { k: t('payloadHash'), v: s.payloadHash, mono: true },
   ]
   return (
     <main id="contenido" className="flex flex-wrap items-start">

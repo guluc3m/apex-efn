@@ -61,6 +61,7 @@
       "replaces": "Replaces",
       "replacesValue": "{month} (gets archived)",
       "expires": "Expires",
+      "payloadHash": "Content hash (payload_hash)",
       "back": "Back to the CSV review",
       "activate": "Activate with passkey",
       "pending": "Not connected yet: signing and activation have no backend",
