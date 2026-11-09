@@ -1,0 +1,3 @@
+/* Tokens y utilidades: se importan de la web, la única fuente (DESIGN §12). */
+@import '../../../apps/web/src/styles/globals.css';
+@source '../src';
