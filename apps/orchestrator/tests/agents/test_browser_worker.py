@@ -52,6 +52,7 @@ class _Worker:
             {
                 "job_id": "j-1",
                 "status": "succeeded",
+                "error": None,
                 "result": {
                     "kind": "search",
                     "offers": [RAW_OFFER],
@@ -187,7 +188,7 @@ async def test_the_client_does_not_convert_or_score_anything(sleeps: list[float]
 async def test_a_missing_quantity_available_falls_back_to_the_moq(sleeps: list[float]) -> None:
     raw = {**RAW_OFFER, "quantity_available": None}
     worker = _Worker(
-        states=[{"job_id": "j-1", "status": "succeeded",
+        states=[{"job_id": "j-1", "status": "succeeded", "error": None,
                  "result": {"kind": "search", "offers": [raw], "skipped": [], "truncated": True}}]
     )  # fmt: skip
     result = await _worker(worker, sleeps).search(
@@ -223,7 +224,12 @@ async def test_a_rejected_job_raises_with_the_contract_code(sleeps: list[float])
 async def test_a_failed_job_raises_with_its_error_code(status: str, sleeps: list[float]) -> None:
     worker = _Worker(
         states=[
-            {"job_id": "j-1", "status": status, "error_code": "captcha", "error_message": "blocked"}
+            {
+                "job_id": "j-1",
+                "status": status,
+                "result": None,
+                "error": {"code": "captcha", "message": "blocked", "retryable": True},
+            }
         ]
     )
     with pytest.raises(BrowserWorkerError) as caught:
