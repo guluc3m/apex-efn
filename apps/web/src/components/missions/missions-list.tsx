@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Icon, Select, StatusBadge, Table, type StatusTone, type TableColumn } from '@apex/ui'
+import { Button, EmptyState, Icon, Select, StatusBadge, Table, type StatusTone, type TableColumn } from '@apex/ui'
 import { CircleCheck, CircleX, Inbox, LoaderCircle, Plus, Scale, type LucideIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 
@@ -25,17 +25,19 @@ export function MissionsList({ missions }: { missions: MissionRow[] }) {
 
   if (missions.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-3 border border-line bg-panel p-gutter-panel">
-        <Icon icon={Inbox} size={20} className="text-ink-muted" />
-        <h2 className="text-[17px] font-semibold">{t('emptyTitle')}</h2>
-        <p className="max-w-prose text-ink-soft">{t('emptyBody')}</p>
-        <Button variant="pri" asChild>
-          <AppLink href="/misiones/nueva">
-            <Icon icon={Plus} />
-            {t('new')}
-          </AppLink>
-        </Button>
-      </div>
+      <EmptyState
+        icon={Inbox}
+        title={t('emptyTitle')}
+        description={t('emptyBody')}
+        actions={
+          <Button variant="pri" asChild>
+            <AppLink href="/misiones/nueva">
+              <Icon icon={Plus} />
+              {t('new')}
+            </AppLink>
+          </Button>
+        }
+      />
     )
   }
 
