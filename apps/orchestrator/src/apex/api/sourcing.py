@@ -1,86 +1,32 @@
 """Sourcing request endpoints (owner: DEV-4, D4-08).
 
-``POST /v1/sourcing-requests`` turns free text into a structured request. The LLM drafts it; code owns the
-ids, the clock, the config version and the validation. The response echoes ``missing_fields`` so the UI can
-ask for what the buyer did not say instead of inventing it.
+Shapes come from ``contracts/openapi.yaml`` (``CreateSourcingRequest`` → ``SourcingRequest``); the router
+does not define DTOs of its own (spec §5.1). The LLM drafts the normalised need from the free text; code owns
+the ids, the clock, the config version and the validation, and stores the result so ``POST /v1/missions`` can
+reference it by id.
 """
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, Field
 
+from apex.agents.request_store import SourcingRequestStore
 from apex.agents.sourcing import SourcingRequest
 from apex.agents.sourcing_service import SourcingService
+from apex.api.contract_map import to_contract_request
 from apex.common.clock import Clock, get_clock
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
+from apex.contracts.generated.models import CreateSourcingRequest
+from apex.contracts.generated.models import SourcingRequest as ContractRequest
 from apex.llm.budget import TokenBudgetExceeded
 from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
 from apex.llm.transport import LLMHTTPError, LLMTransportError
 
 router = APIRouter()
-
-
-class SourcingRequestIn(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    text: str = Field(min_length=1, max_length=8000, description="The need in natural language")
-    base_currency: str = Field(default="EUR", pattern="^(EUR|USD|CNY)$")
-    today: date | None = Field(
-        default=None,
-        description="Reference date for relative deadlines; defaults to the server clock",
-    )
-
-
-class QuantityTierOut(BaseModel):
-    min_quantity: int
-
-
-class SourcingRequestOut(BaseModel):
-    id: str
-    tenant_id: str
-    spec: str
-    quantity_tiers: list[QuantityTierOut]
-    deadline: date | None
-    deadline_text: str | None
-    destination_country: str | None
-    certifications: list[str]
-    budget_text: str | None
-    missing_fields: list[str]
-    created_at: str
-    config_version: str
-
-    @classmethod
-    def of(cls, request: SourcingRequest) -> SourcingRequestOut:
-        return cls(
-            id=request.id,
-            tenant_id=request.tenant_id,
-            spec=request.spec,
-            quantity_tiers=[
-                QuantityTierOut(min_quantity=t.min_quantity) for t in request.quantity_tiers
-            ],
-            deadline=request.deadline,
-            deadline_text=request.deadline_text,
-            destination_country=request.destination_country,
-            certifications=request.certifications,
-            budget_text=request.budget_text,
-            missing_fields=request.missing_fields,
-            created_at=request.created_at.isoformat(),
-            config_version=request.config_version,
-        )
-
-
-def _llm_detail(exc: Exception) -> str:
-    """A short, safe description of an LLM failure. Never the prompt, never a credential."""
-    causes = getattr(exc, "causes", None)
-    if causes:
-        return str(causes)
-    return f"{type(exc).__name__}: {exc}"
 
 
 def get_sourcing_service() -> SourcingService:
@@ -90,25 +36,33 @@ def get_sourcing_service() -> SourcingService:
     )
 
 
+def get_request_store() -> SourcingRequestStore:
+    """Overridable dependency: the store that lets a mission reference a request by id."""
+    raise not_implemented("the sourcing request store is not wired into the app")
+
+
 @router.post(
     "",
-    response_model=SourcingRequestOut,
+    response_model=ContractRequest,
     status_code=status.HTTP_201_CREATED,
     tags=["sourcing"],
 )
 async def create_sourcing_request(
-    body: SourcingRequestIn,
+    body: CreateSourcingRequest,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    store: Annotated[SourcingRequestStore, Depends(get_request_store)],
     clock: Annotated[Clock, Depends(get_clock)],
-) -> SourcingRequestOut:
+) -> ContractRequest:
     """Normalise a purchase need. Never invents a quantity, deadline or budget: absent fields stay null."""
     try:
-        request = await service.create_request(
+        request: SourcingRequest = await service.create_request(
             tenant_id=tenant_id,
-            text=body.text,
-            base_currency=body.base_currency,
-            today=body.today or clock.now().date(),
+            text=body.natural_language,
+            base_currency="EUR",
+            today=clock.now().date(),
+            delivery_country=body.delivery_country,
+            target_delivery_date=body.target_delivery_date,
         )
     except StructuredOutputError as exc:
         raise Problem(
@@ -126,12 +80,18 @@ async def create_sourcing_request(
         ) from exc
     except TokenBudgetExceeded as exc:
         raise Problem(
-            429,
-            "Token budget exhausted",
-            detail=exc.warning,
-            reason="token_budget_exhausted",
+            429, "Token budget exhausted", detail=exc.warning, reason="token_budget_exhausted"
         ) from exc
-    return SourcingRequestOut.of(request)
+    await store.add(request)
+    return to_contract_request(request, max_budget=body.max_budget)
 
 
-__all__ = ["get_sourcing_service", "router"]
+def _llm_detail(exc: Exception) -> str:
+    """A short, safe description of an LLM failure. Never the prompt, never a credential."""
+    causes = getattr(exc, "causes", None)
+    if causes:
+        return str(causes)
+    return f"{type(exc).__name__}: {exc}"
+
+
+__all__ = ["get_request_store", "get_sourcing_service", "router"]

@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from apex.api import config as config_api
-from apex.api import missions as missions_api
 from apex.api import onboarding as onboarding_api
 from apex.api import router
 from apex.api import sourcing as sourcing_api
@@ -112,7 +111,9 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     application.state.app_services = services
     application.state.mission_event_bus = services.mission_bus
     application.dependency_overrides[sourcing_api.get_sourcing_service] = lambda: services.sourcing
-    application.dependency_overrides[missions_api.get_sourcing_service] = lambda: services.sourcing
+    application.dependency_overrides[sourcing_api.get_request_store] = lambda: (
+        services.request_store
+    )
     application.dependency_overrides[config_api.get_config_service] = lambda: services.tenant_config
     application.dependency_overrides[onboarding_api.get_onboarding] = lambda: services.onboarding
     application.state.settings = services.settings

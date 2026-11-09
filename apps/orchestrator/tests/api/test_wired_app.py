@@ -77,66 +77,68 @@ def _h(tenant: str = TENANT) -> dict[str, str]:
     return {"X-Tenant-Id": tenant}
 
 
+def _new_mission(client: TestClient) -> dict[str, Any]:
+    """Create a sourcing request and a mission for it, as the BFF does."""
+    request = client.post(
+        "/v1/sourcing-requests",
+        json={"natural_language": "guantes de nitrilo", "delivery_country": "ES"},
+        headers=_h(),
+    ).json()
+    mission: dict[str, Any] = client.post(
+        "/v1/missions", json={"sourcing_request_id": request["id"]}, headers=_h()
+    ).json()
+    return mission
+
+
 def test_sourcing_request_is_parsed_by_the_real_gateway(app: FastAPI) -> None:
     with TestClient(app) as client:
         response = client.post(
             "/v1/sourcing-requests",
             json={
-                "text": "necesito 500 cajas de guantes de nitrilo talla M",
-                "base_currency": "EUR",
+                "natural_language": "necesito 500 cajas de guantes de nitrilo talla M",
+                "delivery_country": "ES",
             },
             headers=_h(),
         )
     assert response.status_code == 201, response.text
     body = response.json()
-    assert body["spec"] == "Nitrile gloves size M, box of 100"
-    assert body["quantity_tiers"] == [{"min_quantity": 500}]
-    assert body["deadline"] == "2027-06-01"
-    assert body["destination_country"] == "ES"
-    assert body["config_version"].startswith("v1:")
+    assert body["spec"]["description"] == "Nitrile gloves size M, box of 100"
+    assert body["quantity_tiers"] == [{"quantity": 500, "priority": "primary"}]
+    assert body["target_delivery_date"] == "2027-06-01"
+    assert body["delivery_country"] == "ES"
+    assert body["status"] == "normalized"
 
 
 def test_a_mission_is_planned_by_the_real_planner(app: FastAPI) -> None:
     with TestClient(app) as client:
-        created = client.post(
-            "/v1/missions",
-            json={
-                "sourcing_request_id": "sr-1",
-                "spec": "Nitrile gloves size M",
-                "quantity_tiers": [500],
-                "destination_country": "ES",
-            },
+        request = client.post(
+            "/v1/sourcing-requests",
+            json={"natural_language": "guantes de nitrilo talla M", "delivery_country": "ES"},
             headers=_h(),
+        ).json()
+        created = client.post(
+            "/v1/missions", json={"sourcing_request_id": request["id"]}, headers=_h()
         )
     assert created.status_code == 201, created.text
     body = created.json()
-    assert body["status"] == "planned"
-    assert {s["platform_id"] for s in body["steps"]} == {"mock-a", "mock-b"}
-    assert {s["transport"] for s in body["steps"]} == {"http", "browser"}
-    assert body["rejected_steps"] == []
+    assert body["state"] == "sourcing"
+    assert body["sourcing_request_id"] == request["id"]
+    assert body["error"] is None
 
 
 def test_the_mission_streams_its_events(app: FastAPI) -> None:
     with TestClient(app) as client:
-        mission = client.post(
-            "/v1/missions",
-            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
-            headers=_h(),
-        ).json()
+        mission = _new_mission(client)
         with client.stream("GET", f"/v1/missions/{mission['id']}/events", headers=_h()) as response:
             body = "".join(response.iter_text())
     assert response.status_code == 200
     events = [line.split(": ", 1)[1] for line in body.splitlines() if line.startswith("event: ")]
-    assert events == ["mission_created", "planning_started", "plan_ready"]
+    assert events == ["state_changed", "state_changed", "state_changed"]
 
 
 def test_a_mission_is_readable_after_creation(app: FastAPI) -> None:
     with TestClient(app) as client:
-        mission = client.post(
-            "/v1/missions",
-            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
-            headers=_h(),
-        ).json()
+        mission = _new_mission(client)
         fetched = client.get(f"/v1/missions/{mission['id']}", headers=_h())
     assert fetched.status_code == 200
     assert fetched.json()["id"] == mission["id"]
@@ -144,11 +146,7 @@ def test_a_mission_is_readable_after_creation(app: FastAPI) -> None:
 
 def test_missions_are_isolated_per_tenant(app: FastAPI) -> None:
     with TestClient(app) as client:
-        mission = client.post(
-            "/v1/missions",
-            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
-            headers=_h(),
-        ).json()
+        mission = _new_mission(client)
         other = client.get(f"/v1/missions/{mission['id']}", headers=_h("tenant-b"))
     assert other.status_code == 404
 
@@ -274,13 +272,9 @@ def test_the_app_still_boots_when_the_service_graph_is_unavailable() -> None:
 def test_missions_are_not_run_automatically_by_default(app: FastAPI) -> None:
     """The runner needs D5-01 and the DEV-3 engines; with them missing every mission would fail."""
     with TestClient(app) as client:
-        mission = client.post(
-            "/v1/missions",
-            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
-            headers=_h(),
-        ).json()
-    assert mission["status"] == "planned"
-    assert mission["failure_reason"] is None
+        mission = _new_mission(client)
+    assert mission["state"] == "sourcing"
+    assert mission["error"] is None
 
 
 def test_turning_autorun_on_advances_the_mission_and_reports_the_missing_owner() -> None:
@@ -303,14 +297,17 @@ def test_turning_autorun_on_advances_the_mission_and_reports_the_missing_owner()
     application.state.stub = stub
     try:
         with TestClient(application) as client:
-            mission = client.post(
-                "/v1/missions",
-                json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
+            request = client.post(
+                "/v1/sourcing-requests",
+                json={"natural_language": "guantes", "delivery_country": "ES"},
                 headers=_h(),
             ).json()
-        assert mission["status"] == "failed"
-        assert mission["failure_reason"] is not None
-        assert "D5-01" in mission["failure_reason"]
+            mission = client.post(
+                "/v1/missions", json={"sourcing_request_id": request["id"]}, headers=_h()
+            ).json()
+        assert mission["state"] == "failed"
+        assert mission["error"] is not None
+        assert "D5-01" in mission["error"]["detail"]
     finally:
         asyncio.run(stub.aclose())
 
@@ -347,18 +344,14 @@ def test_an_unreachable_llm_endpoint_is_a_502_with_a_reason() -> None:
         Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore(), services=services
     )
     with TestClient(application, raise_server_exceptions=False) as client:
-        sourcing = client.post("/v1/sourcing-requests", json={"text": "gloves"}, headers=_h())
-        mission = client.post(
-            "/v1/missions",
-            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
+        sourcing = client.post(
+            "/v1/sourcing-requests",
+            json={"natural_language": "gloves", "delivery_country": "ES"},
             headers=_h(),
         )
     assert sourcing.status_code == 502, sourcing.text
     assert sourcing.json()["reason"] == "llm_unavailable"
     assert sourcing.headers["content-type"].startswith("application/problem+json")
-    assert mission.status_code == 502, mission.text
-    assert mission.json()["reason"] == "llm_unavailable"
-    assert "planner" in mission.json()["detail"]
 
 
 # ----- writes are idempotent when the caller sends the key (the BFF always does) -------------------
@@ -366,7 +359,13 @@ def test_an_unreachable_llm_endpoint_is_a_502_with_a_reason() -> None:
 
 def test_replaying_a_mission_creation_returns_the_same_mission(app: FastAPI) -> None:
     """The BFF generates an Idempotency-Key per user action; a retry must not create a second mission."""
-    body = {"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]}
+    with TestClient(app) as client:
+        request = client.post(
+            "/v1/sourcing-requests",
+            json={"natural_language": "guantes", "delivery_country": "ES"},
+            headers=_h(),
+        ).json()
+    body = {"sourcing_request_id": request["id"]}
     headers = {**_h(), "Idempotency-Key": "bff-abc-123"}
     with TestClient(app) as client:
         first = client.post("/v1/missions", json=body, headers=headers)
@@ -380,14 +379,17 @@ def test_the_same_key_with_a_different_body_is_refused(app: FastAPI) -> None:
     """Reusing a key for a different request is a client bug and must not silently return the old answer."""
     headers = {**_h(), "Idempotency-Key": "bff-abc-456"}
     with TestClient(app) as client:
+        request = client.post(
+            "/v1/sourcing-requests",
+            json={"natural_language": "guantes", "delivery_country": "ES"},
+            headers=_h(),
+        ).json()
         first = client.post(
-            "/v1/missions",
-            json={"sourcing_request_id": "sr-1", "spec": "gloves", "quantity_tiers": [500]},
-            headers=headers,
+            "/v1/missions", json={"sourcing_request_id": request["id"]}, headers=headers
         )
         conflict = client.post(
             "/v1/missions",
-            json={"sourcing_request_id": "sr-2", "spec": "chairs", "quantity_tiers": [10]},
+            json={"sourcing_request_id": request["id"], "profile_id": "other"},
             headers=headers,
         )
     assert first.status_code == 201
@@ -396,8 +398,9 @@ def test_the_same_key_with_a_different_body_is_refused(app: FastAPI) -> None:
 
 def test_replaying_a_sourcing_request_returns_the_same_request(app: FastAPI) -> None:
     headers = {**_h(), "Idempotency-Key": "bff-sr-1"}
+    body = {"natural_language": "gloves", "delivery_country": "ES"}
     with TestClient(app) as client:
-        first = client.post("/v1/sourcing-requests", json={"text": "gloves"}, headers=headers)
-        second = client.post("/v1/sourcing-requests", json={"text": "gloves"}, headers=headers)
+        first = client.post("/v1/sourcing-requests", json=body, headers=headers)
+        second = client.post("/v1/sourcing-requests", json=body, headers=headers)
     assert first.status_code == second.status_code == 201
     assert first.json()["id"] == second.json()["id"]

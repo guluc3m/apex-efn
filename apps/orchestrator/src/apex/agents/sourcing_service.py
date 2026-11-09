@@ -58,9 +58,15 @@ class SourcingService:
         text: str,
         base_currency: str,
         today: date,
+        delivery_country: str | None = None,
+        target_delivery_date: date | None = None,
     ) -> SourcingRequest:
-        """Normalise free text into a request. The id is generated here so the caller can link a mission."""
-        return await self._deps.intake.parse(
+        """Normalise free text into a request. The id is generated here so the caller can link a mission.
+
+        ``delivery_country`` and ``target_delivery_date`` are what the caller stated explicitly; they win
+        over what the model inferred from the text, because the caller is authoritative about its own need.
+        """
+        request = await self._deps.intake.parse(
             request_id=self._deps.ids.new_id(),
             tenant_id=tenant_id,
             mission_id=f"intake:{tenant_id}",
@@ -68,6 +74,14 @@ class SourcingService:
             base_currency=base_currency,
             today=today,
             config_version=self._deps.config_version(tenant_id),
+        )
+        if delivery_country is None and target_delivery_date is None:
+            return request
+        return request.model_copy(
+            update={
+                "destination_country": delivery_country or request.destination_country,
+                "deadline": target_delivery_date or request.deadline,
+            }
         )
 
     def build_request(

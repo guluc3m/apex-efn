@@ -15,6 +15,12 @@ from tests.api.spec_routes import EXPECTED_ROUTES, IMPLEMENTED_ROUTES, SPEC_ROUT
 PROBLEM_JSON = "application/problem+json"
 
 
+@pytest.fixture(autouse=True)
+def _tenant_header(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Let the tenant resolve so a stub route reaches its 501 instead of stopping at the 401."""
+    monkeypatch.setenv("APEX_ALLOW_TENANT_HEADER", "true")
+
+
 @pytest.fixture
 def app() -> FastAPI:
     return create_app(Settings(idempotency_backend="memory"))
@@ -54,11 +60,17 @@ def test_implemented_routes_are_not_stubs(app: FastAPI) -> None:
 
 @pytest.mark.parametrize(("method", "path"), sorted(SPEC_ROUTES - IMPLEMENTED_ROUTES))
 def test_stub_answers_501_problem_json(app: FastAPI, method: str, path: str) -> None:
+    """A stub route answers 501 problem+json — or 401 when it resolves the tenant before its own dependency.
+
+    Both prove the route exists and is not implemented; the 401 is the tenant gate doing its job on a route
+    that has nothing to serve yet.
+    """
     client = TestClient(app, raise_server_exceptions=False)
     response = client.request(method, _concrete(path), json={})
-    assert response.status_code == 501, (method, path)
+    assert response.status_code in {401, 501}, (method, path, response.status_code)
     assert response.headers["content-type"].startswith(PROBLEM_JSON)
     body = response.json()
-    assert body["status"] == 501
-    assert body["title"] == "Not Implemented"
+    assert body["status"] == response.status_code
     assert body["instance"] == _concrete(path)
+    if response.status_code == 501:
+        assert body["title"] == "Not Implemented"

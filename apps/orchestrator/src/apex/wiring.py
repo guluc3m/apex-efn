@@ -38,6 +38,7 @@ from apex.agents.onboarding import (
     OnboardingDeps,
     OnboardingService,
 )
+from apex.agents.request_store import InMemorySourcingRequestStore
 from apex.agents.scraping import ScrapingDeps, ScrapingService
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
@@ -236,6 +237,7 @@ class AppServices:
     mission_store: InMemoryMissionStore
     flags: FlagProvider
     config_repository: InMemoryConfigRepository
+    request_store: InMemorySourcingRequestStore
     onboarding: OnboardingService
     runner: MissionRunner
     """Ready to advance a planned mission. Only invoked automatically when ``mission_autorun`` is on."""
@@ -267,6 +269,7 @@ def build_app_services(
     )
     mission_bus = MissionEventBus()
     mission_store = InMemoryMissionStore()
+    request_store = InMemorySourcingRequestStore()
     sourcing = SourcingService(
         SourcingServiceDeps(
             intake=IntakeAgent(gateway, prompts, active_clock),
@@ -342,6 +345,7 @@ def build_app_services(
         mission_store=mission_store,
         flags=active_flags,
         config_repository=config_repository,
+        request_store=request_store,
         onboarding=onboarding,
         runner=runner,
     )
