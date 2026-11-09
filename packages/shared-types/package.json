@@ -19,6 +19,14 @@
       "types": "./dist/generated/zod.gen.d.ts",
       "import": "./dist/generated/zod.gen.js"
     },
+    "./contracts/browser-worker": {
+      "types": "./dist/generated/browser-worker/index.d.ts",
+      "import": "./dist/generated/browser-worker/index.js"
+    },
+    "./contracts/browser-worker/zod": {
+      "types": "./dist/generated/browser-worker/zod.gen.d.ts",
+      "import": "./dist/generated/browser-worker/zod.gen.js"
+    },
     "./currency": {
       "types": "./dist/legacy/currency.d.ts",
       "import": "./dist/legacy/currency.js"

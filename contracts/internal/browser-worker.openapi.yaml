@@ -1,99 +1,820 @@
 openapi: 3.1.0
 info:
   title: APEX-EFN Browser Worker Internal API
-  version: 0.1.0
+  version: 1.0.0
   summary: Internal API between the orchestrator and apps/browser-worker. Not exposed to the web app.
   description: |
-    SKELETON (D2-01). DEV-5 completes the operations in D5-01 through a contract PR approved by DEV-2.
-    Rules that already apply:
-    - Credentials never cross this API. Accounts are referenced only by an opaque `account_id`.
-    - Every job carries `mission_id` and `trace_id` for traceability.
-    - The worker returns RAW seller signals. Normalization belongs to the TrustAgent (spec 3.4.1).
-    - Prices in responses are minor units with a currency from the closed enum EUR | USD | CNY.
+    Filled in by D5-01 (DEV-5), approved by DEV-2. Design notes in docs/adr/503-browser-worker-internal-api.md.
+    Rules:
+    - Credentials never cross this API. Accounts are referenced only by an opaque `account_id`. The worker
+      resolves cookies and session state from Vault itself.
+    - Every job and chat carries `tenant_id`, `mission_id` and `trace_id` for traceability.
+    - The worker returns RAW data: listed prices, raw seller signals, raw chat text. Normalization, FX,
+      seller confidence and price bands belong to the orchestrator (spec 3.4.1).
+    - Money is `Money {amount_minor: int64, currency}` with the closed enum EUR | USD | CNY. A listing in
+      any other currency is not an offer: it is reported in `skipped` with `unsupported_currency`.
+    - Scraping and seller-signal jobs are asynchronous (BullMQ). Chat operations are synchronous, because the
+      negotiation engine reads the reply before it drafts the next message.
+    - Writes require `Idempotency-Key`. A replay returns the original response. A replay with a different
+      body answers 409 `idempotency_conflict`.
+    - While a human holds the takeover lock of a chat, the worker refuses every `agent` send (409 `chat_locked`).
+    - Errors are RFC 9457 `application/problem+json` with a closed `code`.
+  license: {name: UNLICENSED}
 servers:
-  - url: http://localhost:4010
-    description: Local browser worker
+- {url: 'http://localhost:4010', description: Local browser worker}
+security:
+- serviceToken: []
+tags:
+- {name: health}
+- {name: jobs}
+- {name: chats}
 paths:
+  /internal/v1/health:
+    get:
+      tags: [health]
+      operationId: getWorkerHealth
+      summary: Liveness and the platforms enabled by feature flag.
+      security: []
+      responses:
+        '200':
+          description: The worker is up.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkerHealth'}
   /internal/v1/jobs:
     post:
       tags: [jobs]
       operationId: enqueueJob
       summary: Enqueue a search, product, seller or seller-signals job.
-      description: "TODO(D5-01): fill in the job payloads. Only the envelope is defined here."
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/JobEnvelope'
+            schema: {$ref: '#/components/schemas/JobRequest'}
       responses:
         '202':
-          description: Job accepted.
+          description: Job accepted, or the job already accepted for this Idempotency-Key.
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/JobAccepted'
-        '422':
-          description: Invalid job payload.
+              schema: {$ref: '#/components/schemas/JobAccepted'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
   /internal/v1/jobs/{id}:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
+    - {name: id, in: path, required: true, schema: {type: string}}
     get:
       tags: [jobs]
       operationId: getJob
-      summary: Job status and result.
+      summary: Job status and, once finished, its result or error.
       responses:
         '200':
           description: Job state.
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/JobState'
-        '404':
-          description: Unknown job.
-  # TODO(D5-01): chat session operations (open, send, read, screenshot, takeover lock).
+              schema: {$ref: '#/components/schemas/JobState'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /internal/v1/chats:
+    post:
+      tags: [chats]
+      operationId: openChat
+      summary: Open (or reuse) the conversation with a seller about a product, from a connected account.
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OpenChatRequest'}
+      responses:
+        '201':
+          description: Chat opened, or the chat already opened for this Idempotency-Key.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Chat'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+        '502': {$ref: '#/components/responses/UpstreamProblem'}
+  /internal/v1/chats/{chat_id}:
+    parameters:
+    - $ref: '#/components/parameters/ChatId'
+    get:
+      tags: [chats]
+      operationId: getChat
+      summary: Chat metadata and the current takeover lock.
+      responses:
+        '200':
+          description: The chat.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Chat'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /internal/v1/chats/{chat_id}/messages:
+    parameters:
+    - $ref: '#/components/parameters/ChatId'
+    get:
+      tags: [chats]
+      operationId: readChatMessages
+      summary: Messages with `seq` greater than `after_seq`, oldest first.
+      parameters:
+      - {name: after_seq, in: query, required: false, schema: {type: integer, minimum: 0, default: 0}}
+      - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 200, default: 100}}
+      responses:
+        '200':
+          description: Messages after `after_seq`.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChatMessagePage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '502': {$ref: '#/components/responses/UpstreamProblem'}
+    post:
+      tags: [chats]
+      operationId: sendChatMessage
+      summary: Send one buyer message. Sent at most once per Idempotency-Key.
+      description: |
+        The text has already passed the deterministic guardrails in the orchestrator (ADR-501). The worker does
+        not rewrite it. An `agent` send is refused with 409 `chat_locked` while a human holds the lock. A
+        `human` send must come from the lock holder.
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SendChatMessageRequest'}
+      responses:
+        '201':
+          description: The message as stored by the platform, or the message already sent for this Idempotency-Key.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChatMessage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+        '502': {$ref: '#/components/responses/UpstreamProblem'}
+  /internal/v1/chats/{chat_id}/screenshots:
+    parameters:
+    - $ref: '#/components/parameters/ChatId'
+    post:
+      tags: [chats]
+      operationId: captureChatScreenshot
+      summary: Capture the chat as the platform renders it, store it in S3 and return the reference.
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Screenshot stored.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChatScreenshot'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '502': {$ref: '#/components/responses/UpstreamProblem'}
+  /internal/v1/chats/{chat_id}/lock:
+    parameters:
+    - $ref: '#/components/parameters/ChatId'
+    put:
+      tags: [chats]
+      operationId: acquireChatLock
+      summary: A human takes control of the chat (takeover). Renewing by the same user extends `expires_at`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AcquireChatLockRequest'}
+      responses:
+        '200':
+          description: The lock now held by the requesting user.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChatLock'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+    delete:
+      tags: [chats]
+      operationId: releaseChatLock
+      summary: Release the takeover lock so the agent may send again. Releasing a free lock is a no-op.
+      parameters:
+      - {name: user_id, in: query, required: true, schema: {type: string, minLength: 1}}
+      responses:
+        '204':
+          description: Lock released.
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
 components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      description: Shared service token from Vault (`BROWSER_WORKER_TOKEN`). Never a user token.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Caller-generated unique key for this write. Replays return the original response.
+      schema: {type: string, minLength: 16, maxLength: 128}
+    ChatId:
+      name: chat_id
+      in: path
+      required: true
+      schema: {type: string}
+  responses:
+    Unauthorized:
+      description: Missing or invalid service token.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/WorkerProblem'}
+    NotFound:
+      description: Unknown job, chat, platform, account, seller or product.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/WorkerProblem'}
+    Conflict:
+      description: Idempotency conflict, chat locked, lock held by another user, or platform disabled.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/WorkerProblem'}
+    ValidationProblem:
+      description: The request does not match the contract.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/WorkerProblem'}
+    RateLimited:
+      description: The per-account or per-domain rate limit would be exceeded. Retry after `retry_after_seconds`.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/WorkerProblem'}
+    UpstreamProblem:
+      description: The platform failed (session invalidated, CAPTCHA, DOM change, timeout, 5xx).
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/WorkerProblem'}
   schemas:
+    Currency:
+      type: string
+      description: Closed enum. Same as the public contract (spec 3.5.1).
+      enum: [EUR, USD, CNY]
+    Money:
+      type: object
+      description: Amount in integer minor units (cents, fen). Never a float.
+      required: [amount_minor, currency]
+      properties:
+        amount_minor: {type: integer, format: int64, minimum: 0, maximum: 9223372036854775807}
+        currency: {$ref: '#/components/schemas/Currency'}
+    PriceTier:
+      type: object
+      required: [min_quantity, unit_price]
+      properties:
+        min_quantity: {type: integer, minimum: 1}
+        max_quantity:
+          type: [integer, 'null']
+          minimum: 1
+        unit_price: {$ref: '#/components/schemas/Money'}
+    ShippingEstimate:
+      type: object
+      required: [cost, min_days, max_days]
+      properties:
+        cost: {$ref: '#/components/schemas/Money'}
+        min_days: {type: integer, minimum: 0}
+        max_days: {type: integer, minimum: 0}
+        carrier:
+          type: [string, 'null']
+    Incoterm:
+      type: string
+      enum: [EXW, FCA, FAS, FOB, CFR, CIF, CPT, CIP, DAP, DPU, DDP]
+    Transport:
+      type: string
+      description: How the adapter reads the platform (ADR-500). `browser` is used only for login and chat where possible.
+      enum: [http, browser]
+    WorkerErrorCode:
+      type: string
+      description: Closed error codes. The runbooks in docs/runbooks/ are keyed by these values.
+      enum:
+      - validation_error
+      - unauthorized
+      - unknown_job
+      - unknown_chat
+      - unknown_platform
+      - unknown_account
+      - unknown_seller
+      - unknown_product
+      - platform_disabled
+      - idempotency_conflict
+      - chat_locked
+      - lock_held
+      - not_lock_holder
+      - rate_limited
+      - session_invalid
+      - captcha
+      - dom_changed
+      - robots_disallowed
+      - upstream_error
+      - timeout
+      - internal
+    WorkerProblem:
+      type: object
+      description: RFC 9457 problem details with a closed `code`.
+      required: [type, title, status, code]
+      properties:
+        type: {type: string, format: uri-reference, default: 'about:blank'}
+        title: {type: string}
+        status: {type: integer, minimum: 400, maximum: 599}
+        detail: {type: string}
+        instance: {type: string}
+        code: {$ref: '#/components/schemas/WorkerErrorCode'}
+        retryable: {type: boolean, default: false}
+        retry_after_seconds:
+          type: [integer, 'null']
+          minimum: 0
+    PlatformStatus:
+      type: object
+      required: [platform, enabled, transport]
+      properties:
+        platform: {type: string}
+        enabled: {type: boolean, description: 'Value of the `platform.<id>.enabled` flag.'}
+        transport: {$ref: '#/components/schemas/Transport'}
+    WorkerHealth:
+      type: object
+      required: [status, platforms]
+      properties:
+        status:
+          $ref: '#/components/schemas/WorkerHealthStatus'
+        platforms:
+          type: array
+          items: {$ref: '#/components/schemas/PlatformStatus'}
+    WorkerHealthStatus:
+      type: string
+      enum: [ok, degraded]
     JobKind:
       type: string
       enum: [search, product, seller, seller_signals]
-    JobEnvelope:
+    JobStatus:
+      type: string
+      enum: [queued, running, succeeded, failed, dead_lettered]
+    SearchJobRequest:
       type: object
-      required: [kind, mission_id, trace_id, platform, payload]
+      required: [kind, tenant_id, mission_id, trace_id, platform, query]
+      additionalProperties: false
       properties:
         kind:
-          $ref: '#/components/schemas/JobKind'
-        mission_id:
           type: string
-        trace_id:
+          enum: [search]
+        tenant_id: {type: string, minLength: 1}
+        mission_id: {type: string, minLength: 1}
+        trace_id: {type: string, minLength: 1}
+        platform: {type: string, minLength: 1}
+        priority: {type: integer, minimum: 1, maximum: 10, default: 5, description: 'BullMQ priority. 1 is the highest.'}
+        query: {type: string, minLength: 1, maxLength: 500}
+        quantity:
+          type: [integer, 'null']
+          minimum: 1
+          description: Requested volume, used to read the matching price tier when the platform shows it.
+        max_results: {type: integer, minimum: 1, maximum: 200, default: 50}
+    ProductJobRequest:
+      type: object
+      required: [kind, tenant_id, mission_id, trace_id, platform, platform_offer_id]
+      additionalProperties: false
+      properties:
+        kind:
           type: string
-        platform:
+          enum: [product]
+        tenant_id: {type: string, minLength: 1}
+        mission_id: {type: string, minLength: 1}
+        trace_id: {type: string, minLength: 1}
+        platform: {type: string, minLength: 1}
+        priority: {type: integer, minimum: 1, maximum: 10, default: 5, description: 'BullMQ priority. 1 is the highest.'}
+        platform_offer_id: {type: string, minLength: 1}
+    SellerJobRequest:
+      type: object
+      required: [kind, tenant_id, mission_id, trace_id, platform, platform_seller_id]
+      additionalProperties: false
+      properties:
+        kind:
           type: string
-        payload:
-          type: object
-          description: "TODO(D5-01): replace with one schema per kind."
-          additionalProperties: true
+          enum: [seller]
+        tenant_id: {type: string, minLength: 1}
+        mission_id: {type: string, minLength: 1}
+        trace_id: {type: string, minLength: 1}
+        platform: {type: string, minLength: 1}
+        priority: {type: integer, minimum: 1, maximum: 10, default: 5, description: 'BullMQ priority. 1 is the highest.'}
+        platform_seller_id: {type: string, minLength: 1}
+    SellerSignalsJobRequest:
+      type: object
+      required: [kind, tenant_id, mission_id, trace_id, platform, platform_seller_id]
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum: [seller_signals]
+        tenant_id: {type: string, minLength: 1}
+        mission_id: {type: string, minLength: 1}
+        trace_id: {type: string, minLength: 1}
+        platform: {type: string, minLength: 1}
+        priority: {type: integer, minimum: 1, maximum: 10, default: 5, description: 'BullMQ priority. 1 is the highest.'}
+        platform_seller_id: {type: string, minLength: 1}
+        max_reviews:
+          type: integer
+          minimum: 0
+          maximum: 500
+          default: 200
+          description: How many of the most recent reviews to sample for manipulation checks.
+    JobRequest:
+      oneOf:
+      - {$ref: '#/components/schemas/SearchJobRequest'}
+      - {$ref: '#/components/schemas/ProductJobRequest'}
+      - {$ref: '#/components/schemas/SellerJobRequest'}
+      - {$ref: '#/components/schemas/SellerSignalsJobRequest'}
+      discriminator:
+        propertyName: kind
+        mapping:
+          search: '#/components/schemas/SearchJobRequest'
+          product: '#/components/schemas/ProductJobRequest'
+          seller: '#/components/schemas/SellerJobRequest'
+          seller_signals: '#/components/schemas/SellerSignalsJobRequest'
     JobAccepted:
       type: object
-      required: [job_id]
+      required: [job_id, status, deduplicated]
       properties:
-        job_id:
+        job_id: {type: string}
+        status: {$ref: '#/components/schemas/JobStatus'}
+        deduplicated:
+          type: boolean
+          description: True when this Idempotency-Key was already accepted and the existing job is returned.
+    RawOffer:
+      type: object
+      description: One listing as the platform shows it. No EUR conversion, no bands, no scores.
+      required: [platform, platform_offer_id, product_id, platform_seller_id, title, unit_price, price_tiers, moq, specifications,
+        certifications, captured_at]
+      properties:
+        platform: {type: string}
+        platform_offer_id: {type: string, minLength: 1}
+        product_id:
           type: string
+          minLength: 1
+          description: Platform product id. Equal to `platform_offer_id` on platforms without separate listings.
+        platform_seller_id: {type: string, minLength: 1}
+        seller_name:
+          type: [string, 'null']
+        title: {type: string}
+        product_url:
+          type: [string, 'null']
+          format: uri
+        unit_price:
+          $ref: '#/components/schemas/Money'
+        list_price:
+          anyOf:
+          - {$ref: '#/components/schemas/Money'}
+          - {type: 'null'}
+        price_tiers:
+          type: array
+          items: {$ref: '#/components/schemas/PriceTier'}
+        moq: {type: integer, minimum: 1}
+        quantity_available:
+          type: [integer, 'null']
+          minimum: 0
+          description: Stock shown by the platform. Null when the platform does not show it.
+        specifications:
+          type: object
+          additionalProperties: {type: string}
+        certifications:
+          type: array
+          items: {type: string}
+        seller_country:
+          type: [string, 'null']
+          description: ISO 3166-1 alpha-2 when the platform shows it.
+        shipping:
+          anyOf:
+          - {$ref: '#/components/schemas/ShippingEstimate'}
+          - {type: 'null'}
+        incoterm:
+          anyOf:
+          - {$ref: '#/components/schemas/Incoterm'}
+          - {type: 'null'}
+        lead_time_days:
+          type: [integer, 'null']
+          minimum: 0
+        captured_at: {type: string, format: date-time}
+    SkipReason:
+      type: string
+      enum: [unsupported_currency, missing_price, parse_error]
+    SkippedListing:
+      type: object
+      description: A listing found but not returned as an offer, with the reason.
+      required: [platform_offer_id, reason]
+      properties:
+        platform_offer_id: {type: string}
+        reason: {$ref: '#/components/schemas/SkipReason'}
+        currency_raw:
+          type: [string, 'null']
+          maxLength: 16
+          description: The currency code the platform showed, for `unsupported_currency`.
+    RawSeller:
+      type: object
+      required: [platform, platform_seller_id, display_name, captured_at]
+      properties:
+        platform: {type: string}
+        platform_seller_id: {type: string, minLength: 1}
+        display_name: {type: string}
+        country:
+          type: [string, 'null']
+        profile_url:
+          type: [string, 'null']
+          format: uri
+        captured_at: {type: string, format: date-time}
+    RawReview:
+      type: object
+      description: One review as shown. Used only for structural manipulation checks (spec 3.4.2).
+      required: [rating]
+      properties:
+        rating: {type: integer, minimum: 1, maximum: 5}
+        created_at:
+          type: [string, 'null']
+          format: date-time
+        verified_purchase:
+          type: [boolean, 'null']
+        text:
+          type: [string, 'null']
+          maxLength: 2000
+    RawSellerSignals:
+      type: object
+      description: |
+        Raw seller signals as published by the platform (spec 3.4.1). A signal the platform does not publish is
+        null, never 0. The orchestrator computes `data_completeness` and the confidence score.
+      required: [platform, platform_seller_id, captured_at, recent_reviews]
+      properties:
+        platform: {type: string}
+        platform_seller_id: {type: string, minLength: 1}
+        captured_at: {type: string, format: date-time}
+        account_age_days:
+          type: [integer, 'null']
+          minimum: 0
+        first_sale_date:
+          type: [string, 'null']
+          format: date
+        months_active_last_12:
+          type: [integer, 'null']
+          minimum: 0
+          maximum: 12
+        lifetime_transactions:
+          type: [integer, 'null']
+          minimum: 0
+        transactions_12m:
+          type: [integer, 'null']
+          minimum: 0
+        gmv_12m:
+          anyOf:
+          - {$ref: '#/components/schemas/Money'}
+          - {type: 'null'}
+        repeat_buyer_share:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        published_products_count:
+          type: [integer, 'null']
+          minimum: 0
+        catalog_churn_30d:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        spec_completeness_avg:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        reviews_total:
+          type: [integer, 'null']
+          minimum: 0
+        reviews_12m:
+          type: [integer, 'null']
+          minimum: 0
+        rating_avg:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 5
+        rating_count:
+          type: [integer, 'null']
+          minimum: 0
+        verified_review_share:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        response_rate:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        identity_verified:
+          type: [boolean, 'null']
+        trade_assurance:
+          type: [boolean, 'null']
+        escrow_available:
+          type: [boolean, 'null']
+        dispute_rate:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        refund_rate:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        recent_reviews:
+          type: array
+          maxItems: 500
+          items: {$ref: '#/components/schemas/RawReview'}
+    SearchJobResult:
+      type: object
+      required: [kind, offers, skipped, truncated]
+      properties:
+        kind:
+          type: string
+          enum: [search]
+        offers:
+          type: array
+          items: {$ref: '#/components/schemas/RawOffer'}
+        skipped:
+          type: array
+          items: {$ref: '#/components/schemas/SkippedListing'}
+        truncated:
+          type: boolean
+          description: True when `max_results` cut the result list.
+    ProductJobResult:
+      type: object
+      required: [kind, offer]
+      properties:
+        kind:
+          type: string
+          enum: [product]
+        offer: {$ref: '#/components/schemas/RawOffer'}
+    SellerJobResult:
+      type: object
+      required: [kind, seller]
+      properties:
+        kind:
+          type: string
+          enum: [seller]
+        seller: {$ref: '#/components/schemas/RawSeller'}
+    SellerSignalsJobResult:
+      type: object
+      required: [kind, signals]
+      properties:
+        kind:
+          type: string
+          enum: [seller_signals]
+        signals: {$ref: '#/components/schemas/RawSellerSignals'}
+    JobResult:
+      oneOf:
+      - {$ref: '#/components/schemas/SearchJobResult'}
+      - {$ref: '#/components/schemas/ProductJobResult'}
+      - {$ref: '#/components/schemas/SellerJobResult'}
+      - {$ref: '#/components/schemas/SellerSignalsJobResult'}
+      discriminator:
+        propertyName: kind
+        mapping:
+          search: '#/components/schemas/SearchJobResult'
+          product: '#/components/schemas/ProductJobResult'
+          seller: '#/components/schemas/SellerJobResult'
+          seller_signals: '#/components/schemas/SellerSignalsJobResult'
+    JobError:
+      type: object
+      required: [code, message, retryable]
+      properties:
+        code: {$ref: '#/components/schemas/WorkerErrorCode'}
+        message: {type: string, maxLength: 1000}
+        retryable: {type: boolean}
     JobState:
       type: object
-      required: [job_id, status]
+      required: [job_id, kind, platform, mission_id, trace_id, status, attempts, created_at, finished_at, result, error]
       properties:
-        job_id:
-          type: string
-        status:
-          type: string
-          enum: [queued, running, succeeded, failed, dead_lettered]
-        result:
-          type: object
-          additionalProperties: true
-        error_code:
+        job_id: {type: string}
+        kind: {$ref: '#/components/schemas/JobKind'}
+        platform: {type: string}
+        mission_id: {type: string}
+        trace_id: {type: string}
+        status: {$ref: '#/components/schemas/JobStatus'}
+        attempts: {type: integer, minimum: 0}
+        created_at: {type: string, format: date-time}
+        finished_at:
           type: [string, 'null']
+          format: date-time
+        result:
+          anyOf:
+          - {$ref: '#/components/schemas/JobResult'}
+          - {type: 'null'}
+        error:
+          anyOf:
+          - {$ref: '#/components/schemas/JobError'}
+          - {type: 'null'}
+    OpenChatRequest:
+      type: object
+      required: [tenant_id, mission_id, trace_id, negotiation_id, platform, account_id, platform_seller_id, product_id]
+      additionalProperties: false
+      properties:
+        tenant_id: {type: string, minLength: 1}
+        mission_id: {type: string, minLength: 1}
+        trace_id: {type: string, minLength: 1}
+        negotiation_id: {type: string, minLength: 1}
+        platform: {type: string, minLength: 1}
+        account_id:
+          type: string
+          minLength: 1
+          description: Opaque connected-account id. The worker resolves the session from Vault.
+        platform_seller_id: {type: string, minLength: 1}
+        product_id: {type: string, minLength: 1}
+    ChatLockHolder:
+      type: string
+      enum: [human]
+    ChatLock:
+      type: object
+      required: [holder, user_id, acquired_at, expires_at]
+      properties:
+        holder: {$ref: '#/components/schemas/ChatLockHolder'}
+        user_id: {type: string}
+        acquired_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+    Chat:
+      type: object
+      required: [chat_id, tenant_id, negotiation_id, platform, account_id, platform_seller_id, product_id, opened_at, lock]
+      properties:
+        chat_id: {type: string}
+        tenant_id: {type: string}
+        negotiation_id: {type: string}
+        platform: {type: string}
+        account_id: {type: string}
+        platform_seller_id: {type: string}
+        product_id: {type: string}
+        opened_at: {type: string, format: date-time}
+        lock:
+          anyOf:
+          - {$ref: '#/components/schemas/ChatLock'}
+          - {type: 'null'}
+    ChatRole:
+      type: string
+      description: Side of the conversation. The buyer is us (agent or human), the seller is the counterpart.
+      enum: [buyer, seller]
+    ChatSender:
+      type: string
+      enum: [agent, human]
+    ChatMessage:
+      type: object
+      required: [seq, role, text, at, sent_by]
+      properties:
+        seq: {type: integer, minimum: 1, description: 'Strictly increasing per chat.'}
+        role: {$ref: '#/components/schemas/ChatRole'}
+        text: {type: string}
+        at: {type: string, format: date-time}
+        sent_by:
+          anyOf:
+          - {$ref: '#/components/schemas/ChatSender'}
+          - {type: 'null'}
+          description: Who sent a buyer message through this worker. Null for seller messages.
+    ChatMessagePage:
+      type: object
+      required: [chat_id, messages, last_seq]
+      properties:
+        chat_id: {type: string}
+        messages:
+          type: array
+          items: {$ref: '#/components/schemas/ChatMessage'}
+        last_seq:
+          type: integer
+          minimum: 0
+          description: Highest `seq` in the chat, so the caller knows whether more pages remain.
+    SendChatMessageRequest:
+      type: object
+      required: [text, sender]
+      additionalProperties: false
+      properties:
+        text: {type: string, minLength: 1, maxLength: 4000}
+        sender: {$ref: '#/components/schemas/ChatSender'}
+        user_id:
+          type: [string, 'null']
+          minLength: 1
+          description: Required when `sender` is `human`. Must be the lock holder.
+        draft_id:
+          type: [string, 'null']
+          description: The approved draft this text comes from, for the audit trail.
+    ChatScreenshot:
+      type: object
+      required: [screenshot_ref, sha256, captured_at]
+      properties:
+        screenshot_ref: {type: string, description: 'S3 object key in the attachments bucket.'}
+        sha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+        captured_at: {type: string, format: date-time}
+    AcquireChatLockRequest:
+      type: object
+      required: [user_id, ttl_seconds]
+      additionalProperties: false
+      properties:
+        user_id: {type: string, minLength: 1}
+        ttl_seconds: {type: integer, minimum: 60, maximum: 3600}
