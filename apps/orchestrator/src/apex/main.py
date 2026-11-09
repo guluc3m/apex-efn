@@ -7,7 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
+from apex.api import missions as missions_api
 from apex.api import router
+from apex.api import sourcing as sourcing_api
 from apex.common.errors import install_problem_handlers
 from apex.common.idempotency import (
     IdempotencyMiddleware,
@@ -17,6 +19,7 @@ from apex.common.idempotency import (
 )
 from apex.config import Settings, settings
 from apex.platform.telemetry import setup_telemetry
+from apex.wiring import AppServices, build_app_services
 
 
 def build_idempotency_store(cfg: Settings) -> IdempotencyStore:
@@ -26,9 +29,14 @@ def build_idempotency_store(cfg: Settings) -> IdempotencyStore:
     return InMemoryIdempotencyStore()
 
 
-def create_app(cfg: Settings | None = None, store: IdempotencyStore | None = None) -> FastAPI:
-    """Build the application. Tests pass their own settings and an in-memory store."""
+def create_app(
+    cfg: Settings | None = None,
+    store: IdempotencyStore | None = None,
+    services: AppServices | None = None,
+) -> FastAPI:
+    """Build the application. Tests pass their own settings, store and service graph."""
     active = cfg or settings
+    active_services = services or build_app_services(active)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -61,6 +69,7 @@ def create_app(cfg: Settings | None = None, store: IdempotencyStore | None = Non
     )
 
     application.include_router(router, prefix="/v1")
+    _wire_services(application, active_services)
     setup_telemetry(application, service_name="apex-orchestrator")
 
     @application.get("/health")
@@ -69,6 +78,19 @@ def create_app(cfg: Settings | None = None, store: IdempotencyStore | None = Non
         return {"status": "healthy"}
 
     return application
+
+
+def _wire_services(application: FastAPI, services: AppServices) -> None:
+    """Point the DEV-4 routes at the services they need.
+
+    Only the services that exist today are wired. Routes whose engine is still missing keep answering 501
+    with the owning lane named, which is the honest answer: the alternative is inventing the numbers those
+    engines own.
+    """
+    application.state.app_services = services
+    application.state.mission_event_bus = services.mission_bus
+    application.dependency_overrides[sourcing_api.get_sourcing_service] = lambda: services.sourcing
+    application.dependency_overrides[missions_api.get_sourcing_service] = lambda: services.sourcing
 
 
 app: FastAPI = create_app()

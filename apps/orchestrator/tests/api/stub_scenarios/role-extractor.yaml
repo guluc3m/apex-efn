@@ -1,0 +1,18 @@
+scenarios:
+  - name: role-extractor
+    description: A valid SourcingRequestDraft for the intake prompt.
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+    response:
+      kind: json
+      content:
+        spec: "Nitrile gloves size M, box of 100"
+        quantity_tiers: [{min_quantity: 500}]
+        deadline: "2027-06-01"
+        deadline_text: null
+        destination_country: "ES"
+        certifications: ["EN 455"]
+        budget_text: "4500 EUR"
+        missing_fields: []

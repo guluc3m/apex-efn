@@ -1,0 +1,10 @@
+scenarios:
+  - name: default
+    description: Fallback. Declares structured output so the ladder starts at json_schema.
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+    response:
+      kind: json
+      content: {"status": "ok"}
