@@ -383,8 +383,8 @@ class NegotiationEngine:
         """LLM extraction, accepted only when grounded in a price literally present in the text.
 
         A price the buyer side already proposed is an echo, not a quote, whenever the seller also states a
-        fresh price. It counts as the seller's price only when it is the only one in the message, and then
-        the written summary still has to be confirmed before anything is agreed.
+        fresh price or refuses. It counts as the seller's price only when it is the only one in a message
+        without a refusal, and then the written summary still has to be confirmed before anything is agreed.
         """
         currency = session.params.currency
         offered = offered_prices(session)
@@ -403,7 +403,9 @@ class NegotiationEngine:
         if not grounded:
             session.guardrail_hits.append("extraction_not_grounded")
             return fallback
-        if extraction.unit_price_minor in offered and fallback is not None:
+        if extraction.unit_price_minor in offered and (
+            fallback is not None or _REFUSAL_RE.search(text)
+        ):
             session.guardrail_hits.append("extraction_echoes_agent_price")
             return fallback
         return Quote(
