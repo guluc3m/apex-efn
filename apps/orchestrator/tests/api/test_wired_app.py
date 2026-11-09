@@ -328,11 +328,20 @@ def test_the_service_graph_exposes_a_runner_with_named_unwired_ports() -> None:
 
 
 def test_an_unreachable_llm_endpoint_is_a_502_with_a_reason() -> None:
-    """The default endpoint is the LLM stub. If it is not running, the caller must learn why."""
+    """The default endpoint is the LLM stub. If it is not running, the caller must learn why.
+
+    The failure is injected through the HTTP client factory rather than a closed port, so the test does not
+    depend on what happens to be listening on the developer's machine.
+    """
     from apex.wiring import build_app_services
 
+    class _Refuse(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("connection refused", request=request)
+
     services = build_app_services(
-        Settings(idempotency_backend="memory", llm_gateway_url="http://127.0.0.1:9/v1")
+        Settings(idempotency_backend="memory"),
+        http_client_factory=lambda cfg: httpx.AsyncClient(transport=_Refuse()),
     )
     application = create_app(
         Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore(), services=services

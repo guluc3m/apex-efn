@@ -1,10 +1,22 @@
 scenarios:
   - name: role-extractor
-    description: "Matched by 'role: extractor'; JSON via json_object."
+    description: >-
+      Matched by the 'role: extractor' marker in the system message. Returns a valid SourcingRequestDraft,
+      which is what the intake prompt (D4-05) asks for. The header-mapping prompt shares this role and gets
+      the same document; that endpoint is not wired yet, and the eval suite pins its own scenarios by hash.
     role: extractor
     capabilities:
       "*":
+        supports_json_schema: true
         supports_json_object: true
     response:
       kind: json
-      content: {"price_eur": 12.5, "currency": "EUR"}
+      content:
+        spec: "Nitrile gloves size M, box of 100, examination grade"
+        quantity_tiers: [{min_quantity: 500}]
+        deadline: "2027-06-01"
+        deadline_text: null
+        destination_country: "ES"
+        certifications: ["EN 455"]
+        budget_text: "4500 EUR"
+        missing_fields: []
