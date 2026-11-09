@@ -1,1 +1,30 @@
-{}
+{
+  "back": "Volver a la misión",
+  "context": "{code} · {n} finalistas",
+  "profile": "Perfil",
+  "profiles": { "operative": "Comprador operativo", "cfo": "CFO / finanzas" },
+  "export": "Exportar comparativa",
+  "decide": "Decidir sobre {name}",
+  "pending": "Pendiente de conectar",
+  "tableCaption": "Comparativa de los finalistas",
+  "rank": "{n}.º",
+  "rows": { "criterion": "Criterio", "price": "Precio/ud", "band": "Banda de precio", "confidence": "Confianza", "verdict": "Veredicto", "signature": "Firma", "landed": "Landed cost", "lead": "Plazo", "score": "Score", "vsFirst": "Frente al 1.º" },
+  "delta": { "down": "Por debajo de la mediana", "up": "Por encima de la mediana" },
+  "deltaNote": "Flecha: diferencia del precio frente a la mediana de {median}/ud. Azul, por debajo; rojo, por encima.",
+  "price": { "normal": "Normal", "atypical": "Atípico", "implausible": "Implausible" },
+  "confidence": { "high": "alta", "medium": "media", "low": "baja", "untrusted": "no fiable", "insufficient_data": "datos insuficientes" },
+  "verdict": { "within_budget": "En presupuesto", "stretch": "Al límite", "out_of_budget": "Fuera de presupuesto" },
+  "signature": { "signed": "Firmada", "pending": "Sin firmar", "invalid": "No válida" },
+  "chart": {
+    "caption": "Contribución de cada criterio al score",
+    "criteria": { "price": "Precio", "trust": "Confianza", "lead": "Plazo", "verdict": "Veredicto" },
+    "row": "{name}: score {score} ({parts})"
+  },
+  "savings": {
+    "title": "Ahorro",
+    "list": "Frente a precio de lista, esta misión",
+    "median": "Frente a mediana de mercado",
+    "year": "{category}, en 2026",
+    "memory": "Memoria de precios"
+  }
+}
