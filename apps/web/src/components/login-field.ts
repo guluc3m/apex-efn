@@ -1,22 +1,14 @@
 /**
- * Campo de puntos hexagonal del acceso (LoginRD). Port literal del script del lienzo,
- * sin la simulación (estado `busy` y onda `ripple`). Determinista: semilla fija.
+ * Campo de puntos hexagonal del acceso (LoginRD) en WebGL2. Determinista: semilla fija.
+ *
+ * La CPU solo prepara datos estáticos al (re)dimensionar: tabla de ruido, máscara del árbol y el
+ * muestreo del sprite. Cada fotograma es un único draw instanciado (una instancia por celda) cuyo
+ * vertex shader calcula campo, intercambio con vecinos, paleta y morph; solo cambian uniformes.
  */
-type Stop = readonly [number, number, number, number]
-
-// Paleta en el tono del acento (#8fbb8b en 0.78, #a0c99c en 0.92): sombra -> acento -> reflejo pálido.
-const STOPS: readonly Stop[] = [
-  [0, 20, 32, 22],
-  [0.2, 38, 58, 40],
-  [0.4, 66, 94, 66],
-  [0.6, 104, 140, 102],
-  [0.78, 143, 187, 139],
-  [0.92, 160, 201, 156],
-  [1, 214, 232, 212],
-]
 const L = 40
 const CELL = 9
 const RH = (CELL * Math.sqrt(3)) / 2
+const MAX_DPR = 2
 
 type Seg = readonly [number, number, number, number, number, number]
 type Tip = readonly [number, number, number]
@@ -32,76 +24,284 @@ const ss = (a: number, b: number, x: number): number => {
 }
 const clamp01 = (x: number): number => Math.max(0, Math.min(1, x))
 
+const VERT = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+#define CELL ${CELL.toFixed(1)}
+#define RH ${RH.toFixed(9)}
+#define L ${L.toFixed(1)}
+uniform sampler2D uG;    // tabla de ruido 256x256
+uniform sampler2D uCell; // RG32F: sombra del árbol (T), retardo del morph (D)
+uniform sampler2D uSpr;  // RGBA8: color del sprite + alfa
+uniform int uCols, uRows;
+uniform vec2 uView, uOrg;
+uniform float uTime, uPh, uWx, uSway, uSwapP, uMt, uRev;
+out vec2 vP;
+out vec3 vCol;
+out float vRad;
+
+const float SP[7] = float[7](0.0, 0.2, 0.4, 0.6, 0.78, 0.92, 1.0);
+#define C(r, g, b) (vec3(r, g, b) / 255.0)
+const vec3 SC[7] = vec3[7](
+  C(20.0, 32.0, 22.0), C(38.0, 58.0, 40.0), C(66.0, 94.0, 66.0), C(104.0, 140.0, 102.0),
+  C(143.0, 187.0, 139.0), C(160.0, 201.0, 156.0), C(214.0, 232.0, 212.0));
+
+float ih(uint a, uint b) {
+  uint h = a * 374761393u + b * 668265263u;
+  h = (h ^ (h >> 13)) * 1274126177u;
+  return float(h ^ (h >> 16)) / 4294967296.0;
+}
+float ss(float a, float b, float x) {
+  float t = clamp((x - a) / (b - a), 0.0, 1.0);
+  return t * t * (3.0 - 2.0 * t);
+}
+float gv(int x, int y) { return texelFetch(uG, ivec2(x & 255, y & 255), 0).r; }
+float noise(vec2 p) {
+  vec2 f = floor(p);
+  vec2 fr = p - f;
+  vec2 w = fr * fr * (3.0 - 2.0 * fr);
+  int xi = int(f.x);
+  int yi = int(f.y);
+  float a = gv(xi, yi), b = gv(xi + 1, yi), c = gv(xi, yi + 1), d = gv(xi + 1, yi + 1);
+  return a + (b - a) * w.x + (c - a) * w.y + (a - b - c + d) * w.x * w.y;
+}
+vec3 pal(float s) {
+  int j = 0;
+  for (int k = 0; k < 5; k++) if (s > SP[j + 1]) j++;
+  return mix(SC[j], SC[j + 1], (s - SP[j]) / (SP[j + 1] - SP[j]));
+}
+// (valor 0..1 del color, intensidad de tinte frío) de la celda (c, r)
+vec2 field(int c, int r) {
+  float cx = (float(c) + 0.5 + 0.5 * float(r & 1)) * CELL + uOrg.x;
+  float cy = (float(r) + 0.5) * RH + uOrg.y;
+  float amp = uSway * (0.2 + 0.8 * (1.0 - float(r) / float(uRows)));
+  float sw = sin(uTime * 0.7 + float(r) * 0.03) * amp + sin(uTime * 1.9 + float(r) * 0.09) * amp * 0.25;
+  vec2 np = vec2((cx + uWx * 26.0) / (CELL * 30.0), cy / (CELL * 2.8));
+  float n = 0.58 * noise(np) + 0.28 * noise(np * vec2(2.1, 2.2) + vec2(5.3, 1.7)) + 0.14 * noise(np * vec2(4.4, 4.1) + vec2(9.1, 3.3));
+  float lo = noise(vec2(cx / (uView.x * 0.45) + uWx * 0.02, cy / (uView.y * 0.28) + 7.7));
+  float s = 0.66 + 0.62 * (n - 0.5) - 0.25 * ss(0.52, 0.8, lo);
+  float fc = clamp(float(c) + sw, 0.0, float(uCols) - 1.001);
+  int c0 = int(floor(fc));
+  float fr = fc - float(c0);
+  float tk = texelFetch(uCell, ivec2(c0, r), 0).r * (1.0 - fr) + texelFetch(uCell, ivec2(c0 + 1, r), 0).r * fr;
+  s = s * (1.0 - 0.5 * tk) - 0.03 * tk * n;
+  s *= 1.0 - 0.12 * (cy / uView.y) * (cy / uView.y);
+  if (n > 0.8) s += (n - 0.8) * 1.5 * (1.0 - tk);
+  float sh = clamp((1.0 - cy / (uView.y * 0.75)) * (0.55 + 0.9 * lo) * (1.0 - 0.8 * tk), 0.0, 1.0);
+  return vec2(s, sh);
+}
+
+void hide() { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); }
+
+void main() {
+  int id = gl_InstanceID;
+  int r = id / uCols;
+  int c = id - r * uCols;
+  uint i = uint(id);
+  float cx = (float(c) + 0.5 + 0.5 * float(r & 1)) * CELL + uOrg.x;
+  float cy = (float(r) + 0.5) * RH + uOrg.y;
+  if (cy > uView.y + CELL || cy > uRev * (uView.y + CELL)) { hide(); return; }
+
+  // Intercambio de color con un vecino (izquierda/derecha/arriba) para mantener las estrías.
+  vec2 fs = field(c, r);
+  float u = uPh + ih(i, 77u) * 17.0;
+  float q = floor(u);
+  float fq = u - q;
+  uint qu = uint(q);
+  float v = fs.x;
+  if (ih(i, qu) < uSwapP) {
+    int k = min(5, int(floor(ih(i, qu + 4099u) * 8.0)));
+    int j = k < 4 ? (k & 1) : k - 2;
+    int o = r & 1;
+    int nc = j == 0 ? c - 1 : j == 1 ? c + 1 : j == 2 ? c - 1 + o : c + o;
+    int nr = j < 2 ? r : r - 1;
+    nc = (nc + uCols) % uCols;
+    nr = (nr + uRows) % uRows;
+    float m = ss(0.0, 0.15, fq) * (1.0 - ss(0.85, 1.0, fq));
+    v += (field(nc, nr).x - v) * m;
+  }
+  v += (ih(i, qu + 7u) + (ih(i, qu + 8u) - ih(i, qu + 7u)) * ss(0.0, 1.0, fq) - 0.5) * 0.12;
+
+  float s = floor(clamp(v, 0.0, 1.0) * (L - 1.0) + 0.5) / (L - 1.0);
+  float tint = floor(fs.y * 3.0 + 0.5) / 3.0 * 0.8;
+  vec3 cool = vec3(14.0 + 150.0 * pow(s, 1.2), 30.0 + 170.0 * s, 26.0 + 148.0 * s) / 255.0;
+  vec3 col = mix(pal(s), cool, tint);
+
+  // Morph hacia el sprite: color y radio interpolados, con un pequeño desvío orbital.
+  vec4 sp = texelFetch(uSpr, ivec2(c, r), 0);
+  float loc = ss(0.0, 1.0, (uMt - texelFetch(uCell, ivec2(c, r), 0).g) / 0.38);
+  float target = sp.a > 0.1 ? 0.47 * min(1.0, sp.a * 1.5) : 0.0;
+  float rad = CELL * (0.3 + (target - 0.3) * loc);
+  if (rad < 0.4) { hide(); return; }
+  float ang = ih(i, 5u) * 6.2832;
+  float off = sin(3.14159265 * min(1.0, loc)) * CELL * 2.5 * ih(i, 6u);
+  vec2 ctr = vec2(cx, cy) + vec2(cos(ang), sin(ang)) * off;
+
+  vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1)) * 2.0 - 1.0;
+  vP = corner * (rad + 1.0);
+  vRad = rad;
+  vCol = mix(col, sp.rgb, loc);
+  gl_Position = vec4((ctr + vP) / uView * vec2(2.0, -2.0) + vec2(-1.0, 1.0), 0.0, 1.0);
+}
+`
+
+const FRAG = `#version 300 es
+precision mediump float;
+in vec2 vP;
+in vec3 vCol;
+in float vRad;
+out vec4 o;
+void main() {
+  float a = clamp(vRad + 0.5 - length(vP), 0.0, 1.0);
+  o = vec4(vCol * a, a);
+}
+`
+
 export class LoginField {
   hoverT = 0
   private hover = 0
   private ph = 0
   private wx = 0
   private raf = 0
+  private resizeTimer: ReturnType<typeof setTimeout> | undefined
   private ro: ResizeObserver | undefined
   private revealK = 1
   private W = 0
   private H = 0
-  private dpr = 1
   private cols = 0
   private rows = 0
   private G = new Float32Array(0)
-  private F = new Float32Array(0)
   private T = new Float32Array(0)
-  private S = new Float32Array(0)
   private CX = new Float32Array(0)
   private CY = new Float32Array(0)
-  private nb = new Int32Array(0)
-  private pal: string[] = []
-  private palM: string[][] = [[], [], [], []]
-  private palN: number[][] = []
   // Easter egg: los puntos se reorganizan en un sprite (ver `morph`).
   private sprite: HTMLImageElement | undefined
   private morphTo = 0
   private mt = 0
   private reduce = false
   private D = new Float32Array(0)
-  private YR = new Float32Array(0)
-  private YG = new Float32Array(0)
-  private YB = new Float32Array(0)
-  private YA = new Float32Array(0)
+  private spr = new Uint8Array(0)
+  // WebGL
+  private gl: WebGL2RenderingContext | null = null
+  private prog: WebGLProgram | null = null
+  private linked = false
+  private tex: WebGLTexture[] = []
+  private loc = new Map<string, WebGLUniformLocation | null>()
 
   constructor(private readonly cv: HTMLCanvasElement) {}
 
-  private g(i: number): number {
-    return this.G[i] ?? 0
+  private onLost = (e: Event): void => e.preventDefault()
+  private onRestored = (): void => {
+    if (this.initGL()) this.setup()
   }
 
-  private noise(x: number, y: number): number {
-    const xi = Math.floor(x)
-    const yi = Math.floor(y)
-    const fx = x - xi
-    const fy = y - yi
-    const u = fx * fx * (3 - 2 * fx)
-    const v = fy * fy * (3 - 2 * fy)
-    const y0 = (yi & 255) << 8
-    const y1 = ((yi + 1) & 255) << 8
-    const x0 = xi & 255
-    const x1 = (xi + 1) & 255
-    const a = this.g(y0 | x0)
-    const b = this.g(y0 | x1)
-    const c = this.g(y1 | x0)
-    const d = this.g(y1 | x1)
-    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+  private initGL(): boolean {
+    const gl = this.cv.getContext('webgl2', {
+      antialias: false,
+      alpha: true,
+      premultipliedAlpha: true,
+    })
+    if (!gl) return false
+    const sh = (type: number, src: string): WebGLShader => {
+      const s = gl.createShader(type)!
+      gl.shaderSource(s, src)
+      gl.compileShader(s)
+      return s
+    }
+    // Se envía a compilar y NO se consulta el estado todavía: el driver compila mientras la CPU
+    // prepara el árbol y el sprite; `link()` lo comprueba después.
+    const prog = gl.createProgram()
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT))
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG))
+    gl.linkProgram(prog)
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
+    gl.bindVertexArray(gl.createVertexArray())
+    this.tex = [0, 1, 2].map((k) => {
+      const t = gl.createTexture()
+      gl.activeTexture(gl.TEXTURE0 + k)
+      gl.bindTexture(gl.TEXTURE_2D, t)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+      return t
+    })
+    this.gl = gl
+    this.prog = prog
+    this.loc.clear()
+    this.linked = false
+    return true
+  }
+
+  /** Comprueba la compilación (lanza si falla) y deja listo el estado del programa. Idempotente. */
+  private link(): void {
+    const { gl, prog } = this
+    if (!gl || !prog || this.linked) return
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
+      throw new Error(gl.getProgramInfoLog(prog) ?? 'link')
+    gl.useProgram(prog)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+    gl.clearColor(0, 0, 0, 0)
+    gl.uniform1i(this.u('uG'), 0)
+    gl.uniform1i(this.u('uCell'), 1)
+    gl.uniform1i(this.u('uSpr'), 2)
+    this.linked = true
+  }
+
+  private u(name: string): WebGLUniformLocation | null {
+    let l = this.loc.get(name)
+    if (l === undefined && this.gl && this.prog) {
+      l = this.gl.getUniformLocation(this.prog, name)
+      this.loc.set(name, l)
+    }
+    return l ?? null
+  }
+
+  /** Sube las texturas estáticas: ruido, árbol + retardo de morph, y color del sprite. */
+  private upload(): void {
+    const { gl, cols, rows, T, D } = this
+    if (!gl || !cols || !T.length) return
+    const n = cols * rows
+    const cell = new Float32Array(n * 2)
+    for (let i = 0; i < n; i++) {
+      cell[i * 2] = T[i] ?? 0
+      cell[i * 2 + 1] = D[i] ?? 0
+    }
+    gl.activeTexture(gl.TEXTURE0)
+    gl.bindTexture(gl.TEXTURE_2D, this.tex[0] ?? null)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, 256, 256, 0, gl.RED, gl.FLOAT, this.G)
+    gl.activeTexture(gl.TEXTURE1)
+    gl.bindTexture(gl.TEXTURE_2D, this.tex[1] ?? null)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, cols, rows, 0, gl.RG, gl.FLOAT, cell)
+    gl.activeTexture(gl.TEXTURE2)
+    gl.bindTexture(gl.TEXTURE_2D, this.tex[2] ?? null)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA8,
+      cols,
+      rows,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      this.spr.length ? this.spr : new Uint8Array(n * 4)
+    )
   }
 
   /** Rejilla hexagonal + árbol. */
   private setup(): void {
     const cv = this.cv
     const parent = cv.parentElement
-    if (!parent) return
+    if (!parent || !this.gl) return
     const box = parent.getBoundingClientRect()
-    const dpr = window.devicePixelRatio || 1
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
     this.W = box.width
     this.H = box.height
-    this.dpr = dpr
     cv.width = Math.max(1, Math.round(box.width * dpr))
     cv.height = Math.max(1, Math.round(box.height * dpr))
+    this.gl.viewport(0, 0, cv.width, cv.height)
     const cols = Math.ceil(box.width / CELL) + 4
     let rows = Math.ceil(box.height / RH) + 4
     if (rows % 2) rows += 1
@@ -118,75 +318,38 @@ export class LoginField {
 
     this.G = new Float32Array(65536)
     for (let i = 0; i < 65536; i++) this.G[i] = rnd()
-    this.F = new Float32Array(n)
     this.T = new Float32Array(n)
-    this.S = new Float32Array(n)
     this.CX = new Float32Array(n)
     this.CY = new Float32Array(n)
-
-    const nb = new Int32Array(n * 6)
-    const w = (c: number, r: number): number => ((r + rows) % rows) * cols + ((c + cols) % cols)
+    const ox = (box.width - cols * CELL) / 2
+    const oy = (box.height - rows * RH) / 2
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const k = r * cols + c
-        const i = k * 6
-        const o = r & 1
-        nb[i] = w(c - 1, r)
-        nb[i + 1] = w(c + 1, r)
-        nb[i + 2] = w(c - 1 + o, r - 1)
-        nb[i + 3] = w(c + o, r - 1)
-        nb[i + 4] = w(c - 1 + o, r + 1)
-        nb[i + 5] = w(c + o, r + 1)
-        this.CX[k] = (c + 0.5 + 0.5 * o) * CELL + (box.width - cols * CELL) / 2
-        this.CY[k] = (r + 0.5) * RH + (box.height - rows * RH) / 2
+        this.CX[k] = (c + 0.5 + 0.5 * (r & 1)) * CELL + ox
+        this.CY[k] = (r + 0.5) * RH + oy
       }
     }
-    this.nb = nb
-
-    this.pal = []
-    for (let l = 0; l < L; l++) {
-      const s = l / (L - 1)
-      let j = 0
-      while (j < STOPS.length - 2 && s > (STOPS[j + 1]?.[0] ?? 1)) j++
-      const a = STOPS[j] ?? STOPS[0]!
-      const b = STOPS[j + 1] ?? a
-      const f = (s - a[0]) / (b[0] - a[0])
-      this.pal.push(
-        `rgb(${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)},${Math.round(a[3] + (b[3] - a[3]) * f)})`,
-      )
-    }
-
-    // Variantes con tinte frío para el cielo (4 niveles de mezcla).
-    this.palM = [[], [], [], []]
-    for (let l = 0; l < L; l++) {
-      const rgb = (this.pal[l] ?? '').match(/\d+/g)?.map(Number) ?? [0, 0, 0]
-      const s = l / (L - 1)
-      const cr = 14 + 150 * Math.pow(s, 1.2)
-      const cg = 30 + 170 * s
-      const cb = 26 + 148 * s
-      for (let m = 0; m < 4; m++) {
-        const f = (m / 3) * 0.8
-        const [r0 = 0, g0 = 0, b0 = 0] = rgb
-        this.palM[m]?.push(
-          `rgb(${Math.round(r0 + (cr - r0) * f)},${Math.round(g0 + (cg - g0) * f)},${Math.round(b0 + (cb - b0) * f)})`,
-        )
-      }
-    }
-
-    this.palN = this.palM.flatMap((row) => row.map((c) => c.match(/\d+/g)?.map(Number) ?? [0, 0, 0]))
-
     this.buildTree(rnd)
     this.sampleSprite()
+    this.link()
+    this.upload()
+    this.gl.uniform2f(this.u('uView'), this.W, this.H)
+    this.gl.uniform2f(this.u('uOrg'), ox, oy)
+    this.gl.uniform1i(this.u('uCols'), cols)
+    this.gl.uniform1i(this.u('uRows'), rows)
   }
 
   /** Activa/desactiva la transformación en el sprite (carga la imagen la primera vez). */
   morph(on: boolean): void {
+    if (!this.gl) return // sin WebGL2 se usa la imagen estática: no hay morph
     this.morphTo = on ? 1 : 0
     if (on && !this.sprite) {
       const img = new Image()
       img.onload = () => {
         this.sprite = img
         this.sampleSprite()
+        this.upload()
         if (this.reduce) this.settle()
       }
       img.src = '/yoshi.png'
@@ -195,7 +358,7 @@ export class LoginField {
 
   private settle(): void {
     this.mt = this.morphTo
-    if (this.F.length) this.frame(2)
+    if (this.T.length) this.frame(2)
   }
 
   /** Muestrea el sprite (con alfa) en el centro de cada celda y fija el retardo de la onda desde el centro. */
@@ -207,7 +370,7 @@ export class LoginField {
     const oc = document.createElement('canvas')
     oc.width = Math.max(1, Math.round(W))
     oc.height = Math.max(1, Math.round(H))
-    const ctx = oc.getContext('2d')
+    const ctx = oc.getContext('2d', { willReadFrequently: true })
     if (!ctx) return
     // Cabe en la zona libre sobre la tarjeta de ofertas.
     const ph = Math.min(H * 0.56, (W * 0.85 * img.height) / img.width)
@@ -218,10 +381,7 @@ export class LoginField {
     ctx.drawImage(img, x0, y0, pw, ph)
     const data = ctx.getImageData(0, 0, oc.width, oc.height).data
     this.D = new Float32Array(n)
-    this.YR = new Float32Array(n)
-    this.YG = new Float32Array(n)
-    this.YB = new Float32Array(n)
-    this.YA = new Float32Array(n)
+    this.spr = new Uint8Array(n * 4)
     const mx = Math.hypot(W / 2, H / 2)
     const cy0 = y0 + ph / 2
     const o = CELL * 0.3
@@ -232,7 +392,13 @@ export class LoginField {
       let g = 0
       let b = 0
       let a = 0
-      for (const [dx, dy] of [[0, 0], [-o, 0], [o, 0], [0, -o], [0, o]] as const) {
+      for (const [dx, dy] of [
+        [0, 0],
+        [-o, 0],
+        [o, 0],
+        [0, -o],
+        [0, o],
+      ] as const) {
         const px = Math.round(x + dx)
         const py = Math.round(y + dy)
         if (px < 0 || py < 0 || px >= oc.width || py >= oc.height) continue
@@ -243,10 +409,10 @@ export class LoginField {
         b += (data[k + 2] ?? 0) * al
         a += al
       }
-      this.YR[i] = a ? r / a : 0
-      this.YG[i] = a ? g / a : 0
-      this.YB[i] = a ? b / a : 0
-      this.YA[i] = a / 5
+      this.spr[i * 4] = a ? Math.round(r / a) : 0
+      this.spr[i * 4 + 1] = a ? Math.round(g / a) : 0
+      this.spr[i * 4 + 2] = a ? Math.round(b / a) : 0
+      this.spr[i * 4 + 3] = Math.round((a / 5) * 255)
       // La onda sale del centro del sprite hacia fuera (retardo 0..0.62 del recorrido).
       this.D[i] = 0.5 * clamp01(Math.hypot(x - W / 2, y - cy0) / mx) + 0.12 * ih(i, 31)
     }
@@ -257,7 +423,14 @@ export class LoginField {
     const { W, H, CX, CY, T } = this
     const segs: Seg[] = []
     const tips: Tip[] = []
-    const grow = (x: number, y: number, ang: number, len: number, th: number, depth: number): void => {
+    const grow = (
+      x: number,
+      y: number,
+      ang: number,
+      len: number,
+      th: number,
+      depth: number
+    ): void => {
       const x2 = x + Math.sin(ang) * len
       const y2 = y - Math.cos(ang) * len
       const th2 = th * 0.74
@@ -270,135 +443,85 @@ export class LoginField {
       const sides = depth > 3 ? 2 : rnd() < 0.7 ? 1 : 0
       for (let s = 0; s < sides; s++) {
         const dir = (s === 0 ? -1 : 1) * (rnd() < 0.5 ? 1 : -1)
-        grow(x2, y2, ang + dir * (0.5 + rnd() * 0.5), len * (0.62 + rnd() * 0.12), th2 * 0.78, depth - 1)
+        grow(
+          x2,
+          y2,
+          ang + dir * (0.5 + rnd() * 0.5),
+          len * (0.62 + rnd() * 0.12),
+          th2 * 0.78,
+          depth - 1
+        )
       }
     }
     grow(W * 0.46, H * 1.06, -0.1, H * 0.22, Math.max(26, W * 0.07), 7)
-    for (let i = 0; i < T.length; i++) {
-      const x = CX[i] ?? 0
-      const y = CY[i] ?? 0
-      let m = 0
-      for (const g of segs) {
-        const dx = g[2] - g[0]
-        const dy = g[3] - g[1]
-        const t = Math.max(0, Math.min(1, ((x - g[0]) * dx + (y - g[1]) * dy) / (dx * dx + dy * dy)))
-        const d = Math.hypot(x - (g[0] + dx * t), y - (g[1] + dy * t))
-        const half = (g[4] + (g[5] - g[4]) * t) * 0.5
-        const blur = 14 + half * 1.1
-        if (d > half + blur) continue
-        m = Math.max(m, 1 - ss(half * 0.6, half + blur, d))
+    // Cada segmento/copa recorre solo las celdas de su caja (alcance = half + blur = 2.1·half + 14),
+    // en vez de que cada celda pruebe todos los segmentos. T acumula el máximo.
+    const cols = this.cols
+    const rows = this.rows
+    const ox = (CX[0] ?? 0) - CELL * 0.5
+    const oy = (CY[0] ?? 0) - RH * 0.5
+    const each = (
+      x0: number,
+      x1: number,
+      y0: number,
+      y1: number,
+      fn: (i: number, x: number, y: number) => void
+    ): void => {
+      const r0 = Math.max(0, Math.floor((y0 - oy) / RH - 0.5))
+      const r1 = Math.min(rows - 1, Math.ceil((y1 - oy) / RH - 0.5))
+      const c0 = Math.max(0, Math.floor((x0 - ox) / CELL - 1))
+      const c1 = Math.min(cols - 1, Math.ceil((x1 - ox) / CELL))
+      for (let r = r0; r <= r1; r++) {
+        for (let c = c0; c <= c1; c++) {
+          const i = r * cols + c
+          fn(i, CX[i] ?? 0, CY[i] ?? 0)
+        }
       }
-      for (const g of tips) {
-        const d = Math.hypot(x - g[0], y - g[1])
-        const rad = g[2] * 1.5
-        if (d < rad) m = Math.max(m, 0.55 * (1 - ss(0, rad, d)))
-      }
-      T[i] = m
     }
-  }
-
-  /** "Fragment shader": un valor 0..1 por celda. */
-  private shade(t: number, wx: number, sway: number): void {
-    const { cols, rows, CX, CY, T, F, S, W, H } = this
-    for (let r = 0; r < rows; r++) {
-      const amp = sway * (0.2 + 0.8 * (1 - r / rows))
-      const sw = Math.sin(t * 0.7 + r * 0.03) * amp + Math.sin(t * 1.9 + r * 0.09) * amp * 0.25
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c
-        const x = CX[i] ?? 0
-        const y = CY[i] ?? 0
-        // Estrías horizontales de desenfoque de movimiento.
-        const nx = (x + wx * 26) / (CELL * 30)
-        const ny = y / (CELL * 2.8)
-        const n =
-          0.58 * this.noise(nx, ny) + 0.28 * this.noise(nx * 2.1 + 5.3, ny * 2.2 + 1.7) + 0.14 * this.noise(nx * 4.4 + 9.1, ny * 4.1 + 3.3)
-        const lo = this.noise(x / (W * 0.45) + wx * 0.02, y / (H * 0.28) + 7.7)
-        let s = 0.66 + 0.62 * (n - 0.5) - 0.25 * ss(0.52, 0.8, lo)
-        // Sombra del árbol con vaivén (más arriba, más movimiento).
-        let fc = c + sw
-        fc = Math.max(0, Math.min(cols - 1.001, fc))
-        const c0 = Math.floor(fc)
-        const fr = fc - c0
-        const tk = (T[r * cols + c0] ?? 0) * (1 - fr) + (T[r * cols + c0 + 1] ?? 0) * fr
-        s = s * (1 - 0.5 * tk) - 0.03 * tk * n
-        s *= 1 - 0.12 * (y / H) * (y / H)
-        if (n > 0.8) s += (n - 0.8) * 1.5 * (1 - tk)
-        F[i] = s
-        S[i] = clamp01((1 - y / (H * 0.75)) * (0.55 + 0.9 * lo) * (1 - 0.8 * tk))
-      }
+    for (const g of segs) {
+      const reach = Math.max(g[4], g[5]) * 0.5 * 2.1 + 14
+      const dx = g[2] - g[0]
+      const dy = g[3] - g[1]
+      each(
+        Math.min(g[0], g[2]) - reach,
+        Math.max(g[0], g[2]) + reach,
+        Math.min(g[1], g[3]) - reach,
+        Math.max(g[1], g[3]) + reach,
+        (i, x, y) => {
+          const t = Math.max(
+            0,
+            Math.min(1, ((x - g[0]) * dx + (y - g[1]) * dy) / (dx * dx + dy * dy))
+          )
+          const d = Math.hypot(x - (g[0] + dx * t), y - (g[1] + dy * t))
+          const half = (g[4] + (g[5] - g[4]) * t) * 0.5
+          const blur = 14 + half * 1.1
+          if (d > half + blur) return
+          T[i] = Math.max(T[i] ?? 0, 1 - ss(half * 0.6, half + blur, d))
+        }
+      )
+    }
+    for (const g of tips) {
+      const rad = g[2] * 1.5
+      each(g[0] - rad, g[0] + rad, g[1] - rad, g[1] + rad, (i, x, y) => {
+        const d = Math.hypot(x - g[0], y - g[1])
+        if (d < rad) T[i] = Math.max(T[i] ?? 0, 0.55 * (1 - ss(0, rad, d)))
+      })
     }
   }
 
   private frame(t: number): void {
-    const ctx = this.cv.getContext('2d')
-    if (!ctx) return
-    const { rows, cols, F, nb, CX, CY, W, H, ph } = this
-    this.shade(t, this.wx, 2.2 + 1.5 * this.hover)
-    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
-    ctx.clearRect(0, 0, W, H)
-    const rev = this.revealK
-    const swapP = 0.55 + 0.2 * this.hover
-    const { mt, D } = this
-    const mv: number[] = []
-    const paths: Path2D[] = []
-    for (let l = 0; l < L * 4; l++) paths.push(new Path2D())
-    for (let r = 0; r < rows; r++) {
-      const cy = CY[r * cols] ?? 0
-      if (cy > H + CELL) break
-      if (cy > rev * (H + CELL)) break
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c
-        const hs = ih(i, 77)
-        const u = ph + hs * 17
-        const q = Math.floor(u)
-        const fq = u - q
-        // Intercambio de color con un vecino (favorece izquierda/derecha para mantener las estrías).
-        let v = F[i] ?? 0
-        const h1 = ih(i, q)
-        if (h1 < swapP) {
-          const k = Math.min(5, Math.floor(ih(i, q + 4099) * 8))
-          const j = k < 4 ? k & 1 : k - 2
-          const m = ss(0, 0.15, fq) * (1 - ss(0.85, 1, fq))
-          v += ((F[nb[i * 6 + j] ?? 0] ?? 0) - v) * m
-        }
-        v += (ih(i, q + 7) + (ih(i, q + 8) - ih(i, q + 7)) * ss(0, 1, fq) - 0.5) * 0.12
-        const l = Math.max(0, Math.min(L - 1, Math.round(v * (L - 1))))
-        const m2 = Math.round(clamp01(this.S[i] ?? 0) * 3)
-        const cx = CX[i] ?? 0
-        if (mt > 0 && D.length && mt > (D[i] ?? 0)) {
-          mv.push(i, m2 * L + l)
-          continue
-        }
-        const p = paths[m2 * L + l]
-        p?.moveTo(cx + CELL * 0.3, cy)
-        p?.arc(cx, cy, CELL * 0.3, 0, 6.2832)
-      }
-    }
-    for (let k = 0; k < L * 4; k++) {
-      const path = paths[k]
-      const fill = this.palM[Math.floor(k / L)]?.[k % L]
-      if (path && fill) {
-        ctx.fillStyle = fill
-        ctx.fill(path)
-      }
-    }
-    // Celdas en transición o ya convertidas: color y radio interpolados hacia el sprite.
-    for (let j = 0; j < mv.length; j += 2) {
-      const i = mv[j] ?? 0
-      const loc = ss(0, 1, (mt - (D[i] ?? 0)) / 0.38)
-      const base = this.palN[mv[j + 1] ?? 0] ?? [0, 0, 0]
-      const ya = this.YA[i] ?? 0
-      const target = ya > 0.1 ? 0.47 * Math.min(1, ya * 1.5) : 0
-      const rad = CELL * (0.3 + (target - 0.3) * loc)
-      if (rad < 0.4) continue
-      const lerp = (a: number, b: number): number => Math.round(a + (b - a) * loc)
-      const ang = ih(i, 5) * 6.2832
-      const off = Math.sin(Math.PI * Math.min(1, loc)) * CELL * 2.5 * ih(i, 6)
-      ctx.fillStyle = `rgb(${lerp(base[0] ?? 0, this.YR[i] ?? 0)},${lerp(base[1] ?? 0, this.YG[i] ?? 0)},${lerp(base[2] ?? 0, this.YB[i] ?? 0)})`
-      ctx.beginPath()
-      ctx.arc((CX[i] ?? 0) + Math.cos(ang) * off, (CY[i] ?? 0) + Math.sin(ang) * off, rad, 0, 6.2832)
-      ctx.fill()
-    }
+    const { gl } = this
+    if (!gl || !this.cols || gl.isContextLost()) return
+    gl.uniform1f(this.u('uTime'), t)
+    gl.uniform1f(this.u('uPh'), this.ph)
+    gl.uniform1f(this.u('uWx'), this.wx)
+    gl.uniform1f(this.u('uSway'), 2.2 + 1.5 * this.hover)
+    gl.uniform1f(this.u('uSwapP'), 0.55 + 0.2 * this.hover)
+    // Sin sprite cargado el morph no se ve (retardos a 0 y alfa 0 dejarían el radio base).
+    gl.uniform1f(this.u('uMt'), this.sprite ? this.mt : 0)
+    gl.uniform1f(this.u('uRev'), this.revealK)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.cols * this.rows)
   }
 
   private still(): void {
@@ -406,14 +529,27 @@ export class LoginField {
     this.mt = this.morphTo
     this.ph = 3.3
     this.wx = 1.5
-    if (this.F.length) this.frame(2)
+    this.frame(2)
   }
 
-  start(): void {
+  /** Arranca la animación. Devuelve false si no hay WebGL2 (el llamador pinta la imagen estática). */
+  start(): boolean {
     cancelAnimationFrame(this.raf)
+    this.cv.addEventListener('webglcontextlost', this.onLost)
+    this.cv.addEventListener('webglcontextrestored', this.onRestored)
+    let ok = false
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     this.reduce = reduce
-    this.setup()
+    try {
+      ok = this.initGL()
+      if (ok) this.setup()
+    } catch {
+      ok = false // el shader no compila en esta GPU/driver
+    }
+    if (!ok) {
+      this.stop()
+      return false
+    }
     const parent = this.cv.parentElement
     if (typeof ResizeObserver !== 'undefined' && !this.ro && parent) {
       let first = true
@@ -422,14 +558,17 @@ export class LoginField {
           first = false
           return
         }
-        this.setup()
-        if (reduce) this.still()
+        clearTimeout(this.resizeTimer)
+        this.resizeTimer = setTimeout(() => {
+          this.setup()
+          if (reduce) this.still()
+        }, 120)
       })
       this.ro.observe(parent)
     }
     if (reduce) {
       this.still()
-      return
+      return true
     }
     let t0 = 0
     let prev = 0
@@ -441,22 +580,32 @@ export class LoginField {
       const t = (now - t0) / 1000
       const dt = Math.min(0.05, (now - prev) / 1000)
       prev = now
-      if (!this.F.length || !this.W) this.setup()
       this.hover += (this.hoverT - this.hover) * (1 - Math.exp(-dt / 0.25))
       this.ph += dt * (0.7 + 0.5 * this.hover)
       this.wx += dt * (0.6 + 1.2 * this.hover)
       this.mt = clamp01(this.mt + Math.max(-dt / 2.4, Math.min(dt / 2.4, this.morphTo - this.mt)))
       const r = Math.min(1, t / 0.8)
       this.revealK = 1 - Math.pow(1 - r, 3)
-      if (this.F.length) this.frame(t)
+      this.frame(t)
       this.raf = requestAnimationFrame(tick)
     }
     this.raf = requestAnimationFrame(tick)
+    return true
   }
 
   stop(): void {
     cancelAnimationFrame(this.raf)
+    clearTimeout(this.resizeTimer)
     this.ro?.disconnect()
     this.ro = undefined
+    this.cv.removeEventListener('webglcontextlost', this.onLost)
+    this.cv.removeEventListener('webglcontextrestored', this.onRestored)
+    if (this.gl) {
+      for (const t of this.tex) this.gl.deleteTexture(t)
+      this.gl.deleteProgram(this.prog)
+    }
+    this.gl = null
+    this.prog = null
+    this.tex = []
   }
 }

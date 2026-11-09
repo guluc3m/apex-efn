@@ -25,9 +25,9 @@ export function LoginPanel() {
   return (
     <main
       id="contenido"
-      className="flex min-h-screen flex-wrap overflow-hidden bg-linear-to-b from-bg from-75% to-accent-subtle"
+      className="flex min-h-screen flex-wrap overflow-hidden bg-bg"
     >
-      <div className="flex min-w-0 flex-[1_1_420px] flex-col justify-between px-14 py-10">
+      <div className="flex min-w-0 flex-[1_1_420px] flex-col justify-between bg-linear-to-b from-bg from-75% to-accent-subtle px-14 py-10">
         <div className="flex min-h-9.5 items-center justify-between gap-4">
           <Logo size="md" />
           <AppLanguageSwitcher />
