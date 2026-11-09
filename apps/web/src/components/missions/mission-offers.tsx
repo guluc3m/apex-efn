@@ -43,8 +43,8 @@ export function MissionOffers({ offers, total }: { offers: readonly OfferRow[]; 
   const pct = new Intl.NumberFormat(locale, { style: 'percent', signDisplay: 'exceptZero' })
 
   const columns: TableColumn<OfferRow>[] = [
-    { id: 'seller', header: t('cols.seller'), sortValue: (o) => o.seller, cell: (o) => o.seller },
-    { id: 'platform', header: t('cols.platform'), sortValue: (o) => o.platform, cell: (o) => <span className="text-ink-muted">{t(`platform.${o.platform}`)}</span> },
+    { id: 'seller', header: t('cols.seller'), sortValue: (o) => o.seller, cell: (o) => <span className="whitespace-nowrap">{o.seller}</span> },
+    { id: 'platform', header: t('cols.platform'), sortValue: (o) => o.platform, cell: (o) => <span className="whitespace-nowrap text-ink-muted">{t(`platform.${o.platform}`)}</span> },
     {
       id: 'price',
       header: t('cols.price'),
@@ -95,7 +95,7 @@ export function MissionOffers({ offers, total }: { offers: readonly OfferRow[]; 
       label={label}
       value={url.value(id)}
       onValueChange={(v) => url.setFilter(id, v)}
-      options={[{ value: 'all', label: t('filters.all') }, ...values.map((v) => ({ value: v, label: t(`${key}.${v}`) }))]}
+      options={[{ value: 'all', label: t('filters.all') }, ...values.map((v) => ({ value: v, label: t(`${key}.${v}`, { round: '–' }) }))]}
     />
   )
 

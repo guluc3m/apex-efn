@@ -1,5 +1,6 @@
 // //todo_#165: sustituir por la bandeja de aprobaciones real (doble control, documentos y seguimiento) cuando exista el BFF
 export type ApprovalStatus = 'sign' | 'progress' | 'closed'
+export const APPROVAL_TABS: readonly ApprovalStatus[] = ['sign', 'progress', 'closed']
 
 export interface ApprovalSignature {
   slot: 'first' | 'second'

@@ -3,6 +3,8 @@
 import type { ColumnFiltersState, SortingState } from '@tanstack/react-table'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+import { toRoute } from '../app-link'
+
 /** Orden y filtros de una tabla en la URL (`?sort=-price&status=aborted`). Cambiar de filtro usa `replace`: no ensucia el historial. */
 export function useUrlTable(filterIds: readonly string[]) {
   const params = useSearchParams()
@@ -21,7 +23,7 @@ export function useUrlTable(filterIds: readonly string[]) {
     mutate(next)
     const qs = next.toString()
     // typedRoutes no admite rutas con query dinámica.
-    router.replace((qs ? `${pathname}?${qs}` : pathname) as never, { scroll: false })
+    router.replace(toRoute(qs ? `${pathname}?${qs}` : pathname), { scroll: false })
   }
 
   return {

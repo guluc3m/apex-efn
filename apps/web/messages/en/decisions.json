@@ -190,5 +190,6 @@
     "title": "Transcript: {seller}",
     "agent": "Agent",
     "seller": "Seller"
-  }
+  },
+  "emptyNext": "View active missions"
 }

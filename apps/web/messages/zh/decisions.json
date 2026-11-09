@@ -190,5 +190,6 @@
     "title": "记录：{seller}",
     "agent": "代理",
     "seller": "卖家"
-  }
+  },
+  "emptyNext": "查看进行中的任务"
 }
