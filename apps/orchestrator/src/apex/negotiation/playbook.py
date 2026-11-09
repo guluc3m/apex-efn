@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from apex.negotiation.guardrails import BP_DENOMINATOR, IncomingVerdict, price_floor_minor
 from apex.negotiation.models import Intent, NegotiationOutcome, NegotiationSession, Plan, Quote
+from apex.negotiation.text import find_prices
 
 # Rounds reserved outside the ladder: the opening message and the written summary.
 _RESERVED_ROUNDS = 2
@@ -66,17 +67,36 @@ class Stop:
 Decision = Plan | Stop
 
 
-def select_quote(verdict: IncomingVerdict, currency: str, at_round: int) -> Quote | None:
-    """Deterministic fallback when no grounded extraction exists: the lowest price in ``currency``.
+def select_quote(
+    verdict: IncomingVerdict,
+    currency: str,
+    at_round: int,
+    *,
+    offered: frozenset[int] = frozenset(),
+) -> Quote | None:
+    """Deterministic fallback when no grounded extraction exists: the lowest fresh price in ``currency``.
 
-    Sellers usually list volume tiers in decreasing order and the buyer asks for the largest volume, so
-    the lowest price is the relevant tier.
+    ``offered`` are the prices the buyer side already proposed. Sellers echo them ("EUR 3.79 is too low,
+    our best is EUR 4.12"), so they are never the seller's quote. Sellers usually list volume tiers in
+    decreasing order and the buyer asks for the largest volume, so the lowest fresh price is the relevant tier.
     """
-    prices = [p.minor for p in verdict.prices if p.currency == currency]
+    prices = [p.minor for p in verdict.prices if p.currency == currency and p.minor not in offered]
     return (
         Quote(unit_price_minor=min(prices), currency=currency, at_round=at_round)
         if prices
         else None
+    )
+
+
+def offered_prices(session: NegotiationSession) -> frozenset[int]:
+    """Prices in the negotiation currency that the agent or a human already sent to the seller."""
+    currency = session.params.currency
+    return frozenset(
+        p.minor
+        for m in session.transcript
+        if m.role != "seller"
+        for p in find_prices(m.text)
+        if p.currency == currency
     )
 
 

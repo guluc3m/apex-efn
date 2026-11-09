@@ -16,6 +16,7 @@ from tests.negotiation.fakes import (
     NOW,
     BandSanity,
     ScriptedChat,
+    SellerTurn,
     T,
     cooperative_seller,
     harness,
@@ -195,3 +196,54 @@ class TestFinding12NewSellerTurnSupersedesDraft:
         session = await h.engine.advance(session.id, tenant_id=T)
         assert session.pending is not None and session.pending.id != first
         assert h.chat.sent == []
+
+
+def echoing_seller(floor: int = 409, list_price: int = 445) -> SellerTurn:
+    """Like the D5-04 mock personas: a counter-offer repeats the buyer's price before stating its own."""
+    state = {"ask": list_price}
+
+    def turn(agent: str, n: int) -> str | None:
+        prices = [p.minor for p in find_prices(agent)]
+        if "confirm" in agent.lower() and prices and prices[-1] >= floor:
+            return f"Confirmed in writing: EUR {prices[-1] / 100:.2f} per unit for 5000 units."
+        if not prices:
+            return "Our volume tiers are: 500-1999 units: EUR 4.45; 2000+ units: EUR 4.15."
+        offer = prices[-1]
+        if offer >= floor:
+            return f"OK, we can accept EUR {offer / 100:.2f} per unit."
+        state["ask"] = max(floor, state["ask"] - (state["ask"] - offer) // 2)
+        return (
+            f"Sorry, EUR {offer / 100:.2f} is too low for us. "
+            f"Our best price is EUR {state['ask'] / 100:.2f} per unit."
+        )
+
+    return turn
+
+
+class TestFinding13EchoedBuyerPrices:
+    """Found by the D5-09 suite against the real mock: an echoed buyer price was read as the quote."""
+
+    async def test_echo_is_not_the_quote(self) -> None:
+        h = harness(echoing_seller(), sanity=BandSanity(floor=100))
+        p = params(semi_automatic=False, reference_price_minor=445)
+        s = await run_autonomous(h, await h.engine.start(request(p), idempotency_key="k"))
+        assert s.status is NegotiationOutcome.AGREED
+        assert s.agreed is not None and s.agreed.unit_price_minor == 409
+        anchor = s.ladder[0]
+        assert all(q.unit_price_minor != anchor for q in s.quotes)
+        assert "extraction_echoes_agent_price" in s.guardrail_hits
+
+    async def test_summary_never_states_a_rejected_price(self) -> None:
+        h = harness(echoing_seller(), sanity=BandSanity(floor=100))
+        p = params(semi_automatic=False, reference_price_minor=445)
+        s = await run_autonomous(h, await h.engine.start(request(p), idempotency_key="k"))
+        summaries = [m.text for m in s.transcript if m.intent is Intent.SUMMARY]
+        assert summaries and all("EUR 4.09" in t for t in summaries)
+
+    async def test_acceptance_of_our_price_still_counts(self) -> None:
+        """The only price in the message is ours: the seller accepted it (still needs written confirmation)."""
+        h = harness(echoing_seller(floor=300), sanity=BandSanity(floor=100))
+        p = params(semi_automatic=False, reference_price_minor=445)
+        s = await run_autonomous(h, await h.engine.start(request(p), idempotency_key="k"))
+        assert s.status is NegotiationOutcome.AGREED
+        assert s.agreed is not None and s.agreed.unit_price_minor == s.ladder[0]
