@@ -7,7 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
+from apex.api import config as config_api
 from apex.api import missions as missions_api
+from apex.api import onboarding as onboarding_api
 from apex.api import router
 from apex.api import sourcing as sourcing_api
 from apex.common.errors import install_problem_handlers
@@ -19,7 +21,7 @@ from apex.common.idempotency import (
 )
 from apex.config import Settings, settings
 from apex.platform.telemetry import setup_telemetry
-from apex.wiring import AppServices, build_app_services
+from apex.wiring import AppServices, build_app_services, seed_demo_tenants
 
 
 def build_idempotency_store(cfg: Settings) -> IdempotencyStore:
@@ -41,7 +43,8 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         """Application lifespan handler."""
-        # Startup
+        # Startup: the demo tenants get their config baseline, so reads and proposals have a version.
+        await seed_demo_tenants(active_services)
         yield
         # Shutdown
 
@@ -91,6 +94,8 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     application.state.mission_event_bus = services.mission_bus
     application.dependency_overrides[sourcing_api.get_sourcing_service] = lambda: services.sourcing
     application.dependency_overrides[missions_api.get_sourcing_service] = lambda: services.sourcing
+    application.dependency_overrides[config_api.get_config_service] = lambda: services.tenant_config
+    application.dependency_overrides[onboarding_api.get_onboarding] = lambda: services.onboarding
 
 
 app: FastAPI = create_app()
