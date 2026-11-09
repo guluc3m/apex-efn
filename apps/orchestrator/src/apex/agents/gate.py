@@ -24,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from apex.agents.offers import Offer, OfferAnalysis
 from apex.agents.ports import ConfidenceBand, DecisionPort, DecisionRef, PriceBand
+from apex.common.metrics import GATE_ACTIONS, GATE_CAUSES, closed, get_metrics
 
 
 class _Model(BaseModel):
@@ -390,6 +391,7 @@ class GateAgent:
             )
         if relevant:
             raise ActionBlocked(relevant)
+        _record_resolved(action.value, gate_item)
         payload = {
             "action": action.value,
             "offer_id": offer.id,
@@ -416,8 +418,32 @@ class GateAgent:
         )
 
     async def list_open(self, *, tenant_id: str) -> list[GateQueueItem]:
-        """Open items, most urgent first (soonest SLA)."""
-        return await self._deps.store.list_open(tenant_id)
+        """Open items, most urgent first (soonest SLA). Also refreshes the gate health gauges."""
+        items = await self._deps.store.list_open(tenant_id)
+        self._record_queue_health(items)
+        return items
+
+    def _record_queue_health(self, items: Sequence[GateQueueItem]) -> None:
+        """``apex.gate.queue.depth``, ``apex.gate.oldest_item.age`` and ``apex.gate.sla.missed``.
+
+        Gauges are per cause and are only set for causes that have open items; Prometheus keeps the last
+        value, so a cause that drains is explicitly zeroed.
+        """
+        metrics = get_metrics()
+        now = self._deps.clock.now()
+        depth: dict[str, int] = {}
+        oldest: dict[str, int] = {}
+        for item in items:
+            for cause in item.causes:
+                name = closed(cause.value, GATE_CAUSES)
+                depth[name] = depth.get(name, 0) + 1
+                age = int((now - item.created_at).total_seconds())
+                oldest[name] = max(oldest.get(name, 0), age)
+                if now > item.sla_due_at:
+                    metrics.gate_sla_missed.add(1, {"cause": name})
+        for name in sorted(GATE_CAUSES):
+            metrics.gate_queue_depth.set(depth.get(name, 0), {"cause": name})
+            metrics.gate_oldest_item_age.set(oldest.get(name, 0), {"cause": name})
 
     async def decide_queue_action(
         self,
@@ -441,9 +467,22 @@ class GateAgent:
         }
         if comment is not None:
             payload["comment"] = comment
+        _record_resolved(action.value, item)
         decision_type = "gate_unblock" if action is QueueAction.UNBLOCK else "gate_override_discard"
         return await self._deps.decisions.create_decision(
             decision_type, f"gate:{item.id}", payload, tenant_id=tenant_id
+        )
+
+
+def _record_resolved(action: str, item: GateQueueItem | None) -> None:
+    """``apex.gate.items.resolved`` — one observation per cause of the item that was acted on."""
+    if item is None:
+        return
+    metrics = get_metrics()
+    label = closed(action, GATE_ACTIONS | {"unblock", "override_discard"})
+    for cause in item.causes:
+        metrics.gate_items_resolved.add(
+            1, {"cause": closed(cause.value, GATE_CAUSES), "action": label}
         )
 
 
