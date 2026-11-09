@@ -27,24 +27,28 @@ browser worker (D5-01) and the DEV-3 engines.
 
 ## Reading a mission
 
-- `GET /v1/missions/{id}` — status, plan steps (with `platform_id` and `transport`), `rejected_steps`,
-  `failure_reason`.
+- `GET /v1/missions/{id}` — the contract's `Mission`: `state`, `offers_discovered`, `offers_in_gate`,
+  `tokens_used`, `token_budget`, `started_at`, `completed_at` and `error` (an RFC 9457 problem carrying the
+  failure reason). The plan steps are not in this body: they are in the `plan_ready` event payload.
 - `GET /v1/missions/{id}/events` — SSE. Reconnect with `Last-Event-ID: <seq>` to resume without gaps. The
   stream ends at `planned` on purpose (planning is the last step the sourcing service performs); reconnect
   when the mission starts running.
 
-  Event types, one per thing that happened: `mission_created`, `planning_started`, `plan_ready`,
-  `sourcing_started`, `offers_collected`, `analysis_completed`, `mission_failed`, `mission_cancelled`.
+  Frames are the contract's `MissionEvent` (`id`, `mission_id`, `type`, `at`, `data`), so the SSE `event:`
+  field is one of the contract's closed set: `state_changed`, `offer_discovered`, `sanity_checked`, `error`,
+  … The orchestrator's internal step names (`planning_started`, `offers_collected`, `analysis_completed`) are
+  mapped onto that set and the step detail travels in `data`.
 
 ## When a mission is `failed`
 
-`failure_reason` is a stable code followed by a detail. The codes:
+The failure lands in `Mission.error.detail` (the contract's `Problem`) and in the `error` event. It is a
+stable code followed by a detail. The codes:
 
 | `failure_reason` starts with | Meaning | What to do |
 |---|---|---|
 | `no_viable_platform:` | The planner proposed only platforms that are disabled or not in the catalogue | Check `platform.<id>.enabled` feature flags and the platform catalogue |
 | `planner_output_invalid` | The model did not return a valid plan after the structured-output ladder | Check the LLM endpoint; the gateway already retried and repaired |
-| `not_wired: ...` | A port the runner needs is not implemented yet; the detail names the owner lane | Expected until D5-01 and the DEV-3 engines land |
+| `not_wired: ...` | A port the runner needs is not implemented yet; the detail names the owner lane | Expected until the DEV-3 engines land (the browser worker is wired as soon as `browser_worker_url` is set) |
 | `gate_rejected` | A human rejected the gate decision | Nothing; the offer is rejected by design |
 | `renegotiation_limit` | `gate.max_renegotiations` reached | Raise the limit in tenant config if the case justifies it |
 
