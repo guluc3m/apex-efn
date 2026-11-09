@@ -62,12 +62,27 @@ async def test_semi_automatic_reports_awaiting_human_approval() -> None:
     assert h.chat.sent == []
 
 
-async def test_new_attempt_key_starts_a_new_negotiation() -> None:
+async def test_new_attempt_key_starts_a_new_negotiation_once_the_previous_one_is_terminal() -> None:
     h = harness(cooperative_seller())
     port = EngineNegotiationPort(h.engine, h.store, resolver(params()))
     a = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="negotiate:x:1")
+    await h.engine.abort(a.negotiation_id, reason="buyer_cancelled", tenant_id="tenant-a")
     b = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="negotiate:x:2")
     assert a.negotiation_id != b.negotiation_id
+    assert len(h.chat.opened) == 2
+
+
+async def test_a_new_attempt_never_opens_a_second_chat_with_a_busy_seller() -> None:
+    """D5-08: one active negotiation per seller. The graph routes the refusal to the human gate."""
+    h = harness(cooperative_seller())
+    port = EngineNegotiationPort(h.engine, h.store, resolver(params()))
+    first = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="negotiate:x:1")
+    second = await port.negotiate(OFFER, tenant_id="tenant-a", idempotency_key="negotiate:x:2")
+    assert second.outcome is NegotiationOutcome.ESCALATED
+    assert second.reason == "seller_busy"
+    assert second.negotiation_id == first.negotiation_id
+    assert second.price_minor is None
+    assert len(h.chat.opened) == 1  # only the first negotiation touched the seller
 
 
 async def test_escalation_carries_the_reason_and_no_price() -> None:

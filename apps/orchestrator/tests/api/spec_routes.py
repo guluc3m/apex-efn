@@ -40,8 +40,8 @@ SPEC_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
-# Routes implemented by DEV-4 (D4-03 config, D4-08 sourcing and missions). They answer real responses
-# instead of 501, so the stub check below skips them; their own tests cover behaviour.
+# Routes that answer real responses instead of 501, so the stub check below skips them; their own tests
+# cover behaviour. DEV-4: D4-03 config, D4-08 sourcing and missions. DEV-5: D5-08 negotiation controls.
 IMPLEMENTED_ROUTES: frozenset[tuple[str, str]] = frozenset(
     {
         ("POST", "/v1/sourcing-requests"),
@@ -51,6 +51,9 @@ IMPLEMENTED_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/v1/onboarding/sessions"),
         ("POST", "/v1/onboarding/{id}/financial-csv"),
         ("POST", "/v1/onboarding/{id}/financial-csv/activate"),
+        ("POST", "/v1/negotiations/{id}/takeover"),
+        ("POST", "/v1/negotiations/{id}/resume"),
+        ("POST", "/v1/negotiations/{id}/abort"),
     }
 )
 
