@@ -1,0 +1,98 @@
+import type {
+  EffectiveConfig,
+  Mission,
+  MissionEvent,
+  OnboardingSession,
+  Problem,
+  SourcingRequest,
+} from '@apex/shared-types/contracts'
+import { http, HttpResponse } from 'msw'
+
+/**
+ * MSW handlers for screens built before the orchestrator answers.
+ *
+ * The contract has no response examples yet (DEV-2 adds them in a follow-up, guluc3m/apex-efn#83),
+ * so the bodies below are typed with the generated contract types: a contract change that makes
+ * one stale fails `pnpm typecheck`. `handlers.test.ts` also parses each one with the generated Zod
+ * schema. Values are inert placeholders, never business defaults.
+ *
+ * Only routes that are still 501 in the orchestrator should stay mocked; the live ones can be
+ * dropped from `activeHandlers` once the BFF is pointed at a running orchestrator.
+ */
+
+const NOW = '2026-11-09T09:00:00Z'
+
+export const sourcingRequestFixture: SourcingRequest = {
+  id: 'sr_mock_1',
+  status: 'normalized',
+  spec: { description: 'PET bottle 500 ml with flip-top cap' },
+  quantity_tiers: [{ quantity: 5000, priority: 'primary' }],
+  delivery_country: 'ES',
+  needs_clarification: [],
+  created_at: NOW,
+}
+
+export const missionFixture: Mission = {
+  id: 'ms_mock_1',
+  sourcing_request_id: sourcingRequestFixture.id,
+  state: 'sourcing',
+  offers_discovered: 0,
+  offers_negotiated: 0,
+  offers_in_gate: 0,
+  tokens_used: 0,
+  // The schema requires >= 1. Inert placeholder for a mock, not a budget the product proposes.
+  token_budget: 1,
+  started_at: NOW,
+}
+
+export const effectiveConfigFixture: EffectiveConfig = {
+  tenant_id: 'tenant-a',
+  category: null,
+  config_version: 1,
+  content_hash: `sha256:${'0'.repeat(64)}`,
+  resolved_at: NOW,
+  // Unset values stay unset: the UI must render "sin definir", never a made-up default.
+  values: {},
+}
+
+export const onboardingSessionFixture: OnboardingSession = {
+  id: 'ob_mock_1',
+  status: 'profiling',
+  // Placeholder identity for a mock only; the wizard collects the real one.
+  company_profile: { legal_name: 'Mock Company S.L.', tax_id: 'MOCK0000', country: 'ES', base_currency: 'EUR' },
+  effective_config: effectiveConfigFixture,
+  created_at: NOW,
+  updated_at: NOW,
+}
+
+export const missionEventFixture: MissionEvent = {
+  id: '1',
+  mission_id: missionFixture.id,
+  type: 'state_changed',
+  at: NOW,
+  data: { state: missionFixture.state },
+}
+
+export const reauthProblemFixture: Problem & { error: 'reauth_required'; reason: 'session_expired' } = {
+  type: 'about:blank',
+  title: 'Reauthentication required',
+  status: 428,
+  error: 'reauth_required',
+  reason: 'session_expired',
+}
+
+const API = '*/api/v1'
+
+export const handlers = [
+  http.post(`${API}/onboarding/sessions`, () => HttpResponse.json(onboardingSessionFixture, { status: 201 })),
+  http.post(`${API}/sourcing-requests`, () => HttpResponse.json(sourcingRequestFixture, { status: 201 })),
+  http.post(`${API}/missions`, () => HttpResponse.json(missionFixture, { status: 201 })),
+  http.get(`${API}/missions/:id`, ({ params }) =>
+    HttpResponse.json({ ...missionFixture, id: String(params.id) }),
+  ),
+  http.get(`${API}/missions/:id/events`, ({ params }) => {
+    const body = `id: 1\nevent: state_changed\ndata: ${JSON.stringify({ ...missionEventFixture, mission_id: params.id })}\n\n`
+    return new HttpResponse(body, { headers: { 'content-type': 'text/event-stream' } })
+  }),
+  http.get(`${API}/config/effective`, () => HttpResponse.json(effectiveConfigFixture)),
+]
