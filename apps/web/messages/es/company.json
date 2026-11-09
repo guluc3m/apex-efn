@@ -1,1 +1,71 @@
-{}
+{
+  "finance": {
+    "report": {
+      "title": "Revisa la importación de {file}",
+      "subtitle": "Alta de empresa · paso 7 de 7 · {rows} filas · nada se activa hasta que firmes.",
+      "upload": "Subir otro archivo",
+      "pending": "Pendiente de conectar",
+      "accepted": "Filas aceptadas",
+      "rejected": "Rechazadas",
+      "duplicated": "Duplicadas",
+      "periods": "Periodos",
+      "converted": "Convertidas a EUR",
+      "range": "{range} · proyección activada",
+      "mappingTitle": "Confirma el mapeo de {n} cabeceras",
+      "mappingHint": "El asistente sugiere el campo; los números los interpreta siempre el importador, no la IA.",
+      "column": "Columna en tu archivo",
+      "field": "Campo de APEX",
+      "origin": "Origen",
+      "suggested": "Sugerido por el asistente",
+      "confirmMapping": "Confirmar mapeo",
+      "rejectionsTitle": "Filas que no entran",
+      "rejectionsCaption": "Filas rechazadas del CSV",
+      "metric": "Métrica",
+      "period": "Periodo",
+      "line": "Línea",
+      "value": "Valor",
+      "reason": "Motivo",
+      "reasons": {
+        "decimals": "Importe con decimales",
+        "period": "Periodo mal formado (YYYY-MM)",
+        "metric": "Métrica desconocida",
+        "currency": "Divisa no soportada",
+        "duplicate": "Duplicada: se mantiene la línea {line}"
+      },
+      "warningsTitle": "Avisos",
+      "warnings": {
+        "fx": "{n} importes en USD se han convertido a EUR con el tipo de cierre de cada mes. Se conserva el original.",
+        "taxReserve": "No hay tax_reserve en {month}: la capacidad de compra no descuenta reserva de impuestos ese mes."
+      },
+      "review": "Revisar resultado y activar",
+      "rejectedDontBlock": "Las {n} filas rechazadas no bloquean la activación."
+    },
+    "summary": {
+      "title": "Esto es lo que podréis comprar con los datos de octubre",
+      "subtitle": "Fecha de referencia {date} · snapshot nuevo, sustituye al anterior.",
+      "capacity": "Capacidad de compra neta",
+      "capacityHint": "Tras colchón del {buffer} % y pagos comprometidos",
+      "score": "Buying Power Score",
+      "scoreHint": "Fórmula pendiente de aprobar",
+      "envelopes": "Envelopes por categoría",
+      "chartCaption": "Uso del presupuesto frente a límite, este mes. La barra completa es el límite.",
+      "category": "Categoría",
+      "used": "Usado este mes",
+      "available": "Disponible",
+      "limit": "Límite",
+      "nearlyExhausted": "Casi agotado",
+      "activateTitle": "Activar snapshot",
+      "activateBody": "Activar es una decisión firmada y pide tu passkey ahora, aunque tengas una sesión de firma abierta.",
+      "rows": "Filas",
+      "rowsValue": "{n} aceptadas",
+      "replaces": "Sustituye a",
+      "replacesValue": "{month} (queda archivado)",
+      "expires": "Caduca",
+      "payloadHash": "Hash del contenido (payload_hash)",
+      "back": "Volver a revisar el CSV",
+      "activate": "Activar con passkey",
+      "pending": "Pendiente de conectar: la firma y la activación aún no tienen backend",
+      "allOrNothing": "Todo o nada: no hay activación parcial."
+    }
+  }
+}
