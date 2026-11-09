@@ -39,7 +39,7 @@ export function LoginPanel() {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email" className="text-ink-soft">{t('email')}</Label>
-            <Input id="email" type="email" autoComplete="username" placeholder={t('emailPlaceholder')} className="min-h-11" />
+            <Input id="email" type="email" autoComplete="username" onChange={(e) => field.current?.morph(e.target.value.trim().toLowerCase() === 'macarrones')} placeholder={t('emailPlaceholder')} className="min-h-11" />
           </div>
           <Button
             variant="pri"

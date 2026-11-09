@@ -54,6 +54,17 @@ export class LoginField {
   private nb = new Int32Array(0)
   private pal: string[] = []
   private palM: string[][] = [[], [], [], []]
+  private palN: number[][] = []
+  // Easter egg: los puntos se reorganizan en un sprite (ver `morph`).
+  private sprite: HTMLImageElement | undefined
+  private morphTo = 0
+  private mt = 0
+  private reduce = false
+  private D = new Float32Array(0)
+  private YR = new Float32Array(0)
+  private YG = new Float32Array(0)
+  private YB = new Float32Array(0)
+  private YA = new Float32Array(0)
 
   constructor(private readonly cv: HTMLCanvasElement) {}
 
@@ -162,7 +173,83 @@ export class LoginField {
       }
     }
 
+    this.palN = this.palM.flatMap((row) => row.map((c) => c.match(/\d+/g)?.map(Number) ?? [0, 0, 0]))
+
     this.buildTree(rnd)
+    this.sampleSprite()
+  }
+
+  /** Activa/desactiva la transformación en el sprite (carga la imagen la primera vez). */
+  morph(on: boolean): void {
+    this.morphTo = on ? 1 : 0
+    if (on && !this.sprite) {
+      const img = new Image()
+      img.onload = () => {
+        this.sprite = img
+        this.sampleSprite()
+        if (this.reduce) this.settle()
+      }
+      img.src = '/yoshi.png'
+    } else if (this.reduce) this.settle()
+  }
+
+  private settle(): void {
+    this.mt = this.morphTo
+    if (this.F.length) this.frame(2)
+  }
+
+  /** Muestrea el sprite (con alfa) en el centro de cada celda y fija el retardo de la onda desde el centro. */
+  private sampleSprite(): void {
+    const img = this.sprite
+    const { W, H, CX, CY } = this
+    const n = CX.length
+    if (!img || !n) return
+    const oc = document.createElement('canvas')
+    oc.width = Math.max(1, Math.round(W))
+    oc.height = Math.max(1, Math.round(H))
+    const ctx = oc.getContext('2d')
+    if (!ctx) return
+    // Cabe en la zona libre sobre la tarjeta de ofertas.
+    const ph = Math.min(H * 0.56, (W * 0.85 * img.height) / img.width)
+    const pw = (ph * img.width) / img.height
+    const x0 = (W - pw) / 2
+    const y0 = H * 0.05
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(img, x0, y0, pw, ph)
+    const data = ctx.getImageData(0, 0, oc.width, oc.height).data
+    this.D = new Float32Array(n)
+    this.YR = new Float32Array(n)
+    this.YG = new Float32Array(n)
+    this.YB = new Float32Array(n)
+    this.YA = new Float32Array(n)
+    const mx = Math.hypot(W / 2, H / 2)
+    const cy0 = y0 + ph / 2
+    const o = CELL * 0.3
+    for (let i = 0; i < n; i++) {
+      const x = CX[i] ?? 0
+      const y = CY[i] ?? 0
+      let r = 0
+      let g = 0
+      let b = 0
+      let a = 0
+      for (const [dx, dy] of [[0, 0], [-o, 0], [o, 0], [0, -o], [0, o]] as const) {
+        const px = Math.round(x + dx)
+        const py = Math.round(y + dy)
+        if (px < 0 || py < 0 || px >= oc.width || py >= oc.height) continue
+        const k = (py * oc.width + px) * 4
+        const al = (data[k + 3] ?? 0) / 255
+        r += (data[k] ?? 0) * al
+        g += (data[k + 1] ?? 0) * al
+        b += (data[k + 2] ?? 0) * al
+        a += al
+      }
+      this.YR[i] = a ? r / a : 0
+      this.YG[i] = a ? g / a : 0
+      this.YB[i] = a ? b / a : 0
+      this.YA[i] = a / 5
+      // La onda sale del centro del sprite hacia fuera (retardo 0..0.62 del recorrido).
+      this.D[i] = 0.5 * clamp01(Math.hypot(x - W / 2, y - cy0) / mx) + 0.12 * ih(i, 31)
+    }
   }
 
   /** Silueta de árbol: tronco, ramas recursivas y copas, en una máscara de oscuridad por celda. */
@@ -251,6 +338,8 @@ export class LoginField {
     ctx.clearRect(0, 0, W, H)
     const rev = this.revealK
     const swapP = 0.55 + 0.2 * this.hover
+    const { mt, D } = this
+    const mv: number[] = []
     const paths: Path2D[] = []
     for (let l = 0; l < L * 4; l++) paths.push(new Path2D())
     for (let r = 0; r < rows; r++) {
@@ -275,8 +364,12 @@ export class LoginField {
         v += (ih(i, q + 7) + (ih(i, q + 8) - ih(i, q + 7)) * ss(0, 1, fq) - 0.5) * 0.12
         const l = Math.max(0, Math.min(L - 1, Math.round(v * (L - 1))))
         const m2 = Math.round(clamp01(this.S[i] ?? 0) * 3)
-        const p = paths[m2 * L + l]
         const cx = CX[i] ?? 0
+        if (mt > 0 && D.length && mt > (D[i] ?? 0)) {
+          mv.push(i, m2 * L + l)
+          continue
+        }
+        const p = paths[m2 * L + l]
         p?.moveTo(cx + CELL * 0.3, cy)
         p?.arc(cx, cy, CELL * 0.3, 0, 6.2832)
       }
@@ -289,10 +382,28 @@ export class LoginField {
         ctx.fill(path)
       }
     }
+    // Celdas en transición o ya convertidas: color y radio interpolados hacia el sprite.
+    for (let j = 0; j < mv.length; j += 2) {
+      const i = mv[j] ?? 0
+      const loc = ss(0, 1, (mt - (D[i] ?? 0)) / 0.38)
+      const base = this.palN[mv[j + 1] ?? 0] ?? [0, 0, 0]
+      const ya = this.YA[i] ?? 0
+      const target = ya > 0.1 ? 0.47 * Math.min(1, ya * 1.5) : 0
+      const rad = CELL * (0.3 + (target - 0.3) * loc)
+      if (rad < 0.4) continue
+      const lerp = (a: number, b: number): number => Math.round(a + (b - a) * loc)
+      const ang = ih(i, 5) * 6.2832
+      const off = Math.sin(Math.PI * Math.min(1, loc)) * CELL * 2.5 * ih(i, 6)
+      ctx.fillStyle = `rgb(${lerp(base[0] ?? 0, this.YR[i] ?? 0)},${lerp(base[1] ?? 0, this.YG[i] ?? 0)},${lerp(base[2] ?? 0, this.YB[i] ?? 0)})`
+      ctx.beginPath()
+      ctx.arc((CX[i] ?? 0) + Math.cos(ang) * off, (CY[i] ?? 0) + Math.sin(ang) * off, rad, 0, 6.2832)
+      ctx.fill()
+    }
   }
 
   private still(): void {
     this.revealK = 1
+    this.mt = this.morphTo
     this.ph = 3.3
     this.wx = 1.5
     if (this.F.length) this.frame(2)
@@ -301,6 +412,7 @@ export class LoginField {
   start(): void {
     cancelAnimationFrame(this.raf)
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    this.reduce = reduce
     this.setup()
     const parent = this.cv.parentElement
     if (typeof ResizeObserver !== 'undefined' && !this.ro && parent) {
@@ -333,6 +445,7 @@ export class LoginField {
       this.hover += (this.hoverT - this.hover) * (1 - Math.exp(-dt / 0.25))
       this.ph += dt * (0.7 + 0.5 * this.hover)
       this.wx += dt * (0.6 + 1.2 * this.hover)
+      this.mt = clamp01(this.mt + Math.max(-dt / 2.4, Math.min(dt / 2.4, this.morphTo - this.mt)))
       const r = Math.min(1, t / 0.8)
       this.revealK = 1 - Math.pow(1 - r, 3)
       if (this.F.length) this.frame(t)
