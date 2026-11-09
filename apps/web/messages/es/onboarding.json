@@ -1,1 +1,202 @@
-{}
+{
+  "header": {
+    "home": "TRATO, ir a Decisiones",
+    "title": "Configurar empresa · paso {n} de {total}",
+    "draft": "Borrador local · aún sin guardar en el servidor"
+  },
+  "stepsLabel": "Pasos del alta",
+  "steps": {
+    "empresa": {
+      "label": "Identidad fiscal",
+      "title": "Identidad fiscal",
+      "lead": "Lo usamos en RFQ, órdenes de compra y aduanas."
+    },
+    "sector": {
+      "label": "Sector y actividad",
+      "title": "Sector y actividad",
+      "lead": "Ayuda a elegir plataformas y referencias de precio."
+    },
+    "cuentas": {
+      "label": "Cuentas de plataformas",
+      "title": "Cuentas de plataformas",
+      "lead": "El agente busca y negocia con estas cuentas. Las credenciales no salen del almacén cifrado."
+    },
+    "presupuesto": {
+      "label": "Presupuesto y divisa",
+      "title": "Presupuesto y divisa",
+      "lead": "Toda oferta se contrasta contra estos límites y tu tesorería real."
+    },
+    "politica": {
+      "label": "Política de compra",
+      "title": "Política de compra",
+      "lead": "Define cuándo hace falta tu firma, cuándo dos firmas y qué vendedores se aceptan."
+    },
+    "negociacion": {
+      "label": "Negociación",
+      "title": "Negociación",
+      "lead": "Límites duros del agente. Nunca los supera."
+    },
+    "finanzas": {
+      "label": "Datos financieros",
+      "title": "Datos financieros",
+      "lead": "Sin un snapshot activo no se puede lanzar ninguna misión."
+    }
+  },
+  "stepState": {
+    "done": "Hecho",
+    "warnings": "{count, plural, one {# aviso} other {# avisos}}",
+    "pending": "{count, plural, one {# pendiente} other {# pendientes}}"
+  },
+  "blocking": "No podrás lanzar misiones hasta activar un snapshot financiero (paso 7).",
+  "nav": {
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "firstStep": "Ya estás en el primer paso",
+    "toImport": "Ir a la importación"
+  },
+  "pending": "Pendiente de conectar",
+  "errors": {
+    "required": "Campo obligatorio",
+    "amount": "Introduce un importe válido",
+    "percent": "Introduce un porcentaje válido"
+  },
+  "options": {
+    "country": {
+      "es": "España"
+    },
+    "customs": {
+      "eori": "Importador habitual (EORI)"
+    },
+    "frequency": {
+      "monthly": "Mensual",
+      "quarterly": "Trimestral",
+      "occasional": "Puntual"
+    },
+    "currency": {
+      "EUR": "EUR",
+      "USD": "USD",
+      "CNY": "CNY"
+    },
+    "payment": {
+      "d30": "30 días",
+      "d60": "60 días",
+      "d90": "90 días",
+      "prepaid": "Prepago"
+    },
+    "trust": {
+      "medium": "Media",
+      "high": "Alta"
+    },
+    "lateness": {
+      "none": "Sin retraso",
+      "late5": "Hasta 5 días de retraso",
+      "late10": "Hasta 10 días de retraso"
+    },
+    "aggressiveness": {
+      "balanced": "Equilibrado",
+      "conservative": "Conservador",
+      "aggressive": "Agresivo"
+    },
+    "tone": {
+      "formal": "Formal",
+      "close": "Cercano"
+    },
+    "language": {
+      "seller": "Idioma del vendedor",
+      "es": "Español",
+      "en": "Inglés"
+    },
+    "counterparts": {
+      "volume": "Mayor volumen (sin pasar de lo pedido en la misión)",
+      "prepay": "Prepago",
+      "framework": "Contrato marco",
+      "longerTerm": "Plazo de pago más largo"
+    }
+  },
+  "fields": {
+    "legalName": "Razón social",
+    "taxId": "CIF / VAT",
+    "country": "País",
+    "customs": "Régimen aduanero",
+    "shipping": "Dirección de envío",
+    "billingSame": "La dirección de facturación es la misma",
+    "cnae": "CNAE",
+    "frequency": "Frecuencia de compra",
+    "purchases": "Qué compráis",
+    "seasonality": "Estacionalidad",
+    "currency": "Divisa base",
+    "payment": "Condiciones de pago preferidas",
+    "buffer": "Colchón de tesorería (%)",
+    "category": "Categoría",
+    "envelope": "Envelope mensual",
+    "maxPerOrder": "Máximo por operación",
+    "addCategory": "Añadir categoría",
+    "approvalFrom": "Aprobación humana a partir de",
+    "dualFrom": "Doble firma a partir de",
+    "amountRequired": "Importe obligatorio",
+    "minTrust": "Confianza mínima del vendedor",
+    "lateness": "Tolerancia de plazo",
+    "certifications": "Certificaciones exigidas",
+    "excludedCountries": "Países excluidos",
+    "bannedSellers": "Proveedores vetados",
+    "none": "Ninguno",
+    "effective": "Umbrales efectivos (solo lectura)",
+    "unset": "Sin definir: lo decide tu empresa",
+    "thresholds": {
+      "referenceWeights": "Pesos de la referencia de precio",
+      "approval": "Aprobación humana",
+      "dual": "Doble firma"
+    },
+    "targetDiscount": "Descuento objetivo",
+    "maxDiscount": "Descuento máximo",
+    "discountNote": "Sin valores por defecto. El agente no negocia una categoría hasta que tenga los dos.",
+    "aggressiveness": "Agresividad",
+    "tone": "Tono",
+    "language": "Idioma",
+    "counterparts": "Contrapartidas que el agente puede ofrecer",
+    "sendMode": "Modo de envío: semiautomático. Cada mensaje del agente espera tu aprobación (fase 1)."
+  },
+  "accounts": {
+    "platform": "Plataforma",
+    "connection": "Conexión",
+    "status": "Estado",
+    "action": "Acción",
+    "connections": {
+      "oauth": "OAuth",
+      "password": "Usuario y contraseña"
+    },
+    "states": {
+      "connected": "Conectada",
+      "expired": "Sesión caducada",
+      "none": "Sin conectar"
+    },
+    "disconnect": "Desconectar",
+    "relogin": "Volver a entrar",
+    "connect": "Conectar",
+    "connectTitle": "Conectar {name}",
+    "user": "Usuario",
+    "password": "Contraseña",
+    "vaultNote": "Se envían directamente al almacén cifrado. Ni el agente ni esta pantalla las vuelven a ver: solo un identificador de cuenta.",
+    "save": "Guardar credenciales",
+    "pending": "Pendiente de conectar: las credenciales aún no pueden enviarse al almacén cifrado"
+  },
+  "finance": {
+    "drop": "Arrastra aquí tu CSV financiero",
+    "format": "Formato largo, UTF-8, importes en céntimos. Separador detectado automáticamente.",
+    "choose": "Elegir archivo",
+    "selected": "Archivo seleccionado ({size}). Aún no se ha subido ni leído.",
+    "template": "Descargar plantilla",
+    "pending": "Pendiente de conectar"
+  },
+  "assistant": {
+    "title": "Asistente de alta",
+    "subtitle": "Rellena el formulario por ti; tú confirmas cada campo.",
+    "agent": "Asistente",
+    "you": "Tú",
+    "input": "Mensaje al asistente",
+    "placeholder": "Escribe al asistente",
+    "send": "Enviar",
+    "stop": "Parar",
+    "sendReason": "Pendiente de conectar: el asistente aún no puede recibir mensajes."
+  }
+}

@@ -1,1 +1,202 @@
-{}
+{
+  "header": {
+    "home": "TRATO，前往决策",
+    "title": "设置公司 · 第 {n} 步，共 {total} 步",
+    "draft": "本地草稿 · 尚未保存到服务器"
+  },
+  "stepsLabel": "设置步骤",
+  "steps": {
+    "empresa": {
+      "label": "税务身份",
+      "title": "税务身份",
+      "lead": "用于询价单、采购订单和海关。"
+    },
+    "sector": {
+      "label": "行业与业务",
+      "title": "行业与业务",
+      "lead": "帮助选择平台和价格参考。"
+    },
+    "cuentas": {
+      "label": "平台账户",
+      "title": "平台账户",
+      "lead": "代理使用这些账户搜索和谈判。凭据不会离开加密保管库。"
+    },
+    "presupuesto": {
+      "label": "预算与币种",
+      "title": "预算与币种",
+      "lead": "每个报价都会对照这些限额和您的实际资金进行核对。"
+    },
+    "politica": {
+      "label": "采购政策",
+      "title": "采购政策",
+      "lead": "设定何时需要您签名、何时需要两人签名，以及接受哪些卖家。"
+    },
+    "negociacion": {
+      "label": "谈判",
+      "title": "谈判",
+      "lead": "代理的硬性限制，绝不会超出。"
+    },
+    "finanzas": {
+      "label": "财务数据",
+      "title": "财务数据",
+      "lead": "没有生效的快照，就无法启动任何任务。"
+    }
+  },
+  "stepState": {
+    "done": "已完成",
+    "warnings": "{count} 条警告",
+    "pending": "{count} 项待办"
+  },
+  "blocking": "激活财务快照（第 7 步）之前，无法启动任务。",
+  "nav": {
+    "prev": "上一步",
+    "next": "下一步",
+    "firstStep": "已经是第一步",
+    "toImport": "前往导入"
+  },
+  "pending": "尚未接入",
+  "errors": {
+    "required": "必填项",
+    "amount": "请输入有效金额",
+    "percent": "请输入有效百分比"
+  },
+  "options": {
+    "country": {
+      "es": "西班牙"
+    },
+    "customs": {
+      "eori": "常规进口商 (EORI)"
+    },
+    "frequency": {
+      "monthly": "每月",
+      "quarterly": "每季度",
+      "occasional": "不定期"
+    },
+    "currency": {
+      "EUR": "EUR",
+      "USD": "USD",
+      "CNY": "CNY"
+    },
+    "payment": {
+      "d30": "30 天",
+      "d60": "60 天",
+      "d90": "90 天",
+      "prepaid": "预付"
+    },
+    "trust": {
+      "medium": "中",
+      "high": "高"
+    },
+    "lateness": {
+      "none": "不允许延迟",
+      "late5": "最多延迟 5 天",
+      "late10": "最多延迟 10 天"
+    },
+    "aggressiveness": {
+      "balanced": "均衡",
+      "conservative": "保守",
+      "aggressive": "激进"
+    },
+    "tone": {
+      "formal": "正式",
+      "close": "亲切"
+    },
+    "language": {
+      "seller": "卖家的语言",
+      "es": "西班牙语",
+      "en": "英语"
+    },
+    "counterparts": {
+      "volume": "更大批量（不超过任务所需）",
+      "prepay": "预付",
+      "framework": "框架合同",
+      "longerTerm": "更长的付款期限"
+    }
+  },
+  "fields": {
+    "legalName": "公司名称",
+    "taxId": "税号 / VAT",
+    "country": "国家",
+    "customs": "海关制度",
+    "shipping": "收货地址",
+    "billingSame": "开票地址相同",
+    "cnae": "行业代码 (CNAE)",
+    "frequency": "采购频率",
+    "purchases": "采购内容",
+    "seasonality": "季节性",
+    "currency": "基础币种",
+    "payment": "首选付款条件",
+    "buffer": "资金缓冲 (%)",
+    "category": "类别",
+    "envelope": "月度额度",
+    "maxPerOrder": "单笔上限",
+    "addCategory": "添加类别",
+    "approvalFrom": "需人工审批的起点金额",
+    "dualFrom": "需双人签名的起点金额",
+    "amountRequired": "必须填写金额",
+    "minTrust": "卖家最低可信度",
+    "lateness": "交期容忍度",
+    "certifications": "必需的认证",
+    "excludedCountries": "排除的国家",
+    "bannedSellers": "禁用的供应商",
+    "none": "无",
+    "effective": "生效阈值（只读）",
+    "unset": "未设置：由贵公司决定",
+    "thresholds": {
+      "referenceWeights": "价格参考权重",
+      "approval": "人工审批",
+      "dual": "双人签名"
+    },
+    "targetDiscount": "目标折扣",
+    "maxDiscount": "最大折扣",
+    "discountNote": "没有默认值。两项都填写后，代理才会就该类别进行谈判。",
+    "aggressiveness": "强硬程度",
+    "tone": "语气",
+    "language": "语言",
+    "counterparts": "代理可提供的交换条件",
+    "sendMode": "发送模式：半自动。代理的每条消息都需等待您的批准（第 1 阶段）。"
+  },
+  "accounts": {
+    "platform": "平台",
+    "connection": "连接方式",
+    "status": "状态",
+    "action": "操作",
+    "connections": {
+      "oauth": "OAuth",
+      "password": "用户名和密码"
+    },
+    "states": {
+      "connected": "已连接",
+      "expired": "会话已过期",
+      "none": "未连接"
+    },
+    "disconnect": "断开连接",
+    "relogin": "重新登录",
+    "connect": "连接",
+    "connectTitle": "连接 {name}",
+    "user": "用户名",
+    "password": "密码",
+    "vaultNote": "它们将直接发送到加密保管库。代理和本页面都不会再看到：只保留账户标识。",
+    "save": "保存凭据",
+    "pending": "尚未接入：凭据暂时无法发送到加密保管库"
+  },
+  "finance": {
+    "drop": "将财务 CSV 拖到此处",
+    "format": "长格式，UTF-8，金额以分为单位。自动识别分隔符。",
+    "choose": "选择文件",
+    "selected": "已选择文件（{size}）。尚未上传或读取。",
+    "template": "下载模板",
+    "pending": "尚未接入"
+  },
+  "assistant": {
+    "title": "设置助手",
+    "subtitle": "为您填写表单；每个字段由您确认。",
+    "agent": "助手",
+    "you": "您",
+    "input": "发给助手的消息",
+    "placeholder": "向助手提问",
+    "send": "发送",
+    "stop": "停止",
+    "sendReason": "尚未接入：助手暂时无法接收消息。"
+  }
+}
