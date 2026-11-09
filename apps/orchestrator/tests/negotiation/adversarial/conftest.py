@@ -9,7 +9,12 @@ import pytest
 
 from apex.common.clock import FixedClock
 from apex.negotiation.engine import NegotiationEngine
-from apex.negotiation.ports import InMemoryAccountSendLog, InMemoryNegotiationStore
+from apex.negotiation.ports import (
+    InMemoryAccountSendLog,
+    InMemoryNegotiationStore,
+    InMemorySellerGuard,
+    InMemorySellerSendLog,
+)
 from tests.negotiation.adversarial.mock_marketplace import (
     MockAChatTransport,
     MockMarketplace,
@@ -59,6 +64,8 @@ def build_harness(
         sanity=s,
         store=InMemoryNegotiationStore(),
         send_log=InMemoryAccountSendLog(),
+        seller_log=InMemorySellerSendLog(),
+        seller_guard=InMemorySellerGuard(),
         clock=clock,
         new_id=lambda: f"id-{next(counter)}",
     )
