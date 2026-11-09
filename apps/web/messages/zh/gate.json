@@ -1,1 +1,33 @@
-{}
+{
+  "title": "审批队列 · {count} 项待处理",
+  "subtitle": "没有签名决定，任何事项都不能通过。进入后 SLA 为 24 小时。",
+  "order": "排序：最紧急优先（SLA）。",
+  "caption": "审批队列中的待处理事项",
+  "empty": "没有符合筛选条件的事项",
+  "legend": "SLA 显示剩余小时和分钟。黄色表示不足 3 小时，红色表示不足 1 小时。",
+  "slaBar": "剩余 SLA",
+  "pending": "尚未连接",
+  "close": "关闭",
+  "confirm": "确认",
+  "cancel": "取消",
+  "reminderSent": "已于 {time} 发送",
+  "cols": { "item": "事项", "cause": "原因", "amount": "金额", "sla": "SLA", "assignee": "负责人", "reminder": "提醒", "actions": "操作" },
+  "causes": {
+    "negotiator": "谈判代理上报",
+    "price": "价格异常或无参考价",
+    "confidence": "可信度低或数据不足",
+    "second_signature": "缺少第二个签名",
+    "high_amount": "大额",
+    "discard": "待复核的放弃项",
+    "company": "公司"
+  },
+  "flags": { "no_reference": "无参考价", "new_seller": "新卖家" },
+  "slaSoon": { "bad": "不足 1 小时到期", "warn": "不足 3 小时到期" },
+  "assignee": { "owner": "负责人", "finance": "财务", "none": "未分配" },
+  "filters": { "cause": "原因", "assignee": "负责人", "all": "全部", "me": "我", "today": "仅今日到期" },
+  "actions": { "unblock": "解除阻止", "override_discard": "撤销放弃" },
+  "dialog": {
+    "unblock": { "title": "解除阻止", "body": "将记录一项签名决定以解除阻止：{item}。" },
+    "override_discard": { "title": "撤销放弃", "body": "将记录一项签名决定以撤销放弃：{item}。" }
+  }
+}
