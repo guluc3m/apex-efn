@@ -404,3 +404,102 @@ def test_replaying_a_sourcing_request_returns_the_same_request(app: FastAPI) -> 
         second = client.post("/v1/sourcing-requests", json=body, headers=headers)
     assert first.status_code == second.status_code == 201
     assert first.json()["id"] == second.json()["id"]
+
+
+# ----- the browser worker is wired when a URL is configured ---------------------------------------
+
+
+def test_the_worker_port_names_its_owner_when_no_url_is_configured() -> None:
+    """A mission that needs to scrape must fail with the owner, not call a service that is not there."""
+    from apex.wiring import UnwiredBrowserWorker, build_app_services
+
+    services = build_app_services(Settings())
+    assert isinstance(services.runner._deps.scraping._deps.worker, UnwiredBrowserWorker)  # type: ignore[attr-defined]
+
+
+def test_a_configured_worker_url_switches_to_the_http_client() -> None:
+    from apex.agents.browser_worker import HttpBrowserWorker
+    from apex.wiring import build_app_services
+
+    services = build_app_services(
+        Settings(browser_worker_url="http://worker.test", browser_worker_token="t")
+    )
+    worker = services.runner._deps.scraping._deps.worker  # type: ignore[attr-defined]
+    assert isinstance(worker, HttpBrowserWorker)
+    assert worker.base_url == "http://worker.test"
+    assert worker.service_token == "t"
+
+
+async def test_the_runner_reaches_the_worker_and_stops_at_the_next_unwired_port() -> None:
+    """The worker is wired; FX (D3-03) is not, so the mission fails there — past the scraping step.
+
+    That is the honest state of the chain today, and it proves the worker client is actually called: the
+    failure reason names the port *after* it.
+    """
+    from apex.agents.missions import Mission, MissionStatus
+    from apex.agents.sourcing import PlanStep, SourcingPlan
+    from apex.wiring import build_app_services
+
+    offer = {
+        "platform": "mock-a",
+        "platform_offer_id": "a-1",
+        "product_id": "p-1",
+        "platform_seller_id": "s-1",
+        "title": "Gloves",
+        "unit_price": {"amount_minor": 445, "currency": "EUR"},
+        "list_price": None,
+        "price_tiers": [],
+        "moq": 500,
+        "quantity_available": 2000,
+        "specifications": {},
+        "certifications": [],
+        "seller_country": "CN",
+        "shipping": None,
+        "incoterm": None,
+        "lead_time_days": 10,
+        "captured_at": "2026-11-09T12:00:00Z",
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            return httpx.Response(
+                202, json={"job_id": "j-1", "status": "queued", "deduplicated": False}
+            )
+        return httpx.Response(
+            200,
+            json={
+                "job_id": "j-1",
+                "status": "succeeded",
+                "result": {"kind": "search", "offers": [offer], "skipped": [], "truncated": False},
+            },
+        )
+
+    services = build_app_services(
+        Settings(browser_worker_url="http://worker.test", browser_worker_token="t"),
+        clock=FixedClock(NOW),
+        http_client_factory=lambda cfg: httpx.AsyncClient(
+            transport=httpx.MockTransport(handler), base_url="http://worker.test"
+        ),
+    )
+    plan = SourcingPlan(
+        steps=[PlanStep(platform_id="mock-a", transport="http", query="gloves")],
+        rationale="test",
+        config_version="v1",
+    )
+    mission = Mission(
+        id="m-1",
+        tenant_id=TENANT,
+        sourcing_request_id="sr-1",
+        quantity=500,
+        status=MissionStatus.PLANNED,
+        config_version="v1",
+        created_at=NOW,
+        updated_at=NOW,
+        plan=plan,
+    )
+    await services.mission_store.create(mission)
+    result = await services.runner.run(tenant_id=TENANT, mission_id="m-1")
+    assert result.mission.status is MissionStatus.FAILED
+    assert result.failed_reason is not None
+    assert "D3-03" in result.failed_reason  # FX, the step after scraping
+    assert "D5-01" not in result.failed_reason  # the worker is wired
