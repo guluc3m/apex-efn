@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Icon } from '@apex/ui'
+import { Button, Checkbox, Icon } from '@apex/ui'
 import { FileText, FolderOpen, Download, Plus, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, type ReactNode } from 'react'
@@ -10,7 +10,7 @@ import type { z } from 'zod'
 import { certifications, effectiveThresholds } from '@/fixtures/onboarding'
 import { useOnboarding } from '@/stores/onboarding'
 
-import { CellInput, CheckGroup, CheckRow, SelectField, TextField } from './fields'
+import { CellInput, CheckGroup, SelectField, TextField } from './fields'
 import { schemas, zodResolver, type Drafts, type FormStepId } from './schemas'
 
 export const FORM_ID = 'paso-form'
@@ -68,9 +68,7 @@ export function CompanyStep() {
       <SelectField name="aduana" label={t('customs')} options={customs} />
       <TextField name="direccion" label={t('shipping')} className="col-span-full" />
       <div className="col-span-full">
-        <CheckRow label={t('billingSame')}>
-          <input type="checkbox" className="accent-accent" {...register('facturacionIgual')} />
-        </CheckRow>
+        <Checkbox label={t('billingSame')} {...register('facturacionIgual')} />
       </div>
     </div>
   )
