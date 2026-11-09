@@ -1,0 +1,99 @@
+openapi: 3.1.0
+info:
+  title: APEX-EFN Browser Worker Internal API
+  version: 0.1.0
+  summary: Internal API between the orchestrator and apps/browser-worker. Not exposed to the web app.
+  description: |
+    SKELETON (D2-01). DEV-5 completes the operations in D5-01 through a contract PR approved by DEV-2.
+    Rules that already apply:
+    - Credentials never cross this API. Accounts are referenced only by an opaque `account_id`.
+    - Every job carries `mission_id` and `trace_id` for traceability.
+    - The worker returns RAW seller signals. Normalization belongs to the TrustAgent (spec 3.4.1).
+    - Prices in responses are minor units with a currency from the closed enum EUR | USD | CNY.
+servers:
+  - url: http://localhost:4010
+    description: Local browser worker
+paths:
+  /internal/v1/jobs:
+    post:
+      tags: [jobs]
+      operationId: enqueueJob
+      summary: Enqueue a search, product, seller or seller-signals job.
+      description: "TODO(D5-01): fill in the job payloads. Only the envelope is defined here."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobEnvelope'
+      responses:
+        '202':
+          description: Job accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAccepted'
+        '422':
+          description: Invalid job payload.
+  /internal/v1/jobs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [jobs]
+      operationId: getJob
+      summary: Job status and result.
+      responses:
+        '200':
+          description: Job state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobState'
+        '404':
+          description: Unknown job.
+  # TODO(D5-01): chat session operations (open, send, read, screenshot, takeover lock).
+components:
+  schemas:
+    JobKind:
+      type: string
+      enum: [search, product, seller, seller_signals]
+    JobEnvelope:
+      type: object
+      required: [kind, mission_id, trace_id, platform, payload]
+      properties:
+        kind:
+          $ref: '#/components/schemas/JobKind'
+        mission_id:
+          type: string
+        trace_id:
+          type: string
+        platform:
+          type: string
+        payload:
+          type: object
+          description: "TODO(D5-01): replace with one schema per kind."
+          additionalProperties: true
+    JobAccepted:
+      type: object
+      required: [job_id]
+      properties:
+        job_id:
+          type: string
+    JobState:
+      type: object
+      required: [job_id, status]
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed, dead_lettered]
+        result:
+          type: object
+          additionalProperties: true
+        error_code:
+          type: [string, 'null']

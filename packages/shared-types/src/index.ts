@@ -1,15 +1,8 @@
 /**
  * @apex/shared-types
  *
- * Central type definitions shared between all services.
- * Generated from OpenAPI spec where applicable.
+ * Contract types are generated from contracts/openapi.yaml. Import them from
+ * '@apex/shared-types/contracts'. Hand-written DTOs in src/legacy are deprecated.
  */
-
-export * from './currency.js'
-export * from './seller.js'
-export * from './sanity.js'
-export * from './signing.js'
-export * from './offer.js'
-export * from './financial.js'
-export * from './mission.js'
-export * from './config.js'
+export * from './generated/index.js'
+export * from './generated/zod.gen.js'
