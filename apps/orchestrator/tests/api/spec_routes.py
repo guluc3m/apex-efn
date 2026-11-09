@@ -73,5 +73,20 @@ DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
+# Routes DEV-5 added that section 8 does not list: reading a negotiation, its transcript and the
+# semi-automatic approval loop (D5-07c). Declared in contracts/openapi.yaml; they answer 501 until D5-07c
+# implements them.
+DEV5_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("GET", "/v1/negotiations/{id}"),
+        ("GET", "/v1/negotiations/{id}/messages"),
+        ("POST", "/v1/negotiations/{id}/messages"),
+        ("POST", "/v1/negotiations/{id}/approve"),
+        ("POST", "/v1/negotiations/{id}/reject"),
+    }
+)
+
 # The exact-set check covers both. The 501 stub check covers only SPEC_ROUTES minus IMPLEMENTED_ROUTES.
-EXPECTED_ROUTES: frozenset[tuple[str, str]] = SPEC_ROUTES | CONFIG_ROUTES | DEV4_EXTRA_ROUTES
+EXPECTED_ROUTES: frozenset[tuple[str, str]] = (
+    SPEC_ROUTES | CONFIG_ROUTES | DEV4_EXTRA_ROUTES | DEV5_EXTRA_ROUTES
+)
