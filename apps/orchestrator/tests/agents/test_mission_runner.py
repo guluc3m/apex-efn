@@ -306,3 +306,11 @@ async def test_a_failed_mission_keeps_its_reason_for_the_ui() -> None:
     stored = await store.get(TENANT, "m-1")
     assert stored is not None and stored.failure_reason is not None
     assert "D5-01" in stored.failure_reason
+
+
+async def test_the_sourcing_event_reports_how_many_listings_were_skipped() -> None:
+    runner, store, _, _, _ = _runner()
+    await _seed(store)
+    result = await runner.run(tenant_id=TENANT, mission_id="m-1")
+    sourced = next(e for e in result.mission.events if e.type is MissionEventType.OFFERS_COLLECTED)
+    assert sourced.payload["skipped"] == 0

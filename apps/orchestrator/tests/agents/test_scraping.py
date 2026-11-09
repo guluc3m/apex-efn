@@ -268,3 +268,46 @@ def test_offers_quoted_in_an_unsupported_currency_are_not_collected() -> None:
     assert [o.platform_offer_id for o in offers_from_fixture(products, platform_id="mock-a")] == [
         "a-1"
     ]
+
+
+# ----- skipped listings are visible, never silently dropped ---------------------------------------
+
+
+async def test_listings_the_adapter_refused_are_reported_with_their_reason() -> None:
+    """The contract's ``SkippedListing``: an offer that vanishes must say why."""
+    from apex.agents.scraping import SkippedListing
+
+    class _WorkerWithSkips(_Worker):
+        async def search(self, *, tenant_id, mission_id, step, quantity):  # type: ignore[no-untyped-def]
+            self.calls.append(
+                {"platform": step.platform_id, "query": step.query, "quantity": quantity}
+            )
+            return WorkerSearchResult(
+                platform_id=step.platform_id,
+                offers=[_raw()],
+                skipped=[
+                    SkippedListing(
+                        platform_id=step.platform_id,
+                        platform_offer_id="a-gbp-1",
+                        reason="unsupported_currency",
+                        currency_raw="GBP",
+                    )
+                ],
+            )
+
+    service, _, _ = _service(_WorkerWithSkips({}))
+    result = await service.scrape(
+        tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500
+    )
+    assert result.kept == 1
+    assert [(s.platform_offer_id, s.reason, s.currency_raw) for s in result.skipped] == [
+        ("a-gbp-1", "unsupported_currency", "GBP")
+    ]
+
+
+async def test_no_skips_is_the_normal_case() -> None:
+    service, _, _ = _service(_Worker({"mock-a": [_raw()]}))
+    result = await service.scrape(
+        tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500
+    )
+    assert result.skipped == []

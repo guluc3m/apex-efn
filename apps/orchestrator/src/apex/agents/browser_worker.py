@@ -22,7 +22,7 @@ from typing import Any, Protocol
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from apex.agents.scraping import RawOffer, WorkerSearchResult
+from apex.agents.scraping import RawOffer, SkippedListing, WorkerSearchResult
 from apex.agents.sourcing import PlanStep
 
 JOBS_PATH = "/internal/v1/jobs"
@@ -203,6 +203,15 @@ class HttpBrowserWorker:
         return WorkerSearchResult(
             platform_id=platform_id,
             offers=[_to_raw_offer(offer) for offer in result.offers],
+            skipped=[
+                SkippedListing(
+                    platform_id=platform_id,
+                    platform_offer_id=skipped.platform_offer_id,
+                    reason=skipped.reason,
+                    currency_raw=skipped.currency_raw,
+                )
+                for skipped in result.skipped
+            ],
             truncated=result.truncated,
         )
 
