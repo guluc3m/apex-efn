@@ -32,6 +32,13 @@ from apex.agents.ports import (
     TrustPort,
 )
 from apex.common.clock import Clock
+from apex.common.metrics import (
+    CONFIDENCE_BANDS,
+    MANIPULATION_FLAGS,
+    PRICE_BANDS,
+    closed,
+    get_metrics,
+)
 
 
 class AnalysisConfig(Protocol):
@@ -98,6 +105,8 @@ class AnalysisNodes:
         record = SellerConfidenceRecord(
             seller_id=seller_id,
             tenant_id=tenant_id,
+            platform_id=str(signals.get("platform_id", "")),
+            flags=tuple(str(f) for f in getattr(outcome, "flags", ())),
             band=outcome.band,
             score=outcome.score,
             model_version=outcome.model_version,
@@ -106,6 +115,7 @@ class AnalysisNodes:
             signals_used=_count_signals(signals),
         )
         await self._deps.confidence.append(record)
+        _record_confidence(record)
         if force:
             await self._audit(
                 tenant_id,
@@ -126,11 +136,14 @@ class AnalysisNodes:
         """Run trust, sanity and finance for one offer and persist the result."""
         payload = offer_payload(offer)
         confidence = await self.score_seller(
-            tenant_id=tenant_id, seller_id=offer.seller_id, signals=offer.raw_signals
+            tenant_id=tenant_id,
+            seller_id=offer.seller_id,
+            signals={**offer.raw_signals, "platform_id": offer.platform_id},
         )
         sanity: SanityOutcome = await self._deps.sanity.check(
             payload, tenant_id=tenant_id, price_minor=offer.unit_price_eur_minor
         )
+        _record_sanity(offer.platform_id, sanity)
         fit: FitOutcome = await self._deps.finance.fit(payload, tenant_id=tenant_id)
         analysis = OfferAnalysis(
             offer_id=offer.id,
@@ -167,6 +180,31 @@ class AnalysisNodes:
 
     async def _audit(self, tenant_id: str, event: Mapping[str, Any]) -> None:
         await self._deps.audit.append(event, tenant_id=tenant_id)
+
+
+def _record_sanity(platform_id: str, outcome: SanityOutcome) -> None:
+    """``apex.price_sanity.*`` — band and relative deviation, never an amount."""
+    metrics = get_metrics()
+    metrics.price_sanity_checks.add(
+        1, {"platform": platform_id, "band": closed(outcome.band.value, PRICE_BANDS)}
+    )
+    deviation = getattr(outcome, "relative_deviation", None)
+    if deviation is not None:
+        metrics.price_sanity_relative_deviation.record(float(deviation), {"platform": platform_id})
+
+
+def _record_confidence(record: SellerConfidenceRecord) -> None:
+    """``apex.seller_confidence.*`` — band, score and manipulation flags."""
+    metrics = get_metrics()
+    metrics.seller_confidence_assessments.add(
+        1, {"platform": record.platform_id, "band": closed(record.band.value, CONFIDENCE_BANDS)}
+    )
+    if record.score is not None:
+        metrics.seller_confidence_score.record(record.score, {"platform": record.platform_id})
+    for flag in record.flags:
+        metrics.seller_confidence_flags.add(
+            1, {"platform": record.platform_id, "flag": closed(flag, MANIPULATION_FLAGS)}
+        )
 
 
 def _count_signals(signals: Mapping[str, Any]) -> int:

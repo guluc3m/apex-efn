@@ -69,6 +69,10 @@ class SellerConfidenceRecord(_Model):
 
     seller_id: str
     tenant_id: str
+    platform_id: str = ""
+    """The platform the snapshot came from, for the ``platform`` metric label."""
+    flags: tuple[str, ...] = ()
+    """Structural manipulation flags reported by the trust engine (D3-06). Closed set."""
     band: ConfidenceBand
     score: int | None
     model_version: str

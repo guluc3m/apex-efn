@@ -22,6 +22,7 @@ import httpx
 from pydantic import BaseModel, SecretStr
 
 from apex.common.clock import Clock, SystemClock
+from apex.common.metrics import LLM_OUTCOMES, closed, get_metrics
 from apex.llm.accounting import LLMEvent, LLMEventSink
 from apex.llm.budget import TokenBudget, TokenBudgetExceeded, estimate_prompt_tokens
 from apex.llm.config import (
@@ -38,7 +39,7 @@ from apex.llm.resilience import (
     Sleeper,
     run_with_fallback,
 )
-from apex.llm.structured import StructuredOutputError, StructuredResult, run_ladder
+from apex.llm.structured import LadderStep, StructuredOutputError, StructuredResult, run_ladder
 from apex.llm.transport import OpenAICompatTransport
 
 M = TypeVar("M", bound=BaseModel)
@@ -476,6 +477,17 @@ class LLMGateway:
         gpu_seconds: float | None = None
         if cfg.gpu_seconds_per_1k_tokens is not None:
             gpu_seconds = (tokens_in + tokens_out) / 1000.0 * cfg.gpu_seconds_per_1k_tokens
+        self._record_metrics(
+            role=role,
+            cfg=cfg,
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
+            latency_ms=latency_ms,
+            ladder_step=ladder_step,
+            repair=repair,
+            outcome=outcome,
+            gpu_seconds=gpu_seconds,
+        )
         self._sink.emit(
             LLMEvent(
                 mission_id=mission_id,
@@ -495,6 +507,38 @@ class LLMGateway:
             )
         )
 
+    def _record_metrics(
+        self,
+        *,
+        role: LLMRole,
+        cfg: RoleEndpointConfig,
+        tokens_in: int,
+        tokens_out: int,
+        latency_ms: float,
+        ladder_step: str,
+        repair: int,
+        outcome: str,
+        gpu_seconds: float | None,
+    ) -> None:
+        """Emit the LLM health metrics (``docs/observability/metrics.md`` §5).
+
+        Labels are the role and the endpoint id only: never the mission, the tenant or the prompt.
+        """
+        metrics = get_metrics()
+        labels = {"role": role.value, "endpoint": cfg.endpoint_id}
+        metrics.llm_requests.add(1, {**labels, "outcome": closed(outcome, LLM_OUTCOMES)})
+        metrics.llm_request_duration.record(latency_ms / 1000.0, labels)
+        if tokens_in:
+            metrics.llm_tokens.add(tokens_in, {**labels, "direction": "input"})
+        if tokens_out:
+            metrics.llm_tokens.add(tokens_out, {**labels, "direction": "output"})
+        if repair:
+            metrics.llm_json_repairs.add(
+                repair, {"role": role.value, "ladder_step": _ladder_index(ladder_step)}
+            )
+        if gpu_seconds:
+            metrics.llm_gpu_seconds.add(gpu_seconds, {"endpoint": cfg.endpoint_id})
+
     def breaker_state(self, *, tenant_id: str, endpoint_id: str) -> str:
         """Current circuit-breaker state for an endpoint (observability and tests)."""
         roles = self._roles(tenant_id)
@@ -504,6 +548,18 @@ class LLMGateway:
         for transport in self._transports.values():
             await transport.aclose()
         self._transports.clear()
+
+
+def _ladder_index(ladder_step: str) -> str:
+    """The catalogue labels repairs by ladder step 1-5; anything else is ``other``."""
+    order = {
+        LadderStep.JSON_SCHEMA.value: "1",
+        LadderStep.JSON_OBJECT.value: "2",
+        LadderStep.TOOL_CALL.value: "3",
+        LadderStep.GUIDED.value: "4",
+        LadderStep.PLAIN_REPAIR.value: "5",
+    }
+    return order.get(ladder_step, "other")
 
 
 async def _call_chat(transport: OpenAICompatTransport, payload: dict[str, Any]) -> dict[str, Any]:
