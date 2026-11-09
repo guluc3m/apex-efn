@@ -190,5 +190,6 @@
     "title": "Transcripción: {seller}",
     "agent": "Agente",
     "seller": "Vendedor"
-  }
+  },
+  "emptyNext": "Ver misiones en curso"
 }

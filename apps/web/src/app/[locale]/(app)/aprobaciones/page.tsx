@@ -1,7 +1,7 @@
 import { setRequestLocale } from 'next-intl/server'
 
-import { APPROVAL_TABS, ApprovalsList } from '@/components/approvals/approvals-view'
-import { approvals } from '@/fixtures/approvals'
+import { ApprovalsList } from '@/components/approvals/approvals-view'
+import { APPROVAL_TABS, approvals } from '@/fixtures/approvals'
 
 export default async function ApprovalsPage({
   params,

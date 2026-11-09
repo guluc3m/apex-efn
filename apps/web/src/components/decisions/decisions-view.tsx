@@ -119,7 +119,12 @@ export function DecisionsView() {
                 ))}
               </div>
               <ul className="m-0 list-none border-t border-line p-0">
-                {rows.length === 0 && <li className="px-gutter-panel py-6 text-ink-soft">{t('empty')}</li>}
+                {rows.length === 0 && (
+                  <li className="px-gutter-panel py-6 text-ink-soft">
+                    {t('empty')}{' '}
+                    <AppLink href="/misiones" className="text-accent underline">{t('emptyNext')}</AppLink>
+                  </li>
+                )}
                 {rows.map((d, n) => {
                   const on = d.id === selected?.id
                   return (

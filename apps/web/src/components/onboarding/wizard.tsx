@@ -40,10 +40,10 @@ function Assistant() {
         <Chat
           messages={messages}
           labels={{ input: t('input'), placeholder: t('placeholder'), send: t('send'), stop: t('stop') }}
-          // //todo_#152: conectar el chat con el IntakeAgent. Hasta entonces el envío no hace nada y se avisa debajo.
+          // //todo_#152: conectar el chat con el IntakeAgent; hasta entonces el envío queda deshabilitado con motivo.
+          disabledReason={t('sendReason')}
           onSend={() => undefined}
         />
-        <p role="note" className="m-0 text-[13px] text-ink-muted">{t('sendReason')}</p>
       </div>
     </aside>
   )
@@ -75,16 +75,9 @@ export function OnboardingWizard({ step }: { step: StepId }) {
 
   return (
     <>
-      <header className="flex items-center gap-4 border-b border-line px-gutter-page py-3">
-        <AppLink href="/decisiones" aria-label={t('header.home')} className="text-[17px] font-semibold tracking-[-0.04em] text-ink no-underline">
-          TRATO
-        </AppLink>
-        <span className="text-[13px] text-ink-muted">{t('header.title', { n: index + 1, total: STEP_IDS.length })}</span>
-        {/* //todo_#152: estado de guardado real (guardado automático en servidor) */}
-        <span className="ml-auto text-[13px] text-ink-muted">{t('header.draft')}</span>
-      </header>
       <main id="contenido" tabIndex={-1} className="grid min-h-[calc(100vh-57px)] grid-cols-[260px_minmax(0,1fr)_380px]">
         <nav aria-label={t('stepsLabel')} className="flex flex-col border-r border-line py-4">
+          <p className="m-0 px-4 pb-2 text-[13px] text-ink-muted">{t('header.title', { n: index + 1, total: STEP_IDS.length })}</p>
           <ol className="m-0 list-none p-0">
             {STEP_IDS.map((id, i) => {
               const s = stepStatus[id]

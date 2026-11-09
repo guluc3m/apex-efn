@@ -42,7 +42,7 @@ function UserMenu() {
         <Icon icon={ChevronDown} className="text-ink-muted transition-transform duration-(--fast) ease-apex-move group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
       </DropdownMenuTrigger>
       <DropdownMenuContent aria-label={t('menu')} className="w-64">
-        {/* //todo_#177: página de perfil; por ahora solo se muestran los datos */}
+        {/* //todo_#147: página de perfil; por ahora solo se muestran los datos */}
         <div className="px-3 pt-2 pb-2">
           <div className="font-medium">{user.name}</div>
           <div className="text-[13px] text-ink-muted">{user.email}</div>

@@ -63,7 +63,7 @@ export function GateQueue({ items, role }: { items: GateItem[]; role: string }) 
       ),
     },
     { id: 'cause', header: t('cols.cause'), sortValue: (r) => t(`causes.${r.cause}`), cell: (r) => t(`causes.${r.cause}`) },
-    { id: 'amount', header: t('cols.amount'), num: true, sortValue: (r) => r.amountMinor ?? -1, cell: (r) => r.amount ?? '—' },
+    { id: 'amount', header: t('cols.amount'), num: true, sortValue: (r) => r.amountMinor ?? -1, cell: (r) => <span className="whitespace-nowrap">{r.amount ?? '—'}</span> },
     {
       id: 'sla',
       header: t('cols.sla'),

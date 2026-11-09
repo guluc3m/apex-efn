@@ -5,9 +5,7 @@ import { ArrowLeft, Download, FileText, PenLine, Send, Truck } from 'lucide-reac
 import { useTranslations } from 'next-intl'
 
 import { AppLink, renderLink } from '@/components/app-link'
-import type { ApprovalDocument, ApprovalFixture, ApprovalSignature, ApprovalStatus } from '@/fixtures/approvals'
-
-export const APPROVAL_TABS: readonly ApprovalStatus[] = ['sign', 'progress', 'closed']
+import { APPROVAL_TABS, type ApprovalDocument, type ApprovalFixture, type ApprovalSignature, type ApprovalStatus } from '@/fixtures/approvals'
 
 /** Bandeja: el filtro `?estado=` vive en la URL; las pestañas son enlaces. */
 export function ApprovalsList({ rows, status }: { rows: ApprovalFixture[]; status: ApprovalStatus }) {
