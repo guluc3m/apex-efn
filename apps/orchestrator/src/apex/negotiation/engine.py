@@ -44,7 +44,7 @@ from apex.negotiation.models import (
     SanityBand,
     TranscriptMessage,
 )
-from apex.negotiation.playbook import Stop, build_ladder, decide, select_quote
+from apex.negotiation.playbook import Stop, build_ladder, decide, offered_prices, select_quote
 from apex.negotiation.ports import (
     AccountSendLog,
     ChatTransport,
@@ -372,9 +372,15 @@ class NegotiationEngine:
     async def _quote(
         self, session: NegotiationSession, text: str, verdict: IncomingVerdict
     ) -> Quote | None:
-        """LLM extraction, accepted only when grounded in a price literally present in the text."""
+        """LLM extraction, accepted only when grounded in a price literally present in the text.
+
+        A price the buyer side already proposed is an echo, not a quote, whenever the seller also states a
+        fresh price. It counts as the seller's price only when it is the only one in the message, and then
+        the written summary still has to be confirmed before anything is agreed.
+        """
         currency = session.params.currency
-        fallback = select_quote(verdict, currency, session.rounds_sent)
+        offered = offered_prices(session)
+        fallback = select_quote(verdict, currency, session.rounds_sent, offered=offered)
         try:
             extraction = await self._extractor.extract(text, session)
         except Exception:
@@ -388,6 +394,9 @@ class NegotiationEngine:
         )
         if not grounded:
             session.guardrail_hits.append("extraction_not_grounded")
+            return fallback
+        if extraction.unit_price_minor in offered and fallback is not None:
+            session.guardrail_hits.append("extraction_echoes_agent_price")
             return fallback
         return Quote(
             unit_price_minor=extraction.unit_price_minor,

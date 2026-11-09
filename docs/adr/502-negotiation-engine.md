@@ -27,6 +27,12 @@ for a human approval (spec 10).
    - **Extraction** (`chat_structured`, role `negotiator`). The result is accepted only when it is
      _grounded_: the same amount and currency must appear literally in the seller text. Otherwise the
      engine uses the deterministic parser (lowest price in the negotiation currency).
+   - **Echoes.** Sellers repeat the buyer's offer when they reject it ("EUR 3.79 is too low, our best is
+     EUR 4.12"). A price the buyer side already sent is therefore never the quote when the message also
+     states a fresh price. Both the parser fallback and the extraction check apply this rule. When our
+     price is the only one in the message, it counts as the seller accepting it, and the written summary
+     must still be confirmed before anything is agreed. The D5-09 suite found this against the mock
+     marketplace.
 3. **Single send path.** `_send` re-runs `check_outgoing` right before the transport call, so an approved
    draft cannot be sent if the situation changed after approval. The situation includes rounds, tokens,
    hourly rate, a human in control and the limits.
