@@ -28,12 +28,17 @@ from typing import Any
 
 import httpx
 
+from apex.agents.analysis import AnalysisDeps, AnalysisNodes
+from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
+from apex.agents.mission_runner import MissionRunner, MissionRunnerDeps
 from apex.agents.missions import InMemoryMissionStore, MissionEventBus
+from apex.agents.offers import InMemoryOfferStore, InMemorySellerConfidenceStore
 from apex.agents.onboarding import (
     InMemoryOnboardingStore,
     OnboardingDeps,
     OnboardingService,
 )
+from apex.agents.scraping import ScrapingDeps, ScrapingService
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
 from apex.common.clock import Clock, SystemClock
@@ -93,6 +98,70 @@ class UnwiredObjectStore:
 
     async def put(self, key: str, content: bytes, *, content_type: str) -> str:
         raise NotImplementedError("object storage is not wired yet (owner: DEV-1, D1-06)")
+
+
+class UnwiredBrowserWorker:
+    """D5-01. Named so a mission that needs it fails with the owner instead of hanging."""
+
+    async def search(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("browser worker is not wired yet (owner: DEV-5, D5-01)")
+
+
+class UnwiredFx:
+    async def to_eur_unit(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("FX is not wired yet (owner: DEV-3, D3-03)")
+
+
+class UnwiredTrust:
+    async def score(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("trust engine is not wired yet (owner: DEV-3, D3-06)")
+
+
+class UnwiredSanity:
+    async def check(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("price sanity engine is not wired yet (owner: DEV-3, D3-07)")
+
+
+class UnwiredFinance:
+    async def fit(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("financial fit is not wired yet (owner: DEV-3, D3-05)")
+
+
+class UnwiredAudit:
+    async def append(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("audit chain is not wired yet (owner: DEV-2, D2-10)")
+
+
+class _AnalysisConfig:
+    """``AnalysisConfig`` over the defaults: the config version and the snapshot max age."""
+
+    def __init__(self, config_version: Callable[[str], str]) -> None:
+        self._config_version = config_version
+        _, values = load_global_layer(DEFAULT_PATH)
+        self._snapshot_max_age_days = int(values["seller"]["snapshot_max_age_days"])
+
+    def config_version(self, tenant_id: str) -> str:
+        return self._config_version(tenant_id)
+
+    def seller_snapshot_max_age_days(self, tenant_id: str) -> int:
+        return self._snapshot_max_age_days
+
+
+def _gate_rules() -> GateRules:
+    """``GateRules`` from the versioned defaults. ``approval.threshold`` is unset by default (Q7).
+
+    An unset threshold means "no stretch gate": the value is a business number the tenant must supply, and
+    inventing one here would be exactly what rule 0.6 forbids. The gate queue still catches every other
+    cause.
+    """
+    _, values = load_global_layer(DEFAULT_PATH)
+    threshold = values["approval"]["threshold"]
+    stretch = int(threshold["amount_minor"]) if isinstance(threshold, dict) else 0
+    return GateRules(
+        sla_hours=int(values["gate"]["sla_hours"]),
+        max_renegotiations=int(values["gate"]["max_renegotiations"]),
+        stretch_gate_threshold_eur_minor=stretch,
+    )
 
 
 class DefaultRoleConfigProvider:
@@ -158,6 +227,7 @@ def _capabilities(declared: tuple[str, ...]) -> CapabilityProfile:
 class AppServices:
     """Everything the HTTP layer needs, built once per app."""
 
+    settings: Settings
     tenant_config: TenantConfigService
     gateway: LLMGateway
     prompts: PromptRegistry
@@ -167,6 +237,8 @@ class AppServices:
     flags: FlagProvider
     config_repository: InMemoryConfigRepository
     onboarding: OnboardingService
+    runner: MissionRunner
+    """Ready to advance a planned mission. Only invoked automatically when ``mission_autorun`` is on."""
 
 
 def build_app_services(
@@ -208,6 +280,46 @@ def build_app_services(
             config_version=_default_config_version(),
         )
     )
+    offer_store = InMemoryOfferStore()
+    gate_store = InMemoryGateStore()
+    rules = _gate_rules()
+    runner = MissionRunner(
+        MissionRunnerDeps(
+            scraping=ScrapingService(
+                ScrapingDeps(
+                    worker=UnwiredBrowserWorker(),
+                    fx=UnwiredFx(),
+                    offers=offer_store,
+                    bus=mission_bus,
+                    clock=active_clock,
+                )
+            ),
+            nodes=AnalysisNodes(
+                AnalysisDeps(
+                    trust=UnwiredTrust(),
+                    sanity=UnwiredSanity(),
+                    finance=UnwiredFinance(),
+                    offers=offer_store,
+                    confidence=InMemorySellerConfidenceStore(),
+                    audit=UnwiredAudit(),
+                    config=_AnalysisConfig(_default_config_version()),
+                    clock=active_clock,
+                )
+            ),
+            gate=GateAgent(
+                GateDeps(
+                    store=gate_store,
+                    decisions=UnwiredDecisionPort(),
+                    clock=active_clock,
+                    ids=IdGenerator(active_clock),
+                )
+            ),
+            store=mission_store,
+            bus=mission_bus,
+            clock=active_clock,
+            rules_for=lambda tenant_id: rules,
+        )
+    )
     onboarding = OnboardingService(
         OnboardingDeps(
             store=InMemoryOnboardingStore(),
@@ -221,6 +333,7 @@ def build_app_services(
         )
     )
     return AppServices(
+        settings=cfg,
         tenant_config=tenant_config,
         gateway=gateway,
         prompts=prompts,
@@ -230,6 +343,7 @@ def build_app_services(
         flags=active_flags,
         config_repository=config_repository,
         onboarding=onboarding,
+        runner=runner,
     )
 
 
@@ -273,7 +387,9 @@ __all__ = [
     "DEV_PLATFORMS",
     "AppServices",
     "DefaultRoleConfigProvider",
+    "UnwiredBrowserWorker",
     "UnwiredCsvImporter",
+    "UnwiredFx",
     "UnwiredObjectStore",
     "UnwiredDecisionPort",
     "build_app_services",
