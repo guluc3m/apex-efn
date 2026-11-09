@@ -1,1 +1,194 @@
-{}
+{
+  "title": "Decisions",
+  "nav": {
+    "deals": "Deals",
+    "gate": "Gate queue"
+  },
+  "kpi": {
+    "label": "Indicators",
+    "pending": "Awaiting decision",
+    "signed": "Signed decisions",
+    "sla": "Nearest SLA",
+    "savings": "Savings vs. market",
+    "savingsWeekly": "Cumulative savings per week",
+    "week": "Week",
+    "trend": "Trend: {values}"
+  },
+  "views": {
+    "label": "List view",
+    "cola": "Queue · {n}",
+    "tratos": "Deals · {n}"
+  },
+  "filter": {
+    "all": "All",
+    "profile": "Ranking profile",
+    "price": "Price",
+    "confidence": "Confidence",
+    "verdict": "Verdict",
+    "platform": "Platform",
+    "signature": "Signature"
+  },
+  "profile": {
+    "comprador": "Operational buyer",
+    "cfo": "CFO / finance"
+  },
+  "whyRank": {
+    "comprador": "Buyer: lead time weighs more, so Seller E ranks 1st.",
+    "cfo": "CFO: financial fit weighs more, so Seller A ranks 1st and Seller E (stretch) drops."
+  },
+  "empty": "No deal matches the filters.",
+  "cause": {
+    "atypicalPrice": "Atypical price",
+    "lowConfidence": "Low-confidence seller",
+    "secondSignature": "Second signature missing (1 of 2)",
+    "escalatedDiscard": "Discarded by escalation rule",
+    "staleSnapshot": "Stale financial data",
+    "ready": "Ready to decide",
+    "highAmount": "High amount"
+  },
+  "sla": "SLA {time}",
+  "perUnit": "/unit",
+  "rank": "#{n} · score {score}",
+  "band": {
+    "normal": "Normal price",
+    "atypical": "Atypical price",
+    "implausible": "Implausible price",
+    "insufficient_reference": "Insufficient reference"
+  },
+  "conf": {
+    "high": "high",
+    "medium": "medium",
+    "low": "low",
+    "untrusted": "untrusted",
+    "insufficient_data": "insufficient data"
+  },
+  "confLabel": "Confidence {band} · {score}",
+  "verdict": {
+    "within_budget": "Within budget",
+    "stretch": "Stretch",
+    "out_of_budget": "Out of budget"
+  },
+  "sig": {
+    "pending": "Pending",
+    "pending12": "Pending 1/2",
+    "none": "Unsigned",
+    "signed": "Signed"
+  },
+  "detail": {
+    "priceInitial": "Initial price",
+    "priceNegotiated": "Negotiated price",
+    "initial": "Initial",
+    "notNegotiated": "Not negotiated",
+    "confidence": "Seller confidence",
+    "landed": "Landed cost",
+    "expires": "Offer expires in {n} d",
+    "fullTranscript": "View full transcript",
+    "noNegotiation": "Not negotiated yet: no negotiated price or transcript.",
+    "whyConfidence": "Why this confidence",
+    "sanity": "Price sanity",
+    "chartPending": "Chart: price distribution with the band marked (not connected yet)",
+    "landedBreakdown": "Landed cost breakdown",
+    "priceQty": "Price × quantity",
+    "total": "Total",
+    "contribution": "Score contribution",
+    "unscored": "Not scored: not a final deal yet.",
+    "risks": "Risk flags",
+    "terms": "Product, lead time and terms",
+    "termsPending": "Specification, lead time and payment terms: not connected yet."
+  },
+  "signal": {
+    "age": "Age",
+    "ageV": "{n} days",
+    "sales": "Sales",
+    "salesV": "{n} sales · {pct}% repeat",
+    "catalog": "Catalogue",
+    "catalogV": "{n} products · listing {pct}%",
+    "reviews": "Reviews",
+    "reviewsV": "{rating} of {n} · {pct}% verified",
+    "institutional": "Institutional guarantee",
+    "institutionalV": "{kyc, select, true {KYC} other {No KYC}} · {escrow, select, true {escrow} other {no escrow}} · disputes {pct}%"
+  },
+  "stale": {
+    "body": "The active financial snapshot has expired. Direct purchases are blocked until the CSV is re-imported.",
+    "cta": "Re-import CSV"
+  },
+  "reason": {
+    "blockLow": "Low-confidence seller: a signed unblock decision is required.",
+    "staleFinancials": "Financial snapshot expired: direct purchase is blocked until the CSV is re-imported."
+  },
+  "action": {
+    "follow": "Follow and buy",
+    "renegotiate": "Renegotiate",
+    "takeover": "Take over",
+    "hold": "Put on hold",
+    "discard": "Discard",
+    "unblock": "Unblock",
+    "override_discard": "Override discard",
+    "sign2": "Add second signature"
+  },
+  "passkey": "passkey",
+  "line": {
+    "shipping": "Shipping",
+    "insurance": "Insurance",
+    "duties": "Duties and VAT",
+    "capital": "Cost of capital",
+    "fees": "Payment fees",
+    "fx": "FX and risk"
+  },
+  "criterion": {
+    "landed": "Landed cost",
+    "lead": "Lead time",
+    "confidence": "Confidence",
+    "fit": "Financial fit",
+    "margin": "Margin",
+    "spec": "Specification",
+    "compliance": "Compliance",
+    "gain": "Negotiation gain"
+  },
+  "sanity": {
+    "atypical": "Index outside the normal range on the cheap side.",
+    "normal": "Within the normal band.",
+    "escalated": "Escalated to implausible price by the price and confidence combination."
+  },
+  "risk": {
+    "below60": "More than 60% below the median",
+    "burst": "Reviews concentrated in a few days",
+    "escalated": "Atypical price and untrusted seller: escalated to discard",
+    "none": "No flags"
+  },
+  "discardReason": {
+    "price_too_high": "Price too high",
+    "seller_not_trusted": "Seller not trusted",
+    "spec_mismatch": "Does not meet the specification",
+    "lead_time": "Lead time",
+    "out_of_budget": "Out of budget",
+    "duplicate": "Duplicate",
+    "other": "Other"
+  },
+  "dialog": {
+    "close": "Close",
+    "reasonCode": "Reason",
+    "choose": "Choose a reason",
+    "commentRequired": "Comment (required)",
+    "reviewDate": "Review date",
+    "instructions": "Renegotiation instructions",
+    "overrideReason": "Override reason (required)",
+    "payloadIntro": "You will sign exactly this:",
+    "decision": "Decision",
+    "amount": "Amount",
+    "offer": "Offer",
+    "band": "Price band",
+    "confidence": "Confidence",
+    "verdict": "Verdict",
+    "passkeyNote": "This decision requires a passkey even if the signing window is still open.",
+    "sign": "Sign decision",
+    "cancel": "Cancel"
+  },
+  "pending": "Not connected yet",
+  "transcript": {
+    "back": "Back to list",
+    "title": "Transcript: {seller}",
+    "agent": "Agent",
+    "seller": "Seller"
+  }
+}

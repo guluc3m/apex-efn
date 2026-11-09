@@ -1,1 +1,194 @@
-{}
+{
+  "title": "决策",
+  "nav": {
+    "deals": "交易",
+    "gate": "审核队列"
+  },
+  "kpi": {
+    "label": "指标",
+    "pending": "待决策",
+    "signed": "已签署决策",
+    "sla": "最近的SLA",
+    "savings": "相对市场的节省",
+    "savingsWeekly": "每周累计节省",
+    "week": "周",
+    "trend": "趋势：{values}"
+  },
+  "views": {
+    "label": "列表视图",
+    "cola": "队列 · {n}",
+    "tratos": "交易 · {n}"
+  },
+  "filter": {
+    "all": "全部",
+    "profile": "排名方案",
+    "price": "价格",
+    "confidence": "信任度",
+    "verdict": "结论",
+    "platform": "平台",
+    "signature": "签名"
+  },
+  "profile": {
+    "comprador": "运营采购",
+    "cfo": "财务总监"
+  },
+  "whyRank": {
+    "comprador": "采购方案：交期权重更高，因此卖家E排第1。",
+    "cfo": "财务方案：财务匹配权重更高，因此卖家A排第1，处于上限的卖家E下降。"
+  },
+  "empty": "没有符合筛选条件的交易。",
+  "cause": {
+    "atypicalPrice": "价格异常",
+    "lowConfidence": "低信任度卖家",
+    "secondSignature": "缺少第二个签名（1/2）",
+    "escalatedDiscard": "因升级规则被淘汰",
+    "staleSnapshot": "财务数据已过期",
+    "ready": "可决策",
+    "highAmount": "高金额"
+  },
+  "sla": "SLA {time}",
+  "perUnit": "/件",
+  "rank": "第{n}名 · 得分 {score}",
+  "band": {
+    "normal": "价格正常",
+    "atypical": "价格异常",
+    "implausible": "价格不合理",
+    "insufficient_reference": "参考不足"
+  },
+  "conf": {
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "untrusted": "不可信",
+    "insufficient_data": "数据不足"
+  },
+  "confLabel": "信任度{band} · {score}",
+  "verdict": {
+    "within_budget": "预算内",
+    "stretch": "接近上限",
+    "out_of_budget": "超出预算"
+  },
+  "sig": {
+    "pending": "待签",
+    "pending12": "待签 1/2",
+    "none": "未签",
+    "signed": "已签"
+  },
+  "detail": {
+    "priceInitial": "初始价格",
+    "priceNegotiated": "谈判价格",
+    "initial": "初始",
+    "notNegotiated": "未谈判",
+    "confidence": "卖家信任度",
+    "landed": "到岸成本",
+    "expires": "报价 {n} 天后到期",
+    "fullTranscript": "查看完整记录",
+    "noNegotiation": "尚未谈判：没有谈判价格或记录。",
+    "whyConfidence": "信任度依据",
+    "sanity": "价格合理性",
+    "chartPending": "图表：标出区间的价格分布（尚未接入）",
+    "landedBreakdown": "到岸成本明细",
+    "priceQty": "单价 × 数量",
+    "total": "合计",
+    "contribution": "得分贡献",
+    "unscored": "未评分：尚不是最终交易。",
+    "risks": "风险标记",
+    "terms": "产品、交期与条款",
+    "termsPending": "规格、交期和付款条款：尚未接入。"
+  },
+  "signal": {
+    "age": "开业时长",
+    "ageV": "{n} 天",
+    "sales": "销量",
+    "salesV": "{n} 笔销售 · 复购 {pct}%",
+    "catalog": "商品目录",
+    "catalogV": "{n} 件商品 · 完整度 {pct}%",
+    "reviews": "评价",
+    "reviewsV": "{rating} 分 / {n} 条 · {pct}% 已验证",
+    "institutional": "机构保障",
+    "institutionalV": "{kyc, select, true {已KYC} other {未KYC}} · {escrow, select, true {有托管} other {无托管}} · 纠纷 {pct}%"
+  },
+  "stale": {
+    "body": "当前财务快照已过期。重新导入CSV前，直接采购将被阻止。",
+    "cta": "重新导入CSV"
+  },
+  "reason": {
+    "blockLow": "卖家信任度低：需要签署解除阻止的决策。",
+    "staleFinancials": "财务快照已过期：重新导入CSV前，直接采购被阻止。"
+  },
+  "action": {
+    "follow": "跟进并购买",
+    "renegotiate": "重新谈判",
+    "takeover": "接管",
+    "hold": "搁置",
+    "discard": "淘汰",
+    "unblock": "解除阻止",
+    "override_discard": "撤销淘汰",
+    "sign2": "添加第二个签名"
+  },
+  "passkey": "通行密钥",
+  "line": {
+    "shipping": "运费",
+    "insurance": "保险",
+    "duties": "关税与增值税",
+    "capital": "资金成本",
+    "fees": "支付手续费",
+    "fx": "汇率与风险"
+  },
+  "criterion": {
+    "landed": "到岸成本",
+    "lead": "交期",
+    "confidence": "信任度",
+    "fit": "财务匹配",
+    "margin": "利润率",
+    "spec": "规格",
+    "compliance": "合规",
+    "gain": "谈判收益"
+  },
+  "sanity": {
+    "atypical": "指数在低价一侧超出正常范围。",
+    "normal": "处于正常区间内。",
+    "escalated": "因价格与信任度的组合，已升级为价格不合理。"
+  },
+  "risk": {
+    "below60": "低于中位数60%以上",
+    "burst": "评价集中在少数几天",
+    "escalated": "价格异常且卖家不可信：升级为淘汰",
+    "none": "无标记"
+  },
+  "discardReason": {
+    "price_too_high": "价格过高",
+    "seller_not_trusted": "卖家不可信",
+    "spec_mismatch": "不符合规格",
+    "lead_time": "交货期",
+    "out_of_budget": "超出预算",
+    "duplicate": "重复",
+    "other": "其他"
+  },
+  "dialog": {
+    "close": "关闭",
+    "reasonCode": "原因",
+    "choose": "选择原因",
+    "commentRequired": "备注（必填）",
+    "reviewDate": "复查日期",
+    "instructions": "重新谈判指示",
+    "overrideReason": "撤销原因（必填）",
+    "payloadIntro": "您将签署的内容如下：",
+    "decision": "决策",
+    "amount": "金额",
+    "offer": "报价",
+    "band": "价格区间",
+    "confidence": "信任度",
+    "verdict": "结论",
+    "passkeyNote": "即使签署窗口仍然有效，此决策也需要通行密钥。",
+    "sign": "签署决策",
+    "cancel": "取消"
+  },
+  "pending": "尚未接入",
+  "transcript": {
+    "back": "返回列表",
+    "title": "记录：{seller}",
+    "agent": "代理",
+    "seller": "卖家"
+  }
+}
