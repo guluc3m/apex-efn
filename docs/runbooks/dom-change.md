@@ -11,7 +11,7 @@ Note on terms: the only registered adapter today is `mock-a`, a JSON API, so "DO
 - `dom_changed` also comes from `getProduct` when a listing has no price (`listing has no price`) or the price text is not a decimal with at most two decimals (`workerErrorFor` in `apps/browser-worker/src/adapters/mock-a/mapping.ts`).
 - **Search does not fail.** A listing with an unusable price is returned in `skipped[]` with `reason` `missing_price`, `parse_error` or `unsupported_currency` (`SkipReason` in `packages/shared-types`). A rising share of these is an early warning.
 - Metric `apex_scraping_requests_total{outcome="error"}` rises. It is one panel of "Requests per second by outcome" in the "APEX-EFN · Scraping health" dashboard. The `error` outcome also covers 404s and other 5xx answers, so read it together with the job states.
-- The worker log line `scraping job attempt failed` shows only `errorName`. Use the job state to get the code.
+- The worker log line `scraping job attempt failed` carries the closed error `code` (`dom_changed`), never the response body. The job state has the same code.
 
 ## Why it is not retried
 
