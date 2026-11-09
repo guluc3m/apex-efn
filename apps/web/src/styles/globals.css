@@ -66,23 +66,6 @@
   --color-danger: var(--danger);
   --color-danger-hover: var(--danger-hover);
 
-  /* Alias de los componentes actuales de @apex/ui (se reescriben en la fase siguiente). */
-  --color-background: var(--bg);
-  --color-foreground: var(--ink);
-  --color-card: var(--panel);
-  --color-card-foreground: var(--ink);
-  --color-primary: var(--accent);
-  --color-primary-foreground: var(--on-accent);
-  --color-secondary: var(--raised);
-  --color-secondary-foreground: var(--ink);
-  --color-muted: var(--panel);
-  --color-muted-foreground: var(--ink-muted);
-  --color-destructive: var(--danger);
-  --color-destructive-foreground: var(--white);
-  --color-border: var(--line);
-  --color-input: var(--control-border);
-  --color-ring: var(--accent);
-
   --font-sans: var(--font-geist), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
@@ -95,6 +78,7 @@
 
   --spacing-gutter-page: var(--gutter-page);
   --spacing-gutter-panel: var(--gutter-panel);
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.5);
   --ease-apex: var(--easing);
   --ease-apex-move: var(--easing-move);
 }
@@ -117,3 +101,14 @@
     outline-offset: 2px;
   }
 }
+
+/* Movimiento de @apex/ui (DESIGN §8). Entradas y salidas de capas; con reduced motion los componentes las quitan. */
+@keyframes ap-in { from { opacity: 0 } }
+@keyframes ap-out { to { opacity: 0 } }
+@keyframes ap-dlg { from { opacity: 0; transform: translateY(4px) } }
+@keyframes ap-persiana { from { clip-path: inset(0 0 100% 0) } to { clip-path: inset(0) } }
+@keyframes ap-entra { from { opacity: 0; transform: translateX(12px) } }
+@keyframes ap-toast-out { to { opacity: 0; transform: translateX(12px) } }
+@keyframes ap-shine { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+@keyframes ap-pulso { 50% { opacity: 0.6 } }
+@keyframes ap-bota { 0%, 40%, 100% { transform: translateY(0) } 20% { transform: translateY(-16px) } }
