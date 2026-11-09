@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
   Icon,
   Logo,
-  SigningSessionIndicator,
   type NavItem,
 } from '@apex/ui'
 import { Building2, ChevronDown, ClipboardCheck, FileSignature, Gavel, History, Landmark, LogOut, ScrollText, Target, UserRound, Wallet } from 'lucide-react'
@@ -17,11 +16,11 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
-import { signingSession } from '@/fixtures/signing'
 import { user } from '@/fixtures/user'
 
 import { AppLink, renderLink } from './app-link'
 import { AppLanguageSwitcher } from './language-switcher'
+import { ConnectedSigningIndicator } from './signing-indicator'
 
 /** Ruta sin el prefijo de idioma. */
 function useAppPath() {
@@ -82,23 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         }
         trailing={
           <>
-            <SigningSessionIndicator
-              expiresAt={signingSession.expiresAt}
-              signer={signingSession.signer}
-              signaturesLeft={signingSession.signaturesLeft}
-              action={{ href: '/empresa/firma' }}
-              renderLink={renderLink}
-              labels={{
-                signing: t('signing.label'),
-                noSession: t('signing.none'),
-                expiring: t('signing.expiring'),
-                expired: t('signing.expired'),
-                exhausted: t('signing.exhausted'),
-                openSession: t('signing.open'),
-                reauth: t('signing.reauth'),
-                timerLabel: (time) => t('signing.timer', { time }),
-              }}
-            />
+            <ConnectedSigningIndicator />
             <AppLanguageSwitcher />
             <UserMenu />
           </>

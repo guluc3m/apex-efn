@@ -29,7 +29,8 @@
     "exhausted": "לא נותרו חתימות",
     "open": "פתיחת סשן חתימה",
     "reauth": "אימות מחדש לחתימה",
-    "timer": "זמן שנותר: {time}"
+    "timer": "זמן שנותר: {time}",
+    "left": "{count, plural, one {חתימה אחת נותרה} other {# חתימות נותרו}}"
   },
   "userMenu": {
     "trigger": "תפריט משתמש: {name}",

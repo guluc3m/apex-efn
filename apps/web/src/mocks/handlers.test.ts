@@ -2,6 +2,7 @@ import {
   zEffectiveConfig,
   zMission,
   zOnboardingSession,
+  zSigningSession,
   zSourcingRequest,
 } from '@apex/shared-types/contracts/zod'
 import { describe, expect, it } from 'vitest'
@@ -10,6 +11,7 @@ import {
   effectiveConfigFixture,
   missionFixture,
   onboardingSessionFixture,
+  signingSessionFixture,
   sourcingRequestFixture,
 } from './handlers'
 
@@ -19,6 +21,7 @@ describe('MSW fixtures match the generated contract schemas', () => {
     ['SourcingRequest', zSourcingRequest, sourcingRequestFixture],
     ['Mission', zMission, missionFixture],
     ['EffectiveConfig', zEffectiveConfig, effectiveConfigFixture],
+    ['SigningSession', zSigningSession, signingSessionFixture],
     ['OnboardingSession', zOnboardingSession, onboardingSessionFixture],
   ])('%s', (_name, schema, fixture) => {
     expect(schema.safeParse(fixture).success).toBe(true)

@@ -29,7 +29,8 @@
     "exhausted": "Sin firmas",
     "open": "Abrir sesión de firma",
     "reauth": "Reautenticar para firmar",
-    "timer": "Tiempo restante: {time}"
+    "timer": "Tiempo restante: {time}",
+    "left": "{count, plural, one {# firma restante} other {# firmas restantes}}"
   },
   "userMenu": {
     "trigger": "Menú de usuario: {name}",
