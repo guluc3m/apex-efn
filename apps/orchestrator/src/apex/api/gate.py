@@ -21,7 +21,7 @@ from apex.agents.gate import (
     QueueAction,
 )
 from apex.common.errors import Problem, not_implemented
-from apex.common.tenant import get_tenant_id
+from apex.common.tenant import get_roles, get_tenant_id
 
 router = APIRouter()
 
@@ -61,9 +61,6 @@ class QueueActionIn(BaseModel):
 
     action: QueueAction
     comment: str | None = Field(default=None, max_length=2000)
-    roles: list[str] = Field(
-        default_factory=list, description="Caller roles; D1-05 will supply them"
-    )
 
 
 class DecisionAcceptedOut(BaseModel):
@@ -98,6 +95,7 @@ async def gate_queue_action(
     id: str,
     body: QueueActionIn,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
+    roles: Annotated[tuple[str, ...], Depends(get_roles)],
     agent: Annotated[GateAgent, Depends(get_gate_agent)],
 ) -> DecisionAcceptedOut:
     """``unblock`` or ``override_discard``. Both are signed decisions; nothing changes until signed."""
@@ -106,7 +104,7 @@ async def gate_queue_action(
             tenant_id=tenant_id,
             item_id=id,
             action=body.action,
-            roles=body.roles,
+            roles=roles,
             comment=body.comment,
         )
     except ActionBlocked as exc:

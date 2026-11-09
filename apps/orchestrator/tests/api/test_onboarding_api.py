@@ -152,7 +152,7 @@ def test_activation_returns_a_pending_decision(app: FastAPI) -> None:
         ).json()
         response = client.post(
             f"/onboarding/{session['id']}/financial-csv/activate",
-            data={"snapshot_id": snapshot["id"]},
+            json={"import_id": snapshot["id"]},
             headers=_h(),
         )
     assert response.status_code == 202
@@ -164,7 +164,7 @@ def test_activation_of_an_unknown_snapshot_is_404(app: FastAPI) -> None:
         session = client.post("/onboarding/sessions", headers=_h()).json()
         response = client.post(
             f"/onboarding/{session['id']}/financial-csv/activate",
-            data={"snapshot_id": "nope"},
+            json={"import_id": "nope"},
             headers=_h(),
         )
     assert response.status_code == 404

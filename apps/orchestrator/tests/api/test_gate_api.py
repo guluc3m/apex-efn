@@ -251,11 +251,15 @@ def test_override_discard_without_a_role_is_409_with_a_reason(app: FastAPI) -> N
 
 
 def test_override_discard_with_an_allowed_role_succeeds(app: FastAPI) -> None:
+    """Roles come from the principal, so the test overrides the dependency rather than the body."""
+    from apex.common.tenant import get_roles
+
     item = _enqueue(app)
+    app.dependency_overrides[get_roles] = lambda: ("finance",)
     with TestClient(app) as client:
         response = client.post(
             f"/gate/queue/{item.id}/actions",
-            json={"action": "override_discard", "comment": "checked", "roles": ["finance"]},
+            json={"action": "override_discard", "comment": "checked"},
             headers=_h(),
         )
     assert response.status_code == 202
@@ -340,3 +344,33 @@ def test_gate_and_dashboard_need_a_tenant(app: FastAPI, monkeypatch: pytest.Monk
     with TestClient(app) as client:
         assert client.get("/gate/queue", headers=_h()).status_code == 401
         assert client.get("/dashboard/deals", headers=_h()).status_code == 401
+
+
+def test_roles_are_never_read_from_the_request_body(app: FastAPI) -> None:
+    """A caller must not be able to claim `admin` by adding a field (issue #218 item 3)."""
+    item = _enqueue(app)
+    with TestClient(app) as client:
+        response = client.post(
+            f"/gate/queue/{item.id}/actions",
+            json={"action": "override_discard", "comment": "checked", "roles": ["admin"]},
+            headers=_h(),
+        )
+    # The body is rejected outright: the contract has no `roles` field and the model forbids extras.
+    assert response.status_code == 422
+    assert app.state.decisions.created == []
+
+
+def test_without_a_principal_every_role_gated_action_is_refused(app: FastAPI) -> None:
+    """D1-05 has not landed, so there are no roles and `override_discard` fails closed."""
+    from apex.common.tenant import get_roles
+
+    app.dependency_overrides.pop(get_roles, None)
+    item = _enqueue(app)
+    with TestClient(app) as client:
+        response = client.post(
+            f"/gate/queue/{item.id}/actions",
+            json={"action": "override_discard", "comment": "checked"},
+            headers=_h(),
+        )
+    assert response.status_code == 409
+    assert response.json()["reason"] == "role_not_allowed"
