@@ -33,6 +33,7 @@ from apex.agents.missions import (
 from apex.agents.scraping import ScrapingService
 from apex.agents.sourcing import SourcingPlan
 from apex.common.clock import Clock
+from apex.common.metrics import get_metrics
 
 
 class MissionNotRunnable(Exception):
@@ -54,6 +55,9 @@ class MissionRunnerDeps:
     clock: Clock
     rules_for: Callable[[str], GateRules]
     """``tenant_id -> GateRules``, read from tenant config. Never a literal here."""
+    mission_cost_minor: Callable[[str], int | None] = lambda _mission_id: None
+    """``mission_id -> cost in minor units``, or ``None`` when nothing is priced. Injected: the runner must
+    not know about the gateway."""
 
 
 @dataclass(frozen=True)
@@ -137,7 +141,18 @@ class MissionRunner:
             gate_items=gate_items,
         )
 
+    def _record_cost(self, mission_id: str) -> None:
+        """``apex.mission.llm_cost``: one observation per mission at close, with no labels.
+
+        The catalogue says "one observation per mission when it closes", and a failed mission has closed.
+        """
+        cost = self._deps.mission_cost_minor(mission_id)
+        if cost is None:
+            return
+        get_metrics().mission_llm_cost.record(cost / 100.0)
+
     async def _fail(self, mission: Mission, reason: str) -> MissionRunResult:
+        self._record_cost(mission.id)
         at = self._deps.clock.now()
         failed = transition(mission, MissionStatus.FAILED, at=at).model_copy(
             update={"failure_reason": reason}

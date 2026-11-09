@@ -92,6 +92,8 @@ class LLMGateway:
         self._secrets = secrets
         self._budget = budget
         self._sink = sink
+        # Per-mission cost accumulator, so a mission can report what it spent when it closes (§5).
+        self._mission_cost_minor: dict[str, int] = {}
         self._redaction = redaction or RedactionGuard()
         self._clock = clock or SystemClock()
         self._http_client_factory = http_client_factory
@@ -478,6 +480,10 @@ class LLMGateway:
         gpu_seconds: float | None = None
         if cfg.gpu_seconds_per_1k_tokens is not None:
             gpu_seconds = (tokens_in + tokens_out) / 1000.0 * cfg.gpu_seconds_per_1k_tokens
+        if cost is not None:
+            self._mission_cost_minor[mission_id] = (
+                self._mission_cost_minor.get(mission_id, 0) + cost
+            )
         self._record_metrics(
             role=role,
             cfg=cfg,
@@ -552,6 +558,14 @@ class LLMGateway:
             if breaker is not None:
                 return breaker.state.value
         return BreakerState.CLOSED.value
+
+    def mission_cost_minor(self, mission_id: str) -> int | None:
+        """What the mission has cost so far, in minor units of the configured currency.
+
+        ``None`` when no endpoint declares a price: an unpriced self-hosted model has no cost to report, and
+        reporting ``0`` would be a lie.
+        """
+        return self._mission_cost_minor.get(mission_id)
 
     def tokens_used(self, mission_id: str) -> int:
         """Tokens committed for a mission so far (criterion 28). Read-only: the budget owns the number."""
