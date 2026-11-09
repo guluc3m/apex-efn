@@ -29,6 +29,7 @@ from typing import Any
 import httpx
 
 from apex.agents.analysis import AnalysisDeps, AnalysisNodes
+from apex.agents.browser_worker import HttpBrowserWorker
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
 from apex.agents.mission_runner import MissionRunner, MissionRunnerDeps
 from apex.agents.missions import InMemoryMissionStore, MissionEventBus
@@ -146,6 +147,36 @@ class _AnalysisConfig:
 
     def seller_snapshot_max_age_days(self, tenant_id: str) -> int:
         return self._snapshot_max_age_days
+
+
+def _browser_worker(
+    cfg: Settings, http_client_factory: Callable[[RoleEndpointConfig], httpx.AsyncClient] | None
+) -> Any:
+    """The real worker client when a URL is configured, otherwise the port that names its owner.
+
+    The factory is reused for the worker's own clients when a test provides one, so a test can point both
+    the LLM gateway and the worker at fakes without a second injection point.
+    """
+    if not cfg.browser_worker_url:
+        return UnwiredBrowserWorker()
+    if http_client_factory is not None:
+        client_factory = lambda: http_client_factory(  # noqa: E731
+            RoleEndpointConfig(
+                endpoint_id="browser-worker", base_url=cfg.browser_worker_url, model="worker"
+            )
+        )
+    else:
+        client_factory = lambda: httpx.AsyncClient(  # noqa: E731
+            base_url=cfg.browser_worker_url, timeout=30.0
+        )
+    return HttpBrowserWorker(
+        base_url=cfg.browser_worker_url,
+        service_token=cfg.browser_worker_token,
+        client_factory=client_factory,
+        max_results=cfg.browser_worker_max_results,
+        max_polls=cfg.browser_worker_max_polls,
+        poll_interval_s=cfg.browser_worker_poll_interval_s,
+    )
 
 
 def _gate_rules() -> GateRules:
@@ -290,7 +321,7 @@ def build_app_services(
         MissionRunnerDeps(
             scraping=ScrapingService(
                 ScrapingDeps(
-                    worker=UnwiredBrowserWorker(),
+                    worker=_browser_worker(cfg, http_client_factory),
                     fx=UnwiredFx(),
                     offers=offer_store,
                     bus=mission_bus,

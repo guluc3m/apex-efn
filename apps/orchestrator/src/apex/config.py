@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     llm_gateway_url: str = Field(default="http://localhost:8001/v1")
     llm_gateway_api_key: str = Field(default="")
 
+    # Browser worker internal API (D5-01). Empty means "not wired": a mission that needs to scrape fails
+    # with the owner named instead of calling a service that is not there.
+    browser_worker_url: str = Field(default="")
+    browser_worker_token: str = Field(default="")
+    browser_worker_max_results: int = Field(default=50, ge=1, le=200)
+    browser_worker_max_polls: int = Field(default=60, ge=1)
+    browser_worker_poll_interval_s: float = Field(default=0.5, gt=0)
+
     # Run a mission as soon as it is created. Off by default: the runner needs the browser worker (D5-01)
     # and the DEV-3 engines, so with them missing it would fail every mission at its first step. Turn it on
     # once those ports are real; the flag exists so that is a configuration change, not a code change.
