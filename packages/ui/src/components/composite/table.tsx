@@ -6,6 +6,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type ColumnFiltersState,
   type SortingState,
 } from '@tanstack/react-table'
 import { ArrowUp, ArrowUpRight, Inbox } from 'lucide-react'
@@ -48,6 +49,9 @@ export interface TableProps<R> {
   defaultSorting?: SortingState
   /** Filtro de texto sobre los `sortValue`; controlable desde fuera. */
   filter?: string
+  /** Filtros por columna (banda, veredicto, plataforma): igualdad con el `sortValue`. Controlables desde fuera. */
+  columnFilters?: ColumnFiltersState
+  onColumnFiltersChange?: (f: ColumnFiltersState) => void
   pageSize?: number
   loadMoreLabel?: string
   maxHeight?: string
@@ -68,6 +72,8 @@ export function Table<R>({
   onSortingChange,
   defaultSorting = [],
   filter,
+  columnFilters: filtersProp,
+  onColumnFiltersChange,
   pageSize = 25,
   loadMoreLabel,
   maxHeight,
@@ -77,13 +83,16 @@ export function Table<R>({
 }: TableProps<R>) {
   const [inner, setInner] = React.useState<SortingState>(defaultSorting)
   const [shown, setShown] = React.useState(pageSize)
+  const [innerFilters, setInnerFilters] = React.useState<ColumnFiltersState>([])
   const sorting = sortingProp ?? inner
+  const columnFilters = filtersProp ?? innerFilters
 
   const defs = React.useMemo<ColumnDef<R>[]>(
     () =>
       columns.map((c, i) => ({
         id: c.id,
         header: c.header,
+        filterFn: 'weakEquals',
         enableSorting: c.sortable !== false && !c.hidden && !!c.sortValue,
         ...(c.sortValue ? { accessorFn: c.sortValue } : { accessorFn: () => '' }),
         cell: ({ row }) => {
@@ -110,11 +119,16 @@ export function Table<R>({
     data: rows,
     columns: defs,
     getRowId,
-    state: { sorting, globalFilter: filter ?? '', pagination: { pageIndex: 0, pageSize: shown } },
+    state: { sorting, columnFilters, globalFilter: filter ?? '', pagination: { pageIndex: 0, pageSize: shown } },
     onSortingChange: (u) => {
       const next = typeof u === 'function' ? u(sorting) : u
       if (onSortingChange) onSortingChange(next)
       else setInner(next)
+    },
+    onColumnFiltersChange: (u) => {
+      const next = typeof u === 'function' ? u(columnFilters) : u
+      if (onColumnFiltersChange) onColumnFiltersChange(next)
+      else setInnerFilters(next)
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

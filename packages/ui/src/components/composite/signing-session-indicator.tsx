@@ -48,17 +48,20 @@ export function formatRemaining(ms: number): string {
 }
 
 export function SigningSessionIndicator({ expiresAt, now, signer, signaturesLabel, signaturesLeft, labels, action, renderLink = anchor, onExpire, className }: SigningSessionIndicatorProps) {
-  const [tick, setTick] = React.useState(() => Date.now())
+  const [tick, setTick] = React.useState<number | null>(null)
   React.useEffect(() => {
     if (now !== undefined || expiresAt === undefined) return
+    setTick(Date.now())
     const id = setInterval(() => setTick(Date.now()), 1000)
     return () => clearInterval(id)
   }, [now, expiresAt])
 
   const at = expiresAt === undefined ? undefined : new Date(expiresAt).getTime()
-  const left = at === undefined ? 0 : at - (now ?? tick)
+  const clock = now ?? tick
+  // Primer render sin hora: placeholder estable para no romper la hidratación.
+  const left = at === undefined || clock === null ? 0 : at - clock
   const state: SigningSessionState =
-    at === undefined ? 'none' : left <= 0 ? 'expired' : signaturesLeft === 0 ? 'exhausted' : left <= WARN_MS ? 'expiring' : 'active'
+    at === undefined ? 'none' : clock === null ? 'active' : left <= 0 ? 'expired' : signaturesLeft === 0 ? 'exhausted' : left <= WARN_MS ? 'expiring' : 'active'
 
   const wasExpired = React.useRef(false)
   React.useEffect(() => {
@@ -67,7 +70,7 @@ export function SigningSessionIndicator({ expiresAt, now, signer, signaturesLabe
   }, [state, onExpire])
 
   const dead = state === 'expired' || state === 'exhausted'
-  const time = formatRemaining(left)
+  const time = clock === null ? '--:--' : formatRemaining(left)
   const announce = { expiring: labels.expiring, expired: labels.expired, exhausted: labels.exhausted, active: '', none: '' }[state]
   const cta = (text: string) =>
     renderLink({

@@ -2,6 +2,9 @@ import * as React from 'react'
 
 import { ShiningText } from '../shining-text.js'
 
+// Intervalos irregulares fijos dentro de 1,6–2,4 s: sin azar, reproducibles.
+const INTERVALS = [1600, 2100, 1800, 2400]
+
 export interface ThinkingProps {
   /** Frases reales del proceso, en orden. Con menos de dos no hay relevo. */
   phrases: string[]
@@ -14,7 +17,7 @@ export function Thinking({ phrases, active = true, className }: ThinkingProps) {
   const [i, setI] = React.useState(0)
   React.useEffect(() => {
     if (!active || phrases.length < 2) return
-    const id = setTimeout(() => setI((n) => (n + 1) % phrases.length), 1600 + Math.random() * 800)
+    const id = setTimeout(() => setI((n) => (n + 1) % phrases.length), INTERVALS[i % INTERVALS.length])
     return () => clearTimeout(id)
   }, [i, active, phrases.length])
 
