@@ -70,6 +70,21 @@
     "passkey": "使用通行密钥登录",
     "pending": "尚未连接：暂时无法登录。",
     "sso": "贵公司使用 SSO？请通过身份提供商登录（尚未连接）。",
-    "ed25519": "签名需要支持 Ed25519 的浏览器。"
+    "ed25519": "签名需要支持 Ed25519 的浏览器。",
+    "queue": {
+      "title": "决策队列",
+      "count": "{count} 项待处理",
+      "ready": "可供决策",
+      "lowBand": "卖家处于低档",
+      "sla": "SLA {time}",
+      "seller": "卖家 {name}",
+      "priceNormal": "价格正常",
+      "pending": "待处理",
+      "sample": "示例，仅作说明，并非真实数据。",
+      "confidence": {
+        "high": "可信度高 · {score}",
+        "low": "可信度低 · {score}"
+      }
+    }
   }
 }

@@ -70,6 +70,21 @@
     "passkey": "Sign in with passkey",
     "pending": "Not connected yet: sign-in is not available.",
     "sso": "Does your company use SSO? Sign in with your provider (not connected yet).",
-    "ed25519": "Signing requires a browser that supports Ed25519."
+    "ed25519": "Signing requires a browser that supports Ed25519.",
+    "queue": {
+      "title": "Decision queue",
+      "count": "{count} pending",
+      "ready": "Ready to decide",
+      "lowBand": "Seller in low band",
+      "sla": "SLA {time}",
+      "seller": "Seller {name}",
+      "priceNormal": "Normal price",
+      "pending": "Pending",
+      "sample": "Illustrative sample, not real data.",
+      "confidence": {
+        "high": "High confidence · {score}",
+        "low": "Low confidence · {score}"
+      }
+    }
   }
 }
