@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     llm_gateway_url: str = Field(default="http://localhost:8001/v1")
     llm_gateway_api_key: str = Field(default="")
 
+    # LLM token budget per mission (criterion 28). An operator limit, not a business threshold: the
+    # business limits live in tenant config. Kept here until tenant config carries it.
+    llm_mission_token_budget: int = Field(default=200_000, ge=1)
+
     # LLM Models by role
     llm_planner_model: str = Field(default="gpt-4o")
     llm_negotiator_model: str = Field(default="gpt-4o")

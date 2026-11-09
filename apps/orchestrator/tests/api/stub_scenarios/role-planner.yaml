@@ -1,0 +1,14 @@
+scenarios:
+  - name: role-planner
+    description: A valid SourcingPlanDraft naming both mock platforms.
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+    response:
+      kind: json
+      content:
+        steps:
+          - {platform_id: "mock-a", query: "nitrile gloves box 100", tier_index: 0}
+          - {platform_id: "mock-b", query: "guantes nitrilo caja 100", tier_index: 0}
+        rationale: "Both mock platforms ship to the EU."
