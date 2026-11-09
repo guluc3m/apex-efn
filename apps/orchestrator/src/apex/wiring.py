@@ -352,6 +352,7 @@ def build_app_services(
             bus=mission_bus,
             clock=active_clock,
             rules_for=lambda tenant_id: rules,
+            mission_cost_minor=gateway.mission_cost_minor,
         )
     )
     onboarding = OnboardingService(

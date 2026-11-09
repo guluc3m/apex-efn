@@ -119,6 +119,11 @@ class Metrics:
         self.llm_gpu_seconds = meter.create_counter(
             "apex.llm.gpu_seconds", unit="s", description="GPU seconds for self-hosted endpoints"
         )
+        self.mission_llm_cost = meter.create_histogram(
+            "apex.mission.llm_cost",
+            unit="usd",
+            description="Cost of one mission, observed once when it closes. No labels: no mission ids.",
+        )
         self.llm_circuit_state = meter.create_gauge(
             "apex.llm.circuit.state", unit="{state}", description="0 closed, 1 half-open, 2 open"
         )

@@ -366,3 +366,52 @@ async def test_the_circuit_state_gauge_is_set_per_endpoint(reader: InMemoryMetri
     states = _points(reader)["apex.llm.circuit.state"]
     assert states[-1].value == 0  # closed after a successful call
     assert states[-1].attributes == {"endpoint": "primary"}
+
+
+async def test_a_failed_mission_records_its_llm_cost_once(reader: InMemoryMetricReader) -> None:
+    """§5 of the catalogue: one observation per mission when it closes, with no labels."""
+    from apex.agents.mission_runner import MissionRunner, MissionRunnerDeps
+    from apex.agents.missions import InMemoryMissionStore, Mission, MissionEventBus, MissionStatus
+    from apex.agents.sourcing import PlanStep, SourcingPlan
+
+    class _Scraping:
+        async def scrape(self, **_: Any) -> Any:
+            # What an unwired port does: the runner turns this into a failed mission naming the owner.
+            raise NotImplementedError("the worker is not wired yet (owner: DEV-5, D5-01)")
+
+    store = InMemoryMissionStore()
+    runner = MissionRunner(
+        MissionRunnerDeps(
+            scraping=_Scraping(),  # type: ignore[arg-type]
+            nodes=None,  # type: ignore[arg-type]
+            gate=None,  # type: ignore[arg-type]
+            store=store,
+            bus=MissionEventBus(),
+            clock=FixedClock(NOW),
+            rules_for=lambda _t: RULES,
+            mission_cost_minor=lambda mission_id: 1_250 if mission_id == "m-1" else None,
+        )
+    )
+    plan = SourcingPlan(
+        steps=[PlanStep(platform_id="mock-a", transport="http", query="q")],
+        rationale="r",
+        config_version="v1",
+    )
+    await store.create(
+        Mission(
+            id="m-1",
+            tenant_id=TENANT,
+            sourcing_request_id="sr-1",
+            quantity=500,
+            status=MissionStatus.PLANNED,
+            config_version="v1",
+            created_at=NOW,
+            updated_at=NOW,
+            plan=plan,
+        )
+    )
+    await runner.run(tenant_id=TENANT, mission_id="m-1")
+    costs = _points(reader)["apex.mission.llm_cost"]
+    assert len(costs) == 1
+    assert costs[0].sum == pytest.approx(12.50)  # 1250 minor units -> 12.50
+    assert costs[0].attributes == {}  # no mission ids, ever
