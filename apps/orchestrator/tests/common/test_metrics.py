@@ -333,3 +333,36 @@ async def test_llm_metrics_come_from_the_gateway(reader: InMemoryMetricReader) -
     assert tokens == {"input": 10, "output": 5}
     duration = points["apex.llm.request.duration"][0]
     assert duration.attributes == {"role": "planner", "endpoint": "primary"}
+
+
+async def test_the_circuit_state_gauge_is_set_per_endpoint(reader: InMemoryMetricReader) -> None:
+    """The catalogue wants the breaker state as a gauge: 0 closed, 1 half-open, 2 open."""
+    import httpx
+
+    from apex.llm.accounting import InMemorySink
+    from apex.llm.budget import InMemoryBudgetStore, TokenBudget
+    from apex.llm.config import LLMRole
+    from apex.llm.gateway import LLMGateway
+    from tests.llm.fakes import chat_body, endpoint_cfg, provider, roles_config, secrets
+
+    cfg = endpoint_cfg(model="stub-model")
+    gateway = LLMGateway(
+        config_provider=provider(roles_config(cfg, role=LLMRole.PLANNER)),
+        secrets=secrets(),
+        budget=TokenBudget(InMemoryBudgetStore(), mission_limit=1_000_000),
+        sink=InMemorySink(),
+        clock=FixedClock(NOW),
+        http_client_factory=lambda _cfg: httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=chat_body("{}")))
+        ),
+    )
+    await gateway.chat(
+        LLMRole.PLANNER,
+        [{"role": "user", "content": "hi"}],
+        mission_id="m-1",
+        tenant_id=TENANT,
+        prompt_version="planner_sourcing_plan@v1",
+    )
+    states = _points(reader)["apex.llm.circuit.state"]
+    assert states[-1].value == 0  # closed after a successful call
+    assert states[-1].attributes == {"endpoint": "primary"}

@@ -35,6 +35,7 @@ from apex.llm.config import (
 from apex.llm.redaction import RedactionGuard
 from apex.llm.resilience import (
     AllEndpointsUnavailableError,
+    BreakerState,
     Resilience,
     Sleeper,
     run_with_fallback,
@@ -538,6 +539,19 @@ class LLMGateway:
             )
         if gpu_seconds:
             metrics.llm_gpu_seconds.add(gpu_seconds, {"endpoint": cfg.endpoint_id})
+        # The circuit state is a gauge the catalogue wants per endpoint: 0 closed, 1 half-open, 2 open.
+        metrics.llm_circuit_state.set(
+            _CIRCUIT_STATE_VALUE.get(self._breaker_state_for(cfg.endpoint_id), 0),
+            {"endpoint": cfg.endpoint_id},
+        )
+
+    def _breaker_state_for(self, endpoint_id: str) -> str:
+        """Breaker state for an endpoint, or ``closed`` when no breaker exists yet (no call has failed)."""
+        for resilience in self._resilience.values():
+            breaker = resilience.breakers.get(endpoint_id)
+            if breaker is not None:
+                return breaker.state.value
+        return BreakerState.CLOSED.value
 
     def breaker_state(self, *, tenant_id: str, endpoint_id: str) -> str:
         """Current circuit-breaker state for an endpoint (observability and tests)."""
@@ -548,6 +562,13 @@ class LLMGateway:
         for transport in self._transports.values():
             await transport.aclose()
         self._transports.clear()
+
+
+_CIRCUIT_STATE_VALUE: dict[str, int] = {
+    BreakerState.CLOSED.value: 0,
+    BreakerState.HALF_OPEN.value: 1,
+    BreakerState.OPEN.value: 2,
+}
 
 
 def _ladder_index(ladder_step: str) -> str:
