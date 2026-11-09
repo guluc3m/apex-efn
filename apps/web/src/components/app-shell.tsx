@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         renderLink={renderLink}
         brand={
           <AppLink href="/decisiones" aria-label={t('nav.home')} className="inline-flex items-center no-underline">
-            <Logo size="sm" variant="isotipo" />
+            <Logo size="sm" />
           </AppLink>
         }
         trailing={
