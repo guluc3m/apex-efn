@@ -33,4 +33,20 @@ def get_tenant_id(
     return x_tenant_id
 
 
-__all__ = ["ALLOW_TENANT_HEADER_ENV", "get_tenant_id", "tenant_header_enabled"]
+def get_roles() -> tuple[str, ...]:
+    """Roles of the caller, for the endpoints that gate on them.
+
+    Roles come from the authenticated principal and **never** from a request body: a caller must not be able
+    to claim ``admin`` by adding a field. Until DEV-1's ``current_principal()`` lands (D1-05) there is no
+    principal, so this returns no roles and every role-gated action is refused. That is the fail-closed
+    behaviour: ``override_discard`` is unavailable rather than available to anyone.
+    """
+    return ()
+
+
+__all__ = [
+    "ALLOW_TENANT_HEADER_ENV",
+    "get_roles",
+    "get_tenant_id",
+    "tenant_header_enabled",
+]

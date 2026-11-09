@@ -21,6 +21,7 @@ from apex.agents.onboarding import (
 )
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
+from apex.contracts.generated.models import ActivateFinancialSnapshotRequest
 
 router = APIRouter()
 
@@ -171,12 +172,12 @@ async def activate_financial_snapshot(
     id: str,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[OnboardingService, Depends(get_onboarding)],
-    snapshot_id: Annotated[str, Form(min_length=1)],
+    body: ActivateFinancialSnapshotRequest,
 ) -> ActivationAcceptedOut:
     """Create the signed decision that activation requires. The snapshot is not active until it is signed."""
     try:
         decision = await service.request_activation(
-            tenant_id=tenant_id, session_id=id, snapshot_id=snapshot_id
+            tenant_id=tenant_id, session_id=id, snapshot_id=body.import_id
         )
     except LookupError as exc:
         raise Problem(404, "Snapshot not found", detail=str(exc)) from exc

@@ -19,7 +19,7 @@ from apex.agents.gate import (
 )
 from apex.api.gate import DecisionAcceptedOut, _blocked
 from apex.common.errors import Problem, not_implemented
-from apex.common.tenant import get_tenant_id
+from apex.common.tenant import get_roles, get_tenant_id
 
 router = APIRouter()
 
@@ -53,12 +53,13 @@ class DealsOut(BaseModel):
 
 
 class DealActionIn(BaseModel):
+    """The contract's body. Roles are never part of it: they come from the authenticated principal."""
+
     model_config = ConfigDict(extra="forbid")
 
     action: DealAction
     discard_reason: DiscardReason | None = None
     comment: str | None = Field(default=None, max_length=2000)
-    roles: list[str] = Field(default_factory=list)
 
 
 def get_dashboard() -> Any:
@@ -122,6 +123,7 @@ async def deal_action(
     id: str,
     body: DealActionIn,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
+    roles: Annotated[tuple[str, ...], Depends(get_roles)],
     dashboard: Annotated[Any, Depends(get_dashboard)],
 ) -> DecisionAcceptedOut:
     """``follow|renegotiate|takeover|hold|discard``. Every action is a signed decision."""
@@ -132,7 +134,7 @@ async def deal_action(
             action=body.action,
             discard_reason=body.discard_reason,
             comment=body.comment,
-            roles=body.roles,
+            roles=list(roles),
         )
     except ActionBlocked as exc:
         raise _blocked(exc) from exc
