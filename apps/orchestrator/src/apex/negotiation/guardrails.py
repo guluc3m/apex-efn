@@ -46,6 +46,7 @@ __all__ = [
     "check_incoming",
     "check_outgoing",
     "discount_bp",
+    "sends_in_last_hour",
     "fraction_to_bp",
     "price_ceiling_minor",
     "price_floor_minor",
@@ -226,7 +227,7 @@ def fraction_to_bp(value: float | str | Decimal) -> int:
     return int(bp.to_integral_value(rounding=ROUND_FLOOR))
 
 
-def _sends_in_last_hour(sends: Sequence[datetime], now: datetime) -> int:
+def sends_in_last_hour(sends: Sequence[datetime], now: datetime) -> int:
     window_start = now - timedelta(hours=1)
     return sum(1 for t in sends if window_start < t <= now)
 
@@ -263,14 +264,14 @@ def check_outgoing(
             Severity.ESCALATE,
             f"{state.tokens_used + draft_tokens}/{limits.max_tokens} tokens",
         )
-    recent = _sends_in_last_hour(state.account_sends, now)
+    recent = sends_in_last_hour(state.account_sends, now)
     if recent >= limits.max_messages_per_hour:
         hit(
             HitCode.ACCOUNT_RATE_LIMITED,
             Severity.BLOCK,
             f"{recent}/{limits.max_messages_per_hour} messages in the last hour",
         )
-    to_seller = _sends_in_last_hour(state.seller_sends, now)
+    to_seller = sends_in_last_hour(state.seller_sends, now)
     if to_seller >= limits.max_messages_per_hour:
         hit(
             HitCode.SELLER_RATE_LIMITED,

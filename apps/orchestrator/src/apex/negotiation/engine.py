@@ -32,6 +32,7 @@ from apex.negotiation.guardrails import (
     IncomingVerdict,
     check_incoming,
     check_outgoing,
+    sends_in_last_hour,
 )
 from apex.negotiation.models import (
     GuardrailEvent,
@@ -349,6 +350,59 @@ class NegotiationEngine:
             await self._store.save(session)
             return session
 
+    async def send_human(
+        self, negotiation_id: str, text: str, *, author: str, tenant_id: str
+    ) -> NegotiationSession:
+        """A human holding the chat writes to the seller (D5-08 takeover, D5-07c contract).
+
+        Only while the human holds control: the agent keeps its hands off a conversation a person has taken.
+        The text is sent as written, because the human is the accountable author, but the mechanical limits
+        that protect our seller accounts still apply: message length and the hourly caps. Those refuse
+        instead of parking, because a person has to see the refusal to resend later.
+        """
+        async with self._locked(negotiation_id):
+            session = await self._load(negotiation_id, tenant_id)
+            if session.terminal:
+                raise NegotiationError("terminal", "negotiation already finished")
+            if not session.human_in_control:
+                raise NegotiationError(
+                    "not_in_human_control", "nobody has taken this negotiation over"
+                )
+            stripped = text.strip()
+            if not stripped:
+                raise NegotiationError("empty_message", "the message is empty")
+            if len(stripped) > session.params.max_message_chars:
+                raise NegotiationError(
+                    "message_too_long",
+                    f"{len(stripped)} characters; the configured limit is "
+                    f"{session.params.max_message_chars}",
+                )
+            now = self._clock.now()
+            cap = session.params.max_messages_per_hour
+            account = await self._send_log.sends(session.account_id)
+            seller = await self._seller_log.sends(
+                tenant_id=session.tenant_id,
+                platform=session.platform,
+                seller_id=session.seller_id,
+            )
+            if sends_in_last_hour(account, now) >= cap or sends_in_last_hour(seller, now) >= cap:
+                raise NegotiationError(
+                    "rate_limited", f"{cap} messages per hour have already been sent"
+                )
+            if session.chat_id is None:
+                raise NegotiationError("no_chat", "negotiation has no open chat")
+            await self._transport.send(session.chat_id, stripped)
+            await self._send_log.record(session.account_id, now)
+            await self._seller_log.record(
+                tenant_id=session.tenant_id,
+                platform=session.platform,
+                seller_id=session.seller_id,
+                at=now,
+            )
+            self._log(session, "human", stripped, approved_by=author)
+            await self._store.save(session)
+            return session
+
     async def take_over(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:
         """A human takes the chat. Any pending draft is dropped; the agent sends nothing until resume.
 
@@ -389,6 +443,10 @@ class NegotiationEngine:
             return session
 
     # ------------------------------------------------------------------ internals
+
+    async def get(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:
+        """Read one negotiation. Tenant-checked like every other call; a stranger's id is ``not_found``."""
+        return await self._load(negotiation_id, tenant_id)
 
     async def _load(self, negotiation_id: str, tenant_id: str) -> NegotiationSession:
         session = await self._store.get(negotiation_id)
