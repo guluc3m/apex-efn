@@ -22,7 +22,10 @@ from apex.agents.missions import Mission, MissionEvent, MissionStatus
 from apex.agents.sourcing_service import MissionMissing, SourcingService
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
+from apex.llm.budget import TokenBudgetExceeded
+from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
+from apex.llm.transport import LLMHTTPError, LLMTransportError
 
 router = APIRouter()
 
@@ -86,6 +89,14 @@ class MissionOut(BaseModel):
         )
 
 
+def _llm_detail(exc: Exception) -> str:
+    """A short, safe description of an LLM failure. Never the prompt, never a credential."""
+    causes = getattr(exc, "causes", None)
+    if causes:
+        return str(causes)
+    return f"{type(exc).__name__}: {exc}"
+
+
 def get_sourcing_service() -> SourcingService:
     """Overridable dependency. The default refuses: no LLM gateway is wired into the app yet."""
     raise not_implemented(
@@ -133,6 +144,20 @@ async def create_mission(
             "Model output unusable",
             detail="the planner did not return a valid plan",
             reason="structured_output_failed",
+        ) from exc
+    except (AllEndpointsUnavailableError, LLMTransportError, LLMHTTPError) as exc:
+        raise Problem(
+            502,
+            "Model endpoint unavailable",
+            detail=f"the planner endpoint could not be reached: {_llm_detail(exc)}",
+            reason="llm_unavailable",
+        ) from exc
+    except TokenBudgetExceeded as exc:
+        raise Problem(
+            429,
+            "Token budget exhausted",
+            detail=exc.warning,
+            reason="token_budget_exhausted",
         ) from exc
     mission = await _maybe_autorun(http_request, tenant_id=tenant_id, mission=mission)
     return MissionOut.of(mission)
