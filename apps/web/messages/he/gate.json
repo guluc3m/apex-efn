@@ -1,0 +1,33 @@
+{
+  "title": "תור שער · {count} ממתינים",
+  "subtitle": "שום דבר לא יוצא מכאן בלי החלטה חתומה. SLA של 24 שעות מרגע הכניסה.",
+  "order": "סדר: הדחוף ביותר קודם (SLA).",
+  "caption": "פריטים הממתינים בתור השער",
+  "empty": "אין פריטים התואמים למסננים",
+  "legend": "SLA בשעות ובדקות שנותרו. צהוב מתחת ל-3 שעות; אדום מתחת לשעה.",
+  "slaBar": "SLA שנותר",
+  "pending": "ממתין לחיבור",
+  "close": "סגירה",
+  "confirm": "אישור",
+  "cancel": "ביטול",
+  "reminderSent": "נשלח ב-{time}",
+  "cols": { "item": "פריט", "cause": "סיבה", "amount": "סכום", "sla": "SLA", "assignee": "משויך", "reminder": "תזכורת", "actions": "פעולות" },
+  "causes": {
+    "negotiator": "הועלה על ידי המו\"מ",
+    "price": "מחיר חריג או ללא ייחוס",
+    "confidence": "אמון נמוך או ללא נתונים",
+    "second_signature": "חסרה חתימה שנייה",
+    "high_amount": "סכום גבוה",
+    "discard": "פסילות לבדיקה",
+    "company": "חברה"
+  },
+  "flags": { "no_reference": "ללא ייחוס", "new_seller": "מוכר חדש" },
+  "slaSoon": { "bad": "מסתיים בעוד פחות משעה", "warn": "מסתיים בעוד פחות מ-3 שעות" },
+  "assignee": { "owner": "בעלים", "finance": "כספים", "none": "לא משויך" },
+  "filters": { "cause": "סיבה", "assignee": "משויך", "all": "הכול", "me": "אני", "today": "רק פג היום" },
+  "actions": { "unblock": "ביטול חסימה", "override_discard": "ביטול פסילה" },
+  "dialog": {
+    "unblock": { "title": "ביטול חסימת פריט", "body": "תיווצר החלטה חתומה לביטול החסימה של: {item}." },
+    "override_discard": { "title": "ביטול פסילה", "body": "תיווצר החלטה חתומה לביטול הפסילה של: {item}." }
+  }
+}

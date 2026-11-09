@@ -12,6 +12,7 @@ const OPTIONS: Record<(typeof locales)[number], LanguageOption> = {
   es: { id: 'es', name: 'Español', code: 'ES', lang: 'es' },
   en: { id: 'en', name: 'English', code: 'EN', lang: 'en' },
   zh: { id: 'zh', name: '简体中文', code: 'ZH', lang: 'zh-Hans' },
+  he: { id: 'he', name: 'עברית', code: 'HE', lang: 'he' },
 }
 
 /** Cambia el prefijo de idioma conservando la página y la query. */

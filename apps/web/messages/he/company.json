@@ -1,0 +1,171 @@
+{
+  "finance": {
+    "report": {
+      "title": "סקירת הייבוא של {file}",
+      "subtitle": "הגדרת חברה · שלב 7 מתוך 7 · {rows} שורות · דבר לא מופעל עד שתחתמו.",
+      "upload": "העלאת קובץ אחר",
+      "pending": "טרם חובר",
+      "accepted": "שורות שהתקבלו",
+      "rejected": "נדחו",
+      "duplicated": "כפולות",
+      "periods": "תקופות",
+      "converted": "הומרו ל-EUR",
+      "range": "{range} · תחזית מופעלת",
+      "mappingTitle": "אישור מיפוי של {n} כותרות",
+      "mappingHint": "העוזר מציע את השדה; המספרים תמיד מפורשים על ידי מנגנון הייבוא, לעולם לא על ידי ה-AI.",
+      "column": "עמודה בקובץ שלכם",
+      "field": "שדה ב-APEX",
+      "origin": "מקור",
+      "suggested": "הוצע על ידי העוזר",
+      "confirmMapping": "אישור המיפוי",
+      "rejectionsTitle": "שורות שלא נכנסות",
+      "rejectionsCaption": "שורות CSV שנדחו",
+      "metric": "מדד",
+      "period": "תקופה",
+      "line": "שורה",
+      "value": "ערך",
+      "reason": "סיבה",
+      "reasons": {
+        "decimals": "סכום עם ספרות עשרוניות",
+        "period": "תקופה בפורמט שגוי (YYYY-MM)",
+        "metric": "מדד לא מוכר",
+        "currency": "מטבע לא נתמך",
+        "duplicate": "כפילות: שורה {line} נשמרת"
+      },
+      "warningsTitle": "אזהרות",
+      "warnings": {
+        "fx": "{n} סכומים ב-USD הומרו ל-EUR לפי שער סוף כל חודש. המקור נשמר.",
+        "taxReserve": "אין tax_reserve ב-{month}: כושר הרכישה אינו מנכה רזרבת מס באותו חודש."
+      },
+      "review": "סקירת התוצאה והפעלה",
+      "rejectedDontBlock": "{n} השורות שנדחו אינן חוסמות את ההפעלה."
+    },
+    "summary": {
+      "title": "זה מה שתוכלו לרכוש עם נתוני אוקטובר",
+      "subtitle": "תאריך ייחוס {date} · תצלום מצב חדש, מחליף את הקודם.",
+      "capacity": "כושר רכישה נטו",
+      "capacityHint": "לאחר מרווח ביטחון של {buffer}% ותשלומים מחויבים",
+      "score": "Buying Power Score",
+      "scoreHint": "הנוסחה ממתינה לאישור",
+      "envelopes": "מעטפות לפי קטגוריה",
+      "chartCaption": "ניצול התקציב מול המגבלה, החודש. העמודה המלאה היא המגבלה.",
+      "category": "קטגוריה",
+      "used": "נוצל החודש",
+      "available": "זמין",
+      "limit": "מגבלה",
+      "nearlyExhausted": "כמעט מוצה",
+      "activateTitle": "הפעלת תצלום מצב",
+      "activateBody": "ההפעלה היא החלטה חתומה ודורשת את ה-passkey שלכם עכשיו, גם עם סשן חתימה פתוח.",
+      "rows": "שורות",
+      "rowsValue": "{n} התקבלו",
+      "replaces": "מחליף",
+      "replacesValue": "{month} (יועבר לארכיון)",
+      "expires": "פג תוקף",
+      "payloadHash": "גיבוב התוכן (payload_hash)",
+      "back": "חזרה לסקירת ה-CSV",
+      "activate": "הפעלה עם passkey",
+      "pending": "טרם חובר: לחתימה ולהפעלה אין עדיין שרת",
+      "allOrNothing": "הכול או כלום: אין הפעלה חלקית."
+    },
+    "page": {
+      "title": "נתונים פיננסיים",
+      "intro": "תצלום מצב פעיל נכון ל-{date}.",
+      "lastImport": "הייבוא האחרון"
+    }
+  },
+  "rules": {
+    "title": "כללי החלטה · גרסה {version}",
+    "intro": "כל שינוי הוא החלטה חתומה ב-passkey ויוצר גרסה חדשה. הערכות קודמות שומרות על שלהן.",
+    "scope": "היקף",
+    "scopes": {
+      "all": "כל החברה",
+      "bearings": "מיסבים",
+      "valves": "שסתומים"
+    },
+    "caption": "כללי ההחלטה בתוקף",
+    "rule": "כלל",
+    "value": "ערך",
+    "origin": "מקור",
+    "action": "פעולה",
+    "change": "שינוי",
+    "undefined": "לא הוגדר",
+    "groups": {
+      "sanity": "תקינות מחיר",
+      "seller": "אמון במוכר",
+      "signing": "חתימה ואישור",
+      "negotiation": "משא ומתן"
+    },
+    "values": {
+      "goGate": "מעבר לשער",
+      "medium": "בינוני"
+    },
+    "origins": {
+      "template": "תבנית",
+      "proposed": "שינוי מוצע",
+      "policy": "המדיניות שלכם",
+      "category": "לפי קטגוריה",
+      "required": "חובה"
+    },
+    "proposalTitle": "שינוי מוצע",
+    "impact": "לפי השרת, עם ההצעות הפתוחות: {n} יעברו מתקין לחריג ויכנסו לתור השער.",
+    "reason": "סיבה (חובה)",
+    "sign": "חתימה עם passkey",
+    "signNote": "ממתין לחיבור: לחתימה ולשינוי כללים אין עדיין שרת",
+    "pending": "ממתין לחיבור",
+    "history": "היסטוריה",
+    "by": {
+      "finance": "כספים",
+      "owner": "בעלים",
+      "template": "תבנית"
+    },
+    "names": {
+      "sanity_z_ok": "מחיר תקין עד",
+      "sanity_z_gate": "מחיר חריג עד",
+      "sanity_on_insufficient_reference": "ייחוס לא מספיק",
+      "sanity_floor_per_unit": "רצפה מוחלטת ליחידה",
+      "seller_min_accepted_band": "טווח מינימלי ללא שער",
+      "seller_hard_block_below": "פסילה אוטומטית מתחת ל-",
+      "approval_dual_control_above": "חתימה כפולה מסכום של",
+      "signing_high_value_reauth_above": "passkey מיידי מסכום של",
+      "signing_session_minutes": "משך סשן החתימה",
+      "neg_max_rounds": "מספר סבבים מרבי",
+      "neg_max_discount": "הנחה מקסימלית · מיסבים"
+    },
+    "noNewValue": "טרם נבחר ערך חדש",
+    "changeRule": "שינוי {rule}"
+  },
+  "audit": {
+    "title": "יומן ביקורת",
+    "intro": "שרשרת גיבובים לכל חברה, מעוגנת באחסון WORM.",
+    "pending": "ממתין לחיבור",
+    "noAccessTitle": "אין הרשאה",
+    "noAccessBody": "יומן הביקורת זמין רק לתפקידי מנהל מערכת ובעלים.",
+    "verifyChain": "אימות כל השרשרת",
+    "status": "סטטוס",
+    "intact": "השרשרת שלמה",
+    "broken": "השרשרת שבורה",
+    "events": "אירועים",
+    "lastVerified": "אימות אחרון",
+    "anchor": "עיגון אחרון",
+    "when": "מתי",
+    "actor": "גורם",
+    "event": "אירוע",
+    "hash": "גיבוב",
+    "caption": "אירועי ביקורת",
+    "empty": "אין אירועים",
+    "actors": {
+      "negotiator": "סוכן המשא ומתן",
+      "sanity": "שירות תקינות",
+      "human": "מנהל",
+      "fx": "שירות מט\"ח"
+    },
+    "verifyTitle": "אימות החלטה",
+    "verifyLabel": "מזהה או גיבוב",
+    "verify": "אימות",
+    "verifyPlaceholder": "dec_…"
+  },
+  "accounts": {
+    "title": "חשבונות פלטפורמה",
+    "intro": "חברו את הפלטפורמות שבהן הסוכן מחפש ומנהל משא ומתן. פרטי הגישה לעולם לא עוזבים את הדפדפן שלכם לכיוון המודל."
+  }
+}
