@@ -54,6 +54,7 @@ export const COMPARE: CompareFixture = {
         { id: 'j', score: '0,59', parts: { price: 0.1, trust: 0.24, lead: 0.19, verdict: 0.06 }, vsFirst: '3 días antes, pero 1.178 € más caro y al límite del envelope.' },
       ],
     },
+    // //todo_#164: datos ficticios, el lienzo solo trae el perfil operativo
     cfo: {
       headline: 'Vendedor A gana también para finanzas; J pasa por delante de K por el riesgo de confianza',
       explanation: 'Perfil CFO: pesa el veredicto financiero y la confianza; el plazo cuenta menos. La confianza baja de K lo deja en 3.º.',

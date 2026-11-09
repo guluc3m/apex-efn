@@ -39,10 +39,12 @@ export function CompareView({ data, missionId }: { data: CompareFixture; mission
             onValueChange={(v) => setProfile(v as ProfileKey)}
             options={PROFILES.map((k) => ({ value: k, label: t(`profiles.${k}`) }))}
           />
-          <Button variant="sec" disabledReason={t('pending')}>
+          {/* //todo_#164: exportar la comparativa cuando exista el endpoint */}
+          <Button variant="sec"disabledReason={t('pending')}>
             <Icon icon={Download} label="" /> {t('export')}
           </Button>
-          <Button variant="pri" disabledReason={t('pending')}>
+          {/* //todo_#164: decidir (decisión firmada) cuando exista el backend */}
+          <Button variant="pri"disabledReason={t('pending')}>
             <Icon icon={Scale} label="" /> {t('decide', { name: first.f.name })}
           </Button>
         </div>
