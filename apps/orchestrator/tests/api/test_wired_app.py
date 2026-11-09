@@ -158,3 +158,75 @@ def test_routes_whose_engines_are_missing_still_answer_501(app: FastAPI) -> None
     with TestClient(app) as client:
         assert client.get("/v1/sellers/s-1/confidence", headers=_h()).status_code == 501
         assert client.get("/v1/dashboard/deals", headers=_h()).status_code == 501
+
+
+# ----- config and onboarding are wired too -------------------------------------------------------
+
+
+def test_effective_config_is_served_for_a_demo_tenant(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        response = client.get("/v1/config/effective", headers=_h())
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["tenant_id"] == TENANT
+    assert body["config_version"] >= 1
+    assert body["content_hash"].startswith("sha256:")
+    assert body["values"]["sanity.z_gate"]["status"] == "set"
+
+
+def test_the_demo_tenants_get_their_seeded_values(app: FastAPI) -> None:
+    """ADR-900 Q7: the demo tenants get demo values from the seed, never from /config/defaults."""
+    with TestClient(app) as client:
+        response = client.get("/v1/config/effective", headers=_h())
+    values = response.json()["values"]
+    assert values["neg.max_discount"]["status"] == "set"
+    assert values["neg.max_discount"]["value"] == "0.15"
+
+
+def test_a_tenant_outside_the_demo_set_keeps_the_unset_keys(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        response = client.get("/v1/config/effective", headers=_h("tenant-c"))
+    values = response.json()["values"]
+    assert values["neg.max_discount"]["status"] == "unset"
+    assert values["approval.threshold"]["status"] == "unset"
+
+
+def test_a_config_proposal_says_signing_is_not_wired(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/config/proposals",
+            json={"base_config_version": 1, "patch": {"sanity": {"z_gate": "7.0"}}},
+            headers=_h(),
+        )
+    assert response.status_code == 501, response.text
+
+
+def test_an_onboarding_session_can_be_started_and_profiled(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        created = client.post("/v1/onboarding/sessions", headers=_h())
+        assert created.status_code == 201, created.text
+        session = created.json()
+        assert session["status"] == "started"
+        updated = client.patch(
+            f"/v1/onboarding/sessions/{session['id']}",
+            json={"legal_name": "ACME", "base_currency": "EUR"},
+            headers=_h(),
+        )
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "profiled"
+    assert updated.json()["profile"]["legal_name"] == "ACME"
+
+
+def test_a_csv_upload_says_the_importer_is_not_wired(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        session = client.post("/v1/onboarding/sessions", headers=_h()).json()
+        response = client.post(
+            f"/v1/onboarding/{session['id']}/financial-csv",
+            files={"file": ("fin.csv", b"period,metric,value_minor\n", "text/csv")},
+            headers=_h(),
+        )
+    assert response.status_code == 501, response.text
+    # The original is stored before it is parsed, so the first missing piece is object storage (D1-06);
+    # once that lands the importer (D3-04) is next. Either way the answer names the owning lane.
+    assert "not wired yet" in response.json()["detail"]
+    assert "owner: DEV-" in response.json()["detail"]

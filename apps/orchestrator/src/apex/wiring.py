@@ -29,6 +29,11 @@ from typing import Any
 import httpx
 
 from apex.agents.missions import InMemoryMissionStore, MissionEventBus
+from apex.agents.onboarding import (
+    InMemoryOnboardingStore,
+    OnboardingDeps,
+    OnboardingService,
+)
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
 from apex.common.clock import Clock, SystemClock
@@ -47,6 +52,7 @@ from apex.llm.gateway import LLMGateway
 from apex.llm.prompts import PromptRegistry
 from apex.platform.flags import FlagProvider, StaticFlags
 from apex.tenant_config.defaults import DEFAULT_PATH, load_global_layer
+from apex.tenant_config.load_defaults import DEMO_TENANTS, seed
 from apex.tenant_config.repository import InMemoryConfigRepository
 from apex.tenant_config.resolver import content_hash
 from apex.tenant_config.service import TenantConfigService
@@ -66,6 +72,27 @@ class UnwiredDecisionPort:
 
     async def require_signed(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("signing is not wired yet (DEV-2 apex.signing.api pending)")
+
+    async def sign_service_event(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError(
+            "service signing is not wired yet (DEV-2 apex.signing.api pending)"
+        )
+
+
+class UnwiredCsvImporter:
+    """The financial CSV parser is DEV-3's (D3-04). Until it lands, an upload says so instead of guessing."""
+
+    async def parse(self, content: bytes, *, base_currency: str, tenant_id: str, now: Any) -> Any:
+        raise NotImplementedError(
+            "the financial CSV importer is not wired yet (owner: DEV-3, D3-04)"
+        )
+
+
+class UnwiredObjectStore:
+    """Object storage is DEV-1's (D1-06). Nothing is stored until it exists."""
+
+    async def put(self, key: str, content: bytes, *, content_type: str) -> str:
+        raise NotImplementedError("object storage is not wired yet (owner: DEV-1, D1-06)")
 
 
 class DefaultRoleConfigProvider:
@@ -138,6 +165,8 @@ class AppServices:
     mission_bus: MissionEventBus
     mission_store: InMemoryMissionStore
     flags: FlagProvider
+    config_repository: InMemoryConfigRepository
+    onboarding: OnboardingService
 
 
 def build_app_services(
@@ -150,11 +179,8 @@ def build_app_services(
 ) -> AppServices:
     """Build the service graph. Synchronous on purpose: ``create_app`` is a sync factory."""
     active_clock = clock or SystemClock()
-    tenant_config = TenantConfigService(
-        InMemoryConfigRepository(),
-        UnwiredDecisionPort(),
-        active_clock,
-    )
+    config_repository = InMemoryConfigRepository()
+    tenant_config = TenantConfigService(config_repository, UnwiredDecisionPort(), active_clock)
     gateway = LLMGateway(
         config_provider=DefaultRoleConfigProvider(),
         secrets=StaticSecretResolver({}),
@@ -182,6 +208,18 @@ def build_app_services(
             config_version=_default_config_version(),
         )
     )
+    onboarding = OnboardingService(
+        OnboardingDeps(
+            store=InMemoryOnboardingStore(),
+            importer=UnwiredCsvImporter(),
+            objects=UnwiredObjectStore(),
+            decisions=UnwiredDecisionPort(),
+            clock=active_clock,
+            ids=IdGenerator(active_clock),
+            stale_after_days=_finance_stale_after_days(),
+            config_version=_default_config_version(),
+        )
+    )
     return AppServices(
         tenant_config=tenant_config,
         gateway=gateway,
@@ -190,7 +228,25 @@ def build_app_services(
         mission_bus=mission_bus,
         mission_store=mission_store,
         flags=active_flags,
+        config_repository=config_repository,
+        onboarding=onboarding,
     )
+
+
+def _finance_stale_after_days() -> int:
+    """``finance.stale_after_days`` from the versioned defaults (spec §3.5). Read, never hardcoded."""
+    _, values = load_global_layer(DEFAULT_PATH)
+    entry = values["finance"]["stale_after_days"]
+    return int(entry)
+
+
+async def seed_demo_tenants(services: AppServices) -> list[str]:
+    """Seed the demo tenants' config baseline so proposals and reads have a version to work from.
+
+    Uses the same ``load_defaults`` path as ``pnpm dev:reset`` (ADR-900 Q7 demo values). Idempotent.
+    """
+    written = await seed(sorted(DEMO_TENANTS), services.config_repository, demo_values=True)
+    return [record.tenant_id for record in written]
 
 
 def _default_config_version() -> Callable[[str], str]:
@@ -217,6 +273,9 @@ __all__ = [
     "DEV_PLATFORMS",
     "AppServices",
     "DefaultRoleConfigProvider",
+    "UnwiredCsvImporter",
+    "UnwiredObjectStore",
     "UnwiredDecisionPort",
     "build_app_services",
+    "seed_demo_tenants",
 ]

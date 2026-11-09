@@ -155,6 +155,9 @@ async def upload_financial_csv(
         )
     except LookupError as exc:
         raise Problem(404, "Session not found", detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        # The importer or object storage is not wired yet: say so instead of failing with a 500.
+        raise not_implemented(str(exc)) from exc
     return SnapshotOut.of(snapshot)
 
 
