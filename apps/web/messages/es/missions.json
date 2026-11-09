@@ -1,1 +1,123 @@
-{}
+{
+  "list": {
+    "title": "Misiones",
+    "subtitle": "Cada misión busca, filtra precios anómalos y negocia. Nada se compra sin tu firma.",
+    "new": "Nueva misión",
+    "emptyTitle": "Aún no hay misiones",
+    "emptyBody": "Describe lo que necesitas comprar y la primera misión empezará a buscar ofertas.",
+    "caption": "Misiones de compra",
+    "noMatch": "Ninguna misión con este filtro",
+    "cols": { "mission": "Misión", "state": "Estado", "phase": "Fase", "offers": "Ofertas", "finalists": "Finalistas", "launched": "Lanzada" },
+    "state": { "running": "En curso", "valuation": "En valoración", "closed": "Cerrada", "cancelled": "Cancelada" },
+    "phase": { "search": "Búsqueda", "filter": "Confianza y precio", "negotiation": "Negociación", "valuation": "Valoración" },
+    "filters": { "state": "Estado", "all": "Todas" }
+  },
+  "request": {
+    "title": "Nueva misión de compra",
+    "pending": "Pendiente de conectar",
+    "reinterpret": "Volver a interpretar",
+    "chat": {
+      "title": "Qué necesitas, con tus palabras",
+      "you": "Tú",
+      "agent": "Asistente",
+      "reply": "He entendido la petición. Revisa los campos de la derecha y corrige lo que haga falta antes de lanzar la misión.",
+      "placeholder": "Describe lo que necesitas",
+      "send": "Enviar",
+      "stop": "Parar",
+      "hint": "Intro envía · Mayús + Intro nueva línea",
+      "pending": "Enviar mensajes aún no está conectado: pendiente de conectar.",
+      "phrases": {
+        "interpreting": "Interpretando la petición",
+        "spec": "Identificando la especificación",
+        "budget": "Comprobando el presupuesto",
+        "platforms": "Eligiendo plataformas",
+        "plan": "Preparando el plan"
+      }
+    },
+    "review": {
+      "title": "Revisa lo que hemos entendido",
+      "product": "Producto",
+      "category": "Categoría",
+      "categories": { "bearings": "Rodamientos" },
+      "quantity": "Cantidad",
+      "destination": "Destino",
+      "deadline": "Entregar antes de",
+      "payment": "Pago",
+      "payments": { "net60": "60 días" },
+      "spec": "Especificación",
+      "tolerances": "Tolerancias",
+      "tolerancesMissing": "No lo indicaste",
+      "tolerancesHelp": "Sin tolerancia, el técnico no puede validar la especificación. Añádela o confirma que vale cualquiera."
+    },
+    "platforms": {
+      "title": "Plataformas",
+      "p1": "Plataforma 1",
+      "p2": "Plataforma 2",
+      "p3": "Plataforma 3",
+      "expired": "(sesión caducada: entra de nuevo en Empresa)",
+      "disabled": "desactivada por el administrador"
+    },
+    "envelope": { "label": "Envelope Rodamientos", "available": "disponibles" },
+    "profile": { "label": "Perfil de ranking", "operational": "Comprador operativo", "cfo": "CFO / finanzas" },
+    "noSnapshot": {
+      "title": "El snapshot financiero no está activo",
+      "body": "No se puede lanzar: las ofertas no tendrían contra qué compararse.",
+      "action": "Importar CSV financiero",
+      "reason": "Activa primero un snapshot financiero"
+    },
+    "launch": "Lanzar misión",
+    "launchHint": "Busca, filtra precios anómalos y negocia. Nada se compra sin tu firma."
+  },
+  "detail": {
+    "meta": "Misión {id} · lanzada hace {minutes} min",
+    "new": "Nueva misión",
+    "compare": "Ver comparativa",
+    "pause": "Pausar",
+    "cancel": "Cancelar misión",
+    "pending": "Pendiente de conectar",
+    "side": "Embudo y actividad de la misión",
+    "phases": {
+      "label": "Fases de la misión",
+      "state": { "done": "Completado", "running": "En curso", "pending": "Pendiente" },
+      "search": { "title": "Búsqueda", "done": "{n} ofertas en {p} plataformas" },
+      "filter": { "title": "Confianza y precio", "done": "{pass} pasan · {out} filtradas" },
+      "negotiation": { "title": "Negociación", "running": "{n} de {total} en curso" },
+      "valuation": { "title": "Valoración", "pending": "Empieza al cerrar las negociaciones" }
+    },
+    "funnel": {
+      "caption": "Embudo de la misión: ofertas que llegan a cada etapa",
+      "aria": "Embudo de la misión: {found} ofertas encontradas, {passed} pasan los filtros, {negotiated} negociadas y {finalists} finalistas.",
+      "stages": { "found": "Encontradas", "passed": "Pasan filtros", "negotiated": "Negociadas", "finalists": "Finalistas" }
+    },
+    "activity": {
+      "title": "Actividad",
+      "live": "En vivo",
+      "review": "Revisar",
+      "working": "Comprobando la confianza de {n} vendedores…",
+      "reply": "{seller} responde con escalado por volumen.",
+      "draft": "Borrador para {seller} espera tu aprobación.",
+      "discarded": "{seller} descartado: precio implausible, {pct} % por debajo de la mediana.",
+      "gate": "{seller} a gate: confianza baja ({score}).",
+      "offers": "{platform}: {n} ofertas."
+    },
+    "offers": {
+      "caption": "Ofertas de la misión por vendedor",
+      "empty": "Ninguna oferta con estos filtros",
+      "footer": "Mostrando {shown} de {total}. La confianza va siempre junto al precio. La flecha es la diferencia frente a la mediana: azul, por debajo; rojo, por encima.",
+      "cols": { "seller": "Vendedor", "platform": "Plataforma", "price": "Precio/ud", "band": "Banda de precio", "confidence": "Confianza", "verdict": "Veredicto", "signature": "Firma", "status": "Estado", "landed": "Landed cost" },
+      "platform": { "p1": "Plataforma 1", "p2": "Plataforma 2" },
+      "band": { "normal": "Normal", "atypical": "Atípico", "implausible": "Implausible", "insufficient_reference": "Sin referencia" },
+      "confidence": { "high": "alta · {score}", "medium": "media · {score}", "low": "baja · {score}", "untrusted": "no fiable · {score}", "insufficient_data": "sin datos" },
+      "verdict": { "within_budget": "En presupuesto", "stretch": "Al límite", "out_of_budget": "Fuera de presupuesto" },
+      "signature": { "signed": "Firmada", "pending": "Sin firmar", "invalid": "Firma no válida" },
+      "status": {
+        "awaiting_approval": "Mensaje por aprobar",
+        "negotiating": "Negociando · ronda {round}",
+        "aborted": "Abortada · ronda {round}",
+        "gate_low_confidence": "En gate: confianza baja",
+        "filtered_implausible": "Filtrada: precio implausible"
+      },
+      "filters": { "status": "Estado", "band": "Precio", "verdict": "Veredicto", "platform": "Plataforma", "all": "Todas" }
+    }
+  }
+}
