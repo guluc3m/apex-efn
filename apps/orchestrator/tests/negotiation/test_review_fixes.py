@@ -247,3 +247,37 @@ class TestFinding13EchoedBuyerPrices:
         s = await run_autonomous(h, await h.engine.start(request(p), idempotency_key="k"))
         assert s.status is NegotiationOutcome.AGREED
         assert s.agreed is not None and s.agreed.unit_price_minor == s.ladder[0]
+
+
+class TestFinding14WrittenAcceptance:
+    """Found by D5-09: the mock accepts the summary with "OK, we can accept EUR 4.09 per unit for 5000 units"."""
+
+    Q = Quote(unit_price_minor=409, currency="EUR", at_round=3)
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "OK, we can accept EUR 4.09 per unit for 5000 units.",
+            "We accept EUR 4.09 per unit.",
+            "Aceptamos EUR 4.09 por unidad para 5000 unidades.",
+            "好的，可以接受 EUR 4.09 单价。",
+        ],
+    )
+    def test_explicit_acceptance_of_the_summary_confirms(self, text: str) -> None:
+        assert confirms(text, self.Q, 5000)
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "We can accept EUR 4.09 if you pay 50% upfront.",
+            "We accept EUR 4.09 provided you order again next month.",
+            "We can accept EUR 4.09 only for 10000 units.",
+            "We can accept EUR 4.09 per unit for 3000 units.",
+            "Aceptamos EUR 4.09 siempre que paguen por adelantado.",
+            "如果预付，可以接受 EUR 4.09。",
+            "We cannot accept EUR 4.09.",
+            "Accepting is hard, EUR 4.09 is our cost.",
+        ],
+    )
+    def test_conditional_or_different_terms_go_to_a_human(self, text: str) -> None:
+        assert not confirms(text, self.Q, 5000)
