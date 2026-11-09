@@ -22,7 +22,7 @@ from typing import Any, Protocol
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from apex.agents.scraping import RawOffer, SkippedListing, WorkerSearchResult
+from apex.agents.scraping import RawOffer, SkippedListing, WorkerError, WorkerSearchResult
 from apex.agents.sourcing import PlanStep
 
 JOBS_PATH = "/internal/v1/jobs"
@@ -95,7 +95,7 @@ class _JobAccepted(_Model):
     deduplicated: bool = False
 
 
-class BrowserWorkerError(Exception):
+class BrowserWorkerError(WorkerError):
     """The worker refused the job, failed it, or never finished. ``code`` is the contract's closed code."""
 
     def __init__(self, code: str, detail: str = "", *, retryable: bool = False) -> None:

@@ -15,7 +15,7 @@ Adapters return **raw** signals; normalisation and scoring belong here and in DE
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -66,6 +66,17 @@ class WorkerSearchResult(_Model):
     truncated: bool = False
 
 
+class WorkerError(Exception):
+    """A worker failure the scraping service can react to.
+
+    ``retryable`` comes from the worker contract's ``JobError``: a ``rate_limited`` or ``captcha`` failure is
+    worth another attempt, a ``dom_changed`` one is not. The base lives here so the HTTP client can subclass
+    it without a circular import.
+    """
+
+    retryable: bool = False
+
+
 class BrowserWorkerPort(Protocol):
     """D5-01's internal API: dispatch a search job and collect what the adapter found."""
 
@@ -107,6 +118,10 @@ class ScrapeResult(_Model):
     fx_provisional: bool
 
 
+async def _no_sleep(_seconds: float) -> None:
+    """Default sleep for the retry loop. Tests inject a recorder so nothing waits."""
+
+
 @dataclass(frozen=True)
 class ScrapingDeps:
     worker: BrowserWorkerPort
@@ -114,6 +129,10 @@ class ScrapingDeps:
     offers: OfferStore
     bus: MissionEventBus
     clock: Clock
+    max_attempts: int = 3
+    """Attempts per plan step when the worker reports a retryable failure."""
+    retry_backoff_s: float = 1.0
+    sleep: Callable[[float], Awaitable[None]] = _no_sleep
 
 
 class ScrapingService:
@@ -133,7 +152,7 @@ class ScrapingService:
         platforms: list[str] = []
         skipped: list[SkippedListing] = []
         for step in plan.steps:
-            result = await self._deps.worker.search(
+            result = await self._search_with_retries(
                 tenant_id=tenant_id, mission_id=mission_id, step=step, quantity=quantity
             )
             platforms.append(result.platform_id)
@@ -154,6 +173,26 @@ class ScrapingService:
             fx_provisional=provisional,
         )
         return outcome
+
+    async def _search_with_retries(
+        self, *, tenant_id: str, mission_id: str, step: PlanStep, quantity: int
+    ) -> WorkerSearchResult:
+        """One step, retried while the worker says the failure is retryable and attempts remain.
+
+        A non-retryable failure (``dom_changed``, ``platform_disabled``) is raised immediately: retrying it
+        would only burn the mission's time budget.
+        """
+        attempt = 1
+        while True:
+            try:
+                return await self._deps.worker.search(
+                    tenant_id=tenant_id, mission_id=mission_id, step=step, quantity=quantity
+                )
+            except WorkerError as exc:
+                if not exc.retryable or attempt >= self._deps.max_attempts:
+                    raise
+                await self._deps.sleep(self._deps.retry_backoff_s * attempt)
+                attempt += 1
 
     async def _normalise(
         self, *, tenant_id: str, mission_id: str, raw: Sequence[RawOffer]
@@ -274,6 +313,7 @@ __all__ = [
     "ScrapingDeps",
     "SUPPORTED_CURRENCIES",
     "ScrapingService",
+    "WorkerError",
     "WorkerSearchResult",
     "offers_from_fixture",
 ]
