@@ -311,3 +311,84 @@ async def test_no_skips_is_the_normal_case() -> None:
         tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500
     )
     assert result.skipped == []
+
+
+# ----- a retryable worker failure is retried, a permanent one is not ------------------------------
+
+
+class _FlakyWorker(_Worker):
+    """Fails the first N calls with the given error, then behaves."""
+
+    def __init__(self, failures: int, *, retryable: bool) -> None:
+        super().__init__({"mock-a": [_raw()]})
+        self.failures = failures
+        self.retryable = retryable
+        self.attempts = 0
+
+    async def search(self, *, tenant_id, mission_id, step, quantity):  # type: ignore[no-untyped-def]
+        self.attempts += 1
+        if self.attempts <= self.failures:
+            from apex.agents.scraping import WorkerError
+
+            error = WorkerError("rate_limited" if self.retryable else "dom_changed")
+            error.retryable = self.retryable
+            raise error
+        return await super().search(
+            tenant_id=tenant_id, mission_id=mission_id, step=step, quantity=quantity
+        )
+
+
+def _retrying_service(worker: _FlakyWorker, sleeps: list[float]) -> ScrapingService:
+    async def _sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    clock = FixedClock(NOW)
+    return ScrapingService(
+        ScrapingDeps(
+            worker=worker,
+            fx=_Fx(),
+            offers=InMemoryOfferStore(),
+            bus=MissionEventBus(),
+            clock=clock,
+            max_attempts=3,
+            retry_backoff_s=1.0,
+            sleep=_sleep,
+        )
+    )
+
+
+async def test_a_rate_limited_step_is_retried_with_backoff() -> None:
+    sleeps: list[float] = []
+    worker = _FlakyWorker(failures=2, retryable=True)
+    result = await _retrying_service(worker, sleeps).scrape(
+        tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500
+    )
+    assert worker.attempts == 3
+    assert sleeps == [1.0, 2.0]  # linear backoff, one wait between attempts
+    assert result.kept == 1
+
+
+async def test_a_permanent_failure_is_not_retried() -> None:
+    sleeps: list[float] = []
+    worker = _FlakyWorker(failures=1, retryable=False)
+    from apex.agents.scraping import WorkerError
+
+    with pytest.raises(WorkerError):
+        await _retrying_service(worker, sleeps).scrape(
+            tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500
+        )
+    assert worker.attempts == 1
+    assert sleeps == []
+
+
+async def test_retries_stop_at_max_attempts() -> None:
+    sleeps: list[float] = []
+    worker = _FlakyWorker(failures=99, retryable=True)
+    from apex.agents.scraping import WorkerError
+
+    with pytest.raises(WorkerError):
+        await _retrying_service(worker, sleeps).scrape(
+            tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500
+        )
+    assert worker.attempts == 3
+    assert sleeps == [1.0, 2.0]
