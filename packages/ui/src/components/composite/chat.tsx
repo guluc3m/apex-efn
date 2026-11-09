@@ -39,6 +39,8 @@ export interface ChatProps {
   onSend: (text: string) => void
   onStop?: () => void
   onAttach?: () => void
+  /** Envío deshabilitado: conserva el texto y muestra el motivo, visible y asociado al campo. */
+  disabledReason?: string
   className?: string
 }
 
@@ -48,7 +50,8 @@ const ROLE: Record<ChatRole, { icon: LucideIcon; cls: string }> = {
   human: { icon: User, cls: 'border-line-strong bg-raised' },
 }
 
-export function Chat({ messages = [], labels, thinking = false, phrases = [], onSend, onStop, onAttach, className }: ChatProps) {
+export function Chat({ messages = [], labels, thinking = false, phrases = [], onSend, onStop, onAttach, disabledReason, className }: ChatProps) {
+  const reasonId = React.useId()
   const [text, setText] = React.useState('')
   const [focus, setFocus] = React.useState(false)
   const [hidden, setHidden] = React.useState(false)
@@ -61,7 +64,7 @@ export function Chat({ messages = [], labels, thinking = false, phrases = [], on
 
   const open = focus || thinking || text.length > 0
   const submit = () => {
-    if (!text.trim()) return
+    if (disabledReason || !text.trim()) return
     onSend(text)
     setText('')
   }
@@ -110,6 +113,7 @@ export function Chat({ messages = [], labels, thinking = false, phrases = [], on
               rows={1}
               value={text}
               aria-label={labels.input}
+              aria-describedby={disabledReason ? reasonId : undefined}
               placeholder={labels.placeholder}
               onChange={(e) => setText(e.target.value)}
               onFocus={() => setFocus(true)}
@@ -130,11 +134,17 @@ export function Chat({ messages = [], labels, thinking = false, phrases = [], on
               size="lg"
               className="w-11 min-w-11 px-0"
               aria-label={thinking ? labels.stop : labels.send}
+              disabledReason={thinking ? undefined : disabledReason}
               onClick={thinking ? onStop : submit}
             >
               <Icon icon={thinking ? CircleStop : Send} />
             </Button>
           </div>
+          {disabledReason && (
+            <p id={reasonId} className="m-0 px-4 pb-2 text-[13px] text-ink-muted">
+              {disabledReason}
+            </p>
+          )}
         </div>
       </div>
     </div>

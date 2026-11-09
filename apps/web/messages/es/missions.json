@@ -25,7 +25,7 @@
       "send": "Enviar",
       "stop": "Parar",
       "hint": "Intro envía · Mayús + Intro nueva línea",
-      "pending": "Enviar mensajes aún no está conectado: pendiente de conectar.",
+      "pending": "Pendiente de conectar: aún no se puede enviar.",
       "phrases": {
         "interpreting": "Interpretando la petición",
         "spec": "Identificando la especificación",

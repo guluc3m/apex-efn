@@ -25,7 +25,7 @@
       "send": "发送",
       "stop": "停止",
       "hint": "回车发送 · Shift + 回车换行",
-      "pending": "发送消息尚未接入。",
+      "pending": "尚未接入：暂时无法发送。",
       "phrases": {
         "interpreting": "正在理解需求",
         "spec": "正在识别规格",

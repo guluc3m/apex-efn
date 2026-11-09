@@ -36,14 +36,14 @@ export function MissionRequest({ request, snapshotActive }: { request: Request; 
         <h2 id="req-chat" className="text-[13px] font-normal text-ink-muted">
           {t('chat.title')}
         </h2>
-        {/* //todo_#172: enviar al IntakeAgent y mostrar «Interpretando…» (Thinking) mientras trabaja */}
+        {/* //todo_#155: enviar al IntakeAgent y mostrar «Interpretando…» (Thinking) mientras trabaja */}
         <Chat
           messages={messages}
           phrases={['interpreting', 'spec', 'budget', 'platforms', 'plan'].map((k) => t(`chat.phrases.${k}`))}
           labels={{ input: t('chat.title'), placeholder: t('chat.placeholder'), send: t('chat.send'), stop: t('chat.stop'), hint: t('chat.hint') }}
           onSend={() => undefined}
+          disabledReason={t('chat.pending')}
         />
-        <p className="text-[13px] text-ink-muted">{t('chat.pending')}</p>
         <div>
           <Button disabledReason={pending}>
             <Icon icon={RefreshCw} />
@@ -116,7 +116,7 @@ export function MissionRequest({ request, snapshotActive }: { request: Request; 
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* //todo_#172: lanzar misión (POST /v1/missions) */}
+          {/* //todo_#156: lanzar misión (POST /v1/missions) */}
           <Button variant="pri" disabledReason={snapshotActive ? pending : t('noSnapshot.reason')}>
             <Icon icon={Play} />
             {t('launch')}

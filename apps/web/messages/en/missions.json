@@ -25,7 +25,7 @@
       "send": "Send",
       "stop": "Stop",
       "hint": "Enter sends · Shift + Enter for a new line",
-      "pending": "Sending messages is not connected yet.",
+      "pending": "Not connected yet: sending is unavailable.",
       "phrases": {
         "interpreting": "Interpreting the request",
         "spec": "Identifying the specification",

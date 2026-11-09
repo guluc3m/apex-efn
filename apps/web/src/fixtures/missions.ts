@@ -2,7 +2,7 @@ import type { ConfidenceBand, FinancialVerdict, PriceBand, SignatureStatus } fro
 
 // Datos del lienzo (Peticion, Mision), ya calculados por la API. La UI solo los muestra.
 
-// //todo_#178: lista real de misiones (GET /v1/missions)
+// //todo_#156: lista real de misiones (GET /v1/missions)
 export type MissionState = 'running' | 'valuation' | 'closed' | 'cancelled'
 export type MissionPhase = 'search' | 'filter' | 'negotiation' | 'valuation'
 export interface MissionRow {
@@ -24,7 +24,7 @@ export const missionList: MissionRow[] = [
 // //todo_#155: estado real del snapshot financiero activo
 export const financialSnapshotActive = true
 
-// //todo_#172: petición interpretada por el IntakeAgent (POST /v1/sourcing-requests)
+// //todo_#155: petición interpretada por el IntakeAgent (POST /v1/sourcing-requests)
 export const sourcingRequest = {
   text: 'Necesito 5.000 rodamientos 6204-2RS con doble sellado de goma, entrega en la nave de Valencia antes del 15 de diciembre. Pago a 60 días si puede ser.',
   fields: {
