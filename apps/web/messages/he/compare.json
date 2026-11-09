@@ -1,0 +1,30 @@
+{
+  "back": "חזרה למשימה",
+  "context": "{code} · {n} מועמדים סופיים",
+  "profile": "פרופיל",
+  "profiles": { "operative": "קונה תפעולי", "cfo": "סמנכ\"ל כספים" },
+  "export": "ייצוא ההשוואה",
+  "decide": "החלטה על {name}",
+  "pending": "טרם חובר",
+  "tableCaption": "השוואת המועמדים הסופיים",
+  "rank": "#{n}",
+  "rows": { "criterion": "קריטריון", "price": "מחיר ליחידה", "band": "טווח מחיר", "confidence": "אמון", "verdict": "הערכה", "signature": "חתימה", "landed": "עלות נחיתה", "lead": "זמן אספקה", "score": "ציון", "vsFirst": "לעומת #1" },
+  "delta": { "down": "מתחת לחציון", "up": "מעל החציון" },
+  "deltaNote": "חץ: הפרש המחיר לעומת החציון של {median}/יחידה. כחול – מתחת; אדום – מעל.",
+  "price": { "normal": "תקין", "atypical": "חריג", "implausible": "לא סביר" },
+  "confidence": { "high": "גבוה", "medium": "בינוני", "low": "נמוך", "untrusted": "לא מהימן", "insufficient_data": "אין מספיק נתונים" },
+  "verdict": { "within_budget": "במסגרת התקציב", "stretch": "מתיחת תקציב", "out_of_budget": "מחוץ לתקציב" },
+  "signature": { "signed": "חתום", "pending": "לא חתום", "invalid": "לא תקין" },
+  "chart": {
+    "caption": "תרומת כל קריטריון לציון",
+    "criteria": { "price": "מחיר", "trust": "אמון", "lead": "זמן אספקה", "verdict": "הערכה" },
+    "row": "{name}: ציון {score} ({parts})"
+  },
+  "savings": {
+    "title": "חיסכון",
+    "list": "לעומת מחירון, משימה זו",
+    "median": "לעומת חציון השוק",
+    "year": "{category}, ב-2026",
+    "memory": "זיכרון מחירים"
+  }
+}

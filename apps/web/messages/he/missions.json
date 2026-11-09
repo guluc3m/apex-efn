@@ -1,0 +1,123 @@
+{
+  "list": {
+    "title": "משימות",
+    "subtitle": "כל משימה מחפשת, מסננת מחירים חריגים ומנהלת משא ומתן. דבר לא נרכש בלי חתימתכם.",
+    "new": "משימה חדשה",
+    "emptyTitle": "אין עדיין משימות",
+    "emptyBody": "תארו מה צריך לרכוש והמשימה הראשונה תתחיל לחפש הצעות.",
+    "caption": "משימות רכש",
+    "noMatch": "אין משימה התואמת למסנן זה",
+    "cols": { "mission": "משימה", "state": "סטטוס", "phase": "שלב", "offers": "הצעות", "finalists": "מועמדים סופיים", "launched": "הופעלה" },
+    "state": { "running": "בתהליך", "valuation": "בהערכה", "closed": "סגורה", "cancelled": "בוטלה" },
+    "phase": { "search": "חיפוש", "filter": "אמון ומחיר", "negotiation": "משא ומתן", "valuation": "הערכה" },
+    "filters": { "state": "סטטוס", "all": "הכול" }
+  },
+  "request": {
+    "title": "משימת רכש חדשה",
+    "pending": "טרם חובר",
+    "reinterpret": "פירוש מחדש",
+    "chat": {
+      "title": "מה אתם צריכים, במילים שלכם",
+      "you": "אתם",
+      "agent": "עוזר",
+      "reply": "הבנתי את הבקשה. עברו על השדות מימין ותקנו מה שצריך לפני הפעלת המשימה.",
+      "placeholder": "תארו מה אתם צריכים",
+      "send": "שליחה",
+      "stop": "עצירה",
+      "hint": "Enter לשליחה · Shift + Enter לשורה חדשה",
+      "pending": "טרם חובר: השליחה אינה זמינה.",
+      "phrases": {
+        "interpreting": "מפרש את הבקשה",
+        "spec": "מזהה את המפרט",
+        "budget": "בודק את התקציב",
+        "platforms": "בוחר פלטפורמות",
+        "plan": "מכין את התוכנית"
+      }
+    },
+    "review": {
+      "title": "בדקו מה הבנו",
+      "product": "מוצר",
+      "category": "קטגוריה",
+      "categories": { "bearings": "מיסבים" },
+      "quantity": "כמות",
+      "destination": "יעד",
+      "deadline": "לספק לפני",
+      "payment": "תשלום",
+      "payments": { "net60": "60 יום" },
+      "spec": "מפרט",
+      "tolerances": "סבילויות",
+      "tolerancesMissing": "לא ציינתם",
+      "tolerancesHelp": "בלי סבילות, הטכנאי אינו יכול לאמת את המפרט. הוסיפו אחת או אשרו שכל סבילות מתאימה."
+    },
+    "platforms": {
+      "title": "פלטפורמות",
+      "p1": "פלטפורמה 1",
+      "p2": "פלטפורמה 2",
+      "p3": "פלטפורמה 3",
+      "expired": "(הסשן פג: התחברו מחדש תחת חברה)",
+      "disabled": "הושבתה על ידי מנהל המערכת"
+    },
+    "envelope": { "label": "מעטפת מיסבים", "available": "זמין" },
+    "profile": { "label": "פרופיל דירוג", "operational": "קונה תפעולי", "cfo": "סמנכ\"ל כספים" },
+    "noSnapshot": {
+      "title": "תצלום המצב הפיננסי אינו פעיל",
+      "body": "אי אפשר להפעיל: לא יהיה מול מה להשוות את ההצעות.",
+      "action": "ייבוא CSV פיננסי",
+      "reason": "הפעילו קודם תצלום מצב פיננסי"
+    },
+    "launch": "הפעלת משימה",
+    "launchHint": "היא מחפשת, מסננת מחירים חריגים ומנהלת משא ומתן. דבר לא נרכש בלי חתימתכם."
+  },
+  "detail": {
+    "meta": "משימה {id} · הופעלה לפני {minutes} דקות",
+    "new": "משימה חדשה",
+    "compare": "צפייה בהשוואה",
+    "pause": "השהיה",
+    "cancel": "ביטול משימה",
+    "pending": "טרם חובר",
+    "side": "משפך המשימה ופעילות",
+    "phases": {
+      "label": "שלבי המשימה",
+      "state": { "done": "הושלם", "running": "בתהליך", "pending": "ממתין" },
+      "search": { "title": "חיפוש", "done": "{n} הצעות ב-{p} פלטפורמות" },
+      "filter": { "title": "אמון ומחיר", "done": "{pass} עברו · {out} סוננו" },
+      "negotiation": { "title": "משא ומתן", "running": "{n} מתוך {total} בתהליך" },
+      "valuation": { "title": "הערכה", "pending": "מתחילה עם סגירת המשא ומתן" }
+    },
+    "funnel": {
+      "caption": "משפך המשימה: הצעות שהגיעו לכל שלב",
+      "aria": "משפך המשימה: נמצאו {found} הצעות, {passed} עוברות את המסננים, {negotiated} נוהל עליהן משא ומתן ו-{finalists} מועמדים סופיים.",
+      "stages": { "found": "נמצאו", "passed": "עברו מסננים", "negotiated": "נוהל משא ומתן", "finalists": "מועמדים סופיים" }
+    },
+    "activity": {
+      "title": "פעילות",
+      "live": "חי",
+      "review": "בדיקה",
+      "working": "בודק את אמינותם של {n} מוכרים…",
+      "reply": "{seller} משיב עם מדרגת כמות.",
+      "draft": "טיוטה עבור {seller} ממתינה לאישורכם.",
+      "discarded": "{seller} נפסל: מחיר לא סביר, {pct}% מתחת לחציון.",
+      "gate": "{seller} הועבר לשער: אמון נמוך ({score}).",
+      "offers": "{platform}: {n} הצעות."
+    },
+    "offers": {
+      "caption": "הצעות המשימה לפי מוכר",
+      "empty": "אין הצעות התואמות למסננים",
+      "footer": "מוצגות {shown} מתוך {total}. האמון תמיד לצד המחיר. החץ הוא ההפרש מהחציון: כחול – מתחת; אדום – מעל.",
+      "cols": { "seller": "מוכר", "platform": "פלטפורמה", "price": "מחיר/יחידה", "band": "טווח מחיר", "confidence": "אמון", "verdict": "הערכה", "signature": "חתימה", "status": "סטטוס", "landed": "עלות נחיתה" },
+      "platform": { "p1": "פלטפורמה 1", "p2": "פלטפורמה 2" },
+      "band": { "normal": "תקין", "atypical": "חריג", "implausible": "לא סביר", "insufficient_reference": "ללא ייחוס" },
+      "confidence": { "high": "גבוה · {score}", "medium": "בינוני · {score}", "low": "נמוך · {score}", "untrusted": "לא מהימן · {score}", "insufficient_data": "אין נתונים" },
+      "verdict": { "within_budget": "במסגרת התקציב", "stretch": "מתיחת תקציב", "out_of_budget": "מחוץ לתקציב" },
+      "signature": { "signed": "חתום", "pending": "לא חתום", "invalid": "חתימה לא תקינה" },
+      "status": {
+        "awaiting_approval": "הודעה ממתינה לאישור",
+        "negotiating": "במשא ומתן · סבב {round}",
+        "aborted": "הופסק · סבב {round}",
+        "gate_low_confidence": "בשער: אמון נמוך",
+        "filtered_implausible": "סונן: מחיר לא סביר"
+      },
+      "filters": { "status": "סטטוס", "band": "מחיר", "verdict": "הערכה", "platform": "פלטפורמה", "all": "הכול" }
+    }
+  }
+}

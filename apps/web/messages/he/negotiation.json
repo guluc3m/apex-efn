@@ -1,0 +1,78 @@
+{
+  "context": "{code} · {seller} · {platform}",
+  "title": "משא ומתן · סבב {round} מתוך {max}",
+  "titleAborted": "משא ומתן · הופסק בסבב {round} מתוך {max}",
+  "back": "חזרה למשימה",
+  "take": "קבלת שליטה",
+  "resume": "החזרה לסוכן",
+  "abort": "הפסקה",
+  "reopen": "פתיחה מחדש של המשא ומתן",
+  "pending": "טרם חובר",
+  "humanBanner": "השליטה בצ'אט בידיכם. הסוכן לא ישלח דבר עד שתחזירו אותה אליו.",
+  "abortedBanner": "המשא ומתן הופסק. התמלול נשמר.",
+  "transcript": "תמלול המשא ומתן",
+  "translationHide": "הסתרת התרגום",
+  "translationShow": "הצגת התרגום",
+  "translationIcon": "מתורגם",
+  "translationRequest": "בקשת תרגום חדש",
+  "reopenedSeparator": "נפתח מחדש על ידי {by} ב-{time}",
+  "agentSending": "סוכן",
+  "draft": {
+    "title": "טיוטת הסוכן · ממתינה לאישורכם",
+    "textLabel": "טקסט הטיוטה",
+    "checked": "נבדק לפני השליחה:",
+    "approve": "אישור ושליחה",
+    "discard": "מחיקת הטיוטה"
+  },
+  "bands": {
+    "price": {
+      "normal": "תקין",
+      "atypical": "חריג",
+      "implausible": "לא סביר",
+      "insufficient_reference": "ללא ייחוס"
+    },
+    "confidence": {
+      "high": "אמון גבוה",
+      "medium": "אמון בינוני",
+      "low": "אמון נמוך",
+      "untrusted": "לא מהימן",
+      "insufficient_data": "אין מספיק נתונים"
+    }
+  },
+  "side": {
+    "current": "ההצעה הנוכחית",
+    "summary": "התחלתי {initial} · {delta} · יעד {target}",
+    "confidenceTitle": "אמון במוכר",
+    "confidenceLabel": "{band} · {score}",
+    "priceTitle": "טווח מחיר",
+    "priceLabel": "מחיר {band}",
+    "escalationTitle": "הועלה במשא ומתן אחר",
+    "escalationOpen": "פתיחת {seller}",
+    "screenshots": "צפייה בצילומי מסך ({count})"
+  },
+  "chart": {
+    "caption": "מחיר המוכר לפי סבב, עם יעד ותקרה",
+    "round": "סבב {n}",
+    "draft": "טיוטה",
+    "target": "יעד {value}",
+    "max": "מקסימום בהנחה של 8%: {value}",
+    "table": "סבב {round}: {value}",
+    "tableDraft": "טיוטה (לא נשלחה): {value}",
+    "tableTarget": "יעד: {value}",
+    "tableMax": "מקסימום: {value}"
+  },
+  "dialog": {
+    "close": "סגירה",
+    "cancel": "ביטול",
+    "takeTitle": "קבלת שליטה",
+    "takeText": "הסוכן מפסיק לשלוח הודעות עד שתחזירו אותו. תוכלו לכתוב למוכר בעצמכם.",
+    "resumeTitle": "החזרה לסוכן",
+    "resumeText": "הסוכן חוזר לנסח במצב חצי-אוטומטי: כל הודעה ממתינה לאישורכם.",
+    "abortTitle": "הפסקת המשא ומתן",
+    "abortText": "הסוכן מפסיק לכתוב. התמלול נשמר וניתן לפתוח אותו מחדש מאוחר יותר.",
+    "reopenTitle": "פתיחה מחדש של המשא ומתן",
+    "reopenText": "הסוכן חוזר לנסח במצב חצי-אוטומטי: כל הודעה ממתינה לאישורכם. הפעולה נרשמת ביומן הביקורת.",
+    "reason": "סיבה",
+    "reopenConfirm": "פתיחה מחדש"
+  }
+}
