@@ -1,0 +1,73 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.to_decimal",
+  "description": "Exact decimal string in major units (ADR-301 rule 3).",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "cents",
+      "input": {
+        "amount_minor": 1234,
+        "currency": "EUR"
+      },
+      "expected": "12.34"
+    },
+    {
+      "name": "negative",
+      "input": {
+        "amount_minor": -1234,
+        "currency": "EUR"
+      },
+      "expected": "-12.34"
+    },
+    {
+      "name": "small",
+      "input": {
+        "amount_minor": 5,
+        "currency": "EUR"
+      },
+      "expected": "0.05"
+    },
+    {
+      "name": "small-negative",
+      "input": {
+        "amount_minor": -5,
+        "currency": "EUR"
+      },
+      "expected": "-0.05"
+    },
+    {
+      "name": "zero",
+      "input": {
+        "amount_minor": 0,
+        "currency": "EUR"
+      },
+      "expected": "0.00"
+    },
+    {
+      "name": "whole",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR"
+      },
+      "expected": "1.00"
+    },
+    {
+      "name": "max-safe",
+      "input": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR"
+      },
+      "expected": "90071992547409.91"
+    },
+    {
+      "name": "min-safe",
+      "input": {
+        "amount_minor": -9007199254740991,
+        "currency": "EUR"
+      },
+      "expected": "-90071992547409.91"
+    }
+  ],
+  "errors": []
+}

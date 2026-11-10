@@ -1,35 +1,33 @@
+import type { Currency } from '@apex/shared-types/currency'
 import { loadVectorFiles, mismatch, type VectorFile } from '@apex/test-vectors'
 import { describe, expect, it } from 'vitest'
 
-// D3-01 framework sample. D3-02 replaces these adapters with the real money engine.
-class CodedError extends Error {
-  constructor(readonly code: string) {
-    super(code)
-  }
-}
+import { Money } from './money.js'
 
 type Engine = (input: unknown, config: unknown) => unknown
+type In = { amount_minor: number; currency: Currency }
 
+const money = (m: In) => new Money(m.amount_minor, m.currency)
+const out = (m: Money) => ({ amount_minor: m.amountMinor, currency: m.currency })
+
+// Engine ids of packages/test-vectors/money (ADR-301). tests/domain/test_vectors.py runs the same files.
 const ENGINES: Record<string, Engine> = {
-  'sample.half_away_division': (input) => {
-    const { numerator, denominator } = input as {
-      numerator: number | string
-      denominator: number | string
-    }
-    const n = BigInt(numerator)
-    const d = BigInt(denominator)
-    if (d === 0n) throw new CodedError('division_by_zero')
-    const abs = (x: bigint) => (x < 0n ? -x : x)
-    let q = abs(n) / abs(d)
-    if (2n * (abs(n) % abs(d)) >= abs(d)) q += 1n
-    if (n < 0n !== d < 0n) q = -q
-    return typeof numerator === 'string' ? q.toString() : Number(q)
+  'money.new': (i) => out(money(i as In)),
+  'money.parse': (i) => {
+    const { amount, currency } = i as { amount: string; currency: Currency }
+    return out(Money.parse(amount, currency))
   },
-  'sample.mean': (input) => {
-    const xs = input as number[]
-    if (xs.length === 0) throw new CodedError('empty_sample')
-    return xs.reduce((a, b) => a + b, 0) / xs.length
+  'money.to_decimal': (i) => money(i as In).toDecimalString(),
+  'money.arithmetic': (i) => {
+    const { op, a, b } = i as { op: 'add' | 'subtract'; a: In; b: In }
+    return out(money(a)[op](money(b)))
   },
+  'money.multiply': (i) => money(i as In).multiply((i as { factor: string }).factor).amountMinor,
+  'money.divide': (i) => money(i as In).divide((i as { divisor: number }).divisor).amountMinor,
+  'money.allocate': (i) =>
+    money(i as In)
+      .allocate((i as { ratios: number[] }).ratios)
+      .map((m) => m.amountMinor),
 }
 
 function run(files: VectorFile[]) {
@@ -52,7 +50,7 @@ function run(files: VectorFile[]) {
   }
 }
 
-run(loadVectorFiles('sample'))
+run(loadVectorFiles('money'))
 
 describe('vector framework', () => {
   it('compares numbers within tolerance only', () => {

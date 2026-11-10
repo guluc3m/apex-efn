@@ -1,0 +1,105 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.new",
+  "description": "Construct Money from integer minor units (ADR-301 rules 1 and 5).",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "zero",
+      "input": {
+        "amount_minor": 0,
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "negative",
+      "input": {
+        "amount_minor": -1,
+        "currency": "USD"
+      },
+      "expected": {
+        "amount_minor": -1,
+        "currency": "USD"
+      }
+    },
+    {
+      "name": "cny",
+      "input": {
+        "amount_minor": 888,
+        "currency": "CNY"
+      },
+      "expected": {
+        "amount_minor": 888,
+        "currency": "CNY"
+      }
+    },
+    {
+      "name": "max-safe",
+      "input": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "min-safe",
+      "input": {
+        "amount_minor": -9007199254740991,
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": -9007199254740991,
+        "currency": "EUR"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "name": "fractional",
+      "input": {
+        "amount_minor": 1.5,
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_amount"
+      }
+    },
+    {
+      "name": "string-amount",
+      "input": {
+        "amount_minor": "100",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_amount"
+      }
+    },
+    {
+      "name": "boolean-amount",
+      "input": {
+        "amount_minor": true,
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_amount"
+      }
+    },
+    {
+      "name": "unsupported-currency",
+      "input": {
+        "amount_minor": 100,
+        "currency": "GBP"
+      },
+      "expected": {
+        "error": "unsupported_currency"
+      }
+    }
+  ]
+}
