@@ -195,12 +195,39 @@ phase_testcontainers() {
   fi
 }
 
+# Phase C — adversarial negotiation suite (D5-09, issue #240). It boots the mock marketplace with tsx and
+# drives the negotiation engine over HTTP. APEX_REQUIRE_MOCK_MARKETPLACE=1 turns a missing Node/mock into a
+# failure, so the suite cannot silently disappear from CI.
+phase_adversarial() {
+  local tests_dir="apps/orchestrator/tests/negotiation/adversarial"
+  if [ ! -d "$tests_dir" ]; then
+    notes+=("adversarial phase: ${tests_dir} does not exist yet (activates with D5-09)")
+    return
+  fi
+  if [ ! -x "apps/mock-marketplace/node_modules/.bin/tsx" ]; then
+    fail "adversarial suite requires apps/mock-marketplace dependencies (pnpm install) and Node"
+  fi
+  local status=0
+  set +e
+  (cd apps/orchestrator && APEX_REQUIRE_MOCK_MARKETPLACE=1 uv run pytest tests/negotiation/adversarial -q)
+  status=$?
+  set -e
+  if [ "$status" -eq 0 ]; then
+    ran+=("adversarial negotiation pytest (mock marketplace)")
+  elif [ "$status" -eq 5 ]; then
+    notes+=("adversarial phase: pytest collected no tests (exit 5)")
+  else
+    failed+=("adversarial negotiation pytest (mock marketplace)")
+  fi
+}
+
 trap 'stop_vault' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
 phase_vault
 phase_testcontainers
+phase_adversarial
 
 for note in ${notes[@]+"${notes[@]}"}; do
   echo "NOTE: ${note}"
