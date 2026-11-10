@@ -25,13 +25,16 @@ ADR-900 Q11 uses Keycloak step-up (ACR + `auth_time`).
    previous keys so an IdP outage does not log every caller out; with no keys at all the request fails
    closed as `jwks_unavailable`.
 4. **Claims:** `iss`, `aud`, `exp`, `iat`, `sub` are required; `nbf` is honoured when present; `tenant_id`
-   and `sub` must be non-empty strings. Time checks use an injected clock with a configurable skew, so the
-   behaviour is deterministic in tests.
+   and `sub` must be non-empty strings. Optional `auth_time` and `acr` must be integers/strings respectively
+   when present (a non-string `acr` is `malformed`). Time checks use an injected clock with a configurable
+   skew, so the behaviour is deterministic in tests.
 5. **Roles are a closed set** (`owner|admin|buyer|finance|viewer`), read from the `roles` claim or, when a
    client does not map it, from `realm_access.roles`. Unknown roles are dropped, not granted. `viewer` is
    never a signer.
-6. **Principal** is immutable and carries `user_id`, `tenant_id`, `roles` and `auth_time` (for D2-08).
-   `current_principal` is the dependency; `require_role`/`require_signer` are the authorisation helpers.
+6. **Principal** is immutable and carries `user_id`, `tenant_id`, `roles`, `auth_time` (for D2-08) and `acr`
+   (the Authentication Context Class Reference of the authentication, `urn:apex:loa:2` for the signing
+   step-up). `current_principal` is the dependency; `require_role`/`require_signer` are the authorisation
+   helpers.
 7. **Development escape hatch:** `APEX_ALLOW_TENANT_HEADER=true` with no bearer token authenticates a
    development principal from `X-Tenant-Id` plus `APEX_DEV_ROLES`. Off by default; a valid bearer token
    always wins, and the header is never merged into an authenticated request. This keeps local UI work and
@@ -44,12 +47,14 @@ ADR-900 Q11 uses Keycloak step-up (ACR + `auth_time`).
 ## Consequences
 
 ### Easier
+
 - One dependency for every router; no route had to be rewired (they already used `get_tenant_id`/`get_roles`).
 - Key rotation and IdP outages degrade predictably instead of failing every request.
 - Deterministic time checks: the tests freeze the clock and assert `expired`/`not_yet_valid` without sleeping.
 - The same module serves the step-up signing session through `auth_time`.
 
 ### Harder / limits
+
 - The role checks are available but not yet wired into the routers: that belongs to the lane owning each
   router (see `docs/security/rbac.md`). Until then an authenticated `viewer` can reach a mutating endpoint.
 - The JWKS provider caches per process. A fleet-wide rotation is picked up within the TTL, not instantly.

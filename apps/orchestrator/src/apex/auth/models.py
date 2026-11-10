@@ -22,6 +22,10 @@ class Principal(BaseModel):
     #: ``auth_time`` from the access token. Keycloak sets it on step-up (ACR) tokens; D2-08 uses it to
     #: anchor a signing session. ``None`` means the token did not carry one.
     auth_time: int | None = None
+    #: ``acr`` claim: the Authentication Context Class Reference of this authentication. ``None`` when
+    #: the token (or the realm) carries no mapping; ``urn:apex:loa:2`` is the sign-up step-up value
+    #: (ADR-900 Q11, ``infra/keycloak/realm-apex.json``). The signature layer still checks freshness.
+    acr: str | None = None
 
     def has_role(self, *names: str) -> bool:
         return any(name in self.roles for name in names)

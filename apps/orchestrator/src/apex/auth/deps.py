@@ -121,6 +121,7 @@ async def current_principal(
             tenant_id=verified.tenant_id,
             roles=verified.roles,
             auth_time=verified.auth_time,
+            acr=verified.acr,
         )
 
     if tenant_header_enabled():
