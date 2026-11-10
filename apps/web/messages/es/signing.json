@@ -1,7 +1,6 @@
 {
   "title": "Firma de decisiones",
   "intro": "Clave Ed25519 en este navegador, sesión de 15 minutos con passkey y reautenticación cuando la regla lo exige.",
-  "pending": "Pendiente de conectar",
   "viewerTitle": "Tu rol es de solo lectura",
   "viewerBody": "El rol viewer nunca firma. Puedes revisar las claves, pero no crear ni revocar.",
   "viewerReason": "El rol viewer no firma",
@@ -37,5 +36,13 @@
   "revokedNote": "Sus firmas siguen verificando",
   "revokeTitle": "Revocar esta clave",
   "revokeBody": "La sesión de firma se cierra. Las firmas anteriores siguen verificando con esta clave.",
-  "revokeConfirm": "Revocar clave"
+  "revokeConfirm": "Revocar clave",
+  "noUser": "No hay usuario con sesión iniciada",
+  "needSession": "Abre antes una sesión de firma (passkey)",
+  "sessionLive": "Sesión abierta: {count, plural, one {queda # firma} other {quedan # firmas}}.",
+  "sessionClose": "Cerrar sesión",
+  "stepUpFailed": "No se pudo iniciar la reautenticación con passkey. No se firmó nada.",
+  "errorGeneric": "Algo ha fallado. No se firmó nada.",
+  "keysError": "No se pudieron cargar tus claves.",
+  "sealedTitle": "Clave revocada con una decisión firmada"
 }

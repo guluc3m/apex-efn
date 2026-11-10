@@ -78,7 +78,7 @@ export function AppShell({ children, viewer }: { children: ReactNode; viewer: Vi
         }
         trailing={
           <>
-            <ConnectedSigningIndicator />
+            <ConnectedSigningIndicator {...(viewer.userId ? { userId: viewer.userId } : {})} />
             <AppLanguageSwitcher />
             <UserMenu viewer={viewer} />
           </>

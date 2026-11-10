@@ -1,8 +1,9 @@
-import { SigningClient } from '@apex/crypto-client'
+import { payloadHash, SigningClient } from '@apex/crypto-client'
 
 import { api } from '@/lib/api'
 
-import { openSigningSession } from './open-session'
+import { enrollKey, openSigningSession } from './open-session'
+import { revokeKey } from './revoke-key'
 
 const client = new SigningClient()
 
@@ -25,5 +26,25 @@ export const openSigningSessionFor = (userId: string) =>
     registerKey: (body) => api.registerMySigningKey(body),
     openSession: (body) => api.openSigningSession(body),
     deviceFingerprintRef,
+    nowMs: () => Date.now(),
+  })
+
+export const enrollKeyFor = (userId: string) =>
+  enrollKey(userId, {
+    keys: client,
+    isSupported: () => SigningClient.isSupported(),
+    registerKey: (body) => api.registerMySigningKey(body),
+  })
+
+/** Signed `revoke_key` decision, then revocation. Needs an open window; a 428 triggers the step-up. */
+export const revokeKeyFor = (userId: string, keyId: string) =>
+  revokeKey(userId, keyId, {
+    keys: client,
+    isSupported: () => SigningClient.isSupported(),
+    hash: payloadHash,
+    createDecision: (body) => api.createDecision(body),
+    signDecision: (id, body) => api.signDecision(id, body),
+    revokeKey: (id, body) => api.revokeSigningKey(id, body),
+    getSession: (id) => api.getSigningSession(id),
     nowMs: () => Date.now(),
   })

@@ -3,6 +3,7 @@ import { ROLES, type Role } from '@/server/auth/types'
 
 export interface Viewer {
   role: Role
+  userId: string | null
   tenantId: string | null
 }
 
@@ -10,5 +11,5 @@ export interface Viewer {
 export async function getViewer(): Promise<Viewer> {
   const session = await getSession()
   const roles = session?.user.roles ?? []
-  return { role: ROLES.find((r) => roles.includes(r)) ?? 'viewer', tenantId: session?.user.tenantId ?? null }
+  return { userId: session?.user_id ?? null, role: ROLES.find((r) => roles.includes(r)) ?? 'viewer', tenantId: session?.user.tenantId ?? null }
 }

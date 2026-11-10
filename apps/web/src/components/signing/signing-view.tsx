@@ -1,21 +1,56 @@
 'use client'
 
 import { SigningClient } from '@apex/crypto-client'
-import { Badge, Button, Dialog, DialogClose, DialogContent, Icon, Table, type TableColumn } from '@apex/ui'
+import type { SigningKey } from '@apex/shared-types/contracts'
+import { Badge, Button, Dialog, DialogClose, DialogContent, Icon, SigningSeal, Table, type TableColumn } from '@apex/ui'
+import { useQueryClient } from '@tanstack/react-query'
 import { CircleOff, Fingerprint, KeyRound, MonitorX, Plus, ShieldAlert } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
 import { renderLink } from '@/components/app-link'
-import type { KeyFixture } from '@/fixtures/signing-keys'
+import { api, ApiError } from '@/lib/api'
+import { enrollKeyFor, openSigningSessionFor, revokeKeyFor } from '@/lib/signing/connect'
+import { signingView } from '@/lib/signing/countdown'
+import { startStepUp } from '@/lib/signing/step-up'
+import { signingKeysKey, useMySigningKeys } from '@/lib/signing/use-keys'
+import { useSigningSession } from '@/stores/signing-session'
 
 type Support = 'checking' | 'yes' | 'no'
 
-export function SigningView({ keys, role }: { keys: KeyFixture[]; role: string }) {
+/** Short public fingerprint: the key is public, the table only needs to tell keys apart. */
+const fingerprint = (k: SigningKey) => `ed25519:${k.public_key.slice(0, 6)}…${k.public_key.slice(-4)}`
+
+export function SigningView({ userId, role }: { userId: string | null; role: string }) {
   const t = useTranslations('signing')
   const [support, setSupport] = useState<Support>('checking')
   const [creating, setCreating] = useState(false)
-  const [revoking, setRevoking] = useState<KeyFixture | null>(null)
+  const [revoking, setRevoking] = useState<SigningKey | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  // Set only after the API confirmed the signed revocation; it is what plays the seal.
+  const [sealed, setSealed] = useState<{ fingerprint: string; hash: string } | null>(null)
+  const locale = useLocale()
+  const queryClient = useQueryClient()
+  const keysQuery = useMySigningKeys()
+  const keys = keysQuery.data?.items ?? []
+  const { session, offsetMs } = useSigningSession()
+  const sessionLive = session !== null && signingView(session, Date.now(), offsetMs) === 'active'
+
+  const run = async (action: () => Promise<void>, close?: () => void) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await action()
+      close?.()
+    } catch (e) {
+      // A 428 already sent the browser to the step-up (client.ts); nothing is signed or retried silently here.
+      if (!(e instanceof ApiError && e.status === 428)) setError(e instanceof Error ? e.message : t('errorGeneric'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const refresh = () => queryClient.invalidateQueries({ queryKey: signingKeysKey })
 
   // #144: la comprobación genera una clave efímera no exportable y la descarta; nunca hay clave en servidor.
   useEffect(() => {
@@ -24,19 +59,20 @@ export function SigningView({ keys, role }: { keys: KeyFixture[]; role: string }
 
   const viewer = role === 'viewer'
   // Motivo visible de por qué no se puede firmar (rol primero, luego navegador).
-  const blocked = viewer ? t('viewerReason') : support === 'no' ? t('unsupportedReason') : undefined
-  const pending = t('pending')
+  const blocked = viewer ? t('viewerReason') : support === 'no' ? t('unsupportedReason') : !userId ? t('noUser') : undefined
+  const needSession = blocked ?? (sessionLive ? undefined : t('needSession'))
+  const date = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso))
 
-  const columns: TableColumn<KeyFixture>[] = [
-    { id: 'device', header: t('colDevice'), sortable: false, cell: (k) => k.device },
-    { id: 'key', header: t('colKey'), sortable: false, cell: (k) => <span className="font-mono">{k.fingerprint}</span> },
-    { id: 'created', header: t('colCreated'), sortable: false, cell: (k) => k.createdAt },
+  const columns: TableColumn<SigningKey>[] = [
+    { id: 'device', header: t('colDevice'), sortable: false, cell: (k) => k.label ?? k.id },
+    { id: 'key', header: t('colKey'), sortable: false, cell: (k) => <span className="font-mono">{fingerprint(k)}</span> },
+    { id: 'created', header: t('colCreated'), sortable: false, cell: (k) => date(k.created_at) },
     {
       id: 'status',
       header: t('colStatus'),
       sortable: false,
       cell: (k) =>
-        k.status === 'active' ? <Badge tone="ok">{t('active')}</Badge> : <Badge tone="neutro" icon={CircleOff}>{t('revoked')}</Badge>,
+        k.revoked_at == null ? <Badge tone="ok">{t('active')}</Badge> : <Badge tone="neutro" icon={CircleOff}>{t('revoked')}</Badge>,
     },
     {
       id: 'action',
@@ -44,8 +80,8 @@ export function SigningView({ keys, role }: { keys: KeyFixture[]; role: string }
       hidden: true,
       num: true,
       cell: (k) =>
-        k.status === 'active' ? (
-          <Button size="sm" {...(blocked ? { disabledReason: blocked } : {})} onClick={() => setRevoking(k)}>
+        k.revoked_at == null ? (
+          <Button size="sm" {...(needSession ? { disabledReason: needSession } : {})} onClick={() => setRevoking(k)}>
             <Icon icon={CircleOff} />
             {t('revoke')}
           </Button>
@@ -112,24 +148,68 @@ export function SigningView({ keys, role }: { keys: KeyFixture[]; role: string }
           </h2>
           <div className="flex flex-col gap-3 border border-line bg-panel p-4">
             <p className="m-0">{t('sessionBody')}</p>
-            <p className="m-0 text-ink-muted">{t('sessionNone')}</p>
-            <div>
-              {/* //todo_#150: abrir la sesión de firma con passkey (POST /v1/signing-sessions) */}
-              <Button variant="pri" disabledReason={blocked ?? pending}>
+            <p className="m-0 text-ink-muted">
+              {session && sessionLive ? t('sessionLive', { count: session.remaining_decisions }) : t('sessionNone')}
+            </p>
+            <div className="flex gap-2">
+              {/* Strong auth first (Keycloak step-up); the window opens with the fresh token. */}
+              <Button
+                variant="pri"
+                {...(blocked ? { disabledReason: blocked } : {})}
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    if (!(await startStepUp()) || !userId) throw new Error(t('stepUpFailed'))
+                    await openSigningSessionFor(userId)
+                    await refresh()
+                  })
+                }
+              >
                 <Icon icon={Fingerprint} />
                 {t('sessionOpen')}
               </Button>
+              {session && sessionLive ? (
+                <Button
+                  disabled={busy}
+                  onClick={() =>
+                    void run(async () => {
+                      useSigningSession.getState().setSession(await api.closeSigningSession(session.id), Date.now())
+                    })
+                  }
+                >
+                  {t('sessionClose')}
+                </Button>
+              ) : null}
             </div>
           </div>
         </section>
       </div>
+
+      {error ? (
+        <p role="alert" className="m-0 border border-bad bg-bad-subtle p-3 text-bad">
+          {error}
+        </p>
+      ) : null}
+
+      {sealed ? (
+        <SigningSeal playing role="status" className="border border-line bg-panel p-4">
+          <strong>{t('sealedTitle')}</strong>
+          <p className="my-1 font-mono">{sealed.fingerprint}</p>
+          <p className="ap-hash m-0 break-all font-mono text-ink-muted">{sealed.hash}</p>
+        </SigningSeal>
+      ) : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="m-0 flex items-center gap-2 text-base font-semibold">
           <Icon icon={KeyRound} />
           {t('keysHeading')}
         </h2>
-        <Table columns={columns} rows={keys} getRowId={(k) => k.id} caption={t('keysHeading')} empty={t('keysEmpty')} renderLink={renderLink} />
+        {keysQuery.isError ? (
+          <p role="alert" className="m-0 text-bad">
+            {t('keysError')}
+          </p>
+        ) : null}
+        <Table columns={columns} rows={keys} getRowId={(k) => k.id} caption={t('keysHeading')} empty={keysQuery.isPending ? t('checking') : t('keysEmpty')} renderLink={renderLink} />
       </section>
 
       <Dialog open={creating} onOpenChange={setCreating}>
@@ -138,8 +218,17 @@ export function SigningView({ keys, role }: { keys: KeyFixture[]; role: string }
             <DialogClose asChild>
               <Button>{t('cancel')}</Button>
             </DialogClose>
-            {/* //todo_#149: generar la clave no exportable y registrarla (POST /v1/keys/me); aquí no se crea ninguna */}
-            <Button variant="pri" disabledReason={pending}>
+            <Button
+              variant="pri"
+              disabled={busy}
+              {...(blocked ? { disabledReason: blocked } : {})}
+              onClick={() =>
+                void run(async () => {
+                  await enrollKeyFor(userId!)
+                  await refresh()
+                }, () => setCreating(false))
+              }
+            >
               {t('createConfirm')}
             </Button>
           </div>
@@ -148,13 +237,24 @@ export function SigningView({ keys, role }: { keys: KeyFixture[]; role: string }
 
       <Dialog open={revoking !== null} onOpenChange={(o) => !o && setRevoking(null)}>
         <DialogContent title={t('revokeTitle')} description={t('revokeBody')} closeLabel={t('close')}>
-          <p className="font-mono">{revoking?.fingerprint}</p>
+          <p className="font-mono">{revoking ? fingerprint(revoking) : null}</p>
           <div className="flex justify-end gap-2">
             <DialogClose asChild>
               <Button>{t('cancel')}</Button>
             </DialogClose>
-            {/* //todo_#149: revocar con passkey (POST /v1/keys/{id}/revoke) */}
-            <Button variant="danger" disabledReason={pending}>
+            <Button
+              variant="danger"
+              disabled={busy}
+              {...(needSession ? { disabledReason: needSession } : {})}
+              onClick={() =>
+                revoking &&
+                void run(async () => {
+                  const { decision } = await revokeKeyFor(userId!, revoking.id)
+                  setSealed({ fingerprint: fingerprint(revoking), hash: decision.payload_hash })
+                  await refresh()
+                }, () => setRevoking(null))
+              }
+            >
               {t('revokeConfirm')}
             </Button>
           </div>

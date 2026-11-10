@@ -1,7 +1,6 @@
 {
   "title": "决策签名",
   "intro": "本浏览器中的 Ed25519 密钥、15 分钟通行密钥会话，规则要求时需重新验证身份。",
-  "pending": "尚未连接",
   "viewerTitle": "你的角色为只读",
   "viewerBody": "viewer 角色不能签名。你可以查看密钥，但不能创建或吊销。",
   "viewerReason": "viewer 角色不能签名",
@@ -37,5 +36,13 @@
   "revokedNote": "其签名仍可验证",
   "revokeTitle": "吊销此密钥",
   "revokeBody": "签名会话将关闭。此前的签名仍可用该密钥验证。",
-  "revokeConfirm": "吊销密钥"
+  "revokeConfirm": "吊销密钥",
+  "noUser": "没有已登录的用户",
+  "needSession": "请先开启签名会话（通行密钥）",
+  "sessionLive": "会话已开启：剩余 {count} 次签名。",
+  "sessionClose": "关闭会话",
+  "stepUpFailed": "无法启动通行密钥重新认证。未签署任何内容。",
+  "errorGeneric": "出错了。未签署任何内容。",
+  "keysError": "无法加载你的密钥。",
+  "sealedTitle": "密钥已通过已签名的决定撤销"
 }

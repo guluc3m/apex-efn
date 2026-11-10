@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useSigningSession } from '@/stores/signing-session'
 
-import { openSigningSession, SigningUnsupportedError, type OpenSessionDeps } from './open-session'
+import { enrollKey, openSigningSession, SigningUnsupportedError, type OpenSessionDeps } from './open-session'
 
 const key = (id: string) => ({ id }) as SigningKey
 const session = { id: 's1', server_time: '2026-11-10T10:00:00Z' } as SigningSession
@@ -61,5 +61,19 @@ describe('openSigningSession', () => {
     expect(d.listKeys).toBeDefined()
     expect(d.registerKey).not.toHaveBeenCalled()
     expect(d.openSession).not.toHaveBeenCalled()
+  })
+})
+
+describe('enrollKey', () => {
+  it('persists the key only after the server accepted it', async () => {
+    const { d, keys } = deps({ registerKey: vi.fn(() => Promise.reject(new Error('409'))) })
+    await expect(enrollKey('u1', d)).rejects.toThrow('409')
+    expect(keys.persist).not.toHaveBeenCalled()
+  })
+
+  it('blocks when the browser has no Ed25519 and never generates a key', async () => {
+    const { d, keys } = deps({ isSupported: () => Promise.resolve(false) })
+    await expect(enrollKey('u1', d)).rejects.toBeInstanceOf(SigningUnsupportedError)
+    expect(keys.generateKey).not.toHaveBeenCalled()
   })
 })
