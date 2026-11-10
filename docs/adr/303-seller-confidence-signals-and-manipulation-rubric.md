@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (D3-06). Needs TL approval.
+Accepted (D3-06). Approved by the TL on 2026-11-10.
 
 ## Context
 

@@ -2,14 +2,14 @@
 
 ## Status
 
-Proposed (D3-06). Needs TL approval. Until it is approved, `seller.weights` stays unset and the trust engine
+Accepted (D3-06). Approved by the TL on 2026-11-10. Until DEV-4 adds the keys to `/config/defaults`, `seller.weights` stays unset and the trust engine
 refuses to run (`config_unset`), as ADR-900 Q3 intends.
 
 ## Context
 
 Spec §3.4.2 makes the score `round(100 · Σ w_i · f_i)` over five signal groups, with institutional guarantees
 weighing more than volume (ADR-900 Q3). It leaves the weights, the saturation point `x_sat` of each count and
-several thresholds to an ADR. Every value below is a **proposal** for the TL; the code has no defaults.
+several thresholds to an ADR. The values below are the approved defaults; the code has none of its own.
 
 ## Decision
 
