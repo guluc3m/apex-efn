@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.10
-# Build context: apps/ (see apps/.dockerignore).
+# Build context: repository root (see /.dockerignore).
+#   docker build -f apps/orchestrator/Dockerfile -t apex/orchestrator:dev .
 #
 # The llm-stub sibling must be present in the context: pyproject.toml declares it as a
 # path source in [tool.uv.sources]. It is a dev-only dependency, so uv resolves its
@@ -7,7 +8,7 @@
 #
 # The wheel carries src/apex (hatchling packages only src/apex), so the runtime stage
 # only needs the virtualenv plus the data files the code resolves relative to the
-# installed package (prompts/, see the runtime stage below).
+# installed package (prompts/ and config/defaults/, see the runtime stage below).
 
 FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 
@@ -20,15 +21,15 @@ COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /build
 
 # The project and its llm-stub sibling (path source in [tool.uv.sources]).
-COPY orchestrator/pyproject.toml orchestrator/uv.lock ./orchestrator/
-COPY llm-stub/pyproject.toml ./llm-stub/
-COPY llm-stub/src ./llm-stub/src
+COPY apps/orchestrator/pyproject.toml apps/orchestrator/uv.lock ./apps/orchestrator/
+COPY apps/llm-stub/pyproject.toml ./apps/llm-stub/
+COPY apps/llm-stub/src ./apps/llm-stub/src
 RUN --mount=type=cache,target=/root/.cache/uv \
-    sh -c 'cd orchestrator && uv sync --locked --no-dev --no-install-project'
+    sh -c 'cd apps/orchestrator && uv sync --locked --no-dev --no-install-project'
 
-COPY orchestrator/src ./orchestrator/src
+COPY apps/orchestrator/src ./apps/orchestrator/src
 RUN --mount=type=cache,target=/root/.cache/uv \
-    sh -c 'cd orchestrator && uv sync --locked --no-dev --no-editable'
+    sh -c 'cd apps/orchestrator && uv sync --locked --no-dev --no-editable'
 
 FROM python:3.12.12-slim-bookworm AS runtime
 ENV PATH=/opt/venv/bin:$PATH \
@@ -42,7 +43,14 @@ COPY --from=builder /opt/venv /opt/venv
 # apex.llm.prompts module, which is /opt/venv/lib/python3.12 in a 3.12 wheel install.
 # The wheel does not carry prompts/ (hatchling packages only src/apex), so copy them
 # here in the runtime stage. If the base image's Python version changes, update this path.
-COPY orchestrator/prompts /opt/venv/lib/python3.12/prompts
+COPY apps/orchestrator/prompts /opt/venv/lib/python3.12/prompts
+
+# Config defaults. apex/tenant_config/defaults.py resolves DEFAULT_PATH = parents[5] of
+# the installed apex.tenant_config.defaults module, which is /opt/venv in a 3.12 wheel
+# install, so the file is expected at /opt/venv/config/defaults/tenant-config.v1.json.
+# The wheel does not carry it (hatchling packages only src/apex); copy the versioned
+# defaults (and its JSON schema, referenced by "$schema") from the repo root.
+COPY config/defaults /opt/venv/config/defaults
 
 WORKDIR /app
 USER 10001:10001
