@@ -13,9 +13,9 @@
     "functions": 75.75
   },
   "@apex/crypto-client": {
-    "lines": 54.23,
-    "statements": 54.23,
+    "lines": 98.11,
+    "statements": 98.11,
     "branches": 98.03,
-    "functions": 56
+    "functions": 87.09
   }
 }
