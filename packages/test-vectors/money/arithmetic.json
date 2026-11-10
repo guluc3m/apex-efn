@@ -1,0 +1,168 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.arithmetic",
+  "description": "Add and subtract in one currency (ADR-301 rules 1 and 5).",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "add",
+      "input": {
+        "op": "add",
+        "a": {
+          "amount_minor": 10,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 20,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "amount_minor": 30,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "add-negative",
+      "input": {
+        "op": "add",
+        "a": {
+          "amount_minor": -50,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 20,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "amount_minor": -30,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "subtract",
+      "input": {
+        "op": "subtract",
+        "a": {
+          "amount_minor": 10,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 20,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "amount_minor": -10,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "add-to-max",
+      "input": {
+        "op": "add",
+        "a": {
+          "amount_minor": 9007199254740990,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 1,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "subtract-to-min",
+      "input": {
+        "op": "subtract",
+        "a": {
+          "amount_minor": -9007199254740990,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 1,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "amount_minor": -9007199254740991,
+        "currency": "EUR"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "name": "currency-mismatch",
+      "input": {
+        "op": "add",
+        "a": {
+          "amount_minor": 1,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 1,
+          "currency": "USD"
+        }
+      },
+      "expected": {
+        "error": "currency_mismatch"
+      }
+    },
+    {
+      "name": "subtract-currency-mismatch",
+      "input": {
+        "op": "subtract",
+        "a": {
+          "amount_minor": 1,
+          "currency": "CNY"
+        },
+        "b": {
+          "amount_minor": 1,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "error": "currency_mismatch"
+      }
+    },
+    {
+      "name": "overflow",
+      "input": {
+        "op": "add",
+        "a": {
+          "amount_minor": 9007199254740991,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 1,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "error": "amount_out_of_range"
+      }
+    },
+    {
+      "name": "underflow",
+      "input": {
+        "op": "subtract",
+        "a": {
+          "amount_minor": -9007199254740991,
+          "currency": "EUR"
+        },
+        "b": {
+          "amount_minor": 1,
+          "currency": "EUR"
+        }
+      },
+      "expected": {
+        "error": "amount_out_of_range"
+      }
+    }
+  ]
+}

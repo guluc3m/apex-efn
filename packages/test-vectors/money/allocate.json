@@ -1,0 +1,236 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.allocate",
+  "description": "Split by non-negative integer ratios with the largest-remainder method on the absolute amount, ties to the lower index, sign applied last. Parts always sum to the amount (ADR-301 rule 4). Expected is the amount_minor of each part.",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "thirds",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": [
+        34,
+        33,
+        33
+      ]
+    },
+    {
+      "name": "thirds-negative",
+      "input": {
+        "amount_minor": -100,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": [
+        -34,
+        -33,
+        -33
+      ]
+    },
+    {
+      "name": "one-cent-two-ways",
+      "input": {
+        "amount_minor": 1,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          1
+        ]
+      },
+      "expected": [
+        1,
+        0
+      ]
+    },
+    {
+      "name": "largest-remainder",
+      "input": {
+        "amount_minor": 999,
+        "currency": "EUR",
+        "ratios": [
+          70,
+          20,
+          10
+        ]
+      },
+      "expected": [
+        699,
+        200,
+        100
+      ],
+      "note": "Exact shares 699.3, 199.8, 99.9: the cents go to .9 and .8, not to the largest ratio"
+    },
+    {
+      "name": "larger-remainder-wins",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          2
+        ]
+      },
+      "expected": [
+        33,
+        67
+      ]
+    },
+    {
+      "name": "zero-ratio-gets-nothing",
+      "input": {
+        "amount_minor": 5,
+        "currency": "EUR",
+        "ratios": [
+          0,
+          1
+        ]
+      },
+      "expected": [
+        0,
+        5
+      ]
+    },
+    {
+      "name": "exact",
+      "input": {
+        "amount_minor": 10,
+        "currency": "EUR",
+        "ratios": [
+          3,
+          0,
+          7
+        ]
+      },
+      "expected": [
+        3,
+        0,
+        7
+      ]
+    },
+    {
+      "name": "zero-amount",
+      "input": {
+        "amount_minor": 0,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          2
+        ]
+      },
+      "expected": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "two-over-three",
+      "input": {
+        "amount_minor": 2,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          1,
+          1
+        ]
+      },
+      "expected": [
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "single",
+      "input": {
+        "amount_minor": 7,
+        "currency": "EUR",
+        "ratios": [
+          1
+        ]
+      },
+      "expected": [
+        7
+      ]
+    },
+    {
+      "name": "max-safe",
+      "input": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          1
+        ]
+      },
+      "expected": [
+        4503599627370496,
+        4503599627370495
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "name": "empty",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "ratios": []
+      },
+      "expected": {
+        "error": "invalid_ratios"
+      }
+    },
+    {
+      "name": "all-zero",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "ratios": [
+          0,
+          0
+        ]
+      },
+      "expected": {
+        "error": "invalid_ratios"
+      }
+    },
+    {
+      "name": "negative-ratio",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "ratios": [
+          1,
+          -1
+        ]
+      },
+      "expected": {
+        "error": "invalid_ratios"
+      }
+    },
+    {
+      "name": "fractional-ratio",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "ratios": [
+          1.5
+        ]
+      },
+      "expected": {
+        "error": "invalid_ratios"
+      }
+    }
+  ]
+}

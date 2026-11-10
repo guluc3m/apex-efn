@@ -1,0 +1,317 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.parse",
+  "description": "Parse a plain decimal string in major units, rounding half away from zero to the minor unit (ADR-301 rules 2 and 3).",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "cents",
+      "input": {
+        "amount": "12.34",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 1234,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "integer",
+      "input": {
+        "amount": "12",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 1200,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "one-decimal",
+      "input": {
+        "amount": "12.3",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 1230,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "leading-zeros",
+      "input": {
+        "amount": "007.50",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 750,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "negative",
+      "input": {
+        "amount": "-12.34",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": -1234,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "half-up",
+      "input": {
+        "amount": "0.005",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 1,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "half-negative-away-from-zero",
+      "input": {
+        "amount": "-0.005",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": -1,
+        "currency": "EUR"
+      },
+      "note": "JS Math.round(-0.5) is -0; the rule says -1"
+    },
+    {
+      "name": "below-half",
+      "input": {
+        "amount": "0.0049",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "below-half-negative-is-zero",
+      "input": {
+        "amount": "-0.0049",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "float-trap",
+      "input": {
+        "amount": "1.015",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 102,
+        "currency": "EUR"
+      },
+      "note": "1.015 * 100 in binary floats is 101.49999999999999"
+    },
+    {
+      "name": "three-decimals-negative",
+      "input": {
+        "amount": "-12.345",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": -1235,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "negative-zero",
+      "input": {
+        "amount": "-0",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 0,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "cny",
+      "input": {
+        "amount": "8.88",
+        "currency": "CNY"
+      },
+      "expected": {
+        "amount_minor": 888,
+        "currency": "CNY"
+      }
+    },
+    {
+      "name": "max-safe",
+      "input": {
+        "amount": "90071992547409.91",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR"
+      }
+    },
+    {
+      "name": "min-safe",
+      "input": {
+        "amount": "-90071992547409.91",
+        "currency": "EUR"
+      },
+      "expected": {
+        "amount_minor": -9007199254740991,
+        "currency": "EUR"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "name": "empty",
+      "input": {
+        "amount": "",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "exponent",
+      "input": {
+        "amount": "1e3",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "thousands-separator",
+      "input": {
+        "amount": "1,000.00",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "comma-decimal",
+      "input": {
+        "amount": "1,5",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "leading-space",
+      "input": {
+        "amount": " 1",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "trailing-dot",
+      "input": {
+        "amount": "1.",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "leading-dot",
+      "input": {
+        "amount": ".5",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "plus-sign",
+      "input": {
+        "amount": "+5",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "double-minus",
+      "input": {
+        "amount": "--1",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "letters",
+      "input": {
+        "amount": "abc",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "number-not-string",
+      "input": {
+        "amount": 1.5,
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "above-max-safe",
+      "input": {
+        "amount": "90071992547409.92",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "amount_out_of_range"
+      }
+    },
+    {
+      "name": "rounds-above-max-safe",
+      "input": {
+        "amount": "90071992547409.915",
+        "currency": "EUR"
+      },
+      "expected": {
+        "error": "amount_out_of_range"
+      }
+    },
+    {
+      "name": "unsupported-currency",
+      "input": {
+        "amount": "1.00",
+        "currency": "GBP"
+      },
+      "expected": {
+        "error": "unsupported_currency"
+      }
+    }
+  ]
+}

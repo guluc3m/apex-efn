@@ -1,10 +1,10 @@
 {
   "_comment": "TypeScript coverage ratchet. Raise with: node .github/scripts/ci/ts-coverage.mjs --update-baseline",
   "@apex/money": {
-    "lines": 71.73,
-    "statements": 71.73,
-    "branches": 84.44,
-    "functions": 48.57
+    "lines": 98.93,
+    "statements": 98.93,
+    "branches": 95.61,
+    "functions": 97.61
   },
   "@apex/scoring": {
     "lines": 69.12,

@@ -1,0 +1,179 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.multiply",
+  "description": "Multiply by an integer or a decimal-string factor as an exact rational, then round half away from zero (ADR-301 rules 2 and 3). Expected is amount_minor.",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "vat",
+      "input": {
+        "amount_minor": 1000,
+        "currency": "EUR",
+        "factor": "1.21"
+      },
+      "expected": 1210
+    },
+    {
+      "name": "half-up",
+      "input": {
+        "amount_minor": 999,
+        "currency": "EUR",
+        "factor": "1.5"
+      },
+      "expected": 1499
+    },
+    {
+      "name": "half-negative-away-from-zero",
+      "input": {
+        "amount_minor": -999,
+        "currency": "EUR",
+        "factor": "1.5"
+      },
+      "expected": -1499
+    },
+    {
+      "name": "half-of-one",
+      "input": {
+        "amount_minor": 1,
+        "currency": "EUR",
+        "factor": "0.5"
+      },
+      "expected": 1
+    },
+    {
+      "name": "half-of-minus-one",
+      "input": {
+        "amount_minor": -1,
+        "currency": "EUR",
+        "factor": "0.5"
+      },
+      "expected": -1
+    },
+    {
+      "name": "below-half",
+      "input": {
+        "amount_minor": 1,
+        "currency": "EUR",
+        "factor": "0.49"
+      },
+      "expected": 0
+    },
+    {
+      "name": "integer-factor",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "factor": 3
+      },
+      "expected": 300
+    },
+    {
+      "name": "negative-factor",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "factor": "-0.25"
+      },
+      "expected": -25
+    },
+    {
+      "name": "negative-half",
+      "input": {
+        "amount_minor": 1005,
+        "currency": "EUR",
+        "factor": "-0.5"
+      },
+      "expected": -503
+    },
+    {
+      "name": "repeating",
+      "input": {
+        "amount_minor": 333,
+        "currency": "EUR",
+        "factor": "0.333"
+      },
+      "expected": 111
+    },
+    {
+      "name": "zero-amount",
+      "input": {
+        "amount_minor": 0,
+        "currency": "EUR",
+        "factor": "123.456"
+      },
+      "expected": 0
+    },
+    {
+      "name": "identity-max",
+      "input": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR",
+        "factor": "1"
+      },
+      "expected": 9007199254740991
+    },
+    {
+      "name": "tiny-factor",
+      "input": {
+        "amount_minor": 12345,
+        "currency": "EUR",
+        "factor": "0.0001"
+      },
+      "expected": 1
+    },
+    {
+      "name": "trailing-zero-factor",
+      "input": {
+        "amount_minor": 1000,
+        "currency": "EUR",
+        "factor": "1.10"
+      },
+      "expected": 1100
+    },
+    {
+      "name": "float-trap",
+      "input": {
+        "amount_minor": 1015,
+        "currency": "EUR",
+        "factor": "0.1"
+      },
+      "expected": 102,
+      "note": "Exactly 101.5, so it rounds up to 102"
+    }
+  ],
+  "errors": [
+    {
+      "name": "exponent-factor",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "factor": "1e2"
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "float-factor",
+      "input": {
+        "amount_minor": 100,
+        "currency": "EUR",
+        "factor": 1.5
+      },
+      "expected": {
+        "error": "invalid_decimal"
+      }
+    },
+    {
+      "name": "overflow",
+      "input": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR",
+        "factor": 2
+      },
+      "expected": {
+        "error": "amount_out_of_range"
+      }
+    }
+  ]
+}

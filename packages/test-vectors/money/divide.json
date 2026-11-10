@@ -1,0 +1,116 @@
+{
+  "$schema": "../schema.json",
+  "engine": "money.divide",
+  "description": "Divide by a non-zero integer, rounding half away from zero (ADR-301 rules 2 and 3). Expected is amount_minor.",
+  "source": "Hand calculation, ADR-301 and ADR-900 Q1",
+  "vectors": [
+    {
+      "name": "half-up",
+      "input": {
+        "amount_minor": 10,
+        "currency": "EUR",
+        "divisor": 4
+      },
+      "expected": 3
+    },
+    {
+      "name": "half-negative",
+      "input": {
+        "amount_minor": -10,
+        "currency": "EUR",
+        "divisor": 4
+      },
+      "expected": -3,
+      "note": "JS Math.round(-2.5) is -2; the rule says -3"
+    },
+    {
+      "name": "negative-divisor",
+      "input": {
+        "amount_minor": 10,
+        "currency": "EUR",
+        "divisor": -4
+      },
+      "expected": -3
+    },
+    {
+      "name": "both-negative",
+      "input": {
+        "amount_minor": -10,
+        "currency": "EUR",
+        "divisor": -4
+      },
+      "expected": 3
+    },
+    {
+      "name": "below-half",
+      "input": {
+        "amount_minor": 7,
+        "currency": "EUR",
+        "divisor": 3
+      },
+      "expected": 2
+    },
+    {
+      "name": "above-half",
+      "input": {
+        "amount_minor": 8,
+        "currency": "EUR",
+        "divisor": 3
+      },
+      "expected": 3
+    },
+    {
+      "name": "zero",
+      "input": {
+        "amount_minor": 0,
+        "currency": "EUR",
+        "divisor": 7
+      },
+      "expected": 0
+    },
+    {
+      "name": "max-safe-half",
+      "input": {
+        "amount_minor": 9007199254740991,
+        "currency": "EUR",
+        "divisor": 2
+      },
+      "expected": 4503599627370496
+    }
+  ],
+  "errors": [
+    {
+      "name": "by-zero",
+      "input": {
+        "amount_minor": 10,
+        "currency": "EUR",
+        "divisor": 0
+      },
+      "expected": {
+        "error": "division_by_zero"
+      }
+    },
+    {
+      "name": "fractional-divisor",
+      "input": {
+        "amount_minor": 10,
+        "currency": "EUR",
+        "divisor": 1.5
+      },
+      "expected": {
+        "error": "invalid_divisor"
+      }
+    },
+    {
+      "name": "string-divisor",
+      "input": {
+        "amount_minor": 10,
+        "currency": "EUR",
+        "divisor": "2"
+      },
+      "expected": {
+        "error": "invalid_divisor"
+      }
+    }
+  ]
+}

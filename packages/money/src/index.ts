@@ -5,10 +5,10 @@
  * NEVER use floats for money calculations.
  *
  * All amounts are stored as integers in minor units (cents/fen).
- * Rounding is always half-up to the minor unit.
+ * Rounding is always half away from zero to the minor unit (ADR-301).
  */
 
-export { Money, type MoneyInput } from './money.js'
+export { Money, MoneyError, type MoneyErrorCode, type MoneyInput } from './money.js'
 export { FxConverter, type FxRateProvider } from './fx.js'
 export { CURRENCY_MINOR_UNITS, FX_PIVOT_CURRENCY } from '@apex/shared-types/currency'
 export type { Currency, FxRate } from '@apex/shared-types/currency'
