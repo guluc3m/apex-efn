@@ -48,7 +48,7 @@ jobs:
       prisma: ${{ steps.filter.outputs.prisma }}
       web: ${{ steps.filter.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -91,7 +91,7 @@ jobs:
     name: Workflow lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: actionlint and shellcheck
         run: bash .github/scripts/ci/workflow-lint.sh
@@ -109,7 +109,7 @@ jobs:
       CI_TS_SCOPE: ${{ github.event_name == 'pull_request' && 'affected' || 'full' }}
       CI_BASE_REF: origin/main
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -135,7 +135,7 @@ jobs:
     if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
@@ -165,7 +165,7 @@ jobs:
     if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
@@ -191,7 +191,7 @@ jobs:
     if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true' || needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
@@ -230,7 +230,7 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -248,7 +248,7 @@ jobs:
     name: Dependency audit (advisory)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
@@ -277,7 +277,7 @@ jobs:
     name: LLM Portability Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Self-test of the deny-list and repository scan
         run: bash .github/scripts/ci/llm-portability.sh
@@ -291,7 +291,7 @@ jobs:
     if: needs.changes.outputs.all == 'true' || needs.changes.outputs.contracts == 'true' || needs.changes.outputs.ts == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
@@ -332,7 +332,7 @@ jobs:
     env:
       SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
@@ -357,7 +357,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
