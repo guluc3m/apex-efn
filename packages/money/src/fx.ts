@@ -1,174 +1,144 @@
-import type { Currency, FxRate } from '@apex/shared-types/currency'
-import { FX_PIVOT_CURRENCY } from '@apex/shared-types/currency'
+import type { ConvertedMoney, Currency, FxRate } from '@apex/shared-types/contracts'
+import { CURRENCY_MINOR_UNITS } from '@apex/shared-types/currency'
 
-import { Money } from './money.js'
+import { divideHalfAwayFromZero, Money, MoneyError, parseDecimal } from './money.js'
 
 /**
- * Interface for FX rate providers
+ * FX conversion with the EUR pivot (ADR-302). Mirrors `apex.domain.fx.convert` for previews; the
+ * orchestrator stays authoritative. Rates are decimal strings applied as exact rationals.
  */
-export interface FxRateProvider {
-  getRate(base: Currency, quote: Currency, asOf?: Date): Promise<FxRate | null>
-  getRatesAsOf(asOf: Date): Promise<FxRate[]>
+
+const PIVOT: Currency = 'EUR' // fx.pivot is global and closed (ADR-900 Q13)
+const RATE_DECIMALS = 12n // fx_rates.rate is Decimal(24, 12)
+
+export type FxErrorCode = 'rate_unavailable' | 'invalid_rate'
+
+export class FxError extends Error {
+  constructor(
+    readonly code: FxErrorCode,
+    message: string
+  ) {
+    super(message)
+    this.name = 'FxError'
+  }
 }
 
-/**
- * FX rate record with conversion tracking
- */
-export interface ConversionResult {
-  money: Money
-  originalMoney: Money
-  rate: FxRate
-  converted: boolean
+export interface FxConfig {
+  /** `fx.max_age_hours` from the effective tenant config */
+  maxAgeHours: number
 }
 
-/**
- * FX conversion utilities using EUR as pivot currency.
- * All rates are stored against EUR for triangulation.
- */
-export class FxConverter {
-  private readonly rates: Map<string, FxRate>
-  private readonly maxAgeMs: number
+/** An exact positive rational. */
+interface Ratio {
+  num: bigint
+  den: bigint
+}
 
-  constructor(rates: FxRate[], maxAgeHours = 36) {
-    this.rates = new Map()
-    this.maxAgeMs = maxAgeHours * 60 * 60 * 1000
+interface Path {
+  rate: Ratio
+  asOf: string
+  time: number
+  kind: number // 0 direct, 1 inverse, 2 triangulated: the tie-break order
+  source: string
+}
 
-    for (const rate of rates) {
-      const key = this.rateKey(rate.base, rate.quote)
-      this.rates.set(key, rate)
+function value(rate: FxRate): Ratio {
+  let parsed: Ratio = { num: 0n, den: 1n }
+  try {
+    parsed = parseDecimal(rate.rate)
+  } catch (e) {
+    if (!(e instanceof MoneyError)) throw e
+  }
+  if (parsed.num <= 0n) {
+    throw new FxError(
+      'invalid_rate',
+      `Rate must be a positive decimal string: ${String(rate.rate)}`
+    )
+  }
+  return parsed
+}
+
+/** Every `src→dst` rate keyed by as_of and source, direct preferred over inverse. */
+function legs(rates: FxRate[], src: Currency, dst: Currency): Map<string, Path> {
+  const found = new Map<string, Path>()
+  const add = (r: FxRate, rate: Ratio, kind: number) => {
+    const time = Date.parse(r.as_of)
+    found.set(`${time}|${r.source}`, { rate, asOf: r.as_of, time, kind, source: r.source })
+  }
+  for (const r of rates) {
+    if (r.base === dst && r.quote === src) {
+      const v = value(r)
+      add(r, { num: v.den, den: v.num }, 1)
     }
   }
+  for (const r of rates) if (r.base === src && r.quote === dst) add(r, value(r), 0)
+  return found
+}
 
-  private rateKey(base: Currency, quote: Currency): string {
-    return `${base}/${quote}`
+function paths(rates: FxRate[], src: Currency, dst: Currency): Path[] {
+  const all = [...legs(rates, src, dst).values()]
+  if (src !== PIVOT && dst !== PIVOT) {
+    const second = legs(rates, PIVOT, dst)
+    for (const [key, a] of legs(rates, src, PIVOT)) {
+      const b = second.get(key)
+      if (b) {
+        const rate = { num: a.rate.num * b.rate.num, den: a.rate.den * b.rate.den }
+        all.push({ ...a, rate, kind: 2 })
+      }
+    }
   }
+  return all
+}
 
-  /**
-   * Get direct rate if available
-   */
-  getDirectRate(base: Currency, quote: Currency): FxRate | null {
-    return this.rates.get(this.rateKey(base, quote)) ?? null
-  }
+function rateString({ num, den }: Ratio): string {
+  const unit = 10n ** RATE_DECIMALS
+  const scaled = divideHalfAwayFromZero(num * unit, den)
+  const fraction = (scaled % unit).toString().padStart(Number(RATE_DECIMALS), '0')
+  return `${scaled / unit}.${fraction}`.replace(/0+$/, '').replace(/\.$/, '')
+}
 
-  /**
-   * Get rate with triangulation through EUR pivot
-   */
-  getRate(base: Currency, quote: Currency, now: Date): FxRate | null {
-    if (base === quote) {
-      return {
-        base,
-        quote,
-        rate: 1,
-        asOf: now.toISOString(),
-        source: 'identity',
-      }
-    }
+const compare = (a: Path, b: Path) =>
+  b.time - a.time || a.kind - b.kind || (a.source < b.source ? -1 : a.source > b.source ? 1 : 0)
 
-    // Try direct rate
-    const direct = this.getDirectRate(base, quote)
-    if (direct) {
-      return this.validateFreshness(direct, now)
-    }
-
-    // Try inverse
-    const inverse = this.getDirectRate(quote, base)
-    if (inverse) {
-      const validated = this.validateFreshness(inverse, now)
-      if (!validated) return null
-      return {
-        base,
-        quote,
-        rate: 1 / inverse.rate,
-        asOf: inverse.asOf,
-        source: `${inverse.source} (inverted)`,
-      }
-    }
-
-    // Triangulate through EUR
-    if (base !== FX_PIVOT_CURRENCY && quote !== FX_PIVOT_CURRENCY) {
-      const baseToPivot = this.getRate(base, FX_PIVOT_CURRENCY, now)
-      const pivotToQuote = this.getRate(FX_PIVOT_CURRENCY, quote, now)
-
-      if (baseToPivot && pivotToQuote) {
-        const olderAsOf =
-          Date.parse(baseToPivot.asOf) < Date.parse(pivotToQuote.asOf)
-            ? baseToPivot.asOf
-            : pivotToQuote.asOf
-        return {
-          base,
-          quote,
-          rate: baseToPivot.rate * pivotToQuote.rate,
-          asOf: olderAsOf,
-          source: `triangulated via ${FX_PIVOT_CURRENCY}`,
-        }
-      }
-    }
-
-    return null
-  }
-
-  /**
-   * Convert money to target currency
-   */
-  convert(money: Money, targetCurrency: Currency, now: Date): ConversionResult | null {
-    if (money.currency === targetCurrency) {
-      return {
-        money,
-        originalMoney: money,
-        rate: {
-          base: money.currency,
-          quote: targetCurrency,
-          rate: 1,
-          asOf: now.toISOString(),
-          source: 'identity',
-        },
-        converted: false,
-      }
-    }
-
-    const rate = this.getRate(money.currency, targetCurrency, now)
-    if (!rate) {
-      return null
-    }
-
-    const convertedMinor = Math.round(money.amountMinor * rate.rate)
+/** Convert with the freshest usable path (ADR-302 §2); stale paths are flagged, never dropped. */
+export function convert(
+  money: Money,
+  to: Currency,
+  rates: FxRate[],
+  now: string,
+  cfg: FxConfig
+): ConvertedMoney {
+  const target = Money.zero(to).currency
+  if (target === money.currency) {
     return {
-      money: Money.fromMinor(convertedMinor, targetCurrency),
-      originalMoney: money,
-      rate,
-      converted: true,
+      amount_minor: money.amountMinor,
+      currency: target,
+      original_amount_minor: null,
+      original_currency: null,
+      fx_rate: null,
+      fx_as_of: null,
+      fx_source: null,
+      converted: false,
+      fx_provisional: false,
     }
   }
-
-  /**
-   * Check if rate is fresh enough
-   */
-  isRateFresh(rate: FxRate, now: Date): boolean {
-    return now.getTime() - Date.parse(rate.asOf) < this.maxAgeMs
+  const nowMs = Date.parse(now)
+  const usable = rates.filter((r) => Date.parse(r.as_of) <= nowMs)
+  const best = paths(usable, money.currency, target).sort(compare)[0]
+  if (!best) {
+    throw new FxError('rate_unavailable', `No usable ${money.currency}->${target} rate at ${now}`)
   }
-
-  /**
-   * Returns null if rate is stale
-   */
-  private validateFreshness(rate: FxRate, now: Date): FxRate | null {
-    if (!this.isRateFresh(rate, now)) {
-      return null
-    }
-    return rate
-  }
-
-  /**
-   * Add or update rates
-   */
-  updateRates(rates: FxRate[]): void {
-    for (const rate of rates) {
-      const key = this.rateKey(rate.base, rate.quote)
-      const existing = this.rates.get(key)
-
-      // Only update if newer
-      if (!existing || Date.parse(rate.asOf) > Date.parse(existing.asOf)) {
-        this.rates.set(key, rate)
-      }
-    }
+  const num = BigInt(money.amountMinor) * best.rate.num * BigInt(CURRENCY_MINOR_UNITS[target])
+  const den = best.rate.den * BigInt(CURRENCY_MINOR_UNITS[money.currency])
+  return {
+    amount_minor: Money.fromMinor(Number(divideHalfAwayFromZero(num, den)), target).amountMinor,
+    currency: target,
+    original_amount_minor: money.amountMinor,
+    original_currency: money.currency,
+    fx_rate: rateString(best.rate),
+    fx_as_of: best.asOf,
+    fx_source: best.source,
+    converted: true,
+    fx_provisional: nowMs - best.time > cfg.maxAgeHours * 3_600_000,
   }
 }

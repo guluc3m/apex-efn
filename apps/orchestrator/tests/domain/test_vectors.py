@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 import pytest
 
+from apex.contracts.generated.models import FxRate
+from apex.domain.fx import FxConfig, convert
 from apex.domain.money import Money
 from tests.domain.vectors import ROOT, cases, domain_files, load_file, mismatch
 
@@ -24,6 +27,19 @@ def _arithmetic(data: dict[str, Any], _config: Any) -> dict[str, Any]:
     return _out(a + b if data["op"] == "add" else a - b)
 
 
+def _convert(data: dict[str, Any], config: Any) -> dict[str, Any]:
+    # model_construct: the engine, not the contract validator, must reject a bad rate (invalid_rate)
+    rates = [
+        FxRate.model_construct(**{**r, "as_of": datetime.fromisoformat(r["as_of"])})
+        for r in data["rates"]
+    ]
+    now = datetime.fromisoformat(data["now"])
+    result = convert(
+        _money(data["money"]), data["to"], rates, now, FxConfig(config["max_age_hours"])
+    )
+    return result.model_dump(mode="json")
+
+
 # Engine ids of packages/test-vectors/money (ADR-301). packages/money/src/vectors.test.ts runs the same files.
 ENGINES: dict[str, Callable[[Any, Any], Any]] = {
     "money.new": lambda d, _c: _out(_money(d)),
@@ -33,9 +49,11 @@ ENGINES: dict[str, Callable[[Any, Any], Any]] = {
     "money.multiply": lambda d, _c: _money(d).multiply(d["factor"]).amount_minor,
     "money.divide": lambda d, _c: _money(d).divide(d["divisor"]).amount_minor,
     "money.allocate": lambda d, _c: [m.amount_minor for m in _money(d).allocate(d["ratios"])],
+    "fx.convert": _convert,
 }
 
-VECTORS, ERRORS = cases("money")
+_money_cases, _fx_cases = cases("money"), cases("fx")
+VECTORS, ERRORS = _money_cases[0] + _fx_cases[0], _money_cases[1] + _fx_cases[1]
 
 
 @pytest.mark.parametrize(("file", "vector"), VECTORS)

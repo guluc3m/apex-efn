@@ -50,7 +50,7 @@ def _is_int(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
-def _parse_decimal(value: object) -> tuple[int, int]:
+def parse_decimal(value: object) -> tuple[int, int]:
     match = _DECIMAL.fullmatch(value) if isinstance(value, str) else None
     if match is None:
         raise MoneyError("invalid_decimal", f"Not a plain decimal string: {value!r}")
@@ -85,7 +85,7 @@ class Money:
     @classmethod
     def parse(cls, amount: str, currency: Currency | str) -> Money:
         """``"-12.345"`` in major units to minor units, rounded half away from zero."""
-        num, den = _parse_decimal(amount)
+        num, den = parse_decimal(amount)
         cur = _currency(currency)
         return cls(divide_half_away_from_zero(num * MINOR_UNITS[cur], den), cur)
 
@@ -130,7 +130,7 @@ class Money:
 
     def multiply(self, factor: int | str) -> Money:
         """Multiply by an integer or a decimal string (``"1.21"``) as an exact rational."""
-        num, den = (factor, 1) if _is_int(factor) else _parse_decimal(factor)
+        num, den = (factor, 1) if _is_int(factor) else parse_decimal(factor)
         return Money(divide_half_away_from_zero(self.amount_minor * int(num), den), self.currency)
 
     def divide(self, divisor: int) -> Money:

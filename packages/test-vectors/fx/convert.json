@@ -1,0 +1,870 @@
+{
+  "$schema": "../schema.json",
+  "engine": "fx.convert",
+  "description": "Convert Money with EUR-pivot triangulation from one source and as_of, fx_provisional on stale rates, recorded as ConvertedMoney (ADR-302).",
+  "source": "Fractions computed by hand script, ADR-302 and ADR-301",
+  "vectors": [
+    {
+      "name": "direct",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10812,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "inverse",
+      "input": {
+        "money": {
+          "amount_minor": 10812,
+          "currency": "USD"
+        },
+        "to": "EUR",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10000,
+        "currency": "EUR",
+        "original_amount_minor": 10812,
+        "original_currency": "USD",
+        "fx_rate": "0.924898261191",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      },
+      "note": "Exact 1/r: 10812 USD is exactly 10000 EUR"
+    },
+    {
+      "name": "triangulated",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "USD"
+        },
+        "to": "CNY",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 72256,
+        "currency": "CNY",
+        "original_amount_minor": 10000,
+        "original_currency": "USD",
+        "fx_rate": "7.225582685905",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      },
+      "note": "USD->EUR->CNY with both legs from ecb at the same as_of"
+    },
+    {
+      "name": "negative",
+      "input": {
+        "money": {
+          "amount_minor": -10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": -10812,
+        "currency": "USD",
+        "original_amount_minor": -10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "half-negative-away-from-zero",
+      "input": {
+        "money": {
+          "amount_minor": -1,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.5",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": -2,
+        "currency": "USD",
+        "original_amount_minor": -1,
+        "original_currency": "EUR",
+        "fx_rate": "1.5",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      },
+      "note": "-1.5 rounds to -2 (ADR-301)"
+    },
+    {
+      "name": "stale-is-provisional",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2025-12-30T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10812,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2025-12-30T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": true
+      },
+      "note": "69 hours old with max_age_hours 36: converted, flagged, never null"
+    },
+    {
+      "name": "exactly-max-age-is-fresh",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T00:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10812,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2026-01-01T00:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "future-rate-ignored",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.2",
+            "as_of": "2026-01-03T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10812,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "latest-wins",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.05",
+            "as_of": "2025-12-31T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10812,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "newer-inverse-beats-older-direct",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.05",
+            "as_of": "2025-12-31T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "USD",
+            "quote": "EUR",
+            "rate": "0.925",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10811,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.081081081081",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "direct-beats-inverse-on-tie",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "USD",
+            "quote": "EUR",
+            "rate": "0.9",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 10812,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.0812",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "direct-beats-triangulated-on-tie",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "USD"
+        },
+        "to": "CNY",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "USD",
+            "quote": "CNY",
+            "rate": "7.2",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 72000,
+        "currency": "CNY",
+        "original_amount_minor": 10000,
+        "original_currency": "USD",
+        "fx_rate": "7.2",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "smaller-source-on-tie",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.1",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "alpha"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 11000,
+        "currency": "USD",
+        "original_amount_minor": 10000,
+        "original_currency": "EUR",
+        "fx_rate": "1.1",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "alpha",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "triangulation-needs-same-as-of",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "USD"
+        },
+        "to": "CNY",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.9",
+            "as_of": "2026-01-02T09:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 72256,
+        "currency": "CNY",
+        "original_amount_minor": 10000,
+        "original_currency": "USD",
+        "fx_rate": "7.225582685905",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      },
+      "note": "The newer CNY leg has no USD leg at the same as_of, so the older complete pair is used"
+    },
+    {
+      "name": "triangulated-inverse-legs",
+      "input": {
+        "money": {
+          "amount_minor": 10000,
+          "currency": "USD"
+        },
+        "to": "CNY",
+        "rates": [
+          {
+            "base": "USD",
+            "quote": "EUR",
+            "rate": "0.925",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "CNY",
+            "quote": "EUR",
+            "rate": "0.128",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 72266,
+        "currency": "CNY",
+        "original_amount_minor": 10000,
+        "original_currency": "USD",
+        "fx_rate": "7.2265625",
+        "fx_as_of": "2026-01-01T15:00:00Z",
+        "fx_source": "ecb",
+        "converted": true,
+        "fx_provisional": false
+      }
+    },
+    {
+      "name": "identity",
+      "input": {
+        "money": {
+          "amount_minor": 500,
+          "currency": "CNY"
+        },
+        "to": "CNY",
+        "rates": [],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "amount_minor": 500,
+        "currency": "CNY",
+        "original_amount_minor": null,
+        "original_currency": null,
+        "fx_rate": null,
+        "fx_as_of": null,
+        "fx_source": null,
+        "converted": false,
+        "fx_provisional": false
+      }
+    }
+  ],
+  "errors": [
+    {
+      "name": "unsupported-target",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "EUR"
+        },
+        "to": "GBP",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "unsupported_currency"
+      }
+    },
+    {
+      "name": "no-rates",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "rate_unavailable"
+      }
+    },
+    {
+      "name": "only-future-rates",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.1",
+            "as_of": "2026-01-03T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "rate_unavailable"
+      }
+    },
+    {
+      "name": "triangulation-different-sources",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "USD"
+        },
+        "to": "CNY",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "other"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "rate_unavailable"
+      }
+    },
+    {
+      "name": "triangulation-different-as-of",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "USD"
+        },
+        "to": "CNY",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1.0812",
+            "as_of": "2025-12-31T15:00:00Z",
+            "source": "ecb"
+          },
+          {
+            "base": "EUR",
+            "quote": "CNY",
+            "rate": "7.8123",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "rate_unavailable"
+      }
+    },
+    {
+      "name": "exponent-rate",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "1e3",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "invalid_rate"
+      }
+    },
+    {
+      "name": "zero-rate",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "0",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "invalid_rate"
+      }
+    },
+    {
+      "name": "negative-rate",
+      "input": {
+        "money": {
+          "amount_minor": 100,
+          "currency": "EUR"
+        },
+        "to": "USD",
+        "rates": [
+          {
+            "base": "EUR",
+            "quote": "USD",
+            "rate": "-1.1",
+            "as_of": "2026-01-01T15:00:00Z",
+            "source": "ecb"
+          }
+        ],
+        "now": "2026-01-02T12:00:00Z"
+      },
+      "config": {
+        "max_age_hours": 36
+      },
+      "expected": {
+        "error": "invalid_rate"
+      }
+    }
+  ]
+}

@@ -9,6 +9,6 @@
  */
 
 export { Money, MoneyError, type MoneyErrorCode, type MoneyInput } from './money.js'
-export { FxConverter, type FxRateProvider } from './fx.js'
+export { convert, FxError, type FxConfig, type FxErrorCode } from './fx.js'
 export { CURRENCY_MINOR_UNITS, FX_PIVOT_CURRENCY } from '@apex/shared-types/currency'
-export type { Currency, FxRate } from '@apex/shared-types/currency'
+export type { ConvertedMoney, Currency, FxRate } from '@apex/shared-types/contracts'

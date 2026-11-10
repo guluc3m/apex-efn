@@ -42,4 +42,4 @@ One folder per domain (`money/`, `fx/`, `trust/`, ...). Each `*.json` file follo
 - Python: `cases(folder)` and `mismatch(...)` from `apps/orchestrator/tests/domain/vectors.py` (example:
   `tests/domain/test_vectors.py`). The Python side also validates every file against `schema.json`.
 
-`money/` holds the money arithmetic vectors (D3-02, ADR-301).
+`money/` holds the money arithmetic vectors (D3-02, ADR-301) and `fx/` the FX conversion vectors (D3-03, ADR-302).
