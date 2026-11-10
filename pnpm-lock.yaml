@@ -317,6 +317,9 @@ importers:
       '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
+      '@apex/test-vectors':
+        specifier: workspace:*
+        version: link:../test-vectors
       '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -400,6 +403,8 @@ importers:
       vitest:
         specifier: ^3.2.6
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.5)(jsdom@31.0.0)(lightningcss@1.33.0)(msw@2.15.0(@types/node@22.20.5)(typescript@5.9.3))
+
+  packages/test-vectors: {}
 
   packages/tsconfig: {}
 

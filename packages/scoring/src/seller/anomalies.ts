@@ -29,11 +29,12 @@ const DEFAULT_CONFIG: ReviewAnomalyDetectorConfig = {
  */
 export function detectReviewAnomalies(
   signals: RawSellerSignals,
+  /** ISO-8601 timestamp from the injected clock (ADR-300). */
+  now: string,
   config: Partial<ReviewAnomalyDetectorConfig> = {}
 ): ReviewAnomaly[] {
   const cfg = { ...DEFAULT_CONFIG, ...config }
   const anomalies: ReviewAnomaly[] = []
-  const now = new Date().toISOString()
 
   // 1. Burst velocity: unusually high review rate
   if (signals.reviews12m !== undefined) {

@@ -1,0 +1,47 @@
+{
+  "$schema": "../schema.json",
+  "engine": "sample.half_away_division",
+  "description": "Framework sample (D3-01): integer division rounding half away from zero (ADR-900 Q1). Replaced by the money vectors in D3-02.",
+  "source": "Hand calculation",
+  "vectors": [
+    { "name": "exact", "input": { "numerator": 4, "denominator": 2 }, "expected": 2 },
+    { "name": "half-positive", "input": { "numerator": 5, "denominator": 2 }, "expected": 3 },
+    {
+      "name": "half-negative",
+      "note": "JS Math.round(-2.5) is -2; the rule says -3",
+      "input": { "numerator": -5, "denominator": 2 },
+      "expected": -3
+    },
+    {
+      "name": "half-negative-denominator",
+      "input": { "numerator": 5, "denominator": -2 },
+      "expected": -3
+    },
+    { "name": "below-half", "input": { "numerator": 7, "denominator": 3 }, "expected": 2 },
+    {
+      "name": "below-half-negative",
+      "input": { "numerator": -7, "denominator": 3 },
+      "expected": -2
+    },
+    { "name": "above-half", "input": { "numerator": 8, "denominator": 3 }, "expected": 3 },
+    { "name": "zero", "input": { "numerator": 0, "denominator": 5 }, "expected": 0 },
+    {
+      "name": "max-safe",
+      "input": { "numerator": 9007199254740991, "denominator": 2 },
+      "expected": 4503599627370496
+    },
+    {
+      "name": "int64-as-string",
+      "note": "Integers beyond 2^53 travel as decimal strings",
+      "input": { "numerator": "9223372036854775807", "denominator": 10 },
+      "expected": "922337203685477581"
+    }
+  ],
+  "errors": [
+    {
+      "name": "zero-denominator",
+      "input": { "numerator": 1, "denominator": 0 },
+      "expected": { "error": "division_by_zero" }
+    }
+  ]
+}

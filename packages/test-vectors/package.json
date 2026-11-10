@@ -1,0 +1,14 @@
+{
+  "name": "@apex/test-vectors",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Shared TS/Python known-answer vectors for the deterministic domain engines (ADR-300)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.mts",
+      "import": "./index.mjs"
+    }
+  }
+}
