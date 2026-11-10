@@ -5,29 +5,49 @@
   "caption": "Items pending in the gate queue",
   "empty": "No items match these filters",
   "legend": "SLA as hours and minutes left. Yellow under 3 h; red under 1 h.",
-  "slaBar": "SLA remaining",
-  "pending": "Pending connection",
   "close": "Close",
   "confirm": "Confirm",
   "cancel": "Cancel",
-  "reminderSent": "Sent at {time}",
-  "cols": { "item": "Item", "cause": "Cause", "amount": "Amount", "sla": "SLA", "assignee": "Assigned", "reminder": "Reminder", "actions": "Actions" },
-  "causes": {
-    "negotiator": "Escalated by the negotiator",
-    "price": "Atypical price or no reference",
-    "confidence": "Low confidence or no data",
-    "second_signature": "Second signature missing",
-    "high_amount": "High amount",
-    "discard": "Discards to review",
-    "company": "Company"
+  "cols": {
+    "item": "Item",
+    "cause": "Cause",
+    "amount": "Amount",
+    "sla": "SLA",
+    "actions": "Actions"
   },
-  "flags": { "no_reference": "No reference", "new_seller": "New seller" },
-  "slaSoon": { "bad": "due in under 1 h", "warn": "due in under 3 h" },
-  "assignee": { "owner": "Owner", "finance": "Finance", "none": "Unassigned" },
-  "filters": { "cause": "Cause", "assignee": "Assignee", "all": "All", "me": "Me", "today": "Due today only" },
-  "actions": { "unblock": "Unblock", "override_discard": "Override discard" },
+  "filters": {
+    "cause": "Cause",
+    "all": "All"
+  },
+  "actions": {
+    "unblock": "Unblock",
+    "override_discard": "Override discard"
+  },
   "dialog": {
-    "unblock": { "title": "Unblock item", "body": "A signed decision will be recorded to unblock: {item}." },
-    "override_discard": { "title": "Override discard", "body": "A signed decision will be recorded to reverse the discard: {item}." }
-  }
+    "unblock": {
+      "title": "Unblock item",
+      "body": "A signed decision will be recorded to unblock: {item}."
+    },
+    "override_discard": {
+      "title": "Override discard",
+      "body": "A signed decision will be recorded to reverse the discard: {item}."
+    }
+  },
+  "reasons": {
+    "price_atypical": "Atypical price",
+    "price_insufficient_reference": "Price without enough reference",
+    "seller_low": "Low seller confidence",
+    "seller_insufficient_data": "Seller with insufficient data",
+    "out_of_budget": "Out of budget",
+    "stretch_above_threshold": "Stretch above approval threshold",
+    "negotiator_escalated": "Escalated by the negotiator",
+    "financials_stale": "Stale financial snapshot",
+    "fx_provisional": "Provisional FX rate",
+    "dual_control_pending": "Second signature pending"
+  },
+  "overdue": "overdue",
+  "loading": "Loading the queue…",
+  "loadError": "Could not load the gate queue.",
+  "retry": "Retry",
+  "comment": "Comment (optional)"
 }

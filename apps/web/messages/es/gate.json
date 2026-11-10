@@ -5,29 +5,49 @@
   "caption": "Elementos pendientes en la cola de gate",
   "empty": "No hay elementos con estos filtros",
   "legend": "SLA en horas y minutos que quedan. En amarillo, menos de 3 h; en rojo, menos de 1 h.",
-  "slaBar": "SLA restante",
-  "pending": "Pendiente de conectar",
   "close": "Cerrar",
   "confirm": "Confirmar",
   "cancel": "Cancelar",
-  "reminderSent": "Enviado a las {time}",
-  "cols": { "item": "Elemento", "cause": "Causa", "amount": "Importe", "sla": "SLA", "assignee": "Asignado", "reminder": "Recordatorio", "actions": "Acciones" },
-  "causes": {
-    "negotiator": "Escalados del negociador",
-    "price": "Precio atípico o sin referencia",
-    "confidence": "Confianza baja o sin datos",
-    "second_signature": "Falta segunda firma",
-    "high_amount": "Importe alto",
-    "discard": "Descartes para revisar",
-    "company": "Empresa"
+  "cols": {
+    "item": "Elemento",
+    "cause": "Causa",
+    "amount": "Importe",
+    "sla": "SLA",
+    "actions": "Acciones"
   },
-  "flags": { "no_reference": "Sin referencia", "new_seller": "Vendedor nuevo" },
-  "slaSoon": { "bad": "vence en menos de 1 h", "warn": "vence en menos de 3 h" },
-  "assignee": { "owner": "Responsable", "finance": "Finanzas", "none": "Sin asignar" },
-  "filters": { "cause": "Causa", "assignee": "Responsable", "all": "Todos", "me": "Yo", "today": "Solo vencen hoy" },
-  "actions": { "unblock": "Desbloquear", "override_discard": "Revertir descarte" },
+  "filters": {
+    "cause": "Causa",
+    "all": "Todos"
+  },
+  "actions": {
+    "unblock": "Desbloquear",
+    "override_discard": "Revertir descarte"
+  },
   "dialog": {
-    "unblock": { "title": "Desbloquear elemento", "body": "Se registrará una decisión firmada para desbloquear: {item}." },
-    "override_discard": { "title": "Revertir descarte", "body": "Se registrará una decisión firmada para revertir el descarte: {item}." }
-  }
+    "unblock": {
+      "title": "Desbloquear elemento",
+      "body": "Se registrará una decisión firmada para desbloquear: {item}."
+    },
+    "override_discard": {
+      "title": "Revertir descarte",
+      "body": "Se registrará una decisión firmada para revertir el descarte: {item}."
+    }
+  },
+  "reasons": {
+    "price_atypical": "Precio atípico",
+    "price_insufficient_reference": "Precio sin referencia suficiente",
+    "seller_low": "Confianza baja del vendedor",
+    "seller_insufficient_data": "Vendedor con datos insuficientes",
+    "out_of_budget": "Fuera de presupuesto",
+    "stretch_above_threshold": "Al límite sobre el umbral de aprobación",
+    "negotiator_escalated": "Escalado por el negociador",
+    "financials_stale": "Snapshot financiero caducado",
+    "fx_provisional": "Tipo de cambio provisional",
+    "dual_control_pending": "Falta segunda firma"
+  },
+  "overdue": "vencido",
+  "loading": "Cargando la cola…",
+  "loadError": "No se ha podido cargar la cola de gate.",
+  "retry": "Reintentar",
+  "comment": "Comentario (opcional)"
 }

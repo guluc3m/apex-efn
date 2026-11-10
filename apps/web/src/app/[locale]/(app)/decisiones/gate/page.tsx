@@ -2,7 +2,6 @@ import { setRequestLocale } from 'next-intl/server'
 import { Suspense } from 'react'
 
 import { GateQueue } from '@/components/gate/gate-queue'
-import { gateQueue } from '@/fixtures/gate'
 import { getViewer } from '@/lib/viewer'
 
 export default async function GatePage({ params }: { params: Promise<{ locale: string }> }) {
@@ -10,7 +9,7 @@ export default async function GatePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale)
   return (
     <Suspense>
-      <GateQueue items={gateQueue} role={(await getViewer()).role} />
+      <GateQueue role={(await getViewer()).role} />
     </Suspense>
   )
 }

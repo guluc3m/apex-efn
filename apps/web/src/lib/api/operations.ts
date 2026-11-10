@@ -8,6 +8,10 @@ import type {
   CreateOnboardingSessionResponse,
   CreateSourcingRequestData,
   CreateSourcingRequestResponse,
+  ApplyDealActionData,
+  ApplyDealActionResponse,
+  ApplyGateQueueActionData,
+  ApplyGateQueueActionResponse,
   GetEffectiveConfigData,
   GetEffectiveConfigResponse,
   GetMissionRecommendationData,
@@ -19,6 +23,10 @@ import type {
   ListMissionOffersResponse,
   GetNegotiationResponse,
   ListNegotiationMessagesResponse,
+  ListDealsData,
+  ListDealsResponse,
+  ListGateQueueData,
+  ListGateQueueResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
   OpenSigningSessionResponse,
@@ -110,6 +118,30 @@ export function createOperations(client: ApiClient) {
 
     getSellerConfidence: (id: string, query?: GetSellerConfidenceData['query'], signal?: AbortSignal) =>
       client.request<GetSellerConfidenceResponse>('/v1/sellers/{id}/confidence', { path: { id }, query, signal }),
+
+    listDeals: (query?: ListDealsData['query'], signal?: AbortSignal) =>
+      client.request<ListDealsResponse>('/v1/dashboard/deals', { path: undefined, query, signal }),
+
+    /** Creates a decision waiting for its signature. It never signs anything. */
+    applyDealAction: (id: string, body: ApplyDealActionData['body'], signal?: AbortSignal) =>
+      client.request<ApplyDealActionResponse>('/v1/dashboard/deals/{id}/actions', {
+        method: 'POST',
+        path: { id },
+        body,
+        signal,
+      }),
+
+    listGateQueue: (query?: ListGateQueueData['query'], signal?: AbortSignal) =>
+      client.request<ListGateQueueResponse>('/v1/gate/queue', { path: undefined, query, signal }),
+
+    /** Creates a decision waiting for its signature. It never signs anything. */
+    applyGateQueueAction: (id: string, body: ApplyGateQueueActionData['body'], signal?: AbortSignal) =>
+      client.request<ApplyGateQueueActionResponse>('/v1/gate/queue/{id}/actions', {
+        method: 'POST',
+        path: { id },
+        body,
+        signal,
+      }),
 
     getEffectiveConfig: (query?: GetEffectiveConfigData['query'], signal?: AbortSignal) =>
       client.request<GetEffectiveConfigResponse>('/v1/config/effective', {

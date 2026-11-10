@@ -7,12 +7,7 @@
   "kpi": {
     "label": "Indicadores",
     "pending": "Pendientes de decidir",
-    "signed": "Decisiones firmadas",
-    "sla": "SLA más próximo",
-    "savings": "Ahorro frente a mercado",
-    "savingsWeekly": "Ahorro acumulado por semana",
-    "week": "Semana",
-    "trend": "Tendencia: {values}"
+    "signed": "Decisiones firmadas"
   },
   "views": {
     "label": "Vista de la lista",
@@ -21,34 +16,16 @@
   },
   "filter": {
     "all": "Todos",
-    "profile": "Perfil de ranking",
     "price": "Precio",
     "confidence": "Confianza",
     "verdict": "Veredicto",
     "platform": "Plataforma",
     "signature": "Firma"
   },
-  "profile": {
-    "comprador": "Comprador operativo",
-    "cfo": "CFO / finanzas"
-  },
-  "whyRank": {
-    "comprador": "Comprador: pesa más el plazo, así que Vendedor E pasa al 1.º.",
-    "cfo": "CFO: pesa más el encaje financiero, así que Vendedor A pasa al 1.º y Vendedor E (al límite) baja."
-  },
   "empty": "Ningún trato coincide con los filtros.",
-  "cause": {
-    "atypicalPrice": "Precio atípico",
-    "lowConfidence": "Vendedor con confianza baja",
-    "secondSignature": "Falta segunda firma (1 de 2)",
-    "escalatedDiscard": "Descartado por regla de escalada",
-    "staleSnapshot": "Datos financieros caducados",
-    "ready": "Listo para decidir",
-    "highAmount": "Importe alto"
-  },
   "sla": "SLA {time}",
   "perUnit": "/ud",
-  "rank": "{n}.º · score {score}",
+  "rank": "{n}.º",
   "band": {
     "normal": "Precio normal",
     "atypical": "Precio atípico",
@@ -69,10 +46,10 @@
     "out_of_budget": "Fuera de presupuesto"
   },
   "sig": {
+    "signed": "Firmado",
     "pending": "Pendiente",
-    "pending12": "Pendiente 1/2",
-    "none": "Sin firma",
-    "signed": "Firmado"
+    "unsigned": "Sin firma",
+    "invalid": "Inválida"
   },
   "detail": {
     "priceInitial": "Precio inicial",
@@ -81,7 +58,7 @@
     "notNegotiated": "Sin negociar",
     "confidence": "Confianza del vendedor",
     "landed": "Landed cost",
-    "expires": "Oferta caduca en {n} d",
+    "expires": "La oferta caduca el {date}",
     "fullTranscript": "Ver transcripción completa",
     "noNegotiation": "Aún sin negociar: no hay precio negociado ni transcripción.",
     "whyConfidence": "Por qué esta confianza",
@@ -94,66 +71,41 @@
     "unscored": "Sin puntuar: todavía no es un trato final.",
     "risks": "Banderas de riesgo",
     "terms": "Producto, plazo y condiciones",
-    "termsPending": "Especificación, plazo de entrega y condiciones de pago: pendiente de conectar."
-  },
-  "signal": {
-    "age": "Antigüedad",
-    "ageV": "{n} días",
-    "sales": "Ventas",
-    "salesV": "{n} ventas · {pct} % repetición",
-    "catalog": "Catálogo",
-    "catalogV": "{n} productos · ficha {pct} %",
-    "reviews": "Reseñas",
-    "reviewsV": "{rating} de {n} · {pct} % verificadas",
-    "institutional": "Garantía institucional",
-    "institutionalV": "{kyc, select, true {KYC} other {Sin KYC}} · {escrow, select, true {escrow} other {sin escrow}} · disputas {pct} %"
+    "penalty": "Penalización",
+    "leadTime": "Plazo de entrega",
+    "leadTimeV": "{n} días",
+    "moq": "Pedido mínimo",
+    "noConfidence": "Aún no hay confianza calculada para este vendedor.",
+    "reference": "Precio de referencia",
+    "median": "Mediana",
+    "sample": "Tamaño de muestra",
+    "deviation": "Desviación sobre la referencia",
+    "noSanity": "Aún sin control de precio.",
+    "noLanded": "Aún sin landed cost."
   },
   "stale": {
     "body": "El snapshot financiero activo ha caducado. Las compras directas quedan bloqueadas hasta reimportar el CSV.",
     "cta": "Reimportar CSV"
-  },
-  "reason": {
-    "blockLow": "Vendedor con confianza baja: hace falta una decisión firmada de desbloqueo.",
-    "staleFinancials": "Snapshot financiero caducado: la compra directa queda bloqueada hasta reimportar el CSV."
   },
   "action": {
     "follow": "Seguir y comprar",
     "renegotiate": "Renegociar",
     "takeover": "Tomar el control",
     "hold": "Aparcar",
-    "discard": "Descartar",
-    "unblock": "Desbloquear",
-    "override_discard": "Anular descarte",
-    "sign2": "Añadir segunda firma"
+    "discard": "Descartar"
   },
-  "passkey": "passkey",
   "line": {
+    "goods": "Mercancía",
     "shipping": "Envío",
     "insurance": "Seguro",
-    "duties": "Aranceles e IVA",
-    "capital": "Coste de capital",
-    "fees": "Comisiones de pago",
-    "fx": "FX y riesgo"
-  },
-  "criterion": {
-    "landed": "Landed cost",
-    "lead": "Plazo",
-    "confidence": "Confianza",
-    "fit": "Encaje financiero",
-    "margin": "Margen",
-    "spec": "Especificación",
-    "compliance": "Cumplimiento",
-    "gain": "Ganancia negociación"
-  },
-  "sanity": {
-    "atypical": "Índice fuera del rango normal en el lado barato.",
-    "normal": "Dentro de la banda normal.",
-    "escalated": "Escalado a precio implausible por la combinación precio y confianza."
+    "duties": "Aranceles",
+    "import_vat": "IVA de importación",
+    "capital_cost": "Coste de capital",
+    "payment_fees": "Comisiones de pago",
+    "fx_conversion": "Conversión FX",
+    "fx_risk": "Riesgo FX"
   },
   "risk": {
-    "below60": "Más de un 60 % por debajo de la mediana",
-    "burst": "Reseñas concentradas en pocos días",
-    "escalated": "Precio atípico y vendedor no fiable: escalado a descarte",
     "none": "Sin banderas"
   },
   "discardReason": {
@@ -172,7 +124,6 @@
     "commentRequired": "Comentario (obligatorio)",
     "reviewDate": "Fecha de revisión",
     "instructions": "Instrucciones para la renegociación",
-    "overrideReason": "Motivo de la anulación (obligatorio)",
     "payloadIntro": "Vas a firmar exactamente esto:",
     "decision": "Decisión",
     "amount": "Importe",
@@ -180,16 +131,61 @@
     "band": "Banda de precio",
     "confidence": "Confianza",
     "verdict": "Veredicto",
-    "passkeyNote": "Esta decisión exige passkey aunque la ventana de firma siga abierta.",
     "sign": "Firmar decisión",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "create": "Crear decisión",
+    "creating": "Creando…",
+    "created": "Decisión {id} creada, pendiente de firma.",
+    "signUnavailable": "La firma aún no está disponible: el flujo de firma se está conectando.",
+    "incomplete": "Completa los campos obligatorios.",
+    "error": "No se ha podido crear la decisión."
   },
-  "pending": "Pendiente de conectar",
   "transcript": {
     "back": "Volver a la lista",
     "title": "Transcripción: {seller}",
     "agent": "Agente",
-    "seller": "Vendedor"
+    "seller": "Vendedor",
+    "human": "Persona",
+    "empty": "Aún no hay mensajes."
   },
-  "emptyNext": "Ver misiones en curso"
+  "emptyNext": "Ver misiones en curso",
+  "loading": "Cargando tratos…",
+  "loadError": "No se han podido cargar los datos.",
+  "retry": "Reintentar",
+  "notFound": "Este trato no está en la lista.",
+  "slaOverdue": "SLA vencido hace {time}",
+  "block": {
+    "price_band_requires_unblock": "Hace falta un desbloqueo firmado por la banda de precio.",
+    "seller_band_requires_unblock": "Hace falta un desbloqueo firmado por la banda de confianza del vendedor.",
+    "out_of_budget": "Fuera de presupuesto.",
+    "financials_stale": "Snapshot financiero caducado: la compra directa queda bloqueada hasta reimportar el CSV.",
+    "fx_provisional": "Tipo de cambio provisional: requiere confirmación adicional.",
+    "renegotiation_limit": "Límite de renegociaciones alcanzado.",
+    "already_decided": "Este trato ya tiene una decisión.",
+    "not_in_queue": "Esta oferta no está en la cola de gate.",
+    "role_not_allowed": "Tu rol no permite esta acción.",
+    "comment_required": "Hace falta un comentario.",
+    "unknown": "La API no indicó el motivo."
+  },
+  "state": {
+    "open": "Abierto",
+    "renegotiating": "Renegociando",
+    "on_hold": "Aparcado",
+    "human_control": "Control humano",
+    "followed": "Seguido",
+    "discarded": "Descartado",
+    "purchased": "Comprado"
+  },
+  "explanation": {
+    "volume_tier_difference": "Diferencia de escalón de volumen",
+    "moq_difference": "Diferencia de pedido mínimo",
+    "incoterm_difference": "Diferencia de Incoterm",
+    "quality_grade_difference": "Diferencia de calidad",
+    "specification_difference": "Diferencia de especificación",
+    "seasonal_pricing": "Precio estacional",
+    "clearance_sale": "Liquidación",
+    "new_seller_promotion": "Promoción de vendedor nuevo",
+    "bulk_discount": "Descuento por volumen",
+    "none": "Sin causa legítima"
+  }
 }

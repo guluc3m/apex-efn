@@ -1,4 +1,22 @@
-export { api, queryKeys, useCreateMission, useCreateSourcingRequest, useEffectiveConfig, useMission, useMissionOffers, useNegotiation, useNegotiationAction, useNegotiationMessages, useProposeConfigChange, useMissionRecommendation, useSellerConfidence } from './hooks'
+export {
+  api,
+  queryKeys,
+  useCreateMission,
+  useCreateSourcingRequest,
+  useDealAction,
+  useDeals,
+  useEffectiveConfig,
+  useGateAction,
+  useGateQueue,
+  useMission,
+  useMissionOffers,
+  useMissionRecommendation,
+  useNegotiation,
+  useNegotiationAction,
+  useNegotiationMessages,
+  useProposeConfigChange,
+  useSellerConfidence,
+} from './hooks'
 export { createApiClient, type ApiClient } from './client'
 export { createOperations, type Operations } from './operations'
 export { subscribeMissionEvents } from './events'
