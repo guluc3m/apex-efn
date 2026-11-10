@@ -4,7 +4,7 @@ import { WorkerError } from '../errors.js'
 import { StaticFlags } from '../platform/flags.js'
 import { FakePlatformAdapter } from '../testing/fakes.js'
 
-import { AdapterRegistry } from './index.js'
+import { AdapterRegistry, createAdapterRegistry } from './index.js'
 
 function errorOf(action: () => unknown): unknown {
   try {
@@ -41,6 +41,29 @@ describe('AdapterRegistry', () => {
       code: 'platform_disabled',
       status: 409,
     })
+  })
+
+  it('never hands out a disabled adapter, so none of its methods run', () => {
+    const disabled = new FakePlatformAdapter('mock-c', 'http')
+    const registry = createAdapterRegistry([disabled], flags)
+    expect(errorOf(() => registry.require('mock-c'))).toBeInstanceOf(WorkerError)
+    expect(disabled.calls).toEqual([])
+  })
+
+  it('rejects two adapters that share a platform id', () => {
+    const adapters = [
+      new FakePlatformAdapter('mock-a', 'http'),
+      new FakePlatformAdapter('mock-a', 'browser'),
+    ]
+    expect(() => createAdapterRegistry(adapters, flags)).toThrow(
+      'duplicate platform adapter: mock-a'
+    )
+    expect(() => new AdapterRegistry(adapters, flags)).toThrow('duplicate platform adapter: mock-a')
+  })
+
+  it('creates a registry with the factory', () => {
+    const adapter = new FakePlatformAdapter('mock-a', 'http')
+    expect(createAdapterRegistry([adapter], flags).require('mock-a')).toBe(adapter)
   })
 
   it('reports the enabled flag for each platform', () => {

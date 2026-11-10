@@ -21,7 +21,33 @@ describe('loadConfig', () => {
       proxyResidentialUrl: undefined,
       proxyDatacenterUrl: undefined,
       artifactDir: './artifacts',
+      adapterUserAgent: 'APEX-EFN-bot/0.1 (+https://example.invalid/bot)',
+      adapterMinIntervalMs: 1000,
+      adapterMaxRetries: 3,
+      adapterTimeoutMs: 15000,
     })
+  })
+
+  it('reads the adapter politeness settings from the environment', () => {
+    const config = loadConfig({
+      BROWSER_WORKER_TOKEN: TOKEN,
+      ADAPTER_USER_AGENT: 'custom-bot/1.0',
+      ADAPTER_MIN_INTERVAL_MS: '250',
+      ADAPTER_MAX_RETRIES: '0',
+      ADAPTER_TIMEOUT_MS: '5000',
+    })
+    expect(config).toMatchObject({
+      adapterUserAgent: 'custom-bot/1.0',
+      adapterMinIntervalMs: 250,
+      adapterMaxRetries: 0,
+      adapterTimeoutMs: 5000,
+    })
+  })
+
+  it('rejects a negative adapter retry count and names only the key', () => {
+    expect(() => loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, ADAPTER_MAX_RETRIES: '-1' })).toThrow(
+      'ADAPTER_MAX_RETRIES'
+    )
   })
 
   it('coerces numeric values from strings', () => {

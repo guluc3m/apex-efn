@@ -102,3 +102,11 @@ export class AdapterRegistry {
     return adapter
   }
 }
+
+/** Builds the registry. The constructor throws if two adapters share a platform id. */
+export function createAdapterRegistry(
+  adapters: PlatformAdapter[],
+  flags: FlagProvider
+): AdapterRegistry {
+  return new AdapterRegistry(adapters, flags)
+}
