@@ -30,6 +30,7 @@ import httpx
 
 from apex.agents.analysis import AnalysisDeps, AnalysisNodes
 from apex.agents.browser_worker import HttpBrowserWorker
+from apex.agents.fx import DomainFxPort, InMemoryFxRateReader
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
 from apex.agents.mission_runner import MissionRunner, MissionRunnerDeps
 from apex.agents.missions import InMemoryMissionStore, MissionEventBus
@@ -281,6 +282,7 @@ def build_app_services(
     http_client_factory: Callable[[RoleEndpointConfig], httpx.AsyncClient] | None = None,
     flags: FlagProvider | None = None,
     catalogue: StaticCatalogue | None = None,
+    fx_rates: Any = None,
 ) -> AppServices:
     """Build the service graph. Synchronous on purpose: ``create_app`` is a sync factory."""
     active_clock = clock or SystemClock()
@@ -315,6 +317,12 @@ def build_app_services(
         )
     )
     offer_store = InMemoryOfferStore()
+    # FX is wired: EUR offers pass through untouched, other currencies go through DEV-3's engine. The rate
+    # history is empty until D3-03's ingestion persists it, so a non-EUR offer fails with `rate_unavailable`
+    # rather than `not_wired` — an honest "no rate yet", not a missing engine.
+    fx_port: Any = DomainFxPort(
+        rates=fx_rates or InMemoryFxRateReader(), config=tenant_config, clock=active_clock
+    )
     gate_store = InMemoryGateStore()
     rules = _gate_rules()
     runner = MissionRunner(
@@ -322,7 +330,7 @@ def build_app_services(
             scraping=ScrapingService(
                 ScrapingDeps(
                     worker=_browser_worker(cfg, http_client_factory),
-                    fx=UnwiredFx(),
+                    fx=fx_port,
                     offers=offer_store,
                     bus=mission_bus,
                     clock=active_clock,
