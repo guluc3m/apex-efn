@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 
 import { createApiClient } from './client'
 import { createOperations } from './operations'
@@ -13,6 +13,8 @@ export const queryKeys = {
   missionOffers: (id: string) => ['mission', id, 'offers'] as const,
   recommendation: (id: string, profile: string) => ['mission', id, 'recommendation', profile] as const,
   sellerConfidence: (id: string) => ['seller', id, 'confidence'] as const,
+  negotiation: (id: string) => ['negotiation', id] as const,
+  negotiationMessages: (id: string) => ['negotiation', id, 'messages'] as const,
   effectiveConfig: (category?: string) => ['config', 'effective', category ?? null] as const,
 }
 
@@ -78,4 +80,49 @@ export function useProposeConfigChange() {
 
 export function useCreateMission() {
   return useMutation({ mutationFn: (body: Parameters<typeof api.createMission>[0]) => api.createMission(body) })
+}
+
+/** A new draft or seller message has no push channel here, so the screen polls while it is open. */
+const NEGOTIATION_POLL_MS = 5000
+
+export function useNegotiation(id: string) {
+  return useQuery({
+    queryKey: queryKeys.negotiation(id),
+    queryFn: ({ signal }) => api.getNegotiation(id, signal),
+    refetchInterval: NEGOTIATION_POLL_MS,
+  })
+}
+
+export function useNegotiationMessages(id: string) {
+  return useQuery({
+    queryKey: queryKeys.negotiationMessages(id),
+    queryFn: ({ signal }) => api.listNegotiationMessages(id, undefined, signal),
+    refetchInterval: NEGOTIATION_POLL_MS,
+  })
+}
+
+export type NegotiationAction = 'approve' | 'reject' | 'takeover' | 'resume' | 'abort' | 'send'
+
+/** One mutation for every write on a negotiation; the server answer is the only source of truth, so refetch after it. */
+export function useNegotiationAction(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ action, draftId, text, reason }: { action: NegotiationAction; draftId?: string; text?: string; reason?: string }): Promise<unknown> => {
+      switch (action) {
+        case 'approve':
+          return api.approveNegotiationDraft(id, { draft_id: draftId ?? '' })
+        case 'reject':
+          return api.rejectNegotiationDraft(id, { draft_id: draftId ?? '' })
+        case 'takeover':
+          return api.takeoverNegotiation(id, reason)
+        case 'resume':
+          return api.resumeNegotiation(id, reason)
+        case 'abort':
+          return api.abortNegotiation(id, reason)
+        case 'send':
+          return api.sendHumanNegotiationMessage(id, { content: text ?? '' })
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.negotiation(id) }),
+  })
 }

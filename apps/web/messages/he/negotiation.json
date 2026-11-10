@@ -1,65 +1,32 @@
 {
-  "context": "{code} · {seller} · {platform}",
+  "context": "הצעה {offer}",
   "title": "משא ומתן · סבב {round} מתוך {max}",
-  "titleAborted": "משא ומתן · הופסק בסבב {round} מתוך {max}",
   "back": "חזרה למשימה",
   "take": "קבלת שליטה",
   "resume": "החזרה לסוכן",
   "abort": "הפסקה",
   "reopen": "פתיחה מחדש של המשא ומתן",
-  "pending": "טרם חובר",
   "humanBanner": "השליטה בצ'אט בידיכם. הסוכן לא ישלח דבר עד שתחזירו אותה אליו.",
   "abortedBanner": "המשא ומתן הופסק. התמלול נשמר.",
   "transcript": "תמלול המשא ומתן",
-  "translationHide": "הסתרת התרגום",
-  "translationShow": "הצגת התרגום",
-  "translationIcon": "מתורגם",
-  "translationRequest": "בקשת תרגום חדש",
-  "reopenedSeparator": "נפתח מחדש על ידי {by} ב-{time}",
-  "agentSending": "סוכן",
   "draft": {
     "title": "טיוטת הסוכן · ממתינה לאישורכם",
     "textLabel": "טקסט הטיוטה",
-    "checked": "נבדק לפני השליחה:",
     "approve": "אישור ושליחה",
-    "discard": "מחיקת הטיוטה"
-  },
-  "bands": {
-    "price": {
-      "normal": "תקין",
-      "atypical": "חריג",
-      "implausible": "לא סביר",
-      "insufficient_reference": "ללא ייחוס"
+    "source": {
+      "llm": "נכתב על ידי הסוכן",
+      "template": "תבנית רגילה"
     },
-    "confidence": {
-      "high": "אמון גבוה",
-      "medium": "אמון בינוני",
-      "low": "אמון נמוך",
-      "untrusted": "לא מהימן",
-      "insufficient_data": "אין מספיק נתונים"
-    }
+    "notSent": "טרם נשלח. יישלח רק לאחר אישורכם, בדיוק כפי שמוצג.",
+    "reject": "דחייה ושליחת תבנית"
   },
   "side": {
-    "current": "ההצעה הנוכחית",
-    "summary": "התחלתי {initial} · {delta} · יעד {target}",
-    "confidenceTitle": "אמון במוכר",
-    "confidenceLabel": "{band} · {score}",
-    "priceTitle": "טווח מחיר",
-    "priceLabel": "מחיר {band}",
-    "escalationTitle": "הועלה במשא ומתן אחר",
-    "escalationOpen": "פתיחת {seller}",
-    "screenshots": "צפייה בצילומי מסך ({count})"
-  },
-  "chart": {
-    "caption": "מחיר המוכר לפי סבב, עם יעד ותקרה",
-    "round": "סבב {n}",
-    "draft": "טיוטה",
-    "target": "יעד {value}",
-    "max": "מקסימום בהנחה של 8%: {value}",
-    "table": "סבב {round}: {value}",
-    "tableDraft": "טיוטה (לא נשלחה): {value}",
-    "tableTarget": "יעד: {value}",
-    "tableMax": "מקסימום: {value}"
+    "rounds": "סבבים",
+    "roundsOf": "{round} מתוך {max}",
+    "strategy": "אסטרטגיה",
+    "guardrails": "מגבלות שהופעלו",
+    "noGuardrails": "אין עד כה.",
+    "offerPending": "ההצעה, אמינות המוכר ופרטי המחיר יוצגו כאן לאחר חיבור נתוני ההצעה."
   },
   "dialog": {
     "close": "סגירה",
@@ -70,9 +37,49 @@
     "resumeText": "הסוכן חוזר לנסח במצב חצי-אוטומטי: כל הודעה ממתינה לאישורכם.",
     "abortTitle": "הפסקת המשא ומתן",
     "abortText": "הסוכן מפסיק לכתוב. התמלול נשמר וניתן לפתוח אותו מחדש מאוחר יותר.",
-    "reopenTitle": "פתיחה מחדש של המשא ומתן",
-    "reopenText": "הסוכן חוזר לנסח במצב חצי-אוטומטי: כל הודעה ממתינה לאישורכם. הפעולה נרשמת ביומן הביקורת.",
-    "reason": "סיבה",
-    "reopenConfirm": "פתיחה מחדש"
+    "reason": "סיבה"
+  },
+  "titleNoMax": "משא ומתן · סבב {round}",
+  "loading": "טוען משא ומתן…",
+  "empty": "אין הודעות עדיין.",
+  "reopenUnavailable": "פתיחה מחדש עדיין אינה זמינה.",
+  "states": {
+    "queued": "בתור",
+    "running": "הסוכן עובד",
+    "awaiting_approval": "ממתין לאישורכם",
+    "human_control": "שליטה אנושית",
+    "paused": "מושהה",
+    "completed": "הושלם",
+    "aborted": "הופסק",
+    "escalated": "הוסלם"
+  },
+  "roles": {
+    "agent": "סוכן",
+    "seller": "מוכר",
+    "human": "אתם"
+  },
+  "human": {
+    "label": "הודעה למוכר",
+    "send": "שליחה"
+  },
+  "guardrails": {
+    "max_discount_exceeded": "חריגה מההנחה המרבית",
+    "unauthorized_concession": "ויתור לא מורשה",
+    "max_rounds": "הושג מספר הסבבים המרבי",
+    "token_budget": "תקציב האסימונים מוצה",
+    "message_rate": "מגבלת קצב הודעות",
+    "sensitive_data_request": "בקשה למידע רגיש",
+    "off_platform_payment": "בקשה לתשלום מחוץ לפלטפורמה",
+    "anomalous_price": "מחיר חריג",
+    "binding_commitment_attempt": "ניסיון להתחייבות מחייבת",
+    "unsupported_currency": "מטבע לא נתמך"
+  },
+  "errors": {
+    "generic": "הפעולה נכשלה. נסו שוב.",
+    "messages": "לא ניתן לטעון את התמלול.",
+    "draft_superseded": "המוכר השיב בינתיים. בדקו את הטיוטה החדשה לפני האישור.",
+    "draft_not_pending": "הטיוטה כבר אינה ממתינה.",
+    "human_in_control": "אדם שולט בצ׳אט. החזירו אותו קודם לסוכן.",
+    "not_in_human_control": "קבלו שליטה בצ׳אט לפני כתיבה למוכר."
   }
 }

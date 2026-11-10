@@ -1,65 +1,32 @@
 {
-  "context": "{code} · {seller} · {platform}",
+  "context": "Oferta {offer}",
   "title": "Negociación · ronda {round} de {max}",
-  "titleAborted": "Negociación · abortada en la ronda {round} de {max}",
   "back": "Volver a la misión",
   "take": "Tomar el control",
   "resume": "Devolver al agente",
   "abort": "Abortar",
   "reopen": "Reabrir negociación",
-  "pending": "Pendiente de conectar",
   "humanBanner": "Tienes el control del chat. El agente no enviará nada hasta que se lo devuelvas.",
   "abortedBanner": "Negociación abortada. La transcripción queda guardada.",
   "transcript": "Transcripción de la negociación",
-  "translationHide": "Ocultar traducción",
-  "translationShow": "Mostrar traducción",
-  "translationIcon": "Traducido",
-  "translationRequest": "Solicitar traducción nueva",
-  "reopenedSeparator": "Reabierta por {by} a las {time}",
-  "agentSending": "Agente",
   "draft": {
     "title": "Borrador del agente · espera tu aprobación",
     "textLabel": "Texto del borrador",
-    "checked": "Comprobado antes de enviar:",
     "approve": "Aprobar y enviar",
-    "discard": "Descartar borrador"
-  },
-  "bands": {
-    "price": {
-      "normal": "normal",
-      "atypical": "atípico",
-      "implausible": "inverosímil",
-      "insufficient_reference": "sin referencia"
+    "source": {
+      "llm": "redactado por el agente",
+      "template": "plantilla estándar"
     },
-    "confidence": {
-      "high": "Confianza alta",
-      "medium": "Confianza media",
-      "low": "Confianza baja",
-      "untrusted": "Sin confianza",
-      "insufficient_data": "Datos insuficientes"
-    }
+    "notSent": "Aún no se ha enviado. Solo se envía cuando lo apruebas, tal como se muestra.",
+    "reject": "Rechazar y enviar plantilla"
   },
   "side": {
-    "current": "Oferta actual",
-    "summary": "Inicial {initial} · {delta} · objetivo {target}",
-    "confidenceTitle": "Confianza del vendedor",
-    "confidenceLabel": "{band} · {score}",
-    "priceTitle": "Banda de precio",
-    "priceLabel": "Precio {band}",
-    "escalationTitle": "Escalado en otra negociación",
-    "escalationOpen": "Abrir {seller}",
-    "screenshots": "Ver capturas de pantalla ({count})"
-  },
-  "chart": {
-    "caption": "Precio del vendedor por ronda, con objetivo y límite",
-    "round": "Ronda {n}",
-    "draft": "Borrador",
-    "target": "objetivo {value}",
-    "max": "máximo con 8 % de descuento: {value}",
-    "table": "Ronda {round}: {value}",
-    "tableDraft": "Borrador (sin enviar): {value}",
-    "tableTarget": "Objetivo: {value}",
-    "tableMax": "Máximo: {value}"
+    "rounds": "Rondas",
+    "roundsOf": "{round} de {max}",
+    "strategy": "Estrategia",
+    "guardrails": "Límites activados",
+    "noGuardrails": "Ninguno por ahora.",
+    "offerPending": "La oferta, la confianza del vendedor y el detalle de precio se mostrarán aquí cuando se conecten los datos de la oferta."
   },
   "dialog": {
     "close": "Cerrar",
@@ -70,9 +37,49 @@
     "resumeText": "El agente vuelve a redactar en modo semiautomático: cada mensaje espera tu aprobación.",
     "abortTitle": "Abortar negociación",
     "abortText": "El agente deja de escribir. La transcripción queda guardada y puedes reabrirla después.",
-    "reopenTitle": "Reabrir negociación",
-    "reopenText": "El agente vuelve a redactar en modo semiautomático: cada mensaje espera tu aprobación. Queda registrado en la auditoría.",
-    "reason": "Motivo",
-    "reopenConfirm": "Reabrir"
+    "reason": "Motivo"
+  },
+  "titleNoMax": "Negociación · ronda {round}",
+  "loading": "Cargando negociación…",
+  "empty": "Aún no hay mensajes.",
+  "reopenUnavailable": "La reapertura aún no está disponible.",
+  "states": {
+    "queued": "En cola",
+    "running": "Agente trabajando",
+    "awaiting_approval": "Pendiente de tu aprobación",
+    "human_control": "Control humano",
+    "paused": "En pausa",
+    "completed": "Completada",
+    "aborted": "Abortada",
+    "escalated": "Escalada"
+  },
+  "roles": {
+    "agent": "Agente",
+    "seller": "Vendedor",
+    "human": "Tú"
+  },
+  "human": {
+    "label": "Mensaje al vendedor",
+    "send": "Enviar"
+  },
+  "guardrails": {
+    "max_discount_exceeded": "Descuento máximo superado",
+    "unauthorized_concession": "Concesión no autorizada",
+    "max_rounds": "Máximo de rondas alcanzado",
+    "token_budget": "Presupuesto de tokens alcanzado",
+    "message_rate": "Límite de mensajes",
+    "sensitive_data_request": "Petición de datos sensibles",
+    "off_platform_payment": "Pago fuera de la plataforma",
+    "anomalous_price": "Precio anómalo",
+    "binding_commitment_attempt": "Intento de compromiso vinculante",
+    "unsupported_currency": "Divisa no admitida"
+  },
+  "errors": {
+    "generic": "La acción ha fallado. Inténtalo de nuevo.",
+    "messages": "No se pudo cargar la transcripción.",
+    "draft_superseded": "El vendedor ha respondido entretanto. Revisa el nuevo borrador antes de aprobar.",
+    "draft_not_pending": "Ese borrador ya no está pendiente.",
+    "human_in_control": "Una persona tiene el chat. Devuélvelo antes al agente.",
+    "not_in_human_control": "Toma el control del chat antes de escribir al vendedor."
   }
 }
