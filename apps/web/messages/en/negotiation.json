@@ -1,65 +1,32 @@
 {
-  "context": "{code} · {seller} · {platform}",
+  "context": "Offer {offer}",
   "title": "Negotiation · round {round} of {max}",
-  "titleAborted": "Negotiation · aborted in round {round} of {max}",
   "back": "Back to mission",
   "take": "Take control",
   "resume": "Hand back to agent",
   "abort": "Abort",
   "reopen": "Reopen negotiation",
-  "pending": "Not connected yet",
   "humanBanner": "You have control of the chat. The agent will not send anything until you hand it back.",
   "abortedBanner": "Negotiation aborted. The transcript is saved.",
   "transcript": "Negotiation transcript",
-  "translationHide": "Hide translation",
-  "translationShow": "Show translation",
-  "translationIcon": "Translated",
-  "translationRequest": "Request a new translation",
-  "reopenedSeparator": "Reopened by {by} at {time}",
-  "agentSending": "Agent",
   "draft": {
     "title": "Agent draft · awaiting your approval",
     "textLabel": "Draft text",
-    "checked": "Checked before sending:",
     "approve": "Approve and send",
-    "discard": "Discard draft"
-  },
-  "bands": {
-    "price": {
-      "normal": "normal",
-      "atypical": "atypical",
-      "implausible": "implausible",
-      "insufficient_reference": "no reference"
+    "source": {
+      "llm": "written by the agent",
+      "template": "standard template"
     },
-    "confidence": {
-      "high": "High confidence",
-      "medium": "Medium confidence",
-      "low": "Low confidence",
-      "untrusted": "Untrusted",
-      "insufficient_data": "Insufficient data"
-    }
+    "notSent": "Not sent yet. It is only sent when you approve it, exactly as shown.",
+    "reject": "Reject and send template"
   },
   "side": {
-    "current": "Current offer",
-    "summary": "Initial {initial} · {delta} · target {target}",
-    "confidenceTitle": "Seller confidence",
-    "confidenceLabel": "{band} · {score}",
-    "priceTitle": "Price band",
-    "priceLabel": "Price {band}",
-    "escalationTitle": "Escalated in another negotiation",
-    "escalationOpen": "Open {seller}",
-    "screenshots": "View screenshots ({count})"
-  },
-  "chart": {
-    "caption": "Seller price by round, with target and limit",
-    "round": "Round {n}",
-    "draft": "Draft",
-    "target": "target {value}",
-    "max": "maximum at 8% discount: {value}",
-    "table": "Round {round}: {value}",
-    "tableDraft": "Draft (not sent): {value}",
-    "tableTarget": "Target: {value}",
-    "tableMax": "Maximum: {value}"
+    "rounds": "Rounds",
+    "roundsOf": "{round} of {max}",
+    "strategy": "Strategy",
+    "guardrails": "Guardrails triggered",
+    "noGuardrails": "None so far.",
+    "offerPending": "Offer, seller confidence and price details are shown here once the offer data is connected."
   },
   "dialog": {
     "close": "Close",
@@ -70,9 +37,49 @@
     "resumeText": "The agent goes back to drafting in semi-automatic mode: every message waits for your approval.",
     "abortTitle": "Abort negotiation",
     "abortText": "The agent stops writing. The transcript is saved and you can reopen it later.",
-    "reopenTitle": "Reopen negotiation",
-    "reopenText": "The agent goes back to drafting in semi-automatic mode: every message waits for your approval. This is recorded in the audit log.",
-    "reason": "Reason",
-    "reopenConfirm": "Reopen"
+    "reason": "Reason"
+  },
+  "titleNoMax": "Negotiation · round {round}",
+  "loading": "Loading negotiation…",
+  "empty": "No messages yet.",
+  "reopenUnavailable": "Reopening is not available yet.",
+  "states": {
+    "queued": "Queued",
+    "running": "Agent working",
+    "awaiting_approval": "Awaiting your approval",
+    "human_control": "Human control",
+    "paused": "Paused",
+    "completed": "Completed",
+    "aborted": "Aborted",
+    "escalated": "Escalated"
+  },
+  "roles": {
+    "agent": "Agent",
+    "seller": "Seller",
+    "human": "You"
+  },
+  "human": {
+    "label": "Message to the seller",
+    "send": "Send"
+  },
+  "guardrails": {
+    "max_discount_exceeded": "Maximum discount exceeded",
+    "unauthorized_concession": "Unauthorized concession",
+    "max_rounds": "Maximum rounds reached",
+    "token_budget": "Token budget reached",
+    "message_rate": "Message rate limit",
+    "sensitive_data_request": "Sensitive data requested",
+    "off_platform_payment": "Off-platform payment requested",
+    "anomalous_price": "Anomalous price",
+    "binding_commitment_attempt": "Binding commitment attempt",
+    "unsupported_currency": "Unsupported currency"
+  },
+  "errors": {
+    "generic": "The action failed. Try again.",
+    "messages": "The transcript could not be loaded.",
+    "draft_superseded": "The seller replied in the meantime. Review the new draft before approving.",
+    "draft_not_pending": "That draft is no longer pending.",
+    "human_in_control": "A human holds the chat. Hand it back to the agent first.",
+    "not_in_human_control": "Take control of the chat before writing to the seller."
   }
 }

@@ -1,4 +1,7 @@
 import type {
+  AbortNegotiationResponse,
+  ApproveNegotiationDraftData,
+  ApproveNegotiationDraftResponse,
   CreateMissionData,
   CreateMissionResponse,
   CreateOnboardingSessionData,
@@ -14,6 +17,8 @@ import type {
   GetSellerConfidenceResponse,
   ListMissionOffersData,
   ListMissionOffersResponse,
+  GetNegotiationResponse,
+  ListNegotiationMessagesResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
   OpenSigningSessionResponse,
@@ -21,6 +26,11 @@ import type {
   ProposeConfigChangeResponse,
   RegisterMySigningKeyData,
   RegisterMySigningKeyResponse,
+  RejectNegotiationDraftResponse,
+  ResumeNegotiationResponse,
+  SendHumanNegotiationMessageData,
+  SendHumanNegotiationMessageResponse,
+  TakeoverNegotiationResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
@@ -133,6 +143,58 @@ export function createOperations(client: ApiClient) {
         path: undefined,
         body,
         signal,
+      }),
+
+    getNegotiation: (id: string, signal?: AbortSignal) =>
+      client.request<GetNegotiationResponse>('/v1/negotiations/{id}', { path: { id }, signal }),
+
+    listNegotiationMessages: (id: string, cursor?: string, signal?: AbortSignal) =>
+      client.request<ListNegotiationMessagesResponse>('/v1/negotiations/{id}/messages', {
+        path: { id },
+        query: { cursor, limit: 200 },
+        signal,
+      }),
+
+    sendHumanNegotiationMessage: (id: string, body: SendHumanNegotiationMessageData['body']) =>
+      client.request<SendHumanNegotiationMessageResponse>('/v1/negotiations/{id}/messages', {
+        method: 'POST',
+        path: { id },
+        body,
+      }),
+
+    approveNegotiationDraft: (id: string, body: ApproveNegotiationDraftData['body']) =>
+      client.request<ApproveNegotiationDraftResponse>('/v1/negotiations/{id}/approve', {
+        method: 'POST',
+        path: { id },
+        body,
+      }),
+
+    rejectNegotiationDraft: (id: string, body: ApproveNegotiationDraftData['body']) =>
+      client.request<RejectNegotiationDraftResponse>('/v1/negotiations/{id}/reject', {
+        method: 'POST',
+        path: { id },
+        body,
+      }),
+
+    takeoverNegotiation: (id: string, reason?: string) =>
+      client.request<TakeoverNegotiationResponse>('/v1/negotiations/{id}/takeover', {
+        method: 'POST',
+        path: { id },
+        body: reason ? { reason } : undefined,
+      }),
+
+    resumeNegotiation: (id: string, reason?: string) =>
+      client.request<ResumeNegotiationResponse>('/v1/negotiations/{id}/resume', {
+        method: 'POST',
+        path: { id },
+        body: reason ? { reason } : undefined,
+      }),
+
+    abortNegotiation: (id: string, reason?: string) =>
+      client.request<AbortNegotiationResponse>('/v1/negotiations/{id}/abort', {
+        method: 'POST',
+        path: { id },
+        body: reason ? { reason } : undefined,
       }),
   }
 }

@@ -1,65 +1,32 @@
 {
-  "context": "{code} · {seller} · {platform}",
+  "context": "报价 {offer}",
   "title": "谈判 · 第 {round} 轮，共 {max} 轮",
-  "titleAborted": "谈判 · 在第 {round} 轮（共 {max} 轮）中止",
   "back": "返回任务",
   "take": "接管",
   "resume": "交还给代理",
   "abort": "中止",
   "reopen": "重新开启谈判",
-  "pending": "尚未连接",
   "humanBanner": "您已接管聊天。在您交还之前，代理不会发送任何内容。",
   "abortedBanner": "谈判已中止。对话记录已保存。",
   "transcript": "谈判对话记录",
-  "translationHide": "隐藏译文",
-  "translationShow": "显示译文",
-  "translationIcon": "已翻译",
-  "translationRequest": "请求新译文",
-  "reopenedSeparator": "{by} 于 {time} 重新开启",
-  "agentSending": "代理",
   "draft": {
     "title": "代理草稿 · 等待您的批准",
     "textLabel": "草稿内容",
-    "checked": "发送前已检查：",
     "approve": "批准并发送",
-    "discard": "放弃草稿"
-  },
-  "bands": {
-    "price": {
-      "normal": "正常",
-      "atypical": "异常",
-      "implausible": "不合理",
-      "insufficient_reference": "无参照"
+    "source": {
+      "llm": "由代理撰写",
+      "template": "标准模板"
     },
-    "confidence": {
-      "high": "信任度高",
-      "medium": "信任度中",
-      "low": "信任度低",
-      "untrusted": "不可信",
-      "insufficient_data": "数据不足"
-    }
+    "notSent": "尚未发送。只有在您批准后才会按所示内容发送。",
+    "reject": "拒绝并发送模板"
   },
   "side": {
-    "current": "当前报价",
-    "summary": "初始 {initial} · {delta} · 目标 {target}",
-    "confidenceTitle": "卖家信任度",
-    "confidenceLabel": "{band} · {score}",
-    "priceTitle": "价格区间",
-    "priceLabel": "价格{band}",
-    "escalationTitle": "其他谈判中的升级事项",
-    "escalationOpen": "打开 {seller}",
-    "screenshots": "查看截图（{count}）"
-  },
-  "chart": {
-    "caption": "卖家每轮报价，含目标与上限",
-    "round": "第 {n} 轮",
-    "draft": "草稿",
-    "target": "目标 {value}",
-    "max": "折扣 8% 时的上限：{value}",
-    "table": "第 {round} 轮：{value}",
-    "tableDraft": "草稿（未发送）：{value}",
-    "tableTarget": "目标：{value}",
-    "tableMax": "上限：{value}"
+    "rounds": "轮次",
+    "roundsOf": "第 {round} 轮，共 {max} 轮",
+    "strategy": "策略",
+    "guardrails": "已触发的限制",
+    "noGuardrails": "暂无。",
+    "offerPending": "待报价数据接入后，这里将显示报价、卖家可信度和价格详情。"
   },
   "dialog": {
     "close": "关闭",
@@ -70,9 +37,49 @@
     "resumeText": "代理将以半自动模式继续起草：每条消息都需等待您的批准。",
     "abortTitle": "中止谈判",
     "abortText": "代理停止写信。对话记录会保存，之后可以重新开启。",
-    "reopenTitle": "重新开启谈判",
-    "reopenText": "代理将以半自动模式继续起草：每条消息都需等待您的批准。此操作会记入审计日志。",
-    "reason": "原因",
-    "reopenConfirm": "重新开启"
+    "reason": "原因"
+  },
+  "titleNoMax": "谈判 · 第 {round} 轮",
+  "loading": "正在加载谈判…",
+  "empty": "暂无消息。",
+  "reopenUnavailable": "暂不支持重新开启。",
+  "states": {
+    "queued": "排队中",
+    "running": "代理处理中",
+    "awaiting_approval": "等待您的批准",
+    "human_control": "人工控制",
+    "paused": "已暂停",
+    "completed": "已完成",
+    "aborted": "已中止",
+    "escalated": "已升级"
+  },
+  "roles": {
+    "agent": "代理",
+    "seller": "卖家",
+    "human": "您"
+  },
+  "human": {
+    "label": "发给卖家的消息",
+    "send": "发送"
+  },
+  "guardrails": {
+    "max_discount_exceeded": "超过最大折扣",
+    "unauthorized_concession": "未经授权的让步",
+    "max_rounds": "已达最大轮次",
+    "token_budget": "已达令牌预算",
+    "message_rate": "消息频率限制",
+    "sensitive_data_request": "索取敏感数据",
+    "off_platform_payment": "要求平台外付款",
+    "anomalous_price": "异常价格",
+    "binding_commitment_attempt": "试图作出约束性承诺",
+    "unsupported_currency": "不支持的币种"
+  },
+  "errors": {
+    "generic": "操作失败，请重试。",
+    "messages": "无法加载对话记录。",
+    "draft_superseded": "卖家已在此期间回复。批准前请查看新草稿。",
+    "draft_not_pending": "该草稿已不再待处理。",
+    "human_in_control": "聊天由人工控制。请先交还给代理。",
+    "not_in_human_control": "请先接管聊天，再给卖家写消息。"
   }
 }
