@@ -1,0 +1,2967 @@
+{
+  "engine": "trust.compute",
+  "description": "Seller confidence (D3-06, spec 3.4.2, ADR-303, ADR-304). Expected values were produced by apex.domain.trust and are checked independently by @apex/scoring.",
+  "tolerance": 1e-12,
+  "vectors": [
+    {
+      "name": "solid_veteran_500_reviews_4_8",
+      "note": "criterion 7 reference",
+      "input": {
+        "snapshot": {
+          "id": "snap-solid",
+          "seller_id": "solid",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "solid",
+        "score": 90,
+        "band": "high",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-solid",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "single_perfect_review_5_0",
+      "note": "criterion 7: shrunk towards the category mean",
+      "input": {
+        "snapshot": {
+          "id": "snap-single",
+          "seller_id": "single",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 1,
+          "reviews_12m": 1,
+          "rating_avg": 5.0,
+          "rating_count": 1,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "single",
+        "score": 83,
+        "band": "high",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.10032881506161206,
+          "reviews_12m": 0.12544621919607912,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.8798076923076923,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-single",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "solid_with_steady_reviews_no_flag",
+      "note": "steady velocity, no flag",
+      "input": {
+        "snapshot": {
+          "id": "snap-steady",
+          "seller_id": "steady",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z",
+        "reviews": [
+          {
+            "rating": 5,
+            "date": "2026-10-27",
+            "verified": true,
+            "text": "order 5 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-15",
+            "verified": true,
+            "text": "order 17 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-10-03",
+            "verified": true,
+            "text": "order 29 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-09-21",
+            "verified": true,
+            "text": "order 41 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-09-09",
+            "verified": true,
+            "text": "order 53 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-08-28",
+            "verified": true,
+            "text": "order 65 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-08-16",
+            "verified": true,
+            "text": "order 77 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-08-04",
+            "verified": true,
+            "text": "order 89 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-23",
+            "verified": true,
+            "text": "order 101 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-07-11",
+            "verified": true,
+            "text": "order 113 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-06-29",
+            "verified": true,
+            "text": "order 125 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-06-17",
+            "verified": true,
+            "text": "order 137 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-06-05",
+            "verified": true,
+            "text": "order 149 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-24",
+            "verified": true,
+            "text": "order 161 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-05-12",
+            "verified": true,
+            "text": "order 173 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-30",
+            "verified": true,
+            "text": "order 185 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-04-18",
+            "verified": true,
+            "text": "order 197 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-04-06",
+            "verified": true,
+            "text": "order 209 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-25",
+            "verified": true,
+            "text": "order 221 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-03-13",
+            "verified": true,
+            "text": "order 233 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-01",
+            "verified": true,
+            "text": "order 245 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-02-17",
+            "verified": true,
+            "text": "order 257 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-02-05",
+            "verified": true,
+            "text": "order 269 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-24",
+            "verified": true,
+            "text": "order 281 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-01-12",
+            "verified": true,
+            "text": "order 293 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2025-12-31",
+            "verified": true,
+            "text": "order 305 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2025-12-19",
+            "verified": true,
+            "text": "order 317 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2025-12-07",
+            "verified": true,
+            "text": "order 329 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2025-11-25",
+            "verified": true,
+            "text": "order 341 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2025-11-13",
+            "verified": true,
+            "text": "order 353 arrived fine"
+          }
+        ]
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "steady",
+        "score": 93,
+        "band": "high",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "positive_share_wilson": 0.6269430358685176,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": [],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-steady",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "review_burst_caps_band_at_low",
+      "note": "criterion 8",
+      "input": {
+        "snapshot": {
+          "id": "snap-burst",
+          "seller_id": "burst",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z",
+        "reviews": [
+          {
+            "rating": 5,
+            "date": "2026-10-27",
+            "verified": true,
+            "text": "order 5 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-15",
+            "verified": true,
+            "text": "order 17 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-10-03",
+            "verified": true,
+            "text": "order 29 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-09-21",
+            "verified": true,
+            "text": "order 41 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-09-09",
+            "verified": true,
+            "text": "order 53 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-08-28",
+            "verified": true,
+            "text": "order 65 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-08-16",
+            "verified": true,
+            "text": "order 77 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-08-04",
+            "verified": true,
+            "text": "order 89 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-23",
+            "verified": true,
+            "text": "order 101 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-07-11",
+            "verified": true,
+            "text": "order 113 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-06-29",
+            "verified": true,
+            "text": "order 125 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-06-17",
+            "verified": true,
+            "text": "order 137 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-06-05",
+            "verified": true,
+            "text": "order 149 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-24",
+            "verified": true,
+            "text": "order 161 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-05-12",
+            "verified": true,
+            "text": "order 173 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-30",
+            "verified": true,
+            "text": "order 185 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-04-18",
+            "verified": true,
+            "text": "order 197 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-04-06",
+            "verified": true,
+            "text": "order 209 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-25",
+            "verified": true,
+            "text": "order 221 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-03-13",
+            "verified": true,
+            "text": "order 233 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-01",
+            "verified": true,
+            "text": "order 245 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-02-17",
+            "verified": true,
+            "text": "order 257 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2026-02-05",
+            "verified": true,
+            "text": "order 269 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-24",
+            "verified": true,
+            "text": "order 281 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2026-01-12",
+            "verified": true,
+            "text": "order 293 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2025-12-31",
+            "verified": true,
+            "text": "order 305 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2025-12-19",
+            "verified": true,
+            "text": "order 317 arrived fine"
+          },
+          {
+            "rating": 3,
+            "date": "2025-12-07",
+            "verified": true,
+            "text": "order 329 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2025-11-25",
+            "verified": true,
+            "text": "order 341 arrived fine"
+          },
+          {
+            "rating": 4,
+            "date": "2025-11-13",
+            "verified": true,
+            "text": "order 353 arrived fine"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-31",
+            "verified": true,
+            "text": "burst 0"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-30",
+            "verified": true,
+            "text": "burst 1"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-29",
+            "verified": true,
+            "text": "burst 2"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-28",
+            "verified": true,
+            "text": "burst 3"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-27",
+            "verified": true,
+            "text": "burst 4"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-26",
+            "verified": true,
+            "text": "burst 5"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-25",
+            "verified": true,
+            "text": "burst 6"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-24",
+            "verified": true,
+            "text": "burst 7"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-23",
+            "verified": true,
+            "text": "burst 8"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-22",
+            "verified": true,
+            "text": "burst 9"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-21",
+            "verified": true,
+            "text": "burst 10"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-20",
+            "verified": true,
+            "text": "burst 11"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-19",
+            "verified": true,
+            "text": "burst 12"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-18",
+            "verified": true,
+            "text": "burst 13"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-17",
+            "verified": true,
+            "text": "burst 14"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-16",
+            "verified": true,
+            "text": "burst 15"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-15",
+            "verified": true,
+            "text": "burst 16"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-14",
+            "verified": true,
+            "text": "burst 17"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-13",
+            "verified": true,
+            "text": "burst 18"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-12",
+            "verified": true,
+            "text": "burst 19"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-11",
+            "verified": true,
+            "text": "burst 20"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-10",
+            "verified": true,
+            "text": "burst 21"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-09",
+            "verified": true,
+            "text": "burst 22"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-08",
+            "verified": true,
+            "text": "burst 23"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-07",
+            "verified": true,
+            "text": "burst 24"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-31",
+            "verified": true,
+            "text": "burst 25"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-30",
+            "verified": true,
+            "text": "burst 26"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-29",
+            "verified": true,
+            "text": "burst 27"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-28",
+            "verified": true,
+            "text": "burst 28"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-27",
+            "verified": true,
+            "text": "burst 29"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-26",
+            "verified": true,
+            "text": "burst 30"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-25",
+            "verified": true,
+            "text": "burst 31"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-24",
+            "verified": true,
+            "text": "burst 32"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-23",
+            "verified": true,
+            "text": "burst 33"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-22",
+            "verified": true,
+            "text": "burst 34"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-21",
+            "verified": true,
+            "text": "burst 35"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-20",
+            "verified": true,
+            "text": "burst 36"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-19",
+            "verified": true,
+            "text": "burst 37"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-18",
+            "verified": true,
+            "text": "burst 38"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-17",
+            "verified": true,
+            "text": "burst 39"
+          }
+        ]
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "burst",
+        "score": 94,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "positive_share_wilson": 0.8253432750766051,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": [],
+        "flags": [
+          {
+            "seller_id": "burst",
+            "type": "burst_velocity",
+            "severity": "critical",
+            "evidence": {
+              "peak_bucket_reviews": 43.0,
+              "z": 40.54545454545455
+            },
+            "detected_at": "2026-11-10T12:00:00Z"
+          }
+        ],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-burst",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "abnormal_five_star_share",
+      "note": "all 5 stars vs category 0.6",
+      "input": {
+        "snapshot": {
+          "id": "snap-five",
+          "seller_id": "five",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z",
+        "reviews": [
+          {
+            "rating": 5,
+            "date": "2026-10-29",
+            "verified": true,
+            "text": "r3"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-20",
+            "verified": true,
+            "text": "r12"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-11",
+            "verified": true,
+            "text": "r21"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-02",
+            "verified": true,
+            "text": "r30"
+          },
+          {
+            "rating": 5,
+            "date": "2026-09-23",
+            "verified": true,
+            "text": "r39"
+          },
+          {
+            "rating": 5,
+            "date": "2026-09-14",
+            "verified": true,
+            "text": "r48"
+          },
+          {
+            "rating": 5,
+            "date": "2026-09-05",
+            "verified": true,
+            "text": "r57"
+          },
+          {
+            "rating": 5,
+            "date": "2026-08-27",
+            "verified": true,
+            "text": "r66"
+          },
+          {
+            "rating": 5,
+            "date": "2026-08-18",
+            "verified": true,
+            "text": "r75"
+          },
+          {
+            "rating": 5,
+            "date": "2026-08-09",
+            "verified": true,
+            "text": "r84"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-31",
+            "verified": true,
+            "text": "r93"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-22",
+            "verified": true,
+            "text": "r102"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-13",
+            "verified": true,
+            "text": "r111"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-04",
+            "verified": true,
+            "text": "r120"
+          },
+          {
+            "rating": 5,
+            "date": "2026-06-25",
+            "verified": true,
+            "text": "r129"
+          },
+          {
+            "rating": 5,
+            "date": "2026-06-16",
+            "verified": true,
+            "text": "r138"
+          },
+          {
+            "rating": 5,
+            "date": "2026-06-07",
+            "verified": true,
+            "text": "r147"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-29",
+            "verified": true,
+            "text": "r156"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-20",
+            "verified": true,
+            "text": "r165"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-11",
+            "verified": true,
+            "text": "r174"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-02",
+            "verified": true,
+            "text": "r183"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-23",
+            "verified": true,
+            "text": "r192"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-14",
+            "verified": true,
+            "text": "r201"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-05",
+            "verified": true,
+            "text": "r210"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-27",
+            "verified": true,
+            "text": "r219"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-18",
+            "verified": true,
+            "text": "r228"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-09",
+            "verified": true,
+            "text": "r237"
+          },
+          {
+            "rating": 5,
+            "date": "2026-02-28",
+            "verified": true,
+            "text": "r246"
+          },
+          {
+            "rating": 5,
+            "date": "2026-02-19",
+            "verified": true,
+            "text": "r255"
+          },
+          {
+            "rating": 5,
+            "date": "2026-02-10",
+            "verified": true,
+            "text": "r264"
+          },
+          {
+            "rating": 5,
+            "date": "2026-02-01",
+            "verified": true,
+            "text": "r273"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-23",
+            "verified": true,
+            "text": "r282"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-14",
+            "verified": true,
+            "text": "r291"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-05",
+            "verified": true,
+            "text": "r300"
+          },
+          {
+            "rating": 5,
+            "date": "2025-12-27",
+            "verified": true,
+            "text": "r309"
+          },
+          {
+            "rating": 5,
+            "date": "2025-12-18",
+            "verified": true,
+            "text": "r318"
+          },
+          {
+            "rating": 5,
+            "date": "2025-12-09",
+            "verified": true,
+            "text": "r327"
+          },
+          {
+            "rating": 5,
+            "date": "2025-11-30",
+            "verified": true,
+            "text": "r336"
+          },
+          {
+            "rating": 5,
+            "date": "2025-11-21",
+            "verified": true,
+            "text": "r345"
+          },
+          {
+            "rating": 5,
+            "date": "2025-11-12",
+            "verified": true,
+            "text": "r354"
+          }
+        ]
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "five",
+        "score": 94,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "positive_share_wilson": 0.9123783988027133,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": [],
+        "flags": [
+          {
+            "seller_id": "five",
+            "type": "five_star_anomaly",
+            "severity": "critical",
+            "evidence": {
+              "five_star_share": 1.0,
+              "z": 5.163977794943222
+            },
+            "detected_at": "2026-11-10T12:00:00Z"
+          }
+        ],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-five",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "duplicate_texts",
+      "note": "share of repeated texts above max",
+      "input": {
+        "snapshot": {
+          "id": "snap-dup",
+          "seller_id": "dup",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z",
+        "reviews": [
+          {
+            "rating": 5,
+            "date": "2026-10-29",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 4,
+            "date": "2026-10-20",
+            "verified": true,
+            "text": "text 12"
+          },
+          {
+            "rating": 3,
+            "date": "2026-10-11",
+            "verified": true,
+            "text": "text 21"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-02",
+            "verified": true,
+            "text": "text 30"
+          },
+          {
+            "rating": 4,
+            "date": "2026-09-23",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 3,
+            "date": "2026-09-14",
+            "verified": true,
+            "text": "text 48"
+          },
+          {
+            "rating": 5,
+            "date": "2026-09-05",
+            "verified": true,
+            "text": "text 57"
+          },
+          {
+            "rating": 4,
+            "date": "2026-08-27",
+            "verified": true,
+            "text": "text 66"
+          },
+          {
+            "rating": 3,
+            "date": "2026-08-18",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 5,
+            "date": "2026-08-09",
+            "verified": true,
+            "text": "text 84"
+          },
+          {
+            "rating": 4,
+            "date": "2026-07-31",
+            "verified": true,
+            "text": "text 93"
+          },
+          {
+            "rating": 3,
+            "date": "2026-07-22",
+            "verified": true,
+            "text": "text 102"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-13",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 4,
+            "date": "2026-07-04",
+            "verified": true,
+            "text": "text 120"
+          },
+          {
+            "rating": 3,
+            "date": "2026-06-25",
+            "verified": true,
+            "text": "text 129"
+          },
+          {
+            "rating": 5,
+            "date": "2026-06-16",
+            "verified": true,
+            "text": "text 138"
+          },
+          {
+            "rating": 4,
+            "date": "2026-06-07",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 3,
+            "date": "2026-05-29",
+            "verified": true,
+            "text": "text 156"
+          },
+          {
+            "rating": 5,
+            "date": "2026-05-20",
+            "verified": true,
+            "text": "text 165"
+          },
+          {
+            "rating": 4,
+            "date": "2026-05-11",
+            "verified": true,
+            "text": "text 174"
+          },
+          {
+            "rating": 3,
+            "date": "2026-05-02",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-23",
+            "verified": true,
+            "text": "text 192"
+          },
+          {
+            "rating": 4,
+            "date": "2026-04-14",
+            "verified": true,
+            "text": "text 201"
+          },
+          {
+            "rating": 3,
+            "date": "2026-04-05",
+            "verified": true,
+            "text": "text 210"
+          },
+          {
+            "rating": 5,
+            "date": "2026-03-27",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 4,
+            "date": "2026-03-18",
+            "verified": true,
+            "text": "text 228"
+          },
+          {
+            "rating": 3,
+            "date": "2026-03-09",
+            "verified": true,
+            "text": "text 237"
+          },
+          {
+            "rating": 5,
+            "date": "2026-02-28",
+            "verified": true,
+            "text": "text 246"
+          },
+          {
+            "rating": 4,
+            "date": "2026-02-19",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 3,
+            "date": "2026-02-10",
+            "verified": true,
+            "text": "text 264"
+          },
+          {
+            "rating": 5,
+            "date": "2026-02-01",
+            "verified": true,
+            "text": "text 273"
+          },
+          {
+            "rating": 4,
+            "date": "2026-01-23",
+            "verified": true,
+            "text": "text 282"
+          },
+          {
+            "rating": 3,
+            "date": "2026-01-14",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-05",
+            "verified": true,
+            "text": "text 300"
+          },
+          {
+            "rating": 4,
+            "date": "2025-12-27",
+            "verified": true,
+            "text": "text 309"
+          },
+          {
+            "rating": 3,
+            "date": "2025-12-18",
+            "verified": true,
+            "text": "text 318"
+          },
+          {
+            "rating": 5,
+            "date": "2025-12-09",
+            "verified": true,
+            "text": "Great   seller!!"
+          },
+          {
+            "rating": 4,
+            "date": "2025-11-30",
+            "verified": true,
+            "text": "text 336"
+          },
+          {
+            "rating": 3,
+            "date": "2025-11-21",
+            "verified": true,
+            "text": "text 345"
+          },
+          {
+            "rating": 5,
+            "date": "2025-11-12",
+            "verified": true,
+            "text": "text 354"
+          }
+        ]
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "dup",
+        "score": 92,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "positive_share_wilson": 0.5201774618987768,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": [],
+        "flags": [
+          {
+            "seller_id": "dup",
+            "type": "duplicate_text",
+            "severity": "critical",
+            "evidence": {
+              "duplicate_share": 0.25
+            },
+            "detected_at": "2026-11-10T12:00:00Z"
+          }
+        ],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-dup",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "spike_at_account_creation",
+      "note": "reviews cluster in the first 30 days",
+      "input": {
+        "snapshot": {
+          "id": "snap-creation",
+          "seller_id": "creation",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 400,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z",
+        "reviews": [
+          {
+            "rating": 5,
+            "date": "2025-09-28",
+            "verified": true,
+            "text": "launch 0"
+          },
+          {
+            "rating": 4,
+            "date": "2025-09-29",
+            "verified": true,
+            "text": "launch 1"
+          },
+          {
+            "rating": 3,
+            "date": "2025-09-30",
+            "verified": true,
+            "text": "launch 2"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-01",
+            "verified": true,
+            "text": "launch 3"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-02",
+            "verified": true,
+            "text": "launch 4"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-03",
+            "verified": true,
+            "text": "launch 5"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-04",
+            "verified": true,
+            "text": "launch 6"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-05",
+            "verified": true,
+            "text": "launch 7"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-06",
+            "verified": true,
+            "text": "launch 8"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-07",
+            "verified": true,
+            "text": "launch 9"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-08",
+            "verified": true,
+            "text": "launch 10"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-09",
+            "verified": true,
+            "text": "launch 11"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-10",
+            "verified": true,
+            "text": "launch 12"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-11",
+            "verified": true,
+            "text": "launch 13"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-12",
+            "verified": true,
+            "text": "launch 14"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-13",
+            "verified": true,
+            "text": "launch 15"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-14",
+            "verified": true,
+            "text": "launch 16"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-15",
+            "verified": true,
+            "text": "launch 17"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-16",
+            "verified": true,
+            "text": "launch 18"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-17",
+            "verified": true,
+            "text": "launch 19"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-18",
+            "verified": true,
+            "text": "launch 20"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-19",
+            "verified": true,
+            "text": "launch 21"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-20",
+            "verified": true,
+            "text": "launch 22"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-21",
+            "verified": true,
+            "text": "launch 23"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-22",
+            "verified": true,
+            "text": "launch 24"
+          },
+          {
+            "rating": 4,
+            "date": "2025-10-23",
+            "verified": true,
+            "text": "launch 25"
+          },
+          {
+            "rating": 3,
+            "date": "2025-10-24",
+            "verified": true,
+            "text": "launch 26"
+          },
+          {
+            "rating": 5,
+            "date": "2025-10-25",
+            "verified": true,
+            "text": "launch 27"
+          },
+          {
+            "rating": 4,
+            "date": "2025-09-28",
+            "verified": true,
+            "text": "launch 28"
+          },
+          {
+            "rating": 3,
+            "date": "2025-09-29",
+            "verified": true,
+            "text": "launch 29"
+          },
+          {
+            "rating": 5,
+            "date": "2026-10-27",
+            "verified": true,
+            "text": "late 5"
+          },
+          {
+            "rating": 4,
+            "date": "2026-09-27",
+            "verified": true,
+            "text": "late 35"
+          },
+          {
+            "rating": 3,
+            "date": "2026-08-28",
+            "verified": true,
+            "text": "late 65"
+          },
+          {
+            "rating": 5,
+            "date": "2026-07-29",
+            "verified": true,
+            "text": "late 95"
+          },
+          {
+            "rating": 4,
+            "date": "2026-06-29",
+            "verified": true,
+            "text": "late 125"
+          },
+          {
+            "rating": 3,
+            "date": "2026-05-30",
+            "verified": true,
+            "text": "late 155"
+          },
+          {
+            "rating": 5,
+            "date": "2026-04-30",
+            "verified": true,
+            "text": "late 185"
+          },
+          {
+            "rating": 4,
+            "date": "2026-03-31",
+            "verified": true,
+            "text": "late 215"
+          },
+          {
+            "rating": 3,
+            "date": "2026-03-01",
+            "verified": true,
+            "text": "late 245"
+          },
+          {
+            "rating": 5,
+            "date": "2026-01-30",
+            "verified": true,
+            "text": "late 275"
+          },
+          {
+            "rating": 4,
+            "date": "2025-12-31",
+            "verified": true,
+            "text": "late 305"
+          },
+          {
+            "rating": 3,
+            "date": "2025-12-01",
+            "verified": true,
+            "text": "late 335"
+          }
+        ]
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "creation",
+        "score": 90,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 0.547945205479452,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "positive_share_wilson": 0.5155250737683379,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": [],
+        "flags": [
+          {
+            "seller_id": "creation",
+            "type": "creation_correlation",
+            "severity": "critical",
+            "evidence": {
+              "first_bucket_reviews": 30.0,
+              "z": 29.083333333333332
+            },
+            "detected_at": "2026-11-10T12:00:00Z"
+          }
+        ],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-creation",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "low_verified_share",
+      "note": "low verified share flag",
+      "input": {
+        "snapshot": {
+          "id": "snap-unverified",
+          "seller_id": "unverified",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.1,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "unverified",
+        "score": 87,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.1,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [
+          {
+            "seller_id": "unverified",
+            "type": "low_verified_share",
+            "severity": "critical",
+            "evidence": {
+              "verified_review_share": 0.1,
+              "threshold": 0.3
+            },
+            "detected_at": "2026-11-10T12:00:00Z"
+          }
+        ],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-unverified",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "insufficient_data_two_signals",
+      "note": "criterion 9",
+      "input": {
+        "snapshot": {
+          "id": "snap-new",
+          "seller_id": "new",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "rating_avg": 5.0,
+          "rating_count": 2
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "new",
+        "score": null,
+        "band": "insufficient_data",
+        "signals_normalized": {},
+        "penalties": [],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-new",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "min_signals_reached_exactly",
+      "note": "three present signals compute a score",
+      "input": {
+        "snapshot": {
+          "id": "snap-thin",
+          "seller_id": "thin",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 40,
+          "rating_avg": 4.0,
+          "rating_count": 3
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "thin",
+        "score": 4,
+        "band": "untrusted",
+        "signals_normalized": {
+          "account_age_days": 0.0547945205479452,
+          "rating_adjusted": 0.8616071428571428
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-thin",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "score_between_20_and_25_is_untrusted",
+      "note": "scaffold returned low here",
+      "input": {
+        "snapshot": {
+          "id": "snap-weak",
+          "seller_id": "weak",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 200,
+          "months_active_last_12": 6,
+          "identity_verified": true,
+          "published_products_count": 10,
+          "rating_avg": 4.0,
+          "rating_count": 5,
+          "response_rate": 0.5
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "weak",
+        "score": 21,
+        "band": "untrusted",
+        "signals_normalized": {
+          "account_age_days": 0.273972602739726,
+          "months_active_last_12": 0.5,
+          "published_products_count": 0.38572417711649953,
+          "response_rate": 0.5,
+          "rating_adjusted": 0.8541666666666667,
+          "identity_verified": 1.0
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-weak",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "disputes_above_max_penalised",
+      "note": "factor max/worst = 0.5",
+      "input": {
+        "snapshot": {
+          "id": "snap-disputes",
+          "seller_id": "disputes",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.1,
+          "refund_rate": 0.08
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "disputes",
+        "score": 45,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "first_sale_date": 1.0,
+          "months_active_last_12": 1.0,
+          "lifetime_transactions": 0.9757754737844707,
+          "transactions_12m": 0.962175991968985,
+          "gmv_12m": 0.9923737601677082,
+          "published_products_count": 0.9180427667361654,
+          "reviews_total": 0.8998157120437035,
+          "reviews_12m": 0.9408273110878522,
+          "repeat_buyer_share": 0.45,
+          "spec_completeness_avg": 0.9,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "catalog_churn_30d": 0.95,
+          "rating_adjusted": 0.9464285714285714,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": ["reviews_unavailable", "dispute_rate_above_max", "refund_rate_above_max"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-disputes",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "institutional_outweighs_volume",
+      "note": "institutional group weighs most",
+      "input": {
+        "snapshot": {
+          "id": "snap-kyc_only",
+          "seller_id": "kyc_only",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 730,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "kyc_only",
+        "score": 35,
+        "band": "low",
+        "signals_normalized": {
+          "account_age_days": 1.0,
+          "identity_verified": 1.0,
+          "trade_assurance": 1.0,
+          "escrow_available": 1.0
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-kyc_only",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    },
+    {
+      "name": "future_first_sale_date_clamped",
+      "note": "negative age saturates at 0",
+      "input": {
+        "snapshot": {
+          "id": "snap-future",
+          "seller_id": "future",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 10,
+          "first_sale_date": "2026-12-01",
+          "identity_verified": false
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "seller_id": "future",
+        "score": 0,
+        "band": "untrusted",
+        "signals_normalized": {
+          "account_age_days": 0.0136986301369863,
+          "first_sale_date": 0.0,
+          "identity_verified": 0.0
+        },
+        "penalties": ["reviews_unavailable"],
+        "flags": [],
+        "model_version": "seller-confidence@1/cfg-test-1",
+        "snapshot_id": "snap-future",
+        "computed_at": "2026-11-10T12:00:00Z"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "name": "weights_unset_refuses",
+      "input": {
+        "snapshot": {
+          "id": "snap-solid",
+          "seller_id": "solid",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": null,
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "error": "config_unset"
+      }
+    },
+    {
+      "name": "weights_not_summing_to_one",
+      "input": {
+        "snapshot": {
+          "id": "snap-solid",
+          "seller_id": "solid",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.16",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "error": "config_invalid"
+      }
+    },
+    {
+      "name": "x_sat_missing_signal",
+      "input": {
+        "snapshot": {
+          "id": "snap-solid",
+          "seller_id": "solid",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "error": "config_invalid"
+      }
+    },
+    {
+      "name": "category_rating_mean_unset",
+      "input": {
+        "snapshot": {
+          "id": "snap-solid",
+          "seller_id": "solid",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 90000000,
+            "currency": "EUR"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": null,
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "error": "config_unset"
+      }
+    },
+    {
+      "name": "gmv_in_usd_rejected",
+      "input": {
+        "snapshot": {
+          "id": "snap-usd",
+          "seller_id": "usd",
+          "data_completeness": 1.0,
+          "captured_at": "2026-11-01T00:00:00+00:00",
+          "account_age_days": 1500,
+          "first_sale_date": "2022-06-01",
+          "months_active_last_12": 12,
+          "lifetime_transactions": 8000,
+          "transactions_12m": 1500,
+          "gmv_12m": {
+            "amount_minor": 100,
+            "currency": "USD"
+          },
+          "repeat_buyer_share": 0.45,
+          "published_products_count": 300,
+          "catalog_churn_30d": 0.05,
+          "spec_completeness_avg": 0.9,
+          "reviews_total": 500,
+          "reviews_12m": 180,
+          "rating_avg": 4.8,
+          "rating_count": 500,
+          "verified_review_share": 0.85,
+          "response_rate": 0.95,
+          "identity_verified": true,
+          "trade_assurance": true,
+          "escrow_available": true,
+          "dispute_rate": 0.01,
+          "refund_rate": 0.02
+        },
+        "now": "2026-11-10T12:00:00Z"
+      },
+      "config": {
+        "config_version": "cfg-test-1",
+        "weights": {
+          "age": "0.15",
+          "sales": "0.20",
+          "catalog": "0.10",
+          "reviews": "0.25",
+          "institutional": "0.30"
+        },
+        "x_sat": {
+          "lifetime_transactions": 10000,
+          "transactions_12m": 2000,
+          "gmv_12m": 1000000,
+          "published_products_count": 500,
+          "reviews_total": 1000,
+          "reviews_12m": 250
+        },
+        "rating_prior_weight": 25,
+        "category_rating_mean": "4.5",
+        "wilson_confidence": "0.95",
+        "age_saturation_days": 730,
+        "min_signals": 3,
+        "band_high": "75",
+        "band_medium": "50",
+        "band_low": "25",
+        "hard_block_below": "20",
+        "review_burst_z": "3.0",
+        "category_five_star_share": "0.6",
+        "min_verified_share": "0.3",
+        "max_duplicate_text_share": "0.2",
+        "max_dispute_rate": "0.05"
+      },
+      "expected": {
+        "error": "gmv_not_eur"
+      }
+    }
+  ]
+}
