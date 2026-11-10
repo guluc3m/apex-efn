@@ -76,15 +76,17 @@ class DecisionType(StrEnum):
     HOLD = "hold"
     DISCARD = "discard"
     APPROVE_PURCHASE = "approve_purchase"
-    ACTIVATE_FINANCIAL_SNAPSHOT = "activate_financial_snapshot"
-    OVERRIDE_DISCARD = "override_discard"
+    FINANCIAL_SNAPSHOT_ACTIVATION = "financial_snapshot_activation"
+    GATE_OVERRIDE_DISCARD = "gate_override_discard"
     CHANGE_PRICING_THRESHOLD = "change_pricing_threshold"
     CHANGE_CONFIDENCE_WEIGHTS = "change_confidence_weights"
     CHANGE_SCORING_WEIGHTS = "change_scoring_weights"
     ROTATE_KEY = "rotate_key"
     REVOKE_KEY = "revoke_key"
-    UNBLOCK = "unblock"
+    GATE_UNBLOCK = "gate_unblock"
     CONFIG_CHANGE = "config_change"
+    DEAL_ACTION = "deal_action"
+    SERVICE_EVENT = "service_event"
 
 
 class DispersionMeasure(StrEnum):

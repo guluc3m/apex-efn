@@ -6,8 +6,8 @@
 - ``POST /{id}/revoke``  revoke a key with a signed ``revoke_key`` decision whose ``subject_ref`` is
                          ``signing_key:<id>``. The key owner, or an ``owner``/``admin`` (lost device).
 
-Signed decisions are D2-09: until it merges, ``get_decision_verifier`` answers 501, so a key cannot be revoked
-over HTTP without a real signature. Invalidating the signing sessions of a revoked key is D2-08.
+``get_decision_verifier`` is the real ``SigningService.require_signed`` (D2-09): a ``revoke_key`` decision needs
+immediate reauth (ADR-209). Revoking a key also ends its signing sessions (D2-08).
 """
 
 from __future__ import annotations
@@ -24,9 +24,6 @@ from apex.common.clock import Clock, get_clock
 from apex.common.errors import Problem, not_implemented
 from apex.common.ids import IdGenerator
 from apex.contracts.generated.models import (
-    Decision,
-    DecisionStatus,
-    DecisionType,
     RegisterSigningKeyRequest,
     RevokeSigningKeyRequest,
     SigningKey,
@@ -36,6 +33,14 @@ from apex.db import models
 from apex.db.session import default_sessionmaker, tenant_session
 from apex.db.users import user_id_for_subject
 from apex.signing import keys
+from apex.signing.api import (
+    DecisionRejected,
+    PendingSignature,
+    SignatureInvalid,
+    SignedDecision,
+    SigningService,
+)
+from apex.signing.decisions import DecisionError
 from apex.signing.ed25519 import MalformedKeyOrSignature
 
 router = APIRouter()
@@ -45,20 +50,28 @@ Signer = Annotated[Principal, Depends(require_signer())]
 
 
 class DecisionVerifier(Protocol):
-    async def require_signed(self, decision_id: str, *, tenant_id: str) -> Decision: ...
-
-
-class _UnwiredDecisions:
-    async def require_signed(self, decision_id: str, *, tenant_id: str) -> Decision:
-        raise not_implemented("signed decisions are D2-09; key revocation needs one")
-
-
-def get_decision_verifier() -> DecisionVerifier:
-    return _UnwiredDecisions()
+    async def require_signed(self, decision_id: str, *, tenant_id: str) -> SignedDecision: ...
 
 
 def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
     return default_sessionmaker()
+
+
+def get_signing_service(
+    request: Request,
+    sessions: Annotated[async_sessionmaker[AsyncSession], Depends(get_sessionmaker)],
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> SigningService:
+    services = getattr(request.app.state, "app_services", None)
+    if services is None:
+        raise not_implemented("tenant config is not wired into the app")
+    return SigningService(sessions, services.tenant_config, clock)
+
+
+def get_decision_verifier(
+    service: Annotated[SigningService, Depends(get_signing_service)],
+) -> DecisionVerifier:
+    return service
 
 
 async def get_enrollment_max_age(request: Request, principal: Signer) -> timedelta:
@@ -90,6 +103,20 @@ def _reauth(detail: str) -> Problem:
         error="reauth_required",
         reason="step_up_required",
     )
+
+
+_SIGNING_CODES: dict[type[Exception], str] = {
+    PendingSignature: "pending_signature",
+    DecisionRejected: "decision_rejected",
+    SignatureInvalid: "signature_invalid",
+}
+
+
+def decision_problem(error: Exception) -> Problem:
+    """problem+json for the ``apex.signing`` decision errors."""
+    if isinstance(error, DecisionError):
+        return Problem(error.status, "Decision refused", detail=str(error), code=error.code)
+    return Problem(409, "Conflict", detail=str(error), code=_SIGNING_CODES[type(error)])
 
 
 async def member_id(session: AsyncSession, principal: Principal) -> str:
@@ -163,12 +190,13 @@ async def revoke_key(
             raise Problem(
                 403, "Forbidden", detail="only the key owner or an owner/admin may revoke it"
             )
-        decision = await decisions.require_signed(body.decision_id, tenant_id=principal.tenant_id)
-        if (
-            decision.status is not DecisionStatus.signed
-            or decision.type is not DecisionType.revoke_key
-            or decision.subject_ref != f"signing_key:{id}"
-        ):
+        try:
+            decision = await decisions.require_signed(
+                body.decision_id, tenant_id=principal.tenant_id
+            )
+        except (DecisionError, PendingSignature, DecisionRejected, SignatureInvalid) as error:
+            raise decision_problem(error) from error
+        if decision.type != "revoke_key" or decision.subject_ref != f"signing_key:{id}":
             raise Problem(
                 409,
                 "Conflict",

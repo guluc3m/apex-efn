@@ -1254,15 +1254,17 @@ enum DecisionType {
   hold
   discard
   approve_purchase
-  activate_financial_snapshot
-  override_discard
+  financial_snapshot_activation
+  gate_override_discard
   change_pricing_threshold
   change_confidence_weights
   change_scoring_weights
   rotate_key
   revoke_key
-  unblock
+  gate_unblock
   config_change
+  deal_action
+  service_event
 }
 
 enum DecisionStatus {

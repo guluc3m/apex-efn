@@ -19,7 +19,6 @@ from apex.api import keys as keys_api
 from apex.auth.deps import current_principal
 from apex.auth.models import Principal
 from apex.common.clock import FixedClock, get_clock
-from apex.common.errors import Problem
 from apex.contracts.generated.models import Decision, DecisionStatus, DecisionType
 from apex.db.models import SigningKey
 from apex.db.session import create_engine, create_sessionmaker, system_session
@@ -235,12 +234,6 @@ async def test_revoke_checks_decision_owner_and_tenant(h: Harness) -> None:
     assert (await h.client.post(url, json={"decision_id": "dec-1"})).status_code == 404
     h.as_user("alice", roles=("admin",))  # lost-device path: an admin revokes
     assert (await h.client.post(url, json={"decision_id": "dec-1"})).status_code == 200
-
-
-async def test_revoke_is_501_until_decisions_exist() -> None:
-    with pytest.raises(Problem) as raised:
-        await keys_api.get_decision_verifier().require_signed("d", tenant_id=TENANT)
-    assert raised.value.status == 501
 
 
 async def test_service_keys_are_versioned_and_idempotent(seeded: str) -> None:

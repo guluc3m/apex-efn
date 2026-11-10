@@ -126,6 +126,9 @@ export type FinancialVerdict = 'within_budget' | 'stretch' | 'out_of_budget'
 
 export type SignatureStatus = 'unsigned' | 'pending' | 'signed' | 'invalid'
 
+/**
+ * `deal_action` carries `action` in its payload; `service_event` is an automatic transition signed by a service key (ADR-209).
+ */
 export type DecisionType =
   | 'follow'
   | 'renegotiate'
@@ -133,17 +136,19 @@ export type DecisionType =
   | 'hold'
   | 'discard'
   | 'approve_purchase'
-  | 'activate_financial_snapshot'
-  | 'override_discard'
+  | 'financial_snapshot_activation'
+  | 'gate_override_discard'
   | 'change_pricing_threshold'
   | 'change_confidence_weights'
   | 'change_scoring_weights'
   | 'rotate_key'
   | 'revoke_key'
-  | 'unblock'
+  | 'gate_unblock'
   | 'config_change'
+  | 'deal_action'
+  | 'service_event'
 
-export type DecisionStatus = 'pending_signature' | 'signed' | 'rejected'
+export type DecisionStatus = 'pending_signature' | 'signed' | 'rejected' | 'expired'
 
 export type MissionState =
   | 'created'
@@ -1122,6 +1127,11 @@ export type SignDecisionRequest = {
    */
   signature: string
   signing_session_id: string
+  /**
+   * Must match the device that opened the signing session.
+   */
+  device_fingerprint_ref: string
+  client_attestation?: string | null
 }
 
 /**
@@ -1130,14 +1140,18 @@ export type SignDecisionRequest = {
 export type Signature = {
   id?: string
   decision_id: string
+  signer_type: ActorType
   signer_id: string
   key_id: string
   alg: 'Ed25519'
   payload_hash: string
   signature: string
   signed_at: string
-  signing_session_id: string
-  auth_at: string
+  /**
+   * Set for human signers. Service signatures have no signing session.
+   */
+  signing_session_id?: string | null
+  auth_at?: string | null
   prev_signature_hash?: string | null
   /**
    * Hash of this record including prev_signature_hash.
