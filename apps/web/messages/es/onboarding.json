@@ -194,7 +194,8 @@
     "resultTitle": "Resultado de la importación",
     "result": "{ok} filas aceptadas, {rejected} rechazadas.",
     "rejection": "Fila {row}: {message}",
-    "notActivated": "Aún no hay nada activo: activar el snapshot requiere tu firma."
+    "notActivated": "Aún no hay nada activo: activar el snapshot requiere tu firma.",
+    "viewReport": "Ver informe completo"
   },
   "assistant": {
     "title": "Asistente de alta",

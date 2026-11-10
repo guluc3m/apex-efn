@@ -42,6 +42,19 @@ describe('api client', () => {
     expect(seen).toEqual({ write: 'key-1', read: null })
   })
 
+  it('posts the snapshot activation to the onboarding path with the import id', async () => {
+    let seen: unknown
+    server.use(
+      http.post('*/api/v1/onboarding/ob_1/financial-csv/activate', async ({ request }) => {
+        seen = await request.json()
+        return HttpResponse.json({ decision_id: 'dec_1', status: 'pending_signature' }, { status: 202 })
+      }),
+    )
+    const res = await ops().activateFinancialSnapshot('ob_1', { import_id: 'imp_1' })
+    expect(seen).toEqual({ import_id: 'imp_1' })
+    expect(res.decision_id).toBe('dec_1')
+  })
+
   it('maps problem+json errors to ApiError', async () => {
     server.use(
       http.get('*/api/v1/missions/:id', () =>

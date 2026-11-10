@@ -194,7 +194,8 @@
     "resultTitle": "Import result",
     "result": "{ok} rows accepted, {rejected} rejected.",
     "rejection": "Row {row}: {message}",
-    "notActivated": "Nothing is active yet: activating the snapshot needs your signature."
+    "notActivated": "Nothing is active yet: activating the snapshot needs your signature.",
+    "viewReport": "View full report"
   },
   "assistant": {
     "title": "Setup assistant",

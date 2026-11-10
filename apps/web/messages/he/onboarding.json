@@ -194,7 +194,8 @@
     "resultTitle": "תוצאת הייבוא",
     "result": "{ok} שורות התקבלו, {rejected} נדחו.",
     "rejection": "שורה {row}: {message}",
-    "notActivated": "עדיין דבר אינו פעיל: הפעלת התמונה דורשת את חתימתכם."
+    "notActivated": "עדיין דבר אינו פעיל: הפעלת התמונה דורשת את חתימתכם.",
+    "viewReport": "הצג דוח מלא"
   },
   "assistant": {
     "title": "עוזר ההגדרה",

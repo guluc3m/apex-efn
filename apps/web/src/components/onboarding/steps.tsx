@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FormProvider, useForm, useFormContext, type FieldValues } from 'react-hook-form'
 import type { z } from 'zod'
 
+import { AppLink } from '@/components/app-link'
 import { certifications, effectiveThresholds } from '@/fixtures/onboarding'
 import { api } from '@/lib/api'
 import { ensureSession } from '@/lib/onboarding-session'
@@ -294,6 +295,11 @@ export function FinanceStep() {
             </p>
           ))}
           <span className="text-[13px] text-ink-muted">{t('notActivated')}</span>
+          <div>
+            <Button variant="sec" size="sm" asChild>
+              <AppLink href={`/onboarding/finanzas/${result.id}`}>{t('viewReport')}</AppLink>
+            </Button>
+          </div>
         </section>
       )}
       {/* //todo_#152: plantilla y documentación de métricas aceptadas */}
