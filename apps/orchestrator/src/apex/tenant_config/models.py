@@ -156,7 +156,16 @@ class SanitySection(_Section):
 
 class SellerSection(_Section):
     weights: dict[str, Rate] | None = None
-    """Unset ("ver ADR-304"). The trust engine refuses to run while it is unset (ADR-900 Q3)."""
+    """Signal-group weights (ADR-304). Unset in the shipped defaults; the engine refuses to run until a
+    tenant sets them (ADR-900 Q3)."""
+    x_sat: dict[str, Rate] | None = None
+    """Saturation point per countable signal (ADR-304). Optional in the model so a tenant can set it; the
+    engine raises ``config_unset`` while it is missing."""
+    category_rating_mean: Rate | None = None
+    category_five_star_share: Rate | None = None
+    wilson_confidence: Rate | None = None
+    min_verified_share: Rate | None = None
+    max_duplicate_text_share: Rate | None = None
     rating_prior_weight: int = Field(ge=0)
     age_saturation_days: int = Field(ge=1)
     min_signals: int = Field(ge=1)
