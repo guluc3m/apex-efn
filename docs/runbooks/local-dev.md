@@ -105,6 +105,29 @@ Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on
   actions", or switch off "Set as default action" under Authentication, then Required actions. Do this in
   the running instance. Do not commit it. `pnpm dev:reset` restores the file's behaviour.
 
+### 5.1 Logging in to the web app locally
+
+1. Start Keycloak (and its database): `docker compose up -d postgres keycloak`, then wait for
+   `curl -m 5 -s http://localhost:8080/realms/apex/.well-known/openid-configuration` to answer.
+   `pnpm dev:up` also works and starts the whole stack.
+2. Copy `.env.example` to `apps/web/.env.local` (or export the same variables) and check the web block:
+   `AUTH_SECRET` (any dev-only string; generate one with `openssl rand -base64 32`),
+   `AUTH_KEYCLOAK_ID=apex-web`, `AUTH_KEYCLOAK_SECRET=apex-dev-web-secret`,
+   `AUTH_KEYCLOAK_ISSUER=http://localhost:8080/realms/apex`, `AUTH_URL=http://localhost:3000`.
+   `.env.local` is gitignored; never commit the secret.
+3. Run `pnpm --filter @apex/web dev` and open `http://localhost:3000`. The root redirects to `/es`; the
+   landing and `/{locale}/acceso` are public, every other app route sends you to Keycloak through
+   `/api/auth/signin?callbackUrl=…`.
+4. Sign in with a test user from the table above (for example `owner-a@apex.local` / `apex-dev`).
+   **First login forces OTP enrolment** (`CONFIGURE_TOTP`): follow the Keycloak screen, scan the QR with
+   any TOTP app and enter the 6-digit code. The OTP is stored per user in the Keycloak database, so it
+   survives `dev:down` but not `dev:reset`.
+5. To skip OTP while testing, remove `CONFIGURE_TOTP` from that user's "Required user actions" in the
+   admin console (section 5). If the user already enrolled, also delete the OTP credential there.
+6. Log out from the app clears the Auth.js cookie; the Keycloak SSO session stays alive until it expires
+   (RP-initiated logout is not wired yet). Use a private window or the admin console to force a fresh
+   login.
+
 ## 6. Object Lock and MinIO buckets
 
 - `minio-init` runs `infra/minio/init-buckets.sh` once. It creates `apex-attachments`, `apex-csv` and
