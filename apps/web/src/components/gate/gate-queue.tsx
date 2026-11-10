@@ -20,7 +20,6 @@ import { renderLink } from '@/components/app-link'
 import type { GateAction, GateCause, GateItem } from '@/fixtures/gate'
 
 const CAUSES: GateCause[] = ['negotiator', 'price', 'confidence', 'second_signature', 'high_amount', 'discard', 'company']
-// //todo_#147: el rol saldrá de la sesión real
 const OVERRIDE_ROLES: readonly string[] = ['finance', 'admin', 'owner']
 
 export function GateQueue({ items, role }: { items: GateItem[]; role: string }) {

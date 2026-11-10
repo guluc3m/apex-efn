@@ -16,7 +16,8 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
-import { user } from '@/fixtures/user'
+import { signOutAction } from '@/app/actions/sign-out'
+import type { Viewer } from '@/lib/viewer'
 
 import { AppLink, renderLink } from './app-link'
 import { AppLanguageSwitcher } from './language-switcher'
@@ -29,36 +30,32 @@ function useAppPath() {
 
 const isIn = (path: string, base: string) => path === base || path.startsWith(`${base}/`)
 
-function UserMenu() {
+function UserMenu({ viewer }: { viewer: Viewer }) {
   const t = useTranslations('shell.userMenu')
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={t('trigger', { name: user.name })}
+        aria-label={t('trigger')}
         className="group inline-flex h-9.5 cursor-pointer items-center gap-2 border border-line-strong bg-transparent pr-2.5 pl-3 text-[13px] text-ink transition-[border-color] duration-(--fast) hover:border-ink-muted"
       >
         <Icon icon={UserRound} className="text-ink-soft" />
-        <span>{user.name}</span>
+        <span>{t(`roles.${viewer.role}`)}</span>
         <Icon icon={ChevronDown} className="text-ink-muted transition-transform duration-(--fast) ease-apex-move group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
       </DropdownMenuTrigger>
       <DropdownMenuContent aria-label={t('menu')} className="w-64">
-        {/* //todo_#147: página de perfil; por ahora solo se muestran los datos */}
         <div className="px-3 pt-2 pb-2">
-          <div className="font-medium">{user.name}</div>
-          <div className="text-[13px] text-ink-muted">{user.email}</div>
-          <div className="text-[13px] text-ink-muted">{t('roleTenant', { role: t(`roles.${user.role}`), tenant: user.tenant })}</div>
+          <div className="font-medium">{t(`roles.${viewer.role}`)}</div>
+          {viewer.tenantId && <div className="text-[13px] text-ink-muted">{viewer.tenantId}</div>}
         </div>
-        {/* //todo_#147: cerrar sesión real (BFF); hasta entonces no se simula */}
-        <DropdownMenuItem icon={LogOut} disabled>
+        <DropdownMenuItem icon={LogOut} onSelect={() => void signOutAction()}>
           {t('signOut')}
         </DropdownMenuItem>
-        <p className="px-3 pt-1 pb-2 text-[13px] text-ink-muted">{t('signOutReason')}</p>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, viewer }: { children: ReactNode; viewer: Viewer }) {
   const t = useTranslations('shell')
   const path = useAppPath()
   const items: NavItem[] = [
@@ -83,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <>
             <ConnectedSigningIndicator />
             <AppLanguageSwitcher />
-            <UserMenu />
+            <UserMenu viewer={viewer} />
           </>
         }
       />
@@ -95,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 /** Subnavegación de /empresa/*; la monta app/[locale]/(app)/empresa/layout.tsx. */
-export function CompanyShell({ children }: { children: ReactNode }) {
+export function CompanyShell({ children, role }: { children: ReactNode; role: Viewer['role'] }) {
   const t = useTranslations('shell.companyNav')
   const path = useAppPath()
   const items: NavItem[] = [
@@ -103,8 +100,7 @@ export function CompanyShell({ children }: { children: ReactNode }) {
     { label: t('finance'), href: '/empresa/finanzas', icon: Wallet },
     { label: t('accounts'), href: '/empresa/cuentas', icon: Landmark },
     { label: t('signing'), href: '/empresa/firma', icon: FileSignature },
-    // //todo_#147: mostrar solo a admin y owner según el rol real; otro rol ve «sin permiso» en la pantalla
-    { label: t('audit'), href: '/empresa/auditoria', icon: History },
+    ...(role === 'admin' || role === 'owner' ? [{ label: t('audit'), href: '/empresa/auditoria', icon: History }] : []),
   ].map((it) => ({ ...it, current: path === it.href }))
   return (
     <>

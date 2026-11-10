@@ -33,9 +33,8 @@
     "left": "{count, plural, one {# firma restante} other {# firmas restantes}}"
   },
   "userMenu": {
-    "trigger": "Menú de usuario: {name}",
+    "trigger": "Menú de usuario",
     "menu": "Usuario",
-    "roleTenant": "{role} · {tenant}",
     "roles": {
       "viewer": "Lector",
       "buyer": "Comprador",
@@ -43,8 +42,7 @@
       "admin": "Administrador",
       "owner": "Propietario"
     },
-    "signOut": "Cerrar sesión",
-    "signOutReason": "Pendiente de conectar: aún no hay servicio de acceso."
+    "signOut": "Cerrar sesión"
   },
   "errors": {
     "home": "Ir a Decisiones",

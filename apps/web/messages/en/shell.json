@@ -33,9 +33,8 @@
     "left": "{count, plural, one {# signature left} other {# signatures left}}"
   },
   "userMenu": {
-    "trigger": "User menu: {name}",
+    "trigger": "User menu",
     "menu": "User",
-    "roleTenant": "{role} · {tenant}",
     "roles": {
       "viewer": "Viewer",
       "buyer": "Buyer",
@@ -43,8 +42,7 @@
       "admin": "Admin",
       "owner": "Owner"
     },
-    "signOut": "Sign out",
-    "signOutReason": "Not connected yet: there is no sign-in service."
+    "signOut": "Sign out"
   },
   "errors": {
     "home": "Go to Decisions",
