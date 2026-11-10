@@ -531,6 +531,148 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
+  /v1/negotiations/{id}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [negotiations]
+      operationId: getNegotiation
+      summary: State of a negotiation, including the draft waiting for a human.
+      description: 'The transcript itself is `GET /v1/negotiations/{id}/messages`; a draft is not part of it
+
+        until it is sent. Poll this endpoint or follow the mission SSE stream to learn when a new draft
+
+        is waiting.'
+      responses:
+        '200':
+          description: Negotiation.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Negotiation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /v1/negotiations/{id}/messages:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [negotiations]
+      operationId: listNegotiationMessages
+      summary: Transcript of the chat with the seller, oldest first.
+      description: 'Messages already exchanged, with their role. Drafts waiting for approval are not here: they
+
+        are `pending_draft` on the negotiation until a human approves or rejects them.'
+      parameters:
+      - {$ref: '#/components/parameters/Cursor'}
+      - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200':
+          description: Page of messages, oldest first.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NegotiationMessagePage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [negotiations]
+      operationId: sendHumanNegotiationMessage
+      summary: A human holding the chat writes to the seller.
+      description: 'Only while the human holds the conversation (`state: human_control`); otherwise 409 with
+
+        reason `not_in_human_control`. The text is sent as written: the agent neither drafts nor rewords it.
+
+        The same outbound limits apply (message length, hourly cap per account and per seller).'
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NegotiationHumanMessage'}
+      responses:
+        '201':
+          description: Message sent and recorded in the transcript.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NegotiationMessage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+  /v1/negotiations/{id}/approve:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [negotiations]
+      operationId: approveNegotiationDraft
+      summary: A human approves the drafted message and it is sent to the seller.
+      description: 'Phase 1 is semi-automatic (spec 3.6 step 5): nothing leaves until a human approves the
+
+        exact text. The server re-checks the guardrails right before sending and processes seller messages
+
+        that arrived in the meantime, so approval can fail with `draft_superseded` instead of sending a
+
+        stale reply.
+
+        Not a signed decision: approving a message opens no commitment. The agreement it may lead to goes
+
+        through the gate and its signed decision (spec 5.10). The approver is the authenticated principal,
+
+        never a field of the request.
+
+        409 `reason`: `draft_not_pending` (unknown draft, already sent or never existed),
+
+        `draft_superseded` (new seller messages changed the state; review it again),
+
+        `human_in_control` (a human holds the chat; resume first).'
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NegotiationDraftRef'}
+      responses:
+        '200':
+          description: Draft sent. The negotiation shows the state after sending.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Negotiation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+  /v1/negotiations/{id}/reject:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [negotiations]
+      operationId: rejectNegotiationDraft
+      summary: A human rejects the drafted message; the deterministic template is sent instead.
+      description: 'The draft is discarded and the playbook''s own template for the same step takes its place,
+
+        so the negotiation keeps moving without the LLM text. 409 `reason`: `draft_not_pending`.'
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NegotiationDraftRef'}
+      responses:
+        '200':
+          description: Draft replaced by the template and sent.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Negotiation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
   /v1/signing-sessions:
     post:
       tags: [signing]
@@ -1779,6 +1921,60 @@ components:
         guardrail_hits:
           type: array
           items: {$ref: '#/components/schemas/GuardrailHit'}
+        pending_draft:
+          anyOf:
+          - {$ref: '#/components/schemas/NegotiationDraft'}
+          - {type: 'null'}
+          description: Draft waiting for a human. Present when `state` is `awaiting_approval`.
+        mission_id:
+          type: [string, 'null']
+          description: 'Mission that opened this negotiation. Lets the orchestrator route new messages and
+
+            state changes onto that mission''s SSE stream instead of polling.'
+        trace_id:
+          type: [string, 'null']
+          description: Trace identifier of the request that opened the negotiation, propagated from the mission.
+    NegotiationDraft:
+      type: object
+      description: 'Message the agent wrote but did not send: Phase 1 sends nothing without a human approval
+
+        (spec 3.6 step 5). `text` is the exact text that will be sent, so the approver sees no surprise.'
+      required: [id, text, source, created_at]
+      properties:
+        id: {type: string}
+        text: {type: string}
+        source: {$ref: '#/components/schemas/NegotiationDraftSource'}
+        created_at: {type: string, format: date-time}
+    NegotiationDraftSource:
+      type: string
+      description: '`llm` is a draft from the `negotiator` role; `template` is the deterministic playbook text,
+
+        used when no draft passed the guardrails.'
+      enum: [llm, template]
+    NegotiationDraftRef:
+      type: object
+      required: [draft_id]
+      properties:
+        draft_id: {type: string, description: Id of the `pending_draft` being approved or rejected.}
+    NegotiationHumanMessage:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          description: 'Text to send, as written. It must respect the negotiation''s configured message length
+
+            limit; a longer message is rejected rather than truncated.'
+    NegotiationMessagePage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/NegotiationMessage'}
+        next_cursor:
+          type: [string, 'null']
     GuardrailHit:
       type: object
       required: [code, at]
@@ -1802,6 +1998,13 @@ components:
         role: {$ref: '#/components/schemas/MessageRole'}
         content: {type: string}
         at: {type: string, format: date-time}
+        seq:
+          type: integer
+          minimum: 0
+          description: Monotonic position in the conversation. The transcript is ordered by it.
+        approved_by:
+          type: [string, 'null']
+          description: Principal that approved an agent message in semi-automatic mode. Null otherwise.
         screenshot_ref:
           type: [string, 'null']
         redactions: {type: integer, minimum: 0}

@@ -808,6 +808,56 @@ export type Negotiation = {
   rounds: number
   max_rounds: number | null
   guardrail_hits: Array<GuardrailHit>
+  /**
+   * Draft waiting for a human. Present when `state` is `awaiting_approval`.
+   */
+  pending_draft?: NegotiationDraft | null
+  /**
+   * Mission that opened this negotiation. Lets the orchestrator route new messages and
+   * state changes onto that mission's SSE stream instead of polling.
+   */
+  mission_id?: string | null
+  /**
+   * Trace identifier of the request that opened the negotiation, propagated from the mission.
+   */
+  trace_id?: string | null
+}
+
+/**
+ * Message the agent wrote but did not send: Phase 1 sends nothing without a human approval
+ * (spec 3.6 step 5). `text` is the exact text that will be sent, so the approver sees no surprise.
+ */
+export type NegotiationDraft = {
+  id: string
+  text: string
+  source: NegotiationDraftSource
+  created_at: string
+}
+
+/**
+ * `llm` is a draft from the `negotiator` role; `template` is the deterministic playbook text,
+ * used when no draft passed the guardrails.
+ */
+export type NegotiationDraftSource = 'llm' | 'template'
+
+export type NegotiationDraftRef = {
+  /**
+   * Id of the `pending_draft` being approved or rejected.
+   */
+  draft_id: string
+}
+
+export type NegotiationHumanMessage = {
+  /**
+   * Text to send, as written. It must respect the negotiation's configured message length
+   * limit; a longer message is rejected rather than truncated.
+   */
+  content: string
+}
+
+export type NegotiationMessagePage = {
+  items: Array<NegotiationMessage>
+  next_cursor: string | null
 }
 
 export type GuardrailHit = {
@@ -826,6 +876,14 @@ export type NegotiationMessage = {
   role: MessageRole
   content: string
   at: string
+  /**
+   * Monotonic position in the conversation. The transcript is ordered by it.
+   */
+  seq?: number
+  /**
+   * Principal that approved an agent message in semi-automatic mode. Null otherwise.
+   */
+  approved_by?: string | null
   screenshot_ref?: string | null
   redactions?: number
 }
@@ -2387,6 +2445,237 @@ export type AbortNegotiationResponses = {
 }
 
 export type AbortNegotiationResponse = AbortNegotiationResponses[keyof AbortNegotiationResponses]
+
+export type GetNegotiationData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/negotiations/{id}'
+}
+
+export type GetNegotiationErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type GetNegotiationError = GetNegotiationErrors[keyof GetNegotiationErrors]
+
+export type GetNegotiationResponses = {
+  /**
+   * Negotiation.
+   */
+  200: Negotiation
+}
+
+export type GetNegotiationResponse = GetNegotiationResponses[keyof GetNegotiationResponses]
+
+export type ListNegotiationMessagesData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: {
+    /**
+     * Opaque cursor returned as `next_cursor` by the previous page.
+     */
+    cursor?: string
+    limit?: number
+  }
+  url: '/v1/negotiations/{id}/messages'
+}
+
+export type ListNegotiationMessagesErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type ListNegotiationMessagesError =
+  ListNegotiationMessagesErrors[keyof ListNegotiationMessagesErrors]
+
+export type ListNegotiationMessagesResponses = {
+  /**
+   * Page of messages, oldest first.
+   */
+  200: NegotiationMessagePage
+}
+
+export type ListNegotiationMessagesResponse =
+  ListNegotiationMessagesResponses[keyof ListNegotiationMessagesResponses]
+
+export type SendHumanNegotiationMessageData = {
+  body: NegotiationHumanMessage
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/negotiations/{id}/messages'
+}
+
+export type SendHumanNegotiationMessageErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+}
+
+export type SendHumanNegotiationMessageError =
+  SendHumanNegotiationMessageErrors[keyof SendHumanNegotiationMessageErrors]
+
+export type SendHumanNegotiationMessageResponses = {
+  /**
+   * Message sent and recorded in the transcript.
+   */
+  201: NegotiationMessage
+}
+
+export type SendHumanNegotiationMessageResponse =
+  SendHumanNegotiationMessageResponses[keyof SendHumanNegotiationMessageResponses]
+
+export type ApproveNegotiationDraftData = {
+  body: NegotiationDraftRef
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/negotiations/{id}/approve'
+}
+
+export type ApproveNegotiationDraftErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+}
+
+export type ApproveNegotiationDraftError =
+  ApproveNegotiationDraftErrors[keyof ApproveNegotiationDraftErrors]
+
+export type ApproveNegotiationDraftResponses = {
+  /**
+   * Draft sent. The negotiation shows the state after sending.
+   */
+  200: Negotiation
+}
+
+export type ApproveNegotiationDraftResponse =
+  ApproveNegotiationDraftResponses[keyof ApproveNegotiationDraftResponses]
+
+export type RejectNegotiationDraftData = {
+  body: NegotiationDraftRef
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/negotiations/{id}/reject'
+}
+
+export type RejectNegotiationDraftErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+}
+
+export type RejectNegotiationDraftError =
+  RejectNegotiationDraftErrors[keyof RejectNegotiationDraftErrors]
+
+export type RejectNegotiationDraftResponses = {
+  /**
+   * Draft replaced by the template and sent.
+   */
+  200: Negotiation
+}
+
+export type RejectNegotiationDraftResponse =
+  RejectNegotiationDraftResponses[keyof RejectNegotiationDraftResponses]
 
 export type OpenSigningSessionData = {
   body: OpenSigningSessionRequest

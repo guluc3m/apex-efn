@@ -21,7 +21,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from apex.common.errors import Problem
+from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
 from apex.contracts.generated.models import Negotiation, NegotiationControlRequest
 from apex.negotiation.api import NegotiationControlService, build_default_control, to_contract
@@ -101,3 +101,37 @@ async def abort_negotiation(
     except NegotiationError as exc:
         raise _problem(exc) from exc
     return to_contract(session)
+
+
+# D5-07c contract: these five operations are declared in contracts/openapi.yaml and are implemented in
+# the D5-07c branch. They answer 501 until then, like every other unfinished route in this app.
+
+
+@router.get("/{id}")
+async def get_negotiation(id: str) -> None:
+    """State of a negotiation, including the draft waiting for a human."""
+    raise not_implemented()
+
+
+@router.get("/{id}/messages")
+async def list_negotiation_messages(id: str) -> None:
+    """Transcript of the chat with the seller, oldest first."""
+    raise not_implemented()
+
+
+@router.post("/{id}/messages")
+async def send_human_negotiation_message(id: str) -> None:
+    """A human holding the chat writes to the seller."""
+    raise not_implemented()
+
+
+@router.post("/{id}/approve")
+async def approve_negotiation_draft(id: str) -> None:
+    """A human approves the drafted message and it is sent to the seller."""
+    raise not_implemented()
+
+
+@router.post("/{id}/reject")
+async def reject_negotiation_draft(id: str) -> None:
+    """A human rejects the drafted message; the deterministic template is sent instead."""
+    raise not_implemented()

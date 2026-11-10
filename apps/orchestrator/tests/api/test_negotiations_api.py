@@ -85,6 +85,9 @@ def test_takeover_returns_the_contract_view(rig: Rig) -> None:
     assert body["rounds"] == 0
     assert body["max_rounds"] == 6
     assert body["guardrail_hits"] == []
+    assert body["pending_draft"] is None  # takeover drops the draft
+    assert body["mission_id"] is None  # engine-level sessions have no mission
+    assert body["trace_id"] is None
     assert set(body) == {
         "id",
         "offer_id",
@@ -93,6 +96,9 @@ def test_takeover_returns_the_contract_view(rig: Rig) -> None:
         "rounds",
         "max_rounds",
         "guardrail_hits",
+        "pending_draft",
+        "mission_id",
+        "trace_id",
     }
 
 
