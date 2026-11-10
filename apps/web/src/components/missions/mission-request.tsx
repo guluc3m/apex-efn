@@ -1,34 +1,53 @@
 'use client'
 
-import { Button, Chat, Icon, Input, Label, MoneyDisplay, Select, type ChatMessage } from '@apex/ui'
+import type { SourcingRequest } from '@apex/shared-types/contracts'
+import { Button, Chat, Icon, Input, Label, type ChatMessage } from '@apex/ui'
 import { ListChecks, Play, RefreshCw, TriangleAlert, Upload } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 
-import { AppLink } from '@/components/app-link'
-import type { sourcingRequest } from '@/fixtures/missions'
+import { AppLink, toRoute } from '@/components/app-link'
+import { ApiError, useCreateMission, useCreateSourcingRequest } from '@/lib/api'
 
-type Request = typeof sourcingRequest
-
-function Field({ label, children, wide }: { label: string; children: (id: string) => React.ReactNode; wide?: boolean }) {
+function Field({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
   const id = useId()
   return (
     <div className={`flex flex-col gap-1 ${wide ? 'col-span-full' : ''}`}>
       <Label htmlFor={id}>{label}</Label>
-      {children(id)}
+      <Input id={id} value={value} readOnly />
     </div>
   )
 }
 
-export function MissionRequest({ request, snapshotActive }: { request: Request; snapshotActive: boolean }) {
+export function MissionRequest() {
   const t = useTranslations('missions.request')
   const locale = useLocale()
-  const messages: ChatMessage[] = [
-    { id: 'u1', role: 'human', author: t('chat.you'), text: request.text },
-    { id: 'a1', role: 'agent', author: t('chat.agent'), text: t('chat.reply') },
-  ]
-  const pending = t('pending')
-  const opts = (key: string, ids: string[]) => ids.map((v) => ({ value: v, label: t(`${key}.${v}`) }))
+  const router = useRouter()
+  const countryId = useId()
+  const [country, setCountry] = useState('')
+  const [text, setText] = useState('')
+  const [request, setRequest] = useState<SourcingRequest | null>(null)
+  const interpret = useCreateSourcingRequest()
+  const launch = useCreateMission()
+
+  const send = (natural_language: string) => {
+    setText(natural_language)
+    setRequest(null)
+    launch.reset()
+    interpret.mutate({ natural_language, delivery_country: country.trim().toUpperCase() }, { onSuccess: setRequest })
+  }
+
+  const messages: ChatMessage[] = []
+  if (text) messages.push({ id: 'u1', role: 'human', author: t('chat.you'), text })
+  if (request) messages.push({ id: 'a1', role: 'agent', author: t('chat.agent'), text: t('chat.reply') })
+  if (interpret.isError) messages.push({ id: 'e1', role: 'agent', author: t('chat.agent'), text: t('chat.error') })
+
+  const blocked = launch.error instanceof ApiError && launch.error.status === 409
+  const clarify = request?.needs_clarification ?? []
+  const launchReason = !request ? t('launchNeedsRequest') : clarify.length > 0 ? t('launchNeedsClarification') : undefined
+  const tiers = request?.quantity_tiers.map((q) => new Intl.NumberFormat(locale).format(q.quantity)).join(' · ') ?? ''
+  const specs = Object.entries(request?.spec.specifications ?? {}).map(([k, v]) => `${k}: ${v}`).join(' · ')
 
   return (
     <div className="flex flex-wrap items-start gap-8">
@@ -36,16 +55,21 @@ export function MissionRequest({ request, snapshotActive }: { request: Request; 
         <h2 id="req-chat" className="text-[13px] font-normal text-ink-muted">
           {t('chat.title')}
         </h2>
-        {/* //todo_#155: enviar al IntakeAgent y mostrar «Interpretando…» (Thinking) mientras trabaja */}
+        <div className="flex flex-col gap-1">
+          <Label htmlFor={countryId}>{t('review.country')}</Label>
+          <Input id={countryId} value={country} onChange={(e) => setCountry(e.target.value)} maxLength={2} placeholder={t('review.countryHint')} className="w-24" />
+        </div>
         <Chat
           messages={messages}
+          thinking={interpret.isPending}
           phrases={['interpreting', 'spec', 'budget', 'platforms', 'plan'].map((k) => t(`chat.phrases.${k}`))}
           labels={{ input: t('chat.title'), placeholder: t('chat.placeholder'), send: t('chat.send'), stop: t('chat.stop'), hint: t('chat.hint') }}
-          onSend={() => undefined}
-          disabledReason={t('chat.pending')}
+          onSend={send}
+          onStop={() => interpret.reset()}
+          disabledReason={country.trim().length !== 2 ? t('chat.needsCountry') : undefined}
         />
         <div>
-          <Button disabledReason={pending}>
+          <Button disabledReason={text ? (country.trim().length !== 2 ? t('chat.needsCountry') : undefined) : t('launchNeedsRequest')} onClick={() => send(text)}>
             <Icon icon={RefreshCw} />
             {t('reinterpret')}
           </Button>
@@ -57,55 +81,35 @@ export function MissionRequest({ request, snapshotActive }: { request: Request; 
           <Icon icon={ListChecks} />
           {t('review.title')}
         </h2>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
-          <Field label={t('review.product')}>{(id) => <Input id={id} defaultValue={request.fields.product} />}</Field>
-          <Select label={t('review.category')} defaultValue="bearings" options={opts('review.categories', ['bearings'])} />
-          <Field label={t('review.quantity')}>{(id) => <Input id={id} defaultValue={request.fields.quantity} />}</Field>
-          <Field label={t('review.destination')}>{(id) => <Input id={id} defaultValue={request.fields.destination} />}</Field>
-          <Field label={t('review.deadline')}>{(id) => <Input id={id} defaultValue={request.fields.deadline} />}</Field>
-          <Select label={t('review.payment')} defaultValue="net60" options={opts('review.payments', ['net60'])} />
-          <Field label={t('review.spec')} wide>{(id) => <Input id={id} defaultValue={request.fields.spec} />}</Field>
-          <Field label={t('review.tolerances')} wide>
-            {(id) => (
-              <>
-                <Input id={id} aria-invalid="true" aria-describedby={`${id}-err`} placeholder={t('review.tolerancesMissing')} className="border-warn" />
-                <span id={`${id}-err`} className="text-[13px] text-warn">
-                  {t('review.tolerancesHelp')}
-                </span>
-              </>
-            )}
-          </Field>
-        </div>
-
-        <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 text-[13px] text-ink-muted">{t('platforms.title')}</legend>
-          {request.platforms.map((p) => (
-            <label key={p.id} className={`flex items-center gap-2 ${p.state === 'disabled' ? 'text-ink-muted' : ''}`}>
-              <input type="checkbox" className="accent-accent" defaultChecked={p.state !== 'disabled'} disabled={p.state === 'disabled'} />
-              {t(`platforms.${p.id}`)}
-              {p.state !== 'on' && <span className="text-[13px] text-ink-muted">{t(`platforms.${p.state}`)}</span>}
-            </label>
-          ))}
-        </fieldset>
-
-        <div className="flex flex-wrap items-end gap-8 border border-line bg-panel p-4">
-          <div>
-            <div className="text-[13px] text-ink-muted">{t('envelope.label')}</div>
-            <strong className="font-semibold">
-              <MoneyDisplay amountMinor={request.envelope.amountMinor} currency={request.envelope.currency} locale={locale} /> {t('envelope.available')}
-            </strong>
+        {request ? (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+            <Field label={t('review.product')} value={request.spec.description} wide />
+            <Field label={t('review.quantity')} value={tiers} />
+            <Field label={t('review.destination')} value={request.delivery_country} />
+            <Field label={t('review.deadline')} value={request.target_delivery_date ?? t('review.none')} />
+            <Field label={t('review.spec')} value={specs || t('review.none')} wide />
           </div>
-          <Select label={t('profile.label')} defaultValue="operational" options={opts('profile', ['operational', 'cfo'])} className="w-52" />
-        </div>
+        ) : (
+          <p className="text-ink-muted">{t('review.empty')}</p>
+        )}
+        {clarify.length > 0 && (
+          <div className="border border-warn bg-warn-subtle p-4" role="alert">
+            <strong className="font-semibold text-warn">{t('clarify')}</strong>
+            <ul className="mt-1 list-disc pl-5">
+              {clarify.map((q) => (
+                <li key={q}>{q}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        {!snapshotActive && (
+        {blocked && (
           <div className="border border-warn bg-warn-subtle p-4" role="alert">
             <strong className="inline-flex items-center gap-1.5 font-semibold text-warn">
               <Icon icon={TriangleAlert} />
               {t('noSnapshot.title')}
             </strong>
-            <p className="mt-1 mb-2">{t('noSnapshot.body')}</p>
-            {/* //todo_#155: el aviso depende del snapshot financiero activo */}
+            <p className="mt-1 mb-2">{launch.error instanceof ApiError ? (launch.error.detail ?? t('noSnapshot.body')) : t('noSnapshot.body')}</p>
             <Button asChild>
               <AppLink href="/onboarding/finanzas">
                 <Icon icon={Upload} />
@@ -114,10 +118,18 @@ export function MissionRequest({ request, snapshotActive }: { request: Request; 
             </Button>
           </div>
         )}
+        {launch.isError && !blocked && (
+          <p className="text-warn" role="alert">
+            {t('launchError')}
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* //todo_#156: lanzar misión (POST /v1/missions) */}
-          <Button variant="pri" disabledReason={snapshotActive ? pending : t('noSnapshot.reason')}>
+          <Button
+            variant="pri"
+            disabledReason={launchReason ?? (launch.isPending ? t('launching') : undefined)}
+            onClick={() => request && launch.mutate({ sourcing_request_id: request.id }, { onSuccess: (m) => router.push(toRoute(`/${locale}/misiones/${m.id}`)) })}
+          >
             <Icon icon={Play} />
             {t('launch')}
           </Button>

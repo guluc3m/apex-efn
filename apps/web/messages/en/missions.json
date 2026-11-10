@@ -26,6 +26,8 @@
       "stop": "Stop",
       "hint": "Enter sends · Shift + Enter for a new line",
       "pending": "Not connected yet: sending is unavailable.",
+      "error": "I could not interpret the request. Try again.",
+      "needsCountry": "Enter the delivery country (2-letter code) to send.",
       "phrases": {
         "interpreting": "Interpreting the request",
         "spec": "Identifying the specification",
@@ -35,6 +37,7 @@
       }
     },
     "review": {
+      "country": "Delivery country", "countryHint": "ES", "none": "Not provided", "empty": "Once the assistant interprets your request, what it understood will appear here.",
       "title": "Review what we understood",
       "product": "Product",
       "category": "Category",
@@ -66,10 +69,20 @@
       "reason": "Activate a financial snapshot first"
     },
     "launch": "Launch mission",
-    "launchHint": "It searches, filters anomalous prices and negotiates. Nothing is bought without your signature."
+    "launchHint": "It searches, filters anomalous prices and negotiates. Nothing is bought without your signature.",
+    "clarify": "The assistant needs more details before launching:",
+    "launchNeedsRequest": "Describe what you need to be able to launch the mission.",
+    "launchNeedsClarification": "Answer the open questions and interpret again.",
+    "launchError": "The mission could not be launched. Try again.",
+    "launching": "Launching the mission…"
   },
   "detail": {
-    "meta": "Mission {id} · launched {minutes} min ago",
+    "loading": "Loading the mission…",
+    "heading": "Mission {id}",
+    "meta": "{state} · launched on {date}",
+    "failed": "The mission failed: {detail}",
+    "offersPending": "{found} offers found, {negotiated} negotiated and {gate} in gate. The offers matrix is not connected yet.",
+    "state": { "created": "Created", "planning": "Planning", "sourcing": "Sourcing", "enriching": "Enriching", "evaluating": "Evaluating", "negotiating": "Negotiating", "awaiting_decision": "Awaiting your decision", "completed": "Completed", "cancelled": "Cancelled", "failed": "Failed" },
     "new": "New mission",
     "compare": "View comparison",
     "pause": "Pause",
@@ -79,10 +92,10 @@
     "phases": {
       "label": "Mission phases",
       "state": { "done": "Completed", "running": "In progress", "pending": "Pending" },
-      "search": { "title": "Search", "done": "{n} offers on {p} platforms" },
-      "filter": { "title": "Trust and price", "done": "{pass} pass · {out} filtered" },
-      "negotiation": { "title": "Negotiation", "running": "{n} of {total} in progress" },
-      "valuation": { "title": "Evaluation", "pending": "Starts when negotiations close" }
+      "search": { "title": "Search", "running": "Searching · {n} offers", "done": "{n} offers found", "pending": "Pending" },
+      "filter": { "title": "Trust and price", "running": "Checking trust and price", "done": "{n} in gate", "pending": "Pending" },
+      "negotiation": { "title": "Negotiation", "running": "{n} negotiated so far", "done": "{n} negotiated", "pending": "Pending" },
+      "valuation": { "title": "Evaluation", "running": "Waiting for your decision", "done": "Mission completed", "pending": "Starts when negotiations close" }
     },
     "funnel": {
       "caption": "Mission funnel: offers reaching each stage",
@@ -92,13 +105,22 @@
     "activity": {
       "title": "Activity",
       "live": "Live",
-      "review": "Review",
-      "working": "Checking the trust of {n} sellers…",
-      "reply": "{seller} replies with a volume tier.",
-      "draft": "A draft for {seller} is waiting for your approval.",
-      "discarded": "{seller} discarded: implausible price, {pct} % below the median.",
-      "gate": "{seller} sent to gate: low confidence ({score}).",
-      "offers": "{platform}: {n} offers."
+      "empty": "No activity yet.",
+      "reconnecting": "Reconnecting…",
+      "events": {
+        "state_changed": "Mission state changed.",
+        "offer_discovered": "New offer found.",
+        "offer_enriched": "Offer enriched.",
+        "sanity_checked": "Price checked.",
+        "trust_scored": "Seller confidence computed.",
+        "financially_checked": "Financial fit checked.",
+        "gate_opened": "An offer moved to gate.",
+        "negotiation_message": "Negotiation message.",
+        "negotiation_state_changed": "A negotiation changed state.",
+        "recommendation_ready": "Recommendation ready.",
+        "budget_warning": "Mission budget warning.",
+        "error": "Mission error."
+      }
     },
     "offers": {
       "caption": "Mission offers by seller",

@@ -26,6 +26,8 @@
       "stop": "Parar",
       "hint": "Intro envía · Mayús + Intro nueva línea",
       "pending": "Pendiente de conectar: aún no se puede enviar.",
+      "error": "No he podido interpretar la petición. Inténtalo de nuevo.",
+      "needsCountry": "Indica el país de entrega (código de 2 letras) para poder enviar.",
       "phrases": {
         "interpreting": "Interpretando la petición",
         "spec": "Identificando la especificación",
@@ -35,6 +37,7 @@
       }
     },
     "review": {
+      "country": "País de entrega", "countryHint": "ES", "none": "No indicado", "empty": "Cuando el asistente interprete tu petición, aparecerá aquí lo que ha entendido.",
       "title": "Revisa lo que hemos entendido",
       "product": "Producto",
       "category": "Categoría",
@@ -66,10 +69,20 @@
       "reason": "Activa primero un snapshot financiero"
     },
     "launch": "Lanzar misión",
-    "launchHint": "Busca, filtra precios anómalos y negocia. Nada se compra sin tu firma."
+    "launchHint": "Busca, filtra precios anómalos y negocia. Nada se compra sin tu firma.",
+    "clarify": "El asistente necesita más datos antes de lanzar:",
+    "launchNeedsRequest": "Describe lo que necesitas para poder lanzar la misión.",
+    "launchNeedsClarification": "Responde a las preguntas pendientes y vuelve a interpretar.",
+    "launchError": "No se ha podido lanzar la misión. Inténtalo de nuevo.",
+    "launching": "Lanzando la misión…"
   },
   "detail": {
-    "meta": "Misión {id} · lanzada hace {minutes} min",
+    "loading": "Cargando la misión…",
+    "heading": "Misión {id}",
+    "meta": "{state} · lanzada el {date}",
+    "failed": "La misión ha fallado: {detail}",
+    "offersPending": "{found} ofertas encontradas, {negotiated} negociadas y {gate} en gate. La matriz de ofertas aún no está conectada.",
+    "state": { "created": "Creada", "planning": "Planificando", "sourcing": "Buscando ofertas", "enriching": "Enriqueciendo", "evaluating": "Evaluando", "negotiating": "Negociando", "awaiting_decision": "Esperando tu decisión", "completed": "Completada", "cancelled": "Cancelada", "failed": "Fallida" },
     "new": "Nueva misión",
     "compare": "Ver comparativa",
     "pause": "Pausar",
@@ -79,10 +92,10 @@
     "phases": {
       "label": "Fases de la misión",
       "state": { "done": "Completado", "running": "En curso", "pending": "Pendiente" },
-      "search": { "title": "Búsqueda", "done": "{n} ofertas en {p} plataformas" },
-      "filter": { "title": "Confianza y precio", "done": "{pass} pasan · {out} filtradas" },
-      "negotiation": { "title": "Negociación", "running": "{n} de {total} en curso" },
-      "valuation": { "title": "Valoración", "pending": "Empieza al cerrar las negociaciones" }
+      "search": { "title": "Búsqueda", "running": "Buscando · {n} ofertas", "done": "{n} ofertas encontradas", "pending": "Pendiente" },
+      "filter": { "title": "Confianza y precio", "running": "Comprobando confianza y precio", "done": "{n} en gate", "pending": "Pendiente" },
+      "negotiation": { "title": "Negociación", "running": "{n} negociadas hasta ahora", "done": "{n} negociadas", "pending": "Pendiente" },
+      "valuation": { "title": "Valoración", "running": "Esperando tu decisión", "done": "Misión completada", "pending": "Empieza al cerrar las negociaciones" }
     },
     "funnel": {
       "caption": "Embudo de la misión: ofertas que llegan a cada etapa",
@@ -92,13 +105,22 @@
     "activity": {
       "title": "Actividad",
       "live": "En vivo",
-      "review": "Revisar",
-      "working": "Comprobando la confianza de {n} vendedores…",
-      "reply": "{seller} responde con escalado por volumen.",
-      "draft": "Borrador para {seller} espera tu aprobación.",
-      "discarded": "{seller} descartado: precio implausible, {pct} % por debajo de la mediana.",
-      "gate": "{seller} a gate: confianza baja ({score}).",
-      "offers": "{platform}: {n} ofertas."
+      "empty": "Aún no hay actividad.",
+      "reconnecting": "Reconectando…",
+      "events": {
+        "state_changed": "Cambio de estado de la misión.",
+        "offer_discovered": "Nueva oferta encontrada.",
+        "offer_enriched": "Oferta enriquecida.",
+        "sanity_checked": "Precio comprobado.",
+        "trust_scored": "Confianza del vendedor calculada.",
+        "financially_checked": "Encaje financiero comprobado.",
+        "gate_opened": "Una oferta ha pasado a gate.",
+        "negotiation_message": "Mensaje de negociación.",
+        "negotiation_state_changed": "Cambio de estado en una negociación.",
+        "recommendation_ready": "Recomendación lista.",
+        "budget_warning": "Aviso de presupuesto de la misión.",
+        "error": "Error en la misión."
+      }
     },
     "offers": {
       "caption": "Ofertas de la misión por vendedor",

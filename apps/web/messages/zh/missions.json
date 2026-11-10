@@ -26,6 +26,8 @@
       "stop": "停止",
       "hint": "回车发送 · Shift + 回车换行",
       "pending": "尚未接入：暂时无法发送。",
+      "error": "无法理解该需求，请重试。",
+      "needsCountry": "请填写收货国家（2 位代码）后再发送。",
       "phrases": {
         "interpreting": "正在理解需求",
         "spec": "正在识别规格",
@@ -35,6 +37,7 @@
       }
     },
     "review": {
+      "country": "收货国家", "countryHint": "ES", "none": "未填写", "empty": "助手理解您的需求后，会在此处显示。",
       "title": "请核对我们的理解",
       "product": "产品",
       "category": "类别",
@@ -66,10 +69,20 @@
       "reason": "请先激活财务快照"
     },
     "launch": "启动任务",
-    "launchHint": "搜索、过滤异常价格并谈判。没有您的签名，不会购买任何东西。"
+    "launchHint": "搜索、过滤异常价格并谈判。没有您的签名，不会购买任何东西。",
+    "clarify": "启动前助手还需要更多信息：",
+    "launchNeedsRequest": "请先描述您的需求，才能启动任务。",
+    "launchNeedsClarification": "请回答待确认的问题后重新解读。",
+    "launchError": "无法启动任务，请重试。",
+    "launching": "正在启动任务…"
   },
   "detail": {
-    "meta": "任务 {id} · {minutes} 分钟前启动",
+    "loading": "正在加载任务…",
+    "heading": "任务 {id}",
+    "meta": "{state} · 启动于 {date}",
+    "failed": "任务失败：{detail}",
+    "offersPending": "已找到 {found} 条报价，{negotiated} 条已谈判，{gate} 条在人工关口。报价矩阵尚未接入。",
+    "state": { "created": "已创建", "planning": "规划中", "sourcing": "搜索中", "enriching": "补充信息中", "evaluating": "评估中", "negotiating": "谈判中", "awaiting_decision": "等待您的决定", "completed": "已完成", "cancelled": "已取消", "failed": "失败" },
     "new": "新建任务",
     "compare": "查看对比",
     "pause": "暂停",
@@ -79,10 +92,10 @@
     "phases": {
       "label": "任务阶段",
       "state": { "done": "已完成", "running": "进行中", "pending": "待开始" },
-      "search": { "title": "搜索", "done": "{p} 个平台共 {n} 条报价" },
-      "filter": { "title": "信任与价格", "done": "{pass} 条通过 · {out} 条被过滤" },
-      "negotiation": { "title": "谈判", "running": "{total} 条中 {n} 条进行中" },
-      "valuation": { "title": "评估", "pending": "谈判结束后开始" }
+      "search": { "title": "搜索", "running": "搜索中 · {n} 条报价", "done": "已找到 {n} 条报价", "pending": "待开始" },
+      "filter": { "title": "信任与价格", "running": "正在检查信任与价格", "done": "{n} 条在人工关口", "pending": "待开始" },
+      "negotiation": { "title": "谈判", "running": "目前已谈判 {n} 条", "done": "已谈判 {n} 条", "pending": "待开始" },
+      "valuation": { "title": "评估", "running": "等待您的决定", "done": "任务已完成", "pending": "谈判结束后开始" }
     },
     "funnel": {
       "caption": "任务漏斗：到达各阶段的报价数",
@@ -92,13 +105,22 @@
     "activity": {
       "title": "动态",
       "live": "实时",
-      "review": "查看",
-      "working": "正在核查 {n} 位卖家的信任度…",
-      "reply": "{seller} 回复了批量阶梯价。",
-      "draft": "给 {seller} 的草稿等待您批准。",
-      "discarded": "{seller} 已剔除：价格不合理，比中位数低 {pct} %。",
-      "gate": "{seller} 进入审核：信任度低（{score}）。",
-      "offers": "{platform}：{n} 条报价。"
+      "empty": "暂无动态。",
+      "reconnecting": "正在重新连接…",
+      "events": {
+        "state_changed": "任务状态已变更。",
+        "offer_discovered": "发现新报价。",
+        "offer_enriched": "报价已补充信息。",
+        "sanity_checked": "价格已检查。",
+        "trust_scored": "已计算卖家可信度。",
+        "financially_checked": "已检查财务匹配度。",
+        "gate_opened": "一条报价进入人工关口。",
+        "negotiation_message": "谈判消息。",
+        "negotiation_state_changed": "某个谈判状态已变更。",
+        "recommendation_ready": "推荐已就绪。",
+        "budget_warning": "任务预算提醒。",
+        "error": "任务出错。"
+      }
     },
     "offers": {
       "caption": "按卖家列出的任务报价",
