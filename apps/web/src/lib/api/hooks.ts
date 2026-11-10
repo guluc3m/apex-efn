@@ -15,6 +15,8 @@ export const queryKeys = {
   sellerConfidence: (id: string) => ['seller', id, 'confidence'] as const,
   negotiation: (id: string) => ['negotiation', id] as const,
   negotiationMessages: (id: string) => ['negotiation', id, 'messages'] as const,
+  deals: (query?: object) => ['deals', query ?? null] as const,
+  gateQueue: (query?: object) => ['gate', 'queue', query ?? null] as const,
   effectiveConfig: (category?: string) => ['config', 'effective', category ?? null] as const,
 }
 
@@ -124,5 +126,30 @@ export function useNegotiationAction(id: string) {
       }
     },
     onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.negotiation(id) }),
+  })
+}
+
+export function useDeals(query?: Parameters<typeof api.listDeals>[0]) {
+  return useQuery({ queryKey: queryKeys.deals(query), queryFn: ({ signal }) => api.listDeals(query, signal) })
+}
+
+export function useGateQueue(query?: Parameters<typeof api.listGateQueue>[0]) {
+  return useQuery({ queryKey: queryKeys.gateQueue(query), queryFn: ({ signal }) => api.listGateQueue(query, signal) })
+}
+
+/** Both mutations only create a decision pending signature; the lists are refreshed afterwards. */
+export function useDealAction() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { id: string; body: Parameters<typeof api.applyDealAction>[1] }) => api.applyDealAction(v.id, v.body),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ['deals'] }), qc.invalidateQueries({ queryKey: ['gate'] })]),
+  })
+}
+
+export function useGateAction() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { id: string; body: Parameters<typeof api.applyGateQueueAction>[1] }) => api.applyGateQueueAction(v.id, v.body),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ['deals'] }), qc.invalidateQueries({ queryKey: ['gate'] })]),
   })
 }

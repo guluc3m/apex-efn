@@ -7,12 +7,7 @@
   "kpi": {
     "label": "מדדים",
     "pending": "ממתינות להחלטה",
-    "signed": "החלטות חתומות",
-    "sla": "ה-SLA הקרוב ביותר",
-    "savings": "חיסכון לעומת השוק",
-    "savingsWeekly": "חיסכון מצטבר לפי שבוע",
-    "week": "שבוע",
-    "trend": "מגמה: {values}"
+    "signed": "החלטות חתומות"
   },
   "views": {
     "label": "תצוגת רשימה",
@@ -21,34 +16,16 @@
   },
   "filter": {
     "all": "הכול",
-    "profile": "פרופיל דירוג",
     "price": "מחיר",
     "confidence": "אמון",
     "verdict": "הערכה",
     "platform": "פלטפורמה",
     "signature": "חתימה"
   },
-  "profile": {
-    "comprador": "קונה תפעולי",
-    "cfo": "סמנכ\"ל כספים"
-  },
-  "whyRank": {
-    "comprador": "קונה: זמן האספקה שוקל יותר, ולכן מוכר E מדורג ראשון.",
-    "cfo": "סמנכ\"ל כספים: ההתאמה הפיננסית שוקלת יותר, ולכן מוכר A מדורג ראשון ומוכר E (מתיחת תקציב) יורד."
-  },
   "empty": "אין עסקה התואמת למסננים.",
-  "cause": {
-    "atypicalPrice": "מחיר חריג",
-    "lowConfidence": "מוכר באמון נמוך",
-    "secondSignature": "חסרה חתימה שנייה (1 מתוך 2)",
-    "escalatedDiscard": "נפסל לפי כלל הסלמה",
-    "staleSnapshot": "נתונים פיננסיים לא עדכניים",
-    "ready": "מוכן להחלטה",
-    "highAmount": "סכום גבוה"
-  },
   "sla": "SLA {time}",
   "perUnit": "/יחידה",
-  "rank": "#{n} · ציון {score}",
+  "rank": "#{n}",
   "band": {
     "normal": "מחיר תקין",
     "atypical": "מחיר חריג",
@@ -69,10 +46,10 @@
     "out_of_budget": "מחוץ לתקציב"
   },
   "sig": {
+    "signed": "חתום",
     "pending": "ממתין",
-    "pending12": "ממתין 1/2",
-    "none": "לא חתום",
-    "signed": "חתום"
+    "unsigned": "לא חתום",
+    "invalid": "לא תקין"
   },
   "detail": {
     "priceInitial": "מחיר התחלתי",
@@ -81,7 +58,7 @@
     "notNegotiated": "לא נוהל משא ומתן",
     "confidence": "אמון במוכר",
     "landed": "עלות נחיתה",
-    "expires": "ההצעה פגה בעוד {n} ימים",
+    "expires": "ההצעה פגה ב-{date}",
     "fullTranscript": "צפייה בתמלול המלא",
     "noNegotiation": "טרם נוהל משא ומתן: אין מחיר מו\"מ או תמלול.",
     "whyConfidence": "מדוע האמון הזה",
@@ -94,66 +71,41 @@
     "unscored": "לא מדורג: עדיין לא עסקה סופית.",
     "risks": "דגלי סיכון",
     "terms": "מוצר, זמן אספקה ותנאים",
-    "termsPending": "מפרט, זמן אספקה ותנאי תשלום: טרם חובר."
-  },
-  "signal": {
-    "age": "ותק",
-    "ageV": "{n} ימים",
-    "sales": "מכירות",
-    "salesV": "{n} מכירות · {pct}% חוזרות",
-    "catalog": "קטלוג",
-    "catalogV": "{n} מוצרים · רישום {pct}%",
-    "reviews": "ביקורות",
-    "reviewsV": "{rating} מתוך {n} · {pct}% מאומתות",
-    "institutional": "ערבות מוסדית",
-    "institutionalV": "{kyc, select, true {KYC} other {ללא KYC}} · {escrow, select, true {נאמנות} other {ללא נאמנות}} · מחלוקות {pct}%"
+    "penalty": "קנס",
+    "leadTime": "זמן אספקה",
+    "leadTimeV": "{n} ימים",
+    "moq": "הזמנה מינימלית",
+    "noConfidence": "עדיין לא חושב אמון במוכר.",
+    "reference": "מחיר ייחוס",
+    "median": "חציון",
+    "sample": "גודל מדגם",
+    "deviation": "סטייה ממחיר הייחוס",
+    "noSanity": "עדיין אין בדיקת מחיר.",
+    "noLanded": "עדיין אין עלות נחיתה."
   },
   "stale": {
     "body": "תצלום המצב הפיננסי הפעיל פג תוקף. רכישות ישירות חסומות עד לייבוא מחדש של ה-CSV.",
     "cta": "ייבוא CSV מחדש"
-  },
-  "reason": {
-    "blockLow": "מוכר באמון נמוך: נדרשת החלטה חתומה לביטול החסימה.",
-    "staleFinancials": "תצלום המצב הפיננסי פג תוקף: רכישה ישירה חסומה עד לייבוא מחדש של ה-CSV."
   },
   "action": {
     "follow": "מעקב ורכישה",
     "renegotiate": "משא ומתן מחודש",
     "takeover": "קבלת שליטה",
     "hold": "השהיה",
-    "discard": "פסילה",
-    "unblock": "ביטול חסימה",
-    "override_discard": "ביטול פסילה",
-    "sign2": "הוספת חתימה שנייה"
+    "discard": "פסילה"
   },
-  "passkey": "passkey",
   "line": {
+    "goods": "סחורה",
     "shipping": "משלוח",
     "insurance": "ביטוח",
-    "duties": "מכס ומע\"מ",
-    "capital": "עלות הון",
-    "fees": "עמלות תשלום",
-    "fx": "מט\"ח וסיכון"
-  },
-  "criterion": {
-    "landed": "עלות נחיתה",
-    "lead": "זמן אספקה",
-    "confidence": "אמון",
-    "fit": "התאמה פיננסית",
-    "margin": "מרווח",
-    "spec": "מפרט",
-    "compliance": "עמידה בדרישות",
-    "gain": "רווח ממשא ומתן"
-  },
-  "sanity": {
-    "atypical": "האינדקס מחוץ לטווח התקין בצד הזול.",
-    "normal": "בתוך הטווח התקין.",
-    "escalated": "הועלה למחיר לא סביר עקב שילוב המחיר והאמון."
+    "duties": "מכסים",
+    "import_vat": "מע\"מ יבוא",
+    "capital_cost": "עלות הון",
+    "payment_fees": "עמלות תשלום",
+    "fx_conversion": "המרת מטבע",
+    "fx_risk": "סיכון מטבע"
   },
   "risk": {
-    "below60": "יותר מ-60% מתחת לחציון",
-    "burst": "ביקורות מרוכזות בכמה ימים",
-    "escalated": "מחיר חריג ומוכר לא מהימן: הועלה לפסילה",
     "none": "ללא דגלים"
   },
   "discardReason": {
@@ -172,7 +124,6 @@
     "commentRequired": "הערה (חובה)",
     "reviewDate": "תאריך בדיקה",
     "instructions": "הוראות למשא ומתן מחודש",
-    "overrideReason": "סיבת הביטול (חובה)",
     "payloadIntro": "אתם חותמים בדיוק על זה:",
     "decision": "החלטה",
     "amount": "סכום",
@@ -180,16 +131,61 @@
     "band": "טווח מחיר",
     "confidence": "אמון",
     "verdict": "הערכה",
-    "passkeyNote": "החלטה זו דורשת passkey גם אם חלון החתימה עדיין פתוח.",
     "sign": "חתימה על ההחלטה",
-    "cancel": "ביטול"
+    "cancel": "ביטול",
+    "create": "יצירת החלטה",
+    "creating": "יוצר…",
+    "created": "ההחלטה {id} נוצרה וממתינה לחתימה.",
+    "signUnavailable": "החתימה עדיין לא זמינה: תהליך החתימה עדיין מתחבר.",
+    "incomplete": "יש להשלים את שדות החובה.",
+    "error": "לא ניתן ליצור את ההחלטה."
   },
-  "pending": "טרם חובר",
   "transcript": {
     "back": "חזרה לרשימה",
     "title": "תמלול: {seller}",
     "agent": "סוכן",
-    "seller": "מוכר"
+    "seller": "מוכר",
+    "human": "אדם",
+    "empty": "אין עדיין הודעות."
   },
-  "emptyNext": "צפייה במשימות פעילות"
+  "emptyNext": "צפייה במשימות פעילות",
+  "loading": "טוען עסקאות…",
+  "loadError": "לא ניתן לטעון את הנתונים.",
+  "retry": "נסו שוב",
+  "notFound": "העסקה אינה ברשימה.",
+  "slaOverdue": "SLA באיחור {time}",
+  "block": {
+    "price_band_requires_unblock": "נדרש קודם שחרור חתום בגלל טווח המחיר.",
+    "seller_band_requires_unblock": "נדרש קודם שחרור חתום בגלל טווח אמון המוכר.",
+    "out_of_budget": "חריגה מהתקציב.",
+    "financials_stale": "תמונת המצב הפיננסית פגה: הרכישה הישירה חסומה עד לייבוא מחדש של ה-CSV.",
+    "fx_provisional": "שער החליפין זמני: נדרש אישור נוסף.",
+    "renegotiation_limit": "הגעת למגבלת המשא ומתן החוזר.",
+    "already_decided": "כבר התקבלה החלטה בעסקה זו.",
+    "not_in_queue": "ההצעה אינה בתור השער.",
+    "role_not_allowed": "התפקיד שלך אינו מאפשר פעולה זו.",
+    "comment_required": "נדרשת הערה.",
+    "unknown": "ה-API לא ציין סיבה."
+  },
+  "state": {
+    "open": "פתוחה",
+    "renegotiating": "במשא ומתן חוזר",
+    "on_hold": "בהשהיה",
+    "human_control": "בשליטה אנושית",
+    "followed": "במעקב",
+    "discarded": "נדחתה",
+    "purchased": "נרכשה"
+  },
+  "explanation": {
+    "volume_tier_difference": "הבדל במדרגת כמות",
+    "moq_difference": "הבדל בכמות מינימלית",
+    "incoterm_difference": "הבדל באינקוטרמס",
+    "quality_grade_difference": "הבדל בדרגת איכות",
+    "specification_difference": "הבדל במפרט",
+    "seasonal_pricing": "תמחור עונתי",
+    "clearance_sale": "מכירת חיסול",
+    "new_seller_promotion": "מבצע למוכר חדש",
+    "bulk_discount": "הנחת כמות",
+    "none": "לא נמצאה סיבה לגיטימית"
+  }
 }
