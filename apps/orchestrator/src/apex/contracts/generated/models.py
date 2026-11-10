@@ -225,6 +225,26 @@ class User(BaseModel):
     display_name: str
 
 
+class Role1(StrEnum):
+    user = "user"
+    agent = "agent"
+
+
+class IntakeMessage(BaseModel):
+    id: str
+    role: Role1
+    text: str
+    created_at: AwareDatetime
+
+
+class IntakeMessageList(BaseModel):
+    items: list[IntakeMessage]
+
+
+class SendIntakeMessageRequest(BaseModel):
+    text: Annotated[str, Field(max_length=4000, min_length=1)]
+
+
 class FinancialCsvUpload(BaseModel):
     file: Annotated[
         bytes,
@@ -1660,6 +1680,14 @@ class Negotiation(BaseModel):
 class NegotiationMessagePage(BaseModel):
     items: list[NegotiationMessage]
     next_cursor: str | None
+
+
+class IntakeTurn(BaseModel):
+    messages: Annotated[
+        list[IntakeMessage],
+        Field(description="The user message followed by the agent reply."),
+    ]
+    session: OnboardingSession
 
 
 class FinancialImport(BaseModel):

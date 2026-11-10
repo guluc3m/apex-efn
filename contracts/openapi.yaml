@@ -70,6 +70,43 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /v1/onboarding/sessions/{id}/messages:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [onboarding]
+      operationId: listIntakeMessages
+      summary: Conversation so far between the user and the IntakeAgent.
+      responses:
+        '200':
+          description: Messages, oldest first.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IntakeMessageList'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [onboarding]
+      operationId: sendIntakeMessage
+      summary: Send a user message to the IntakeAgent and get its reply. The agent may fill the company profile; the updated session comes back.
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SendIntakeMessageRequest'}
+      responses:
+        '200':
+          description: The user message and the agent reply, plus the session after the turn.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IntakeTurn'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /v1/onboarding/{id}/financial-csv:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
@@ -1185,6 +1222,35 @@ components:
       properties:
         company_profile: {$ref: '#/components/schemas/CompanyProfile'}
         base_currency: {$ref: '#/components/schemas/Currency'}
+    IntakeMessage:
+      type: object
+      required: [id, role, text, created_at]
+      properties:
+        id: {type: string}
+        role: {type: string, enum: [user, agent]}
+        text: {type: string}
+        created_at: {type: string, format: date-time}
+    IntakeMessageList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/IntakeMessage'}
+    SendIntakeMessageRequest:
+      type: object
+      required: [text]
+      properties:
+        text: {type: string, minLength: 1, maxLength: 4000}
+    IntakeTurn:
+      type: object
+      required: [messages, session]
+      properties:
+        messages:
+          type: array
+          description: The user message followed by the agent reply.
+          items: {$ref: '#/components/schemas/IntakeMessage'}
+        session: {$ref: '#/components/schemas/OnboardingSession'}
     OnboardingSession:
       type: object
       required: [id, status, company_profile, effective_config, created_at, updated_at]
