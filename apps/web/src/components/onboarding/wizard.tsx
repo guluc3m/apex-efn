@@ -4,8 +4,12 @@ import { Button, Chat, Icon, type ChatMessage } from '@apex/ui'
 import { ArrowRight, Bot, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { useState } from 'react'
 
 import { assistantMessages, platforms, stepStatus } from '@/fixtures/onboarding'
+import { api } from '@/lib/api'
+import { toProfilePatch } from '@/lib/onboarding-profile'
+import { useOnboarding } from '@/stores/onboarding'
 
 import { AppLink } from '../app-link'
 
@@ -56,7 +60,28 @@ export function OnboardingWizard({ step }: { step: StepId }) {
   const index = STEP_IDS.indexOf(step)
   const prev = STEP_IDS[index - 1]
   const next = STEP_IDS[index + 1]
-  const goNext = () => next && router.push(`/${locale}/onboarding/${next}` as never)
+  const [saveError, setSaveError] = useState(false)
+  const go = () => next && router.push(`/${locale}/onboarding/${next}` as never)
+  // empresa and sector persist to the session; a failed save keeps the user on the step.
+  const goNext = async (): Promise<void> => {
+    if (step !== 'empresa' && step !== 'sector') {
+      go()
+      return
+    }
+    const { drafts, sessionId, setSessionId } = useOnboarding.getState()
+    try {
+      let id = sessionId
+      if (!id) {
+        id = (await api.createOnboardingSession({ base_currency: drafts.presupuesto.divisa as 'EUR' | 'USD' | 'CNY' })).id
+        setSessionId(id)
+      }
+      await api.updateOnboardingSession(id, { company_profile: toProfilePatch(step, drafts) })
+      setSaveError(false)
+      go()
+    } catch {
+      setSaveError(true)
+    }
+  }
 
   const body = isForm(step) ? (
     (() => {
@@ -106,6 +131,11 @@ export function OnboardingWizard({ step }: { step: StepId }) {
               <p className="mt-1.5 mb-0 text-ink-soft">{t(`steps.${step}.lead`)}</p>
             </div>
             {body}
+            {saveError && (
+              <p role="alert" className="m-0 text-bad">
+                {t('errors.save')}
+              </p>
+            )}
             <div className="flex gap-2 border-t border-line pt-4">
               {prev ? (
                 <Button asChild variant="sec">

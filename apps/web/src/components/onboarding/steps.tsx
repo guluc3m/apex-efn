@@ -16,7 +16,7 @@ import { schemas, zodResolver, type Drafts, type FormStepId } from './schemas'
 export const FORM_ID = 'paso-form'
 
 /** Formulario de un paso: RHF + zod, borrador en Zustand en cada cambio, `onValid` al enviar. */
-export function StepForm<K extends FormStepId>({ id, onValid, children }: { id: K; onValid: () => void; children: ReactNode }) {
+export function StepForm<K extends FormStepId>({ id, onValid, children }: { id: K; onValid: () => void | Promise<void>; children: ReactNode }) {
   const save = useOnboarding((s) => s.save)
   const form = useForm<FieldValues>({
     resolver: zodResolver(schemas[id] as z.ZodType<FieldValues, z.ZodTypeDef, FieldValues>),
@@ -36,7 +36,7 @@ export function StepForm<K extends FormStepId>({ id, onValid, children }: { id: 
         onSubmit={(e) => {
           void form.handleSubmit((values) => {
             save(id, values as Drafts[K])
-            onValid()
+            void onValid()
           })(e)
         }}
       >
