@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-single-review/metrics"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-single-review\",\"registered_at\":1787184000,\"first_order_at\":1787875200,\"active_months_12\":3,\"orders\":{\"lifetime\":3,\"last_12m\":3},\"turnover_12m\":{\"amount\":\"18500.00\",\"currency\":\"EUR\"},\"repeat_customers_pct\":0,\"catalog\":{\"listings\":6,\"churn_30d_pct\":0,\"completeness_pct\":50},\"feedback\":{\"count\":1,\"count_12m\":1,\"score_0_100\":100,\"rated_orders\":1,\"verified_pct\":100},\"reply_rate_pct\":90,\"badges\":{\"kyc\":true,\"buyer_protection\":false,\"escrow\":true},\"disputes_pct\":0,\"refunds_pct\":0}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "493",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

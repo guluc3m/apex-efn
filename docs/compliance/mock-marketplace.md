@@ -12,7 +12,7 @@
 | Owner lane                        | DEV-5 (Browser Automation & Negotiation)                                            |
 | Status                            | approved for test use only                                                          |
 | Approved by (compliance sign-off) | N/A (internal, synthetic). Real platforms remain TBD per Q10 in AGENTS.md section 8 |
-| Last reviewed                     | 2026-11-08                                                                          |
+| Last reviewed                     | 2026-11-09                                                                          |
 
 ## 1. Terms of service review
 
@@ -56,13 +56,16 @@ run against the mock, fixtures and the LLM stub. Real platforms need their own c
 All data is **synthetic**: sellers, products, reviews, prices and chat personas are fixtures under
 `apps/mock-marketplace/fixtures`. No real company, person or payment data is present.
 
-| Data item                                           | Source page / endpoint                              | Purpose                                                       | Retention                                 |
-| --------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------- |
-| Product title, price, currency                      | `mock-a` JSON API; `mock-b` HTML product page       | Test offer normalisation and price sanity (criterion 5, 3)    | Fixtures in repo, versioned               |
-| Seller profile: account age, sales, catalog size    | `mock-a` seller endpoint; `mock-b` seller page      | Test seller confidence (criteria 6 to 9)                      | Fixtures in repo                          |
-| Seller reviews: rating, count, dates, verified flag | `mock-a` reviews endpoint; `mock-b` reviews section | Test manipulation flags (review burst, abnormal 5-star share) | Fixtures in repo                          |
-| Scripted chat messages                              | `mock-b` chat page                                  | Test negotiation and adversarial suite (criteria 13, 14)      | Fixtures in repo; test runs are ephemeral |
-| Test transcripts and screenshots                    | Local test output                                   | Debugging test failures                                       | Deleted with the test run or reset        |
+| Data item                                                                | Source page / endpoint                                      | Purpose                                                       | Retention                                 |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------- |
+| Product title, price, currency                                           | `mock-a` JSON API; `mock-b` HTML product page               | Test offer normalisation and price sanity (criterion 5, 3)    | Fixtures in repo, versioned               |
+| Seller profile: account age, sales, catalog size                         | `mock-a` seller endpoint; `mock-b` seller page              | Test seller confidence (criteria 6 to 9)                      | Fixtures in repo                          |
+| Seller reviews: rating, count, dates, verified flag                      | `mock-a` reviews endpoint; `mock-b` reviews section         | Test manipulation flags (review burst, abnormal 5-star share) | Fixtures in repo                          |
+| Product specs, certifications, tiers, MOQ, shipping, incoterm, lead time | `mock-a` product endpoint; `mock-b` product page            | Test landed cost, hard constraints and MCDA (criteria 4, 15)  | Fixtures in repo                          |
+| Seller display name, country, GMV, dispute and refund rates              | `mock-a` seller and metrics endpoints; `mock-b` seller page | Test seller confidence and its penalties (criteria 6 to 9)    | Fixtures in repo                          |
+| Review text (at most 2000 characters each, at most `max_reviews`)        | `mock-a` reviews endpoint; `mock-b` reviews section         | Test duplicate or generic review text detection (spec 3.4.2)  | Fixtures in repo                          |
+| Scripted chat messages                                                   | `mock-a` JSON conversations API; `mock-b` chat page         | Test negotiation and adversarial suite (criteria 13, 14)      | Fixtures in repo; test runs are ephemeral |
+| Test transcripts and screenshots                                         | Local test output                                           | Debugging test failures                                       | Deleted with the test run or reset        |
 
 Explicitly not collected or stored: any real personal data, real account credentials, payment data, or
 data from any real marketplace. Fixtures must pass the secret scan in CI (D1-04).

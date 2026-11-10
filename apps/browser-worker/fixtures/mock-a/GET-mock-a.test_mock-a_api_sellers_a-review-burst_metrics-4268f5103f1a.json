@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-review-burst/metrics"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-review-burst\",\"registered_at\":1780272000,\"first_order_at\":1780444800,\"active_months_12\":5,\"orders\":{\"lifetime\":40,\"last_12m\":40},\"turnover_12m\":{\"amount\":\"12000.00\",\"currency\":\"USD\"},\"repeat_customers_pct\":2,\"catalog\":{\"listings\":320,\"churn_30d_pct\":60,\"completeness_pct\":35},\"feedback\":{\"count\":180,\"count_12m\":180,\"score_0_100\":99.2,\"rated_orders\":180,\"verified_pct\":8},\"reply_rate_pct\":70,\"badges\":{\"kyc\":false,\"buyer_protection\":false,\"escrow\":false},\"disputes_pct\":3,\"refunds_pct\":5}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "504",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

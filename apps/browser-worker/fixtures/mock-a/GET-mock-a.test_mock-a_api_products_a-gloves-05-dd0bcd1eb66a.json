@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-gloves-05"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-gloves-05\",\"name\":\"Nitrile Gloves Size M, Box of 100 New Shop Listing\",\"url\":\"/mock-a/api/products/a-gloves-05\",\"price\":{\"amount\":\"4.70\",\"currency\":\"EUR\"},\"min_order_qty\":100,\"vendor\":{\"vendor_id\":\"a-new-shop\",\"display_name\":\"Nuevo Shop Demo (mock)\"},\"sku_group\":\"nitrile-gloves-m-box100\",\"details\":\"Nitrile gloves, size M, box of 100, from a recently opened shop. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"nitrile\"},{\"key\":\"size\",\"value\":\"M\"},{\"key\":\"thickness\",\"value\":\"4 mil\"},{\"key\":\"powder\",\"value\":\"powder-free\"},{\"key\":\"pieces_per_box\",\"value\":\"100\"}],\"certs\":[],\"images\":[\"/static/img/a-gloves-05.png\"],\"bulk_pricing\":[{\"from_qty\":100,\"to_qty\":499,\"price\":\"4.70\"},{\"from_qty\":500,\"to_qty\":null,\"price\":\"4.40\"}],\"delivery\":{\"fee\":\"8.00\",\"currency\":\"EUR\",\"eta_days\":[3,7]},\"trade_term\":null,\"production_days\":null}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "861",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

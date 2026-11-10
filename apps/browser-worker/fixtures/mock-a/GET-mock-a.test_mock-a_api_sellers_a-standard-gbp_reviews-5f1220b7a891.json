@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-standard-gbp/reviews"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-standard-gbp\",\"reviews\":[{\"review_id\":\"rv-a-standard-gbp-1\",\"stars\":5,\"comment\":\"Labels printed correctly and the pallet was well wrapped. Quoted in pounds, paid by bank transfer.\",\"posted_at\":1785974400,\"verified_order\":true},{\"review_id\":\"rv-a-standard-gbp-2\",\"stars\":4,\"comment\":\"Good communication. Two items were backordered but they offered a partial shipment.\",\"posted_at\":1773705600,\"verified_order\":true},{\"review_id\":\"rv-a-standard-gbp-3\",\"stars\":5,\"comment\":\"Reliable repeat supplier for our parcel boxes.\",\"posted_at\":1762214400,\"verified_order\":true},{\"review_id\":\"rv-a-standard-gbp-4\",\"stars\":4,\"comment\":\"Fair pricing, invoice had a small mistake that was fixed the same day.\",\"posted_at\":1751155200,\"verified_order\":false}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "756",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

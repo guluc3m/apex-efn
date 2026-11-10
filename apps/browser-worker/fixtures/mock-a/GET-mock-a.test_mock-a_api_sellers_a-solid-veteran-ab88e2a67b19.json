@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-solid-veteran"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-solid-veteran\",\"display_name\":\"Shenzhen Bright Gloves Co. (mock)\",\"location\":\"CN\",\"listings\":[\"a-gloves-01\",\"a-gloves-02\",\"a-kraft-01\"]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "152",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

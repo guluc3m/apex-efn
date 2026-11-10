@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-gloves-08"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-gloves-08\",\"name\":\"Nitrile Gloves Size M, Box of 100 Premium Edition\",\"url\":\"/mock-a/api/products/a-gloves-08\",\"price\":{\"amount\":\"13.50\",\"currency\":\"EUR\"},\"min_order_qty\":100,\"vendor\":{\"vendor_id\":\"a-standard-offplatform\",\"display_name\":\"Dongguan Harbor Hardware (mock)\"},\"sku_group\":\"nitrile-gloves-m-box100\",\"details\":\"Premium nitrile gloves, size M, box of 100, priced far above the market. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"nitrile\"},{\"key\":\"size\",\"value\":\"M\"},{\"key\":\"thickness\",\"value\":\"4 mil\"},{\"key\":\"powder\",\"value\":\"powder-free\"},{\"key\":\"pieces_per_box\",\"value\":\"100\"}],\"certs\":[],\"images\":[\"/static/img/a-gloves-08.png\"],\"bulk_pricing\":[{\"from_qty\":100,\"to_qty\":null,\"price\":\"13.50\"}],\"delivery\":{\"fee\":\"10.00\",\"currency\":\"EUR\",\"eta_days\":[5,10]},\"trade_term\":\"EXW\",\"production_days\":10}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "847",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

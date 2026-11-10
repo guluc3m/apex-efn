@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/sellers/a-solid-veteran/metrics"
+  },
+  "response": {
+    "body": "{\"vendor_id\":\"a-solid-veteran\",\"registered_at\":1552348800,\"first_order_at\":1554163200,\"active_months_12\":12,\"orders\":{\"lifetime\":4200,\"last_12m\":900},\"turnover_12m\":{\"amount\":\"4100000.00\",\"currency\":\"USD\"},\"repeat_customers_pct\":41,\"catalog\":{\"listings\":140,\"churn_30d_pct\":3,\"completeness_pct\":90},\"feedback\":{\"count\":500,\"count_12m\":260,\"score_0_100\":95,\"rated_orders\":500,\"verified_pct\":92},\"reply_rate_pct\":97,\"badges\":{\"kyc\":true,\"buyer_protection\":true,\"escrow\":true},\"disputes_pct\":1,\"refunds_pct\":2}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "507",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

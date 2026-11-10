@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/search?q=gloves&page=1"
+  },
+  "response": {
+    "body": "{\"query\":\"gloves\",\"total\":8,\"page\":1,\"results\":[{\"listing_id\":\"a-gloves-01\",\"name\":\"Nitrile Gloves Size M, Box of 100 Examination Grade\",\"url\":\"/mock-a/api/products/a-gloves-01\",\"price\":{\"amount\":\"4.45\",\"currency\":\"EUR\"},\"min_order_qty\":500,\"vendor\":{\"vendor_id\":\"a-solid-veteran\",\"display_name\":\"Shenzhen Bright Gloves Co. (mock)\"}},{\"listing_id\":\"a-gloves-02\",\"name\":\"Nitrile Gloves Size M, 100 pcs per Box, Latex-Free\",\"url\":\"/mock-a/api/products/a-gloves-02\",\"price\":{\"amount\":\"4.89\",\"currency\":\"USD\"},\"min_order_qty\":1000,\"vendor\":{\"vendor_id\":\"a-solid-veteran\",\"display_name\":\"Shenzhen Bright Gloves Co. (mock)\"}},{\"listing_id\":\"a-gloves-03\",\"name\":\"Nitrile Gloves Size M, Box of 100 Medical Use\",\"url\":\"/mock-a/api/products/a-gloves-03\",\"price\":{\"amount\":\"4.30\",\"currency\":\"EUR\"},\"min_order_qty\":200,\"vendor\":{\"vendor_id\":\"a-single-review\",\"display_name\":\"Madrid Quick Goods S.L. (mock)\"}},{\"listing_id\":\"a-gloves-04\",\"name\":\"Nitrile Gloves Size M, Box of 100 Bulk Deal\",\"url\":\"/mock-a/api/products/a-gloves-04\",\"price\":{\"amount\":\"0.45\",\"currency\":\"EUR\"},\"min_order_qty\":1000,\"vendor\":{\"vendor_id\":\"a-review-burst\",\"display_name\":\"Guangzhou Star Deals Trading (mock)\"}},{\"listing_id\":\"a-gloves-05\",\"name\":\"Nitrile Gloves Size M, Box of 100 New Shop Listing\",\"url\":\"/mock-a/api/products/a-gloves-05\",\"price\":{\"amount\":\"4.70\",\"currency\":\"EUR\"},\"min_order_qty\":100,\"vendor\":{\"vendor_id\":\"a-new-shop\",\"display_name\":\"Nuevo Shop Demo (mock)\"}},{\"listing_id\":\"a-gloves-06\",\"name\":\"Nitrile Gloves Size M, 100 per Box, Export Packing\",\"url\":\"/mock-a/api/products/a-gloves-06\",\"price\":{\"amount\":\"34.50\",\"currency\":\"CNY\"},\"min_order_qty\":2000,\"vendor\":{\"vendor_id\":\"a-standard-offplatform\",\"display_name\":\"Dongguan Harbor Hardware (mock)\"}},{\"listing_id\":\"a-gloves-07\",\"name\":\"Nitrile Gloves Size M, Box of 100 UK Stock\",\"url\":\"/mock-a/api/products/a-gloves-07\",\"price\":{\"amount\":\"3.90\",\"currency\":\"GBP\"},\"min_order_qty\":500,\"vendor\":{\"vendor_id\":\"a-standard-gbp\",\"display_name\":\"Manchester Parcel Supplies Ltd (mock)\"}},{\"listing_id\":\"a-gloves-08\",\"name\":\"Nitrile Gloves Size M, Box of 100 Premium Edition\",\"url\":\"/mock-a/api/products/a-gloves-08\",\"price\":{\"amount\":\"13.50\",\"currency\":\"EUR\"},\"min_order_qty\":100,\"vendor\":{\"vendor_id\":\"a-standard-offplatform\",\"display_name\":\"Dongguan Harbor Hardware (mock)\"}}]}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "2309",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}

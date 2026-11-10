@@ -4,7 +4,9 @@ import { randomUUID } from 'node:crypto'
 
 import { Redis } from 'ioredis'
 
-import { AdapterRegistry } from './adapters/index.js'
+import { fetchTransport, systemSleep } from './adapters/http.js'
+import { AdapterRegistry, type PlatformAdapter } from './adapters/index.js'
+import { createMockAAdapter } from './adapters/mock-a/index.js'
 import { FsArtifactStore } from './artifacts.js'
 import { ChatService } from './chats/service.js'
 import { RedisChatStore } from './chats/store.js'
@@ -29,8 +31,25 @@ async function main(): Promise<void> {
   const flags = UnleashFlags.fromEnv(process.env)
   const stopPolling = flags.startPolling(FLAG_POLL_INTERVAL_MS)
 
-  // Real platform adapters are registered in D5-03 and later.
-  const registry = new AdapterRegistry([], flags)
+  // Adapters are registered only when their configuration is present. The flag gate in the registry still decides
+  // whether a platform is callable, so a registered adapter with its flag off is never called.
+  const adapters: PlatformAdapter[] = []
+  if (config.mockABaseUrl !== undefined) {
+    adapters.push(
+      createMockAAdapter({
+        baseUrl: config.mockABaseUrl,
+        transport: fetchTransport,
+        clock: systemClock,
+        sleep: systemSleep,
+        random: Math.random,
+        userAgent: config.adapterUserAgent,
+        minIntervalMs: config.adapterMinIntervalMs,
+        maxRetries: config.adapterMaxRetries,
+        timeoutMs: config.adapterTimeoutMs,
+      })
+    )
+  }
+  const registry = new AdapterRegistry(adapters, flags)
   const jobs = new BullJobService(registry, connection, config)
   const workers = startJobWorkers(registry, config, connection, logger)
   const chats = new ChatService({

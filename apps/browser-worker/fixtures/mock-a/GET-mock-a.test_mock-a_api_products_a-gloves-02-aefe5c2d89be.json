@@ -1,0 +1,18 @@
+{
+  "request": {
+    "body": null,
+    "method": "GET",
+    "url": "http://mock-a.test/mock-a/api/products/a-gloves-02"
+  },
+  "response": {
+    "body": "{\"listing_id\":\"a-gloves-02\",\"name\":\"Nitrile Gloves Size M, 100 pcs per Box, Latex-Free\",\"url\":\"/mock-a/api/products/a-gloves-02\",\"price\":{\"amount\":\"4.89\",\"currency\":\"USD\"},\"min_order_qty\":1000,\"vendor\":{\"vendor_id\":\"a-solid-veteran\",\"display_name\":\"Shenzhen Bright Gloves Co. (mock)\"},\"sku_group\":\"nitrile-gloves-m-box100\",\"details\":\"Latex-free nitrile gloves, size M, second listing of the same seller. Synthetic fixture data.\",\"attributes\":[{\"key\":\"material\",\"value\":\"nitrile\"},{\"key\":\"size\",\"value\":\"M\"},{\"key\":\"thickness\",\"value\":\"3.5 mil\"},{\"key\":\"powder\",\"value\":\"powder-free\"},{\"key\":\"pieces_per_box\",\"value\":\"100\"}],\"certs\":[\"EN 455\",\"CE\"],\"images\":[\"/static/img/a-gloves-02.png\"],\"bulk_pricing\":[{\"from_qty\":1000,\"to_qty\":2999,\"price\":\"4.89\"},{\"from_qty\":3000,\"to_qty\":null,\"price\":\"4.59\"}],\"delivery\":{\"fee\":\"15.00\",\"currency\":\"USD\",\"eta_days\":[7,14]},\"trade_term\":\"FOB\",\"production_days\":14}",
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "902",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Mon, 09 Nov 2026 18:17:23 GMT",
+      "keep-alive": "timeout=72"
+    },
+    "status": 200
+  }
+}
