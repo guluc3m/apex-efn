@@ -213,6 +213,8 @@ def to_contract(session: NegotiationSession) -> Negotiation:
         max_rounds=session.params.max_rounds,
         guardrail_hits=_hits_of(session),
         pending_draft=_draft_of(session.pending),
+        mission_id=session.mission_id or None,
+        trace_id=session.trace_id or None,
     )
 
 

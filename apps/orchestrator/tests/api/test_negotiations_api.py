@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 
 import pytest
@@ -277,6 +277,20 @@ def test_get_returns_the_draft_waiting_for_a_human(rig: Rig) -> None:
     assert draft["id"] == _pending_id(rig, negotiation_id)
     assert draft["text"]
     assert draft["source"] == "llm"
+
+
+def test_the_negotiation_names_its_mission_and_trace(rig: Rig) -> None:
+    session = asyncio.run(
+        rig.h.engine.start(
+            replace(_request(), mission_id="m-7", trace_id="tr-9"), idempotency_key="neg-1"
+        )
+    )
+    with TestClient(rig.app) as client:
+        response = client.get(f"/v1/negotiations/{session.id}", headers=_h())
+
+    assert response.status_code == 200
+    assert response.json()["mission_id"] == "m-7"
+    assert response.json()["trace_id"] == "tr-9"
 
 
 def test_get_of_another_tenant_is_404(rig: Rig) -> None:

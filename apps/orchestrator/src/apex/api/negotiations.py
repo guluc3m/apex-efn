@@ -32,7 +32,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Query
 
-from apex.common.errors import Problem, not_implemented
+from apex.common.errors import Problem
 from apex.common.tenant import get_tenant_id
 from apex.contracts.generated.models import (
     Negotiation,

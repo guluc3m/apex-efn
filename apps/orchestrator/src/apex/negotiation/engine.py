@@ -86,6 +86,10 @@ class OpenRequest:
     params: NegotiationParams
     offer_id: str = ""
     """Offer the caller opened this negotiation for. Reported in the API view."""
+    mission_id: str = ""
+    """Mission that opened the negotiation, so the API view can route events onto its stream."""
+    trace_id: str = ""
+    """Trace of the request that opened the negotiation, propagated from the mission."""
 
 
 _REFUSAL_RE = re.compile(
@@ -190,6 +194,8 @@ class NegotiationEngine:
                     config_version=request.config_version,
                     params=request.params,
                     offer_id=request.offer_id,
+                    mission_id=request.mission_id,
+                    trace_id=request.trace_id,
                 )
                 session.ladder = build_ladder(session)
                 # Claim before persisting: a refused claim leaves no half-created negotiation behind.

@@ -237,6 +237,13 @@ class TestOpenRequestCarriesTheOffer:
         session = await h.engine.start(req, idempotency_key="k")
         assert session.offer_id == "offer-42"
 
+    async def test_the_mission_and_trace_are_persisted_for_event_routing(self) -> None:
+        h = harness(cooperative_seller())
+        req: OpenRequest = replace(request(), mission_id="m-7", trace_id="tr-9")
+        session = await h.engine.start(req, idempotency_key="k")
+        assert session.mission_id == "m-7"
+        assert session.trace_id == "tr-9"
+
 
 class TestHumanMessages:
     """A human holding the chat writes to the seller (D5-08 controls, D5-07c contract)."""

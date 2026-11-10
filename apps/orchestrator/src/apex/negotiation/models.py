@@ -197,6 +197,10 @@ class NegotiationSession(BaseModel):
     params: NegotiationParams
     offer_id: str = ""
     """Offer the negotiation was opened for, as the caller knows it. Empty only on engine-level tests."""
+    mission_id: str = ""
+    """Mission that opened the negotiation. Empty when the caller is not a mission (engine tests)."""
+    trace_id: str = ""
+    """Trace identifier of the request that opened the negotiation, when the caller has one."""
     status: NegotiationOutcome = NegotiationOutcome.IN_PROGRESS
     chat_id: str | None = None
     last_seller_seq: int = 0

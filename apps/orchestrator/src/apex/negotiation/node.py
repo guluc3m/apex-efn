@@ -31,6 +31,8 @@ class OfferInput(BaseModel):
     seller_id: str
     product_id: str = Field(validation_alias="platform_offer_id")
     category: str | None = None
+    mission_id: str | None = None
+    trace_id: str | None = None
 
 
 class NegotiationResult(BaseModel):
@@ -93,6 +95,8 @@ class EngineNegotiationPort:
                     config_version=config_version,
                     params=params,
                     offer_id=data.offer_id,
+                    mission_id=data.mission_id or "",
+                    trace_id=data.trace_id or "",
                 ),
                 idempotency_key=idempotency_key,
             )
