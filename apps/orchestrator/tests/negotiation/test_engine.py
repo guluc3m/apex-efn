@@ -145,7 +145,12 @@ class TestStopsAndEscalations:
         h = harness(lambda agent, n: "Our best price is EUR 4.50. Only valid if you close TODAY.")
         session = await run_autonomous(h, await h.engine.start(request(AUTO), idempotency_key="k"))
         assert "seller_closing_pressure" in session.notices
-        assert session.status is NegotiationOutcome.NO_AGREEMENT
+        # The agent never accepts. #241: a quote below the list price goes to the gate instead of being
+        # dropped as no_agreement, so the human sees the discount.
+        assert session.status is NegotiationOutcome.ESCALATED
+        assert session.stop_reason == "best_quote_above_target"
+        assert session.best_quote is not None
+        assert session.best_quote.unit_price_minor < 465
         assert all("accept" not in s.lower() for s in h.chat.sent)
 
 

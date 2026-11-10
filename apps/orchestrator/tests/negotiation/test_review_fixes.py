@@ -297,4 +297,8 @@ class TestFinding15EchoInsideARefusal:
         p = params(semi_automatic=False, reference_price_minor=445)
         s = await run_autonomous(h, await h.engine.start(request(p), idempotency_key="k"))
         assert all(m.intent is not Intent.SUMMARY for m in s.transcript)
-        assert s.status is NegotiationOutcome.NO_AGREEMENT
+        # A refusal is never an acceptance. The seller did quote EUR 4.15 (below the 4.45 list), so #241
+        # sends it to the gate with the number instead of dropping it.
+        assert s.status is NegotiationOutcome.ESCALATED
+        assert s.stop_reason == "best_quote_above_target"
+        assert s.best_quote is not None and s.best_quote.unit_price_minor == 415

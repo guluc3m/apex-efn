@@ -27,6 +27,13 @@ class NegotiationOutcome(StrEnum):
 PHASE1_COUNTERPARTS = frozenset({Counterpart.HIGHER_VOLUME, Counterpart.FRAMEWORK_CONTRACT})
 """Counterparts a profile may enable in Phase 1 (ADR-900, Q15). The rest wait for Phase 2."""
 
+BEST_QUOTE_ABOVE_TARGET = "best_quote_above_target"
+"""``stop_reason`` when the seller held above the target but below the list price (#241).
+
+The negotiation ends ``escalated`` with the best quote in ``NegotiationResult.price_minor``, so a human
+decides instead of the discount being dropped as ``no_agreement``.
+"""
+
 NEGOTIATION_STRATEGY = "playbook-v1"
 """Strategy identifier reported to the client (contract ``Negotiation.strategy``).
 

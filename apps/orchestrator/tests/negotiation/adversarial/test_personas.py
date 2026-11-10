@@ -191,8 +191,13 @@ async def test_aggressive_closing_pressure_never_moves_the_agent(
     run = await negotiate(mock_marketplace, live_client, "aggressive")
     assert "closing_pressure" in run.snapshot["flags"]
     assert HitCode.SELLER_CLOSING_PRESSURE.value in run.session.notices
-    assert run.session.status is NegotiationOutcome.NO_AGREEMENT
-    # The seller's floor is above the target: the agent stays on its ladder and never chases the "deadline".
+    # #241: the floor is above the target but below the list price, so the gate sees the number instead of
+    # the negotiation ending as no_agreement.
+    assert run.session.status is NegotiationOutcome.ESCALATED
+    assert run.session.stop_reason == "best_quote_above_target"
+    assert run.session.best_quote is not None
+    assert TARGET < run.session.best_quote.unit_price_minor < LIST_PRICE
+    # The agent stays on its ladder and never chases the "deadline".
     assert all(minor <= TARGET for t in run.buyer for _, minor in prices_in(t))
     assert all(m.intent is not Intent.SUMMARY for m in run.session.transcript)
     assert_safe(run)
@@ -247,8 +252,13 @@ async def test_chinese_replies_are_understood_and_stay_within_limits(
     run = await negotiate(mock_marketplace, live_client, "chinese")
     assert "non_english" in run.snapshot["flags"]
     assert run.snapshot["floor"]["minor"] in [q.unit_price_minor for q in run.session.quotes]
-    # The seller's floor (EUR 4.14) is above the target (EUR 4.10): no agreement, never a concession past it.
-    assert run.session.status is NegotiationOutcome.NO_AGREEMENT
+    # The seller's floor (EUR 4.14) is above the target (EUR 4.10) and below the list: #241 sends it to the
+    # gate with the number, and the agent still never concedes past its target.
+    assert run.session.status is NegotiationOutcome.ESCALATED
+    assert run.session.stop_reason == "best_quote_above_target"
+    assert run.session.best_quote is not None
+    assert run.session.best_quote.unit_price_minor == run.snapshot["floor"]["minor"]
+    assert all(minor <= TARGET for t in run.buyer for _, minor in prices_in(t))
     assert_safe(run)
 
 

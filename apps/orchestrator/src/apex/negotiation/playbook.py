@@ -11,7 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from apex.negotiation.guardrails import BP_DENOMINATOR, IncomingVerdict, price_floor_minor
-from apex.negotiation.models import Intent, NegotiationOutcome, NegotiationSession, Plan, Quote
+from apex.negotiation.models import (
+    BEST_QUOTE_ABOVE_TARGET,
+    Intent,
+    NegotiationOutcome,
+    NegotiationSession,
+    Plan,
+    Quote,
+)
 from apex.negotiation.text import find_prices
 
 # Rounds reserved outside the ladder: the opening message and the written summary.
@@ -100,6 +107,18 @@ def offered_prices(session: NegotiationSession) -> frozenset[int]:
     )
 
 
+def quote_for_the_gate(session: NegotiationSession) -> Quote | None:
+    """The seller's best grounded quote when it is a real discount, for a human to judge (#241).
+
+    A seller holding above the buyer's target still offered something below the listed price. Ending as
+    ``no_agreement`` would drop that discount silently, so the engine stops and the gate decides.
+    """
+    best = session.best_quote
+    if best is None or best.unit_price_minor >= session.params.reference_price_minor:
+        return None
+    return best
+
+
 def decide(session: NegotiationSession, verdict: IncomingVerdict, quote: Quote | None) -> Decision:
     """Next step after a seller turn. ``quote`` has already passed the sanity re-check."""
     p = session.params
@@ -116,6 +135,8 @@ def decide(session: NegotiationSession, verdict: IncomingVerdict, quote: Quote |
         return Plan(intent=Intent.SUMMARY, price_minor=quote.unit_price_minor)
     # The last round is always kept for the written summary.
     if session.rounds_sent >= p.max_rounds - 1:
+        if quote_for_the_gate(session) is not None:
+            return Stop(NegotiationOutcome.ESCALATED, BEST_QUOTE_ABOVE_TARGET)
         return Stop(NegotiationOutcome.NO_AGREEMENT, "max_rounds")
 
     foreign = [pr for pr in verdict.prices if pr.currency != p.currency]
@@ -125,6 +146,8 @@ def decide(session: NegotiationSession, verdict: IncomingVerdict, quote: Quote |
     if not session.quotes and not session.asked_for_price:
         return Plan(intent=Intent.REQUEST_PRICE)
     if session.next_rung >= len(session.ladder):
+        if quote_for_the_gate(session) is not None:
+            return Stop(NegotiationOutcome.ESCALATED, BEST_QUOTE_ABOVE_TARGET)
         return Stop(NegotiationOutcome.NO_AGREEMENT, "ladder_exhausted")
     price = session.ladder[session.next_rung]
     intent = Intent.ANCHOR if session.next_rung == 0 else Intent.COUNTER
