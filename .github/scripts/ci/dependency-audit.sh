@@ -23,7 +23,10 @@ fi
 require_cmd uv "install uv and run uv sync --locked --dev in apps/orchestrator"
 requirements="$(mktemp "${TMPDIR:-/tmp}/apex-requirements.XXXXXX")"
 trap 'rm -f "${requirements}"' EXIT
-(cd apps/orchestrator && uv export --locked --no-hashes --no-emit-project --format requirements-txt >"${requirements}")
+# Third-party only: the project and its local path dependencies (apps/llm-stub) are not on PyPI, and a
+# relative "-e ../llm-stub" would also be resolved from the wrong directory by pip-audit.
+(cd apps/orchestrator && uv export --locked --no-hashes --no-emit-workspace --format requirements-txt \
+  | grep -vE '^(-e|--editable) ' >"${requirements}")
 if ! uvx "pip-audit==${PIP_AUDIT_VERSION}" --progress-spinner off -r "${requirements}"; then
   note_finding "pip-audit reported vulnerable Python packages"
 fi

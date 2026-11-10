@@ -1,0 +1,18 @@
+# Keep the build context to pyproject.toml, uv.lock, src/ and scenarios/ (see the Dockerfile).
+.git
+.gitignore
+.dockerignore
+
+# Local environment and caches (never copy a host .venv into the image)
+.venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# Tests, docs and compose notes are not part of the runtime image
+tests
+*.md

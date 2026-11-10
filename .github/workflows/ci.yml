@@ -156,6 +156,32 @@ jobs:
         run: bash .github/scripts/ci/python.sh
 
   # =============================================================================
+  # LLM stub (D4-02): a separate uv project in apps/llm-stub. Lint, format, types and tests.
+  # The script runs `uv sync --locked --dev` itself, so CI and `pnpm ci:local` share one path.
+  # =============================================================================
+  llm-stub:
+    name: LLM stub
+    needs: changes
+    if: needs.changes.outputs.all == 'true' || needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: apps/llm-stub/uv.lock
+
+      - name: Lint, format, type check and tests
+        run: bash .github/scripts/ci/llm-stub.sh
+
+  # =============================================================================
   # Integration tests. Two phases in integration.sh: real Vault (pinned dev server, no Docker) and
   # Testcontainers (Docker is available on ubuntu-latest).
   # =============================================================================
@@ -364,6 +390,7 @@ jobs:
       - workflow-lint
       - typescript
       - python
+      - llm-stub
       - integration
       - secret-scan
       - dependency-audit
