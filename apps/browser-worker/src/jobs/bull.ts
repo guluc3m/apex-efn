@@ -13,6 +13,7 @@ import type { Logger } from 'pino'
 import type { AdapterRegistry } from '../adapters/index.js'
 import { sha256Hex } from '../hash.js'
 import { bodyHash, idempotencyConflict } from '../idempotency.js'
+import type { QueueDepths, ScrapingMetrics } from '../metrics.js'
 
 import { jobErrorOf, processJob } from './processor.js'
 import type { JobService } from './service.js'
@@ -20,6 +21,7 @@ import type { JobService } from './service.js'
 const RETENTION_SECONDS = 7 * 24 * 60 * 60
 const DEFAULT_PRIORITY = 5
 const DEAD_LETTER_QUEUE = 'dead-letter'
+const BACKLOG_STATES = ['waiting', 'active', 'delayed', 'prioritized'] as const
 
 export interface QueuedJob {
   request: JobRequest
@@ -127,12 +129,44 @@ export interface JobWorkers {
   close(): Promise<void>
 }
 
+export interface QueueDepthReader {
+  read(): Promise<QueueDepths>
+  close(): Promise<void>
+}
+
+/**
+ * Backlog of the `scrape-<platform>` queues, reported as `scraping`: waiting, active, delayed and prioritized jobs.
+ * The `negotiation` queue no longer exists in the worker (negotiation runs in the orchestrator), so it is always 0.
+ * Queue handles are created once here and closed by `close()`.
+ */
+export function createQueueDepthReader(
+  platforms: readonly string[],
+  connection: Redis
+): QueueDepthReader {
+  const queues = platforms.map((platform) => new Queue(scrapeQueueName(platform), { connection }))
+  return {
+    async read() {
+      const counts = await Promise.all(queues.map((queue) => queue.getJobCounts(...BACKLOG_STATES)))
+      const scraping = counts.reduce(
+        (total, byState) =>
+          total + BACKLOG_STATES.reduce((sum, state) => sum + (byState[state] ?? 0), 0),
+        0
+      )
+      return { scraping, negotiation: 0 }
+    },
+    async close() {
+      await Promise.all(queues.map((queue) => queue.close()))
+    },
+  }
+}
+
 /** One BullMQ worker per platform that is enabled at startup. Retries exhausted → copy to the dead-letter queue. */
 export function startJobWorkers(
   registry: AdapterRegistry,
   options: { scrapingConcurrency: number },
   connection: Redis,
-  logger: Logger
+  logger: Logger,
+  metrics?: ScrapingMetrics
 ): JobWorkers {
   const deadLetter = new Queue<QueuedJob, JobResult>(DEAD_LETTER_QUEUE, { connection })
   const workers = registry
@@ -141,12 +175,18 @@ export function startJobWorkers(
     .map(({ platform }) => {
       const worker = new Worker<QueuedJob, JobResult>(
         scrapeQueueName(platform),
-        (job) => runJob(job, registry, deadLetter),
+        (job) => runJob(job, registry, deadLetter, metrics),
         { connection, concurrency: options.scrapingConcurrency }
       )
       worker.on('failed', (job, error) => {
         logger.warn(
-          { platform, jobId: job?.id, kind: job?.data.request.kind, errorName: error.name },
+          {
+            platform,
+            jobId: job?.id,
+            kind: job?.data.request.kind,
+            code: job?.data.lastError?.code ?? 'internal',
+            errorName: error.name,
+          },
           'scraping job attempt failed'
         )
       })
@@ -166,10 +206,11 @@ export function startJobWorkers(
 async function runJob(
   job: ScrapeJob,
   registry: AdapterRegistry,
-  deadLetter: ScrapeQueue
+  deadLetter: ScrapeQueue,
+  metrics?: ScrapingMetrics
 ): Promise<JobResult> {
   try {
-    return await processJob(job.data.request, registry)
+    return await processJob(job.data.request, registry, metrics)
   } catch (error) {
     const outcome = jobErrorOf(error)
     const deadLettered = outcome.retryable && job.attemptsStarted >= (job.opts.attempts ?? 1)

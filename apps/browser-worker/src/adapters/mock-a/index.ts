@@ -12,6 +12,7 @@ import type { z } from 'zod'
 
 import type { Clock } from '../../clock.js'
 import { WorkerError } from '../../errors.js'
+import type { ScrapingMetrics } from '../../metrics.js'
 import { PoliteHttpClient, type HttpTransport, type RequestOptions, type Sleep } from '../http.js'
 import {
   type ChatAdapter,
@@ -273,6 +274,7 @@ export interface MockAAdapterOptions {
   maxRetries: number
   timeoutMs: number
   baseBackoffMs?: number
+  metrics?: ScrapingMetrics
 }
 
 /** Builds the adapter with a polite client: robots.txt, spacing, retries and the closed error mapping. */
@@ -297,6 +299,9 @@ export function createMockAAdapter(options: MockAAdapterOptions): MockAAdapter {
     clock,
     sleep: options.sleep,
     random: options.random,
+    metrics: options.metrics,
+    metricsPlatform: MOCK_A_PLATFORM,
+    metricsTransport: 'http',
   })
   return new MockAAdapter({ baseUrl: options.baseUrl, http, clock })
 }

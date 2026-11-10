@@ -2,6 +2,7 @@ import './platform/bootstrap.js'
 
 import { randomUUID } from 'node:crypto'
 
+import { metrics as otelMetrics } from '@opentelemetry/api'
 import { Redis } from 'ioredis'
 
 import { fetchTransport, systemSleep } from './adapters/http.js'
@@ -14,7 +15,8 @@ import { systemClock } from './clock.js'
 import { loadConfig } from './config.js'
 import { buildServer } from './http/server.js'
 import { RedisIdempotencyStore } from './idempotency.js'
-import { BullJobService, startJobWorkers } from './jobs/bull.js'
+import { BullJobService, createQueueDepthReader, startJobWorkers } from './jobs/bull.js'
+import { createOtelScrapingMetrics } from './metrics.js'
 import { UnleashFlags } from './platform/flags.js'
 import { createLogger } from './platform/telemetry.js'
 
@@ -30,6 +32,7 @@ async function main(): Promise<void> {
   const connection = new Redis(config.redisUrl, { maxRetriesPerRequest: null })
   const flags = UnleashFlags.fromEnv(process.env)
   const stopPolling = flags.startPolling(FLAG_POLL_INTERVAL_MS)
+  const scrapingMetrics = createOtelScrapingMetrics(otelMetrics.getMeter(SERVICE_NAME))
 
   // Adapters are registered only when their configuration is present. The flag gate in the registry still decides
   // whether a platform is callable, so a registered adapter with its flag off is never called.
@@ -46,12 +49,18 @@ async function main(): Promise<void> {
         minIntervalMs: config.adapterMinIntervalMs,
         maxRetries: config.adapterMaxRetries,
         timeoutMs: config.adapterTimeoutMs,
+        metrics: scrapingMetrics,
       })
     )
   }
   const registry = new AdapterRegistry(adapters, flags)
+  const queueDepth = createQueueDepthReader(
+    registry.status().map((status) => status.platform),
+    connection
+  )
+  void scrapingMetrics.registerQueueDepth(() => queueDepth.read())
   const jobs = new BullJobService(registry, connection, config)
-  const workers = startJobWorkers(registry, config, connection, logger)
+  const workers = startJobWorkers(registry, config, connection, logger, scrapingMetrics)
   const chats = new ChatService({
     registry,
     store: new RedisChatStore(connection),
@@ -72,6 +81,7 @@ async function main(): Promise<void> {
     await app.close()
     await workers.close()
     await jobs.close()
+    await queueDepth.close()
     await connection.quit()
   }
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
