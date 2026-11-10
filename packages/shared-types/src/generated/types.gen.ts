@@ -228,6 +228,29 @@ export type CreateOnboardingSessionRequest = {
   base_currency: Currency
 }
 
+export type IntakeMessage = {
+  id: string
+  role: 'user' | 'agent'
+  text: string
+  created_at: string
+}
+
+export type IntakeMessageList = {
+  items: Array<IntakeMessage>
+}
+
+export type SendIntakeMessageRequest = {
+  text: string
+}
+
+export type IntakeTurn = {
+  /**
+   * The user message followed by the agent reply.
+   */
+  messages: Array<IntakeMessage>
+  session: OnboardingSession
+}
+
 export type OnboardingSession = {
   id: string
   status: OnboardingStatus
@@ -1622,6 +1645,87 @@ export type UpdateOnboardingSessionResponses = {
 
 export type UpdateOnboardingSessionResponse =
   UpdateOnboardingSessionResponses[keyof UpdateOnboardingSessionResponses]
+
+export type ListIntakeMessagesData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/onboarding/sessions/{id}/messages'
+}
+
+export type ListIntakeMessagesErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type ListIntakeMessagesError = ListIntakeMessagesErrors[keyof ListIntakeMessagesErrors]
+
+export type ListIntakeMessagesResponses = {
+  /**
+   * Messages, oldest first.
+   */
+  200: IntakeMessageList
+}
+
+export type ListIntakeMessagesResponse =
+  ListIntakeMessagesResponses[keyof ListIntakeMessagesResponses]
+
+export type SendIntakeMessageData = {
+  body: SendIntakeMessageRequest
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/onboarding/sessions/{id}/messages'
+}
+
+export type SendIntakeMessageErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+}
+
+export type SendIntakeMessageError = SendIntakeMessageErrors[keyof SendIntakeMessageErrors]
+
+export type SendIntakeMessageResponses = {
+  /**
+   * The user message and the agent reply, plus the session after the turn.
+   */
+  200: IntakeTurn
+}
+
+export type SendIntakeMessageResponse = SendIntakeMessageResponses[keyof SendIntakeMessageResponses]
 
 export type UploadFinancialCsvData = {
   body: FinancialCsvUpload

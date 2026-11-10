@@ -253,6 +253,27 @@ export const zUser = z.object({
 
 export type userZodType = z.infer<typeof zUser>
 
+export const zIntakeMessage = z.object({
+  id: z.string(),
+  role: z.enum(['user', 'agent']),
+  text: z.string(),
+  created_at: z.string().datetime(),
+})
+
+export type intakeMessageZodType = z.infer<typeof zIntakeMessage>
+
+export const zIntakeMessageList = z.object({
+  items: z.array(zIntakeMessage),
+})
+
+export type intakeMessageListZodType = z.infer<typeof zIntakeMessageList>
+
+export const zSendIntakeMessageRequest = z.object({
+  text: z.string().min(1).max(4000),
+})
+
+export type sendIntakeMessageRequestZodType = z.infer<typeof zSendIntakeMessageRequest>
+
 export const zFinancialCsvUpload = z.object({
   file: z.string(),
 })
@@ -1744,6 +1765,13 @@ export const zOnboardingSession = z.object({
 
 export type onboardingSessionZodType = z.infer<typeof zOnboardingSession>
 
+export const zIntakeTurn = z.object({
+  messages: z.array(zIntakeMessage),
+  session: zOnboardingSession,
+})
+
+export type intakeTurnZodType = z.infer<typeof zIntakeTurn>
+
 export const zConfigChangeRequest = z.object({
   base_config_version: z.number().int().gte(1),
   category: z.string().nullish(),
@@ -1803,6 +1831,30 @@ export const zUpdateOnboardingSessionPath = z.object({
  * Session updated.
  */
 export const zUpdateOnboardingSessionResponse = zOnboardingSession
+
+export const zListIntakeMessagesPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Messages, oldest first.
+ */
+export const zListIntakeMessagesResponse = zIntakeMessageList
+
+export const zSendIntakeMessageBody = zSendIntakeMessageRequest
+
+export const zSendIntakeMessageHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zSendIntakeMessagePath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * The user message and the agent reply, plus the session after the turn.
+ */
+export const zSendIntakeMessageResponse = zIntakeTurn
 
 export const zUploadFinancialCsvBody = zFinancialCsvUpload
 

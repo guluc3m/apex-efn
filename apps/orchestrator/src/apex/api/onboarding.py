@@ -110,6 +110,18 @@ async def create_onboarding_session(
     return SessionOut.of(await service.start_session(tenant_id=tenant_id))
 
 
+@router.get("/sessions/{id}/messages", tags=["onboarding"])
+async def list_intake_messages(id: str) -> None:
+    """IntakeAgent conversation history. Contract first (D6-04-contract); the agent turn is not wired yet."""
+    raise not_implemented("the IntakeAgent chat is not wired yet")
+
+
+@router.post("/sessions/{id}/messages", tags=["onboarding"])
+async def send_intake_message(id: str) -> None:
+    """Send a message to the IntakeAgent. Contract first (D6-04-contract); not wired yet."""
+    raise not_implemented("the IntakeAgent chat is not wired yet")
+
+
 @router.patch("/sessions/{id}", response_model=SessionOut, tags=["onboarding"])
 async def update_profile(
     id: str,
