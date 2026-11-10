@@ -1,0 +1,18 @@
+{
+  "$schema": "../schema.json",
+  "engine": "sample.mean",
+  "description": "Framework sample (D3-01): arithmetic mean, to exercise the statistics tolerance (ADR-300).",
+  "source": "Hand calculation",
+  "tolerance": 1e-12,
+  "vectors": [
+    {
+      "name": "binary-fraction",
+      "note": "0.1 + 0.2 is not 0.3 in IEEE 754; the tolerance absorbs it",
+      "input": [0.1, 0.2],
+      "expected": 0.15
+    },
+    { "name": "integers", "input": [1, 2, 3, 4], "expected": 2.5 },
+    { "name": "exact-override", "input": [2, 2], "expected": 2, "tolerance": 0 }
+  ],
+  "errors": [{ "name": "empty", "input": [], "expected": { "error": "empty_sample" } }]
+}

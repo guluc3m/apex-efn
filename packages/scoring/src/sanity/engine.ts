@@ -48,10 +48,14 @@ export class PriceSanityEngine {
    * @param offerId Offer being checked
    * @param priceEur Price in EUR minor units
    * @param referencePrices Array of reference prices in EUR minor units
+   * @param now ISO-8601 timestamp from the injected clock (ADR-300)
    */
-  check(offerId: string, priceEur: number, referencePrices: number[]): PriceSanityCheck {
-    const now = new Date().toISOString()
-
+  check(
+    offerId: string,
+    priceEur: number,
+    referencePrices: number[],
+    now: string
+  ): PriceSanityCheck {
     // Insufficient reference data
     if (referencePrices.length < this.config.minSample) {
       return {
@@ -85,22 +89,38 @@ export class PriceSanityEngine {
 
     // Check absolute bounds first (they override statistical bands)
     if (this.config.floorPerUnit !== undefined && priceEur < this.config.floorPerUnit) {
-      return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, 'implausible', 'discard', [
-        { code: 'none', detail: `Below absolute floor ${this.config.floorPerUnit}` },
-      ])
+      return this.buildResult(
+        offerId,
+        sampleSize,
+        stats,
+        indexScore,
+        relDev,
+        'implausible',
+        'discard',
+        [{ code: 'none', detail: `Below absolute floor ${this.config.floorPerUnit}` }],
+        now
+      )
     }
 
     if (this.config.ceilingPerUnit !== undefined && priceEur > this.config.ceilingPerUnit) {
-      return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, 'implausible', 'discard', [
-        { code: 'none', detail: `Above absolute ceiling ${this.config.ceilingPerUnit}` },
-      ])
+      return this.buildResult(
+        offerId,
+        sampleSize,
+        stats,
+        indexScore,
+        relDev,
+        'implausible',
+        'discard',
+        [{ code: 'none', detail: `Above absolute ceiling ${this.config.ceilingPerUnit}` }],
+        now
+      )
     }
 
     // Determine band from index score and relative deviation
     const band = this.determineBand(indexScore, relDev, priceEur < stats.median)
     const decision = this.bandToDecision(band)
 
-    return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, band, decision, [])
+    return this.buildResult(offerId, sampleSize, stats, indexScore, relDev, band, decision, [], now)
   }
 
   private determineBand(
@@ -152,7 +172,8 @@ export class PriceSanityEngine {
     relDev: number,
     band: PriceSanityBand,
     decision: SanityDecision,
-    explanations: PriceSanityCheck['explanations']
+    explanations: PriceSanityCheck['explanations'],
+    now: string
   ): PriceSanityCheck {
     return {
       offerId,
@@ -167,7 +188,7 @@ export class PriceSanityEngine {
       decision,
       explanations,
       configVersion: this.config.configVersion,
-      checkedAt: new Date().toISOString(),
+      checkedAt: now,
     }
   }
 

@@ -64,5 +64,18 @@ describe('FxConverter', () => {
     const result = fx.convert(new Money(100, 'EUR'), 'EUR', now)
     expect(result?.converted).toBe(false)
     expect(result?.money.amountMinor).toBe(100)
+    expect(result?.rate.asOf).toBe(now.toISOString())
+  })
+
+  it('stamps an identity rate with the injected clock', () => {
+    expect(fx.getRate('USD', 'USD', now)?.asOf).toBe(now.toISOString())
+  })
+
+  it('only replaces a rate with a newer one', () => {
+    const local = new FxConverter([rate('USD', 1.1)])
+    local.updateRates([rate('USD', 1.0, '2026-01-01T00:00:00.000Z')])
+    expect(local.getDirectRate('EUR', 'USD')?.rate).toBe(1.1)
+    local.updateRates([rate('USD', 1.2, '2026-01-02T12:00:00.000Z')])
+    expect(local.getDirectRate('EUR', 'USD')?.rate).toBe(1.2)
   })
 })

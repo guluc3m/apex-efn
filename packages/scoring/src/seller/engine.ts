@@ -5,7 +5,11 @@ import type {
   SellerConfidenceBand,
 } from '@apex/shared-types/seller'
 
-import { detectReviewAnomalies, hasAnyAnomaly, type ReviewAnomalyDetectorConfig } from './anomalies.js'
+import {
+  detectReviewAnomalies,
+  hasAnyAnomaly,
+  type ReviewAnomalyDetectorConfig,
+} from './anomalies.js'
 import { normalizeSignals, type NormalizationConfig } from './normalize.js'
 
 export interface SellerConfidenceEngineConfig {
@@ -78,10 +82,10 @@ export class SellerConfidenceEngine {
   compute(
     sellerId: string,
     signals: RawSellerSignals,
-    snapshotId: string
+    snapshotId: string,
+    /** ISO-8601 timestamp from the injected clock (ADR-300). */
+    now: string
   ): SellerConfidence {
-    const now = new Date().toISOString()
-
     // Step 1: Normalize signals
     const normalized = normalizeSignals(signals, this.config.normalization)
 
@@ -101,7 +105,7 @@ export class SellerConfidenceEngine {
     }
 
     // Step 3: Detect anomalies
-    const anomalies = detectReviewAnomalies(signals, this.config.anomalyDetection)
+    const anomalies = detectReviewAnomalies(signals, now, this.config.anomalyDetection)
 
     // Step 4: Calculate weighted score
     const rawScore = this.calculateWeightedScore(normalized)

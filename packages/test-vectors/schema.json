@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-efn/test-vectors/domain-vectors.schema.json",
+  "title": "Domain engine vector file (ADR-300)",
+  "description": "Every *.json under packages/test-vectors/ except signing/. Both the Vitest and the Pytest runner execute every case.",
+  "type": "object",
+  "required": ["engine", "description", "vectors"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "engine": {
+      "description": "Dotted id of the function under test, e.g. money.round or trust.compute. Each runner maps it to its implementation and fails on an unknown id.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "source": {
+      "description": "Where the expected values come from (spec section, RFC, hand calculation).",
+      "type": "string"
+    },
+    "tolerance": { "$ref": "#/$defs/tolerance" },
+    "vectors": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/vector" } },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/errorVector" } }
+  },
+  "$defs": {
+    "tolerance": {
+      "description": "Absolute tolerance for numbers in expected. 0 (the default) means exact. Money and integer outputs are always exact.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.001
+    },
+    "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$" },
+    "vector": {
+      "type": "object",
+      "required": ["name", "input", "expected"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "note": { "type": "string" },
+        "input": {},
+        "config": {},
+        "expected": {},
+        "tolerance": { "$ref": "#/$defs/tolerance" }
+      }
+    },
+    "errorVector": {
+      "type": "object",
+      "required": ["name", "input", "expected"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "note": { "type": "string" },
+        "input": {},
+        "config": {},
+        "expected": {
+          "type": "object",
+          "required": ["error"],
+          "additionalProperties": false,
+          "properties": { "error": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" } }
+        }
+      }
+    }
+  }
+}

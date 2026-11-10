@@ -53,13 +53,13 @@ export class FxConverter {
   /**
    * Get rate with triangulation through EUR pivot
    */
-  getRate(base: Currency, quote: Currency, referenceTime?: Date): FxRate | null {
+  getRate(base: Currency, quote: Currency, now: Date): FxRate | null {
     if (base === quote) {
       return {
         base,
         quote,
         rate: 1,
-        asOf: new Date().toISOString(),
+        asOf: now.toISOString(),
         source: 'identity',
       }
     }
@@ -67,13 +67,13 @@ export class FxConverter {
     // Try direct rate
     const direct = this.getDirectRate(base, quote)
     if (direct) {
-      return this.validateFreshness(direct, referenceTime)
+      return this.validateFreshness(direct, now)
     }
 
     // Try inverse
     const inverse = this.getDirectRate(quote, base)
     if (inverse) {
-      const validated = this.validateFreshness(inverse, referenceTime)
+      const validated = this.validateFreshness(inverse, now)
       if (!validated) return null
       return {
         base,
@@ -86,12 +86,12 @@ export class FxConverter {
 
     // Triangulate through EUR
     if (base !== FX_PIVOT_CURRENCY && quote !== FX_PIVOT_CURRENCY) {
-      const baseToPivot = this.getRate(base, FX_PIVOT_CURRENCY, referenceTime)
-      const pivotToQuote = this.getRate(FX_PIVOT_CURRENCY, quote, referenceTime)
+      const baseToPivot = this.getRate(base, FX_PIVOT_CURRENCY, now)
+      const pivotToQuote = this.getRate(FX_PIVOT_CURRENCY, quote, now)
 
       if (baseToPivot && pivotToQuote) {
         const olderAsOf =
-          new Date(baseToPivot.asOf) < new Date(pivotToQuote.asOf)
+          Date.parse(baseToPivot.asOf) < Date.parse(pivotToQuote.asOf)
             ? baseToPivot.asOf
             : pivotToQuote.asOf
         return {
@@ -110,7 +110,7 @@ export class FxConverter {
   /**
    * Convert money to target currency
    */
-  convert(money: Money, targetCurrency: Currency, referenceTime?: Date): ConversionResult | null {
+  convert(money: Money, targetCurrency: Currency, now: Date): ConversionResult | null {
     if (money.currency === targetCurrency) {
       return {
         money,
@@ -119,14 +119,14 @@ export class FxConverter {
           base: money.currency,
           quote: targetCurrency,
           rate: 1,
-          asOf: new Date().toISOString(),
+          asOf: now.toISOString(),
           source: 'identity',
         },
         converted: false,
       }
     }
 
-    const rate = this.getRate(money.currency, targetCurrency, referenceTime)
+    const rate = this.getRate(money.currency, targetCurrency, now)
     if (!rate) {
       return null
     }
@@ -143,17 +143,15 @@ export class FxConverter {
   /**
    * Check if rate is fresh enough
    */
-  isRateFresh(rate: FxRate, referenceTime?: Date): boolean {
-    const ref = referenceTime ?? new Date()
-    const rateTime = new Date(rate.asOf)
-    return ref.getTime() - rateTime.getTime() < this.maxAgeMs
+  isRateFresh(rate: FxRate, now: Date): boolean {
+    return now.getTime() - Date.parse(rate.asOf) < this.maxAgeMs
   }
 
   /**
    * Returns null if rate is stale
    */
-  private validateFreshness(rate: FxRate, referenceTime?: Date): FxRate | null {
-    if (!this.isRateFresh(rate, referenceTime)) {
+  private validateFreshness(rate: FxRate, now: Date): FxRate | null {
+    if (!this.isRateFresh(rate, now)) {
       return null
     }
     return rate
@@ -168,7 +166,7 @@ export class FxConverter {
       const existing = this.rates.get(key)
 
       // Only update if newer
-      if (!existing || new Date(rate.asOf) > new Date(existing.asOf)) {
+      if (!existing || Date.parse(rate.asOf) > Date.parse(existing.asOf)) {
         this.rates.set(key, rate)
       }
     }
