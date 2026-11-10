@@ -10,6 +10,9 @@
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
   "accessTokenLifespan": 300,
+  "attributes": {
+    "acr.loa.map": "{\"urn:apex:loa:2\": 2}"
+  },
   "roles": {
     "realm": [
       {
