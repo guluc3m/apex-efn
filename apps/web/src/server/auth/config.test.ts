@@ -2,6 +2,10 @@ import { NextRequest } from 'next/server'
 import type { Session } from 'next-auth'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const mocks = vi.hoisted(() => ({ linkExternalSubject: vi.fn() }))
+
+vi.mock('./provision', () => ({ linkExternalSubject: mocks.linkExternalSubject }))
+
 import {
   authorized,
   isPublicPath,
@@ -18,6 +22,8 @@ beforeEach(() => {
   process.env.AUTH_KEYCLOAK_ISSUER = ISSUER
   process.env.AUTH_KEYCLOAK_ID = 'apex-web'
   process.env.AUTH_KEYCLOAK_SECRET = 'secret'
+  mocks.linkExternalSubject.mockReset()
+  mocks.linkExternalSubject.mockResolvedValue(1)
 })
 
 afterEach(() => {
@@ -44,6 +50,7 @@ const signIn = {
   },
   profile: {
     sub: 'user-1',
+    email: 'user-1@apex.local',
     tenant_id: 'tenant-a',
     roles: ['buyer', 'offline_access', 'finance'],
     auth_time: 900,
@@ -72,6 +79,26 @@ describe('jwtCallback', () => {
       roles: ['buyer', 'finance'],
       auth_time: 900,
     })
+  })
+
+  it('links the external subject to the token subject on first sign-in', async () => {
+    await jwtCallback(signIn, deps())
+    expect(mocks.linkExternalSubject).toHaveBeenCalledExactlyOnceWith({
+      sub: 'user-1',
+      email: 'user-1@apex.local',
+    })
+  })
+
+  it('does not try to link a user when the profile has no email', async () => {
+    await jwtCallback({ ...signIn, profile: { sub: 'user-1' } }, deps())
+    expect(mocks.linkExternalSubject).not.toHaveBeenCalled()
+  })
+
+  it('still completes the sign-in when provisioning fails', async () => {
+    mocks.linkExternalSubject.mockRejectedValueOnce(new Error('database down'))
+    const token = await jwtCallback(signIn, deps())
+    expect(token.sub).toBe('user-1')
+    expect(token.access_token).toBe('access-token')
   })
 
   it('keeps a valid token untouched and does not refresh', async () => {
@@ -140,7 +167,7 @@ describe('sessionCallback', () => {
     const session = sessionCallback({
       session: {
         expires: '2099-01-01',
-        user: { id: '', tenantId: null, roles: [], authTime: null },
+        user: { id: '', user_id: '', tenantId: null, roles: [], authTime: null },
       },
       token: {
         sub: 'user-1',
@@ -154,6 +181,7 @@ describe('sessionCallback', () => {
 
     expect(session.user).toEqual({
       id: 'user-1',
+      user_id: 'user-1',
       tenantId: 'tenant-a',
       roles: ['owner'],
       authTime: 900,
@@ -166,11 +194,17 @@ describe('sessionCallback', () => {
     const session = sessionCallback({
       session: {
         expires: '2099-01-01',
-        user: { id: '', tenantId: null, roles: [], authTime: null },
+        user: { id: '', user_id: '', tenantId: null, roles: [], authTime: null },
       },
       token: { sub: 'user-1' },
     })
-    expect(session.user).toEqual({ id: 'user-1', tenantId: null, roles: [], authTime: null })
+    expect(session.user).toEqual({
+      id: 'user-1',
+      user_id: 'user-1',
+      tenantId: null,
+      roles: [],
+      authTime: null,
+    })
   })
 })
 

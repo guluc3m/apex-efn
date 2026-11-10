@@ -32,7 +32,22 @@ async def test_valid_bearer_resolves_the_principal(provider, settings, make_toke
     assert principal.user_id == "user-1"
     assert principal.tenant_id == "tenant-a"
     assert principal.roles == ("owner",)
+    assert principal.auth_time == int(NOW.timestamp()) - 60
+    assert principal.acr is None
     assert principal.is_signer is True
+
+
+async def test_step_up_acr_reaches_the_principal(provider, settings, make_token, make_request):
+    request = make_request(
+        {"authorization": f"Bearer {make_token(claims={'acr': 'urn:apex:loa:2'})}"}
+    )
+
+    principal = await current_principal(
+        request, settings=settings, provider=provider, clock=lambda: NOW
+    )
+
+    assert principal.acr == "urn:apex:loa:2"
+    assert principal.auth_time == int(NOW.timestamp()) - 60
 
 
 async def test_bearer_wins_over_the_tenant_header(
@@ -101,6 +116,7 @@ async def test_dev_mode_resolves_the_header_and_dev_roles(
     assert principal.tenant_id == "tenant-dev"
     assert principal.roles == ("owner", "admin")
     assert principal.auth_time is None
+    assert principal.acr is None
 
 
 async def test_dev_mode_without_the_header_is_a_401(provider, settings, make_request, monkeypatch):

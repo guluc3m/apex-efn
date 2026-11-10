@@ -18,7 +18,9 @@ export const signOut = nextAuth.signOut
  */
 export type SignInFn = (
   provider: string,
-  options?: { redirect?: boolean; redirectTo?: string } & Record<string, unknown>
+  options?: { redirect?: boolean; redirectTo?: string } & Record<string, unknown>,
+  /** OIDC authorization parameters forwarded verbatim to the IdP (`acr_values`, `max_age`, …). */
+  authorizationParams?: Record<string, string> | URLSearchParams
 ) => Promise<unknown>
 
 export const signIn: SignInFn = nextAuth.signIn

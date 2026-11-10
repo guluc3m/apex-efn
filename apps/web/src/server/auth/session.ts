@@ -14,8 +14,10 @@ export async function getSession(): Promise<WebSession | null> {
   if (!user?.id) return null
 
   return {
+    user_id: user.id,
     user: {
       id: user.id,
+      user_id: user.id,
       tenantId: user.tenantId ?? null,
       roles: Array.isArray(user.roles) ? [...user.roles] : [],
       authTime: typeof user.authTime === 'number' ? user.authTime : null,

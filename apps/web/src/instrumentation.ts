@@ -18,6 +18,22 @@ export async function register(): Promise<void> {
   const { registerOTel } = await import('@vercel/otel')
   registerOTel({ serviceName: 'apex-web' })
 
+  // Web-side provisioning (#270) needs Prisma at sign-in. Prisma is registered here, in the Node
+  // runtime only, so it never enters the edge middleware bundle that also imports the Auth.js
+  // config. Without DATABASE_URL the client is not registered and the sign-in link is skipped.
+  if (process.env.DATABASE_URL) {
+    try {
+      const [{ PrismaClient }, { setDefaultExternalSubjectClient }] = await Promise.all([
+        import('@prisma/client'),
+        import('./server/auth/provision'),
+      ])
+      setDefaultExternalSubjectClient(new PrismaClient())
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'unknown error'
+      console.error('[auth] Prisma client not registered; sign-in cannot link users:', reason)
+    }
+  }
+
   const dsn = process.env.SENTRY_DSN
   if (dsn) {
     const Sentry = await import('@sentry/nextjs')

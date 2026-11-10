@@ -48,6 +48,9 @@ class VerifiedToken:
     tenant_id: str
     roles: tuple[str, ...]
     auth_time: int | None
+    #: ``acr`` claim (Authentication Context Class Reference). Keycloak emits it through the ``acr``
+    #: client scope when the realm maps an ACR value to a Level of Authentication (ADR-900 Q11).
+    acr: str | None
     expires_at: datetime
     claims: Mapping[str, Any]
 
@@ -169,11 +172,16 @@ async def verify_access_token(
     if auth_time is not None and _as_int(auth_time) is None:
         raise AuthError(MALFORMED)
 
+    acr = claims.get("acr")
+    if acr is not None and not isinstance(acr, str):
+        raise AuthError(MALFORMED)
+
     return VerifiedToken(
         user_id=subject,
         tenant_id=tenant_id,
         roles=_roles_from(claims),
         auth_time=_as_int(auth_time),
+        acr=acr,
         expires_at=datetime.fromtimestamp(exp, UTC),
         claims=MappingProxyType(dict(claims)),
     )

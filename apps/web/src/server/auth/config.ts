@@ -5,6 +5,7 @@ import Keycloak from 'next-auth/providers/keycloak'
 
 import { locales } from '@/i18n/routing'
 
+import { linkExternalSubject } from './provision'
 import { toRoles, type KeycloakClaims } from './types'
 
 /** Refresh this many seconds before the access token really expires. */
@@ -159,6 +160,17 @@ export async function jwtCallback(
     token.roles = toRoles(claims.roles)
     token.auth_time = typeof claims.auth_time === 'number' ? claims.auth_time : token.auth_time
     if (typeof claims.sub === 'string') token.sub = claims.sub
+
+    // First sign-in only (`account` is present). A database failure never blocks the login: the
+    // helper logs and returns 0, and this guard also covers an unexpected rejection.
+    if (typeof claims.sub === 'string' && typeof claims.email === 'string') {
+      try {
+        await linkExternalSubject({ sub: claims.sub, email: claims.email })
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : 'unknown error'
+        console.error('[auth] external subject provisioning failed:', reason)
+      }
+    }
     return token
   }
 
@@ -169,8 +181,10 @@ export async function jwtCallback(
 
 /** Only identifiers, never tokens: the session object reaches the browser. */
 export function sessionCallback({ session, token }: SessionCallbackParams): Session {
+  const userId = typeof token.sub === 'string' ? token.sub : ''
   session.user = {
-    id: typeof token.sub === 'string' ? token.sub : '',
+    id: userId,
+    user_id: userId,
     tenantId: typeof token.tenant_id === 'string' ? token.tenant_id : null,
     roles: toRoles(token.roles),
     authTime: typeof token.auth_time === 'number' ? token.auth_time : null,

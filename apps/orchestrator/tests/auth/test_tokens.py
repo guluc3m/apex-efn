@@ -35,8 +35,20 @@ async def test_valid_token_becomes_a_verified_token(provider, settings, make_tok
     assert verified.tenant_id == "tenant-a"
     assert verified.roles == ("owner",)
     assert verified.auth_time == int((NOW - timedelta(minutes=1)).timestamp())
+    assert verified.acr is None
     assert verified.expires_at == NOW + timedelta(minutes=5)
     assert verified.is_signer is True
+
+
+async def test_step_up_acr_is_exposed(provider, settings, make_token):
+    verified = await verify_access_token(
+        make_token(claims={"acr": "urn:apex:loa:2"}),
+        provider=provider,
+        settings=settings,
+        now=NOW,
+    )
+
+    assert verified.acr == "urn:apex:loa:2"
 
 
 async def test_roles_are_filtered_to_the_closed_set_in_canonical_order(
@@ -81,6 +93,7 @@ async def test_claims_are_read_only(provider, settings, make_token):
         ({"tenant_id": None}, MISSING_CLAIM),
         ({"tenant_id": "   "}, MALFORMED),
         ({"auth_time": "soon"}, MALFORMED),
+        ({"acr": 2}, MALFORMED),
     ],
 )
 async def test_claim_problems_are_refused_with_a_closed_reason(

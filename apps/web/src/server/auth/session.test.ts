@@ -23,7 +23,14 @@ describe('getSession', () => {
       user: { id: 'user-1', tenantId: 'tenant-a', roles: ['buyer', 'finance'], authTime: 1700 },
     })
     await expect(getSession()).resolves.toEqual({
-      user: { id: 'user-1', tenantId: 'tenant-a', roles: ['buyer', 'finance'], authTime: 1700 },
+      user_id: 'user-1',
+      user: {
+        id: 'user-1',
+        user_id: 'user-1',
+        tenantId: 'tenant-a',
+        roles: ['buyer', 'finance'],
+        authTime: 1700,
+      },
     })
   })
 
@@ -44,7 +51,14 @@ describe('getSession', () => {
 
     const session = await getSession()
     expect(session).toEqual({
-      user: { id: 'user-1', tenantId: 'tenant-a', roles: ['owner'], authTime: 1700 },
+      user_id: 'user-1',
+      user: {
+        id: 'user-1',
+        user_id: 'user-1',
+        tenantId: 'tenant-a',
+        roles: ['owner'],
+        authTime: 1700,
+      },
     })
     expect(JSON.stringify(session)).not.toContain('access-token-value')
     expect(JSON.stringify(session)).not.toContain('refresh-token-value')

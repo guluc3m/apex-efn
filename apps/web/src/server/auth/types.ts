@@ -25,6 +25,7 @@ export function toRoles(value: unknown): Role[] {
 /** Claims Auth.js copies from the Keycloak ID token (`profile`). */
 export interface KeycloakClaims {
   sub?: string
+  email?: string
   tenant_id?: string
   roles?: unknown
   auth_time?: number
@@ -35,13 +36,18 @@ export interface KeycloakClaims {
  * and in the JWT; they are never copied into this object (D1-05b design item 2).
  */
 export interface WebSessionUser {
+  /** Keycloak `sub`. Kept for compatibility; the same value is exposed as `WebSession.user_id`. */
   id: string
+  /** Keycloak `sub` in the flat shape DEV-6 consumes. Equal to `user.id`. */
+  user_id: string
   tenantId: string | null
   roles: Role[]
   authTime: number | null
 }
 
 export interface WebSession {
+  /** Keycloak `sub` of the signed-in user. Flat alias of `user.id` (DEV-6 contract). */
+  user_id: string
   user: WebSessionUser
 }
 
