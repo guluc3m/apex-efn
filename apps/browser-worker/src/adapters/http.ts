@@ -192,6 +192,27 @@ export class PoliteHttpClient {
     })
   }
 
+  /** POSTs an `application/x-www-form-urlencoded` body and returns the HTML the platform answered. */
+  async postFormText(
+    url: string,
+    fields: Record<string, string>,
+    options: RequestOptions = {}
+  ): Promise<string> {
+    return this.observed(async () => {
+      const response = await this.send({
+        ...options,
+        method: 'POST',
+        url,
+        headers: {
+          accept: 'text/html',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(fields).toString(),
+      })
+      return response.body
+    })
+  }
+
   async postJson<T>(
     url: string,
     payload: object,
