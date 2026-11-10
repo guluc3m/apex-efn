@@ -23,10 +23,16 @@ Owner: DEV-1 (task D1-03). Entry point: `compose.yaml` at the repo root, which `
 | `pnpm dev:reset`                                 | Runs `infra/scripts/dev-reset.sh`: `down -v` (wipes all volumes), `up -d --wait`, then migrations and seed **only if they exist** (Prisma from D2-03, `load_defaults` from D4-03). It prints a skip message otherwise. |
 | `pnpm docker:up` / `docker:down` / `docker:logs` | Legacy aliases, kept.                                                                                                                                                                                                  |
 
-Start the app services too (not buildable yet, see section 7):
+Start the app services too (`mock-marketplace` builds from source; the rest still wait for D1-09):
 
 ```bash
 docker compose --profile apps up -d --build
+```
+
+Start the experimental browser stack (Camoufox + crw, see "Browser stack" in section 4):
+
+```bash
+docker compose --profile browser up -d camoufox crw
 ```
 
 ## 3. Cold start
@@ -38,26 +44,28 @@ docker compose --profile apps up -d --build
 
 ## 4. Services, ports and dev credentials
 
-| Service                           | Host URL / port                                  | Image (pinned)                                     | Dev credentials / notes                                                                                                                                              |
-| --------------------------------- | ------------------------------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`            | user `apex` / `apex`. DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`.                                                                      |
-| Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                              | no auth                                                                                                                                                              |
-| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` | `minioadmin` / `minioadmin`                                                                                                                                          |
-| MinIO console                     | `http://localhost:9001`                          | (same)                                             | `minioadmin` / `minioadmin`                                                                                                                                          |
-| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`    | creates buckets, see section 6                                                                                                                                       |
-| Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                   | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                        |
-| Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                           | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                          |
-| Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                  | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here). |
-| Langfuse v2                       | `http://localhost:3001`                          | `langfuse/langfuse:2.95.11`                        | no seeded user: sign up locally on first visit                                                                                                                       |
-| Grafana                           | `http://localhost:3002`                          | `grafana/grafana:12.4.14`                          | `admin` / `admin`. Datasources (Prometheus, Loki, Tempo) are provisioned. No dashboards yet (D1-07).                                                                 |
-| Prometheus                        | `http://localhost:9090`                          | `prom/prometheus:v3.16.0`                          | no auth. Scrapes the OTel collector.                                                                                                                                 |
-| Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                              | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                          |
-| Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                            | no auth. Receives traces from the collector.                                                                                                                         |
-| OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`     | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                            |
-| LLM stub (OpenAI-compatible)      | `http://localhost:8001/v1`                       | built from `apps/llm-stub` (`apex/llm-stub:dev`)   | no auth. Scenarios are baked into the image; select one with `X-Stub-Scenario`. See "LLM stub" below.                                                                |
-| Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                     | not buildable until D1-09                                                                                                                                            |
-| Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace`                 | port is provisional. Not buildable until D5-04.                                                                                                                      |
-| Web (profile `apps`)              | no host port                                     | built from `apps/web`                              | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                       |
+| Service                           | Host URL / port                                  | Image (pinned)                                                   | Dev credentials / notes                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`                          | user `apex` / `apex`. DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`.                                                                      |
+| Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                                            | no auth                                                                                                                                                              |
+| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`               | `minioadmin` / `minioadmin`                                                                                                                                          |
+| MinIO console                     | `http://localhost:9001`                          | (same)                                                           | `minioadmin` / `minioadmin`                                                                                                                                          |
+| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`                  | creates buckets, see section 6                                                                                                                                       |
+| Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                                 | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                        |
+| Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                                         | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                          |
+| Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                                | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here). |
+| Langfuse v2                       | `http://localhost:3001`                          | `langfuse/langfuse:2.95.11`                                      | no seeded user: sign up locally on first visit                                                                                                                       |
+| Grafana                           | `http://localhost:3002`                          | `grafana/grafana:12.4.14`                                        | `admin` / `admin`. Datasources (Prometheus, Loki, Tempo) are provisioned. No dashboards yet (D1-07).                                                                 |
+| Prometheus                        | `http://localhost:9090`                          | `prom/prometheus:v3.16.0`                                        | no auth. Scrapes the OTel collector.                                                                                                                                 |
+| Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                                            | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                          |
+| Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                                          | no auth. Receives traces from the collector.                                                                                                                         |
+| OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`                   | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                            |
+| LLM stub (OpenAI-compatible)      | `http://localhost:8001/v1`                       | built from `apps/llm-stub` (`apex/llm-stub:dev`)                 | no auth. Scenarios are baked into the image; select one with `X-Stub-Scenario`. See "LLM stub" below.                                                                |
+| Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                                   | not buildable until D1-09                                                                                                                                            |
+| Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace` (`apex/mock-marketplace:dev`) | synthetic data only, never deploy. Health: `curl -m 5 http://localhost:8002/healthz`.                                                                                |
+| Web (profile `apps`)              | no host port                                     | built from `apps/web`                                            | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                       |
+| Camoufox (profile `browser`)      | `ws://localhost:13000/camoufox`                  | `ghcr.io/rjocoleman/camoufox-server:150.0.2`                     | experimental Playwright websocket (ADR-500). No HTTP health endpoint, so no compose healthcheck.                                                                     |
+| crw (profile `browser`)           | `http://localhost:13001`                         | `ghcr.io/fastcrw/crw:0.43.2`                                     | Firecrawl-compatible crawler, AGPL-3.0. Health: `GET /health` (`{"status":"ok","version":"0.43.2"}`).                                                                |
 
 ### LLM stub
 
@@ -75,6 +83,41 @@ The stub is built from source (`apps/llm-stub`, image `apex/llm-stub:dev`); Mock
 - Gateway config: `LLM_GATEWAY_URL=http://localhost:8001/v1` from the host (already in `.env.example`),
   or `http://llm-stub:8001/v1` from another compose service.
 - The container is non-root (UID 10001) and the same image is what the `llm-stub` CI job tests.
+
+### Browser stack (profile `browser`, ADR-500)
+
+Two pinned third-party images, both off by default so a plain `docker compose up` is unchanged.
+Neither has a healthcheck that proves the browser is usable: Camoufox gets none, crw gets a plain
+HTTP `/health` probe. Both use `restart: unless-stopped`.
+
+```bash
+docker compose --profile browser up -d camoufox crw
+docker compose --profile browser ps
+```
+
+- **Camoufox** (`ghcr.io/rjocoleman/camoufox-server:150.0.2`, host `13000` → container `3000`):
+  a shared anti-detect Firefox exposed as a Playwright websocket at `ws://localhost:13000/camoufox`
+  (`ws://camoufox:3000/camoufox` between compose services, also in `.env.example` as
+  `CAMOUFOX_WS_ENDPOINT`). The browser worker connects with `firefox.connect(wsEndpoint)` (D5-02). It
+  is **experimental**, one server is one browser, and clients must use the same Playwright major.minor
+  as the image; see the version note below. It needs no `security_opt` override in this image.
+- **crw** (`ghcr.io/fastcrw/crw:0.43.2`, host `13001` → container `3000`): a Firecrawl-compatible
+  crawler (`POST /v1/scrape` with `html`/`markdown`/`links`) used for reading only (D5-02). The base
+  URL is `http://crw:3000` from compose and `http://localhost:13001` from the host (`CRW_BASE_URL`).
+  Its engine is **AGPL-3.0**: running the unmodified container as a separate service and calling its
+  HTTP API is the intended use, but the licence acceptance is a TL item recorded in ADR-500.
+- **Version note (risk for D5-02).** The image tag is Camoufox `150.0.2` with Camoufox `0.6.0` and
+  Python Playwright **1.59.0** inside. Playwright refuses to connect across major.minor skew, and the
+  worker's `playwright ^1.49.0` currently resolves to **1.65.0** in `pnpm-lock.yaml`. D5-02 must pin
+  the worker to `playwright-core` 1.59.x (and remove Puppeteer, ADR-500 consequences), or the image
+  must be bumped to one with Playwright 1.65. Bump the image tag and the worker in the same PR.
+- **Debugging from the host:** `docker compose logs -f camoufox crw`. Any `GET` on port `13000` answers
+  `200` with the body `Running` (that is not a health check), and the startup log prints the websocket
+  endpoint `ws://0.0.0.0:3000/camoufox`. crw answers `GET /health` with `200` and a JSON body, and accepts
+  `POST /v1/scrape` with `{"url":"https://example.com","formats":["markdown"]}`.
+- **Mock marketplace:** it now builds from source through `apps/mock-marketplace/Dockerfile`
+  (`apex/mock-marketplace:dev`, context = repo root because the app extends `@apex/tsconfig`). Rebuild
+  with `docker compose --profile apps build mock-marketplace` after changing `apps/mock-marketplace`.
 
 Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on first login):
 
@@ -198,6 +241,24 @@ Verified separately, on a machine with a Docker daemon, while wiring the LLM stu
   `{"status":"ok"}`, and returns scenario content from `POST /v1/chat/completions`.
 - `docker compose up -d --wait llm-stub` (on a remapped host port) starts it and reaches healthy.
 
+Verified on a machine with a Docker daemon while building the mock marketplace and the browser stack
+(issue #130):
+
+- `docker build -f apps/mock-marketplace/Dockerfile -t apex/mock-marketplace:dev .` succeeds on
+  `node:22.20.0-bookworm-slim` with pnpm 9.15.0 from Corepack. The runtime image runs as UID/GID 10001,
+  contains only the prod deps (`fastify`, `zod`) plus `dist/` and `fixtures/`, reports `healthy`, and
+  answers `GET /healthz` with `{"status":"ok","platforms":["mock-a","mock-b"],…}`. The fixture-backed
+  routes `/mock-a/api/search?q=&page=1` and `/mock-b/item/b-gloves-01` both return content.
+- `ghcr.io/rjocoleman/camoufox-server:150.0.2` starts with the default seccomp profile (no
+  `security_opt` needed), listens on `0.0.0.0:3000` as UID 1000, logs
+  `Websocket endpoint: ws://0.0.0.0:3000/camoufox`, and serves `200 Running` over plain HTTP. It
+  bundles Playwright 1.59.0 and Camoufox 0.6.0 (see the version note in section 4).
+- `ghcr.io/fastcrw/crw:0.43.2` starts, logs `CRW ready at http://0.0.0.0:3000`, answers `GET /health`
+  with `{"active_crawl_jobs":0,"status":"ok","version":"0.43.2"}`, and `POST /v1/scrape` for
+  `https://example.com` returns `success:true` with markdown. The API is unauthenticated (dev only).
+- `docker compose config -q` exits 0 with empty stderr; `--profile browser config --services` lists
+  `camoufox` and `crw`, and the default profile lists neither.
+
 **Not verified** (needs a machine with Docker):
 
 - Starting the stack in containers, service health, and whether every healthcheck command works inside its
@@ -211,8 +272,10 @@ Verified separately, on a machine with a Docker daemon, while wiring the LLM stu
 ## 10. Environment variables
 
 `.env.example` documents the dev values for apps (`DATABASE_URL`, `REDIS_URL`, `S3_*`, `AUTH_*`,
-`VAULT_*`, `UNLEASH_*`, `OTEL_*`). Copy it to `.env.local`. Compose itself does not read `.env.local`: the
-services in `infra/docker-compose.yml` use hardcoded dev values, except the MinIO image variables above.
+`VAULT_*`, `UNLEASH_*`, `OTEL_*`, `CAMOUFOX_WS_ENDPOINT`, `CRW_BASE_URL`). Copy it to `.env.local`. Compose
+itself does not read `.env.local`: the services in `infra/docker-compose.yml` use hardcoded dev values,
+except the MinIO image variables above. The browser-stack endpoints use compose service names
+(`camoufox`, `crw`); from the host use ports 13000 and 13001.
 
 ## 11. Vault (dev secrets bootstrap)
 
