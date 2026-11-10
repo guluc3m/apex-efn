@@ -1,0 +1,18 @@
+# Build context for the orchestrator image: apps/.
+# Whitelist: only the orchestrator project and its llm-stub sibling (path source in
+# [tool.uv.sources]) are needed. The other apps, caches and local venvs are excluded.
+*
+!orchestrator
+!orchestrator/pyproject.toml
+!orchestrator/uv.lock
+!orchestrator/src
+!orchestrator/src/**
+!orchestrator/prompts
+!orchestrator/prompts/**
+!llm-stub
+!llm-stub/pyproject.toml
+!llm-stub/src
+!llm-stub/src/**
+**/__pycache__
+**/*.pyc
+**/.venv

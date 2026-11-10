@@ -1,8 +1,0 @@
-# Whitelist: the image only needs the locked Python project and its source.
-*
-!pyproject.toml
-!uv.lock
-!src
-!src/**
-**/__pycache__
-**/*.pyc

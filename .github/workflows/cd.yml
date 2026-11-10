@@ -40,7 +40,7 @@ jobs:
       matrix:
         include:
           - app: orchestrator
-            context: apps/orchestrator
+            context: apps
             file: apps/orchestrator/Dockerfile
           - app: web
             context: .
