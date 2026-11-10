@@ -1,0 +1,173 @@
+name: Load tests (nightly)
+
+# Nightly k6 run for the orchestrator, the mission queue and the gate queue (D1-10, spec §5.11).
+# Not a required check: it is a scheduled signal, not a merge gate. The workflow is also runnable by hand
+# with a single script, which is useful when investigating a regression.
+#
+# GitHub Actions is disabled in this repository today. The workflow is still part of the deliverable: it
+# must lint (actionlint runs it in the `workflow-lint` job of ci.yml) and must work unchanged once Actions
+# is enabled.
+
+on:
+  schedule:
+    # 03:17 UTC daily. Off the hour on purpose: GitHub delays jobs scheduled at :00.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      script:
+        description: Which load-test script to run
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - orchestrator.js
+          - mission-queue.js
+          - gate-queue.js
+
+permissions:
+  contents: read
+
+concurrency:
+  group: load-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.12'
+  # Keep in sync with ci.yml and the local toolchain (`uv --version`).
+  UV_VERSION: '0.13.7'
+  # Same image the local runner uses, so a local pass means the same thing as a CI pass.
+  K6_IMAGE: grafana/k6:0.54.0
+  K6_PROFILE: load
+  BASE_URL: http://127.0.0.1:8000
+  # Development tenant header: local/CI only. The scripts send X-Tenant-Id: tenant-a.
+  APEX_ALLOW_TENANT_HEADER: 'true'
+  OTEL_SDK_DISABLED: 'true'
+  IDEMPOTENCY_BACKEND: memory
+  # The intake token ledger is keyed per tenant, so a 100 s mission-queue run would trip the default
+  # 200k limit after ~330 sourcing requests. This is a technical operator limit (criterion 28), not a
+  # business threshold; it is raised here only so the load run exercises the whole queue.
+  LLM_MISSION_TOKEN_BUDGET: '50000000'
+  # `workflow_dispatch` sets it; a scheduled run has no inputs and runs everything.
+  LOAD_SCRIPT: ${{ inputs.script || 'all' }}
+
+jobs:
+  load:
+    name: k6 load tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node is pinned for parity with ci.yml (the repository's primary toolchain). The load tests
+      # themselves run k6 from the pinned Docker image, so no npm dependency is installed here.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: apps/orchestrator/uv.lock
+
+      - name: Install Python dependencies
+        working-directory: apps/orchestrator
+        run: uv sync --locked --dev
+
+      - name: Start LLM stub and orchestrator
+        working-directory: apps/orchestrator
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/load"
+          LLM_STUB_SCENARIOS_DIR="${GITHUB_WORKSPACE}/apps/llm-stub/scenarios" \
+            uv run python -m llm_stub > "${RUNNER_TEMP}/load/llm-stub.log" 2>&1 &
+          echo $! > "${RUNNER_TEMP}/load/llm-stub.pid"
+          uv run uvicorn apex.main:app --host 127.0.0.1 --port 8000 \
+            > "${RUNNER_TEMP}/load/orchestrator.log" 2>&1 &
+          echo $! > "${RUNNER_TEMP}/load/orchestrator.pid"
+          for _ in $(seq 1 60); do
+            if curl -fsS -m 2 http://127.0.0.1:8000/health > /dev/null \
+              && curl -fsS -m 2 http://127.0.0.1:8001/health > /dev/null; then
+              echo "orchestrator and LLM stub are up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::orchestrator did not become healthy in 60 s"
+          tail -n 100 "${RUNNER_TEMP}/load/orchestrator.log" || true
+          tail -n 50 "${RUNNER_TEMP}/load/llm-stub.log" || true
+          exit 1
+
+      # Each script keeps its own outcome (continue-on-error) so one failure does not hide the other
+      # summaries. The final gate step turns any failure into a red job.
+      - name: Run orchestrator.js
+        id: orchestrator
+        if: success() && (env.LOAD_SCRIPT == 'all' || env.LOAD_SCRIPT == 'orchestrator.js')
+        continue-on-error: true
+        run: bash tests/load/run-local.sh --script orchestrator.js
+
+      - name: Run mission-queue.js
+        id: missions
+        if: success() && (env.LOAD_SCRIPT == 'all' || env.LOAD_SCRIPT == 'mission-queue.js')
+        continue-on-error: true
+        run: bash tests/load/run-local.sh --script mission-queue.js
+
+      - name: Run gate-queue.js
+        id: gate
+        if: success() && (env.LOAD_SCRIPT == 'all' || env.LOAD_SCRIPT == 'gate-queue.js')
+        continue-on-error: true
+        run: bash tests/load/run-local.sh --script gate-queue.js
+
+      - name: Fail if any selected script failed
+        if: always()
+        env:
+          ORCHESTRATOR_OUTCOME: ${{ steps.orchestrator.outcome }}
+          MISSIONS_OUTCOME: ${{ steps.missions.outcome }}
+          GATE_OUTCOME: ${{ steps.gate.outcome }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for entry in "orchestrator:${ORCHESTRATOR_OUTCOME}" "missions:${MISSIONS_OUTCOME}" "gate:${GATE_OUTCOME}"; do
+            name="${entry%%:*}"
+            outcome="${entry##*:}"
+            echo "${name}: ${outcome}"
+            if [ "${outcome}" = "failure" ]; then
+              failed=1
+            fi
+          done
+          if [ "${failed}" -ne 0 ]; then
+            echo "::error::at least one load test failed its thresholds"
+            exit 1
+          fi
+          echo "All selected load tests passed"
+
+      - name: Stop orchestrator and LLM stub
+        if: always()
+        run: |
+          set -euo pipefail
+          for pidfile in "${RUNNER_TEMP}"/load/*.pid; do
+            [ -f "${pidfile}" ] || continue
+            kill "$(cat "${pidfile}")" 2> /dev/null || true
+          done
+          # `uv run` may leave the child process behind; name the two apps explicitly as a fallback.
+          # The bracket keeps the pattern from matching this shell's own command line.
+          pkill -f "[u]vicorn apex.main:app" 2> /dev/null || true
+          pkill -f "python -m [l]lm_stub" 2> /dev/null || true
+
+      - name: Upload k6 summaries and app logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-load-${{ github.run_id }}
+          path: |
+            tests/load/results/
+            ${{ runner.temp }}/load/*.log
+          if-no-files-found: warn
+          retention-days: 14
