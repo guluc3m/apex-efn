@@ -9,10 +9,12 @@ export interface CsvSelection {
 }
 
 // Borrador del alta. Nunca guarda credenciales de plataformas ni el contenido del CSV.
-// //todo_#152: persistir el borrador en el servidor (guardado automático)
+// Los pasos empresa y sector se guardan en el servidor al validarse (`sessionId`); el resto aún no tiene contrato.
 interface OnboardingStore {
   drafts: Drafts
   csv: CsvSelection | null
+  sessionId: string | null
+  setSessionId: (id: string) => void
   save: <K extends FormStepId>(step: K, values: Drafts[K]) => void
   setCsv: (csv: CsvSelection | null) => void
 }
@@ -20,6 +22,8 @@ interface OnboardingStore {
 export const useOnboarding = create<OnboardingStore>((set) => ({
   drafts: initialDrafts,
   csv: null,
+  sessionId: null,
+  setSessionId: (sessionId) => set({ sessionId }),
   save: (step, values) => set((s) => ({ drafts: { ...s.drafts, [step]: values } })),
   setCsv: (csv) => set({ csv }),
 }))

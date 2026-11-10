@@ -56,6 +56,7 @@
   },
   "pending": "Pendiente de conectar",
   "errors": {
+    "save": "No se pudo guardar este paso. Inténtalo de nuevo.",
     "required": "Campo obligatorio",
     "amount": "Introduce un importe válido",
     "percent": "Introduce un porcentaje válido"
