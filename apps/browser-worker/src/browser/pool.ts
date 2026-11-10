@@ -29,7 +29,7 @@ export interface PoolOptions {
   clock: Clock
   driver: BrowserDriver
   /** Proxy for an account, or ``null``. Resolved by the caller so credentials stay out of the pool. */
-  proxyFor?: (accountId: string | null) => string | null
+  proxyFor?: (accountId: string | null) => Promise<string | null> | string | null
   /** Every launch, recycle and close, for metrics and logs. Never carries URLs or credentials. */
   onEvent?: (event: PoolEvent) => void
 }
@@ -219,7 +219,7 @@ export class BrowserPool {
   }
 
   private async launch(accountId: string | null): Promise<Slot> {
-    const proxyUrl = this.options.proxyFor?.(accountId) ?? null
+    const proxyUrl = (await this.options.proxyFor?.(accountId)) ?? null
     const handle = await this.options.driver.launch({ proxyUrl })
     const slot: Slot = {
       handle,
