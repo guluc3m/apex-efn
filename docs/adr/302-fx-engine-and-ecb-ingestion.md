@@ -26,6 +26,7 @@ with legs from different sources and days. Spec §3.5.1 and criterion 24 require
    The path with the latest `as_of` wins. Ties go to direct, then inverse, then triangulated, then the
    lexically smaller source. No path is `rate_unavailable`. A currency outside EUR/USD/CNY is
    `unsupported_currency`.
+
 3. **Amount.** `amount_minor × rate × 10^(minor digits of to − minor digits of from)` as an exact rational,
    rounded half away from zero (ADR-301). The rate is never rounded before it is applied.
 4. **Stale rates still convert.** If `now − as_of > fx.max_age_hours`, the conversion is returned with
