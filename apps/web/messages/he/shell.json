@@ -33,9 +33,8 @@
     "left": "{count, plural, one {חתימה אחת נותרה} other {# חתימות נותרו}}"
   },
   "userMenu": {
-    "trigger": "תפריט משתמש: {name}",
+    "trigger": "תפריט משתמש",
     "menu": "משתמש",
-    "roleTenant": "{role} · {tenant}",
     "roles": {
       "viewer": "צופה",
       "buyer": "קונה",
@@ -43,8 +42,7 @@
       "admin": "מנהל מערכת",
       "owner": "בעלים"
     },
-    "signOut": "התנתקות",
-    "signOutReason": "טרם חובר: אין שירות התחברות."
+    "signOut": "התנתקות"
   },
   "errors": {
     "home": "מעבר להחלטות",

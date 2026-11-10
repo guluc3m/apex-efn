@@ -33,9 +33,8 @@
     "left": "剩余 {count} 次签名"
   },
   "userMenu": {
-    "trigger": "用户菜单：{name}",
+    "trigger": "用户菜单",
     "menu": "用户",
-    "roleTenant": "{role} · {tenant}",
     "roles": {
       "viewer": "查看者",
       "buyer": "采购员",
@@ -43,8 +42,7 @@
       "admin": "管理员",
       "owner": "所有者"
     },
-    "signOut": "退出登录",
-    "signOutReason": "尚未连接：目前没有登录服务。"
+    "signOut": "退出登录"
   },
   "errors": {
     "home": "前往决策",

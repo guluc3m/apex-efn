@@ -49,5 +49,4 @@ export const auditData = {
 }
 export type AuditRow = (typeof auditData.rows)[number]
 
-// //todo_#147: roles con acceso a auditoría según la sesión
 export const auditRoles = ['admin', 'owner']
