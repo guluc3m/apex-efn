@@ -35,9 +35,20 @@ spec:
               containerPort: {{ .Values.web.containerPort }}
           envFrom:
             {{- include "apex.envFrom" (dict "root" $ "secretName" .Values.web.secretName) | nindent 12 }}
-          {{- with .Values.web.extraEnv }}
+          {{- if or .Values.database.webUrlKey .Values.web.extraEnv }}
           env:
+            {{- with .Values.database.webUrlKey }}
+            # Optional: the app login role. Only enable it together with the Prisma tenant extension
+            # (DEV-2/6); see database.webUrlKey in values.yaml.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.app.secretName }}
+                  key: {{ . }}
+            {{- end }}
+            {{- with .Values.web.extraEnv }}
             {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
           securityContext:
             {{- include "apex.containerSecurityContext" $ | nindent 12 }}

@@ -25,6 +25,64 @@ config:
   LLM_GATEWAY_URL: ''
   OTEL_EXPORTER_OTLP_ENDPOINT: ''
 
+# ---------------------------------------------------------------------------
+# Database connection strings (D1-03, issue #221). Secret references only, never values.
+# The RLS migration creates the NOLOGIN group role `apex_app`; the migration Job creates the login
+# role `apex_app_login` (LOGIN, member of apex_app, NOBYPASSRLS) so row-level security applies to
+# every orchestrator query. Two Secrets keep the schema-owner DSN away from the runtime pods.
+# ---------------------------------------------------------------------------
+database:
+  app:
+    # Existing Secret with keys `appDatabaseUrl` and `appPassword`.
+    # appDatabaseUrl must use the postgresql+asyncpg:// scheme (the SQLAlchemy async engine cannot
+    # load the sync psycopg2 dialect) and the apex_app_login role. appPassword is the same password
+    # as in that URL; the bootstrap step converges the login role to it on every release.
+    secretName: apex-db-app
+    urlKey: appDatabaseUrl
+    passwordKey: appPassword
+    externalSecret:
+      remoteKey: ''
+  migrate:
+    # Existing Secret with key `migrateDatabaseUrl`: the schema owner, which bypasses RLS. Read only
+    # by the pre-upgrade migration Job, never mounted into the orchestrator or web Deployments.
+    secretName: apex-db-migrate
+    urlKey: migrateDatabaseUrl
+    externalSecret:
+      remoteKey: ''
+  # Optional: inject DATABASE_URL into the web Deployment from this key of database.app.secretName.
+  # Leave empty while the web Prisma client has no tenant extension (DEV-2/6): without
+  # `set_config('app.tenant_id', ...)` per transaction, row-level security returns zero tenant rows,
+  # so the web keeps the owner DSN from its own Secret. It has no runtime DB access today.
+  webUrlKey: ''
+
+# Pre-upgrade Jobs (templates/migrations.yaml). They run, in order, as Helm hooks before the
+# Deployments roll: prisma migrate deploy, the optional idempotent seed, the login-role bootstrap,
+# and optionally `python -m apex.tenant_config.load_defaults`.
+migrations:
+  enabled: true
+  # The `migrator` target of apps/web/Dockerfile, built and pushed by .github/workflows/cd.yml.
+  image:
+    repository: ghcr.io/guluc3m/apex-efn/web-migrations
+    tag: ''
+  # Same seed as `pnpm dev:reset`: the two demo tenants and ten users of the Keycloak realm. Set it
+  # to false for a tenant environment with real data.
+  seed: true
+  backoffLimit: 2
+  activeDeadlineSeconds: 900
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  loadDefaults:
+    # `python -m apex.tenant_config.load_defaults` in the orchestrator image, after the seed
+    # (hook weight 1). Today it validates the v1 defaults and persists nothing (D4-03 TODO).
+    enabled: true
+    tenantIds:
+      - tenant-a
+      - tenant-b
+
 orchestrator:
   enabled: true
   image:

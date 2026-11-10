@@ -12,7 +12,9 @@ ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
     HUSKY=0 \
     NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
+# Install pnpm globally instead of relying on Corepack's per-HOME cache: the migration Job runs with
+# HOME=/tmp and a read-only root filesystem, where Corepack would try to download pnpm at runtime.
+RUN npm install -g pnpm@9.15.0 \
  && pnpm config set store-dir /pnpm/store
 WORKDIR /app
 
@@ -30,6 +32,34 @@ RUN --mount=type=cache,id=apex-pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile --offline
 RUN pnpm --filter @apex/web build
 
+# ---------------------------------------------------------------------------
+# Migration image (D1-03, issue #221): Prisma CLI, the migrations, the seed and the psql client
+# on top of the full workspace. Used only by the Helm pre-upgrade Job (templates/migrations.yaml),
+# never by the app runtime.
+#   docker build -f apps/web/Dockerfile --target migrator -t apex/web-migrations:dev .
+# The Job runs `prisma migrate deploy`, then the optional seed, then
+# infra/postgres/bootstrap-app-role.sh, all as the schema owner (migrateDatabaseUrl).
+# ---------------------------------------------------------------------------
+FROM builder AS migrator
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
+COPY infra/postgres/bootstrap-app-role.sh /usr/local/bin/bootstrap-app-role.sh
+RUN chmod 0755 /usr/local/bin/bootstrap-app-role.sh
+
+# Prisma fetches its schema engine on first use. Fetch it at build time as root so the non-root Job
+# never writes into node_modules, then hand the Prisma packages to the runtime user.
+RUN pnpm --filter @apex/web exec prisma -v \
+ && chown -R 10001:10001 /app/node_modules/.pnpm/@prisma* /app/node_modules/.pnpm/prisma*
+# The pod runs with a read-only root filesystem and an emptyDir at /tmp, so HOME must live there.
+ENV HOME=/tmp
+WORKDIR /app/apps/web
+USER 10001:10001
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy"]
+
+# ---------------------------------------------------------------------------
+# Application runtime (standalone Next.js server).
+# ---------------------------------------------------------------------------
 FROM node:22.20.0-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

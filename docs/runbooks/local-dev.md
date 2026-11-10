@@ -16,12 +16,12 @@ Owner: DEV-1 (task D1-03). Entry point: `compose.yaml` at the repo root, which `
 
 ## 2. Scripts (root `package.json`)
 
-| Command                                          | What it does                                                                                                                                                                                                           |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev:up`                                    | `docker compose up -d --wait`: starts everything, waits for healthy services.                                                                                                                                          |
-| `pnpm dev:down`                                  | `docker compose down`: stops containers, **keeps volumes** (data survives).                                                                                                                                            |
-| `pnpm dev:reset`                                 | Runs `infra/scripts/dev-reset.sh`: `down -v` (wipes all volumes), `up -d --wait`, then migrations and seed **only if they exist** (Prisma from D2-03, `load_defaults` from D4-03). It prints a skip message otherwise. |
-| `pnpm docker:up` / `docker:down` / `docker:logs` | Legacy aliases, kept.                                                                                                                                                                                                  |
+| Command                                          | What it does                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev:up`                                    | `docker compose up -d --wait`: starts everything, waits for healthy services.                                                                                                                                                                                                                                                                                        |
+| `pnpm dev:down`                                  | `docker compose down`: stops containers, **keeps volumes** (data survives).                                                                                                                                                                                                                                                                                          |
+| `pnpm dev:reset`                                 | Runs `infra/scripts/dev-reset.sh`: `down -v` (wipes all volumes), brings up Postgres, applies migrations + seed + `load_defaults` as the **schema owner** (`MIGRATE_DATABASE_URL`), creates the application login role (`infra/postgres/bootstrap-app-role.sh`, RLS), then starts the rest with `--wait`. It prints a skip message for anything not in the repo yet. |
+| `pnpm docker:up` / `docker:down` / `docker:logs` | Legacy aliases, kept.                                                                                                                                                                                                                                                                                                                                                |
 
 Start the app services too (`mock-marketplace` builds from source; the rest still wait for D1-09):
 
@@ -44,28 +44,72 @@ docker compose --profile browser up -d camoufox crw
 
 ## 4. Services, ports and dev credentials
 
-| Service                           | Host URL / port                                  | Image (pinned)                                                   | Dev credentials / notes                                                                                                                                              |
-| --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`                          | user `apex` / `apex`. DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`.                                                                      |
-| Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                                            | no auth                                                                                                                                                              |
-| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`               | `minioadmin` / `minioadmin`                                                                                                                                          |
-| MinIO console                     | `http://localhost:9001`                          | (same)                                                           | `minioadmin` / `minioadmin`                                                                                                                                          |
-| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`                  | creates buckets, see section 6                                                                                                                                       |
-| Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                                 | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                        |
-| Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                                         | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                          |
-| Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                                | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here). |
-| Langfuse v2                       | `http://localhost:3001`                          | `langfuse/langfuse:2.95.11`                                      | no seeded user: sign up locally on first visit                                                                                                                       |
-| Grafana                           | `http://localhost:3002`                          | `grafana/grafana:12.4.14`                                        | `admin` / `admin`. Datasources (Prometheus, Loki, Tempo) are provisioned. No dashboards yet (D1-07).                                                                 |
-| Prometheus                        | `http://localhost:9090`                          | `prom/prometheus:v3.16.0`                                        | no auth. Scrapes the OTel collector.                                                                                                                                 |
-| Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                                            | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                          |
-| Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                                          | no auth. Receives traces from the collector.                                                                                                                         |
-| OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`                   | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                            |
-| LLM stub (OpenAI-compatible)      | `http://localhost:8001/v1`                       | built from `apps/llm-stub` (`apex/llm-stub:dev`)                 | no auth. Scenarios are baked into the image; select one with `X-Stub-Scenario`. See "LLM stub" below.                                                                |
-| Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                                   | not buildable until D1-09                                                                                                                                            |
-| Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace` (`apex/mock-marketplace:dev`) | synthetic data only, never deploy. Health: `curl -m 5 http://localhost:8002/healthz`.                                                                                |
-| Web (profile `apps`)              | no host port                                     | built from `apps/web`                                            | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                       |
-| Camoufox (profile `browser`)      | `ws://localhost:13000/camoufox`                  | `ghcr.io/rjocoleman/camoufox-server:150.0.2`                     | experimental Playwright websocket (ADR-500). No HTTP health endpoint, so no compose healthcheck.                                                                     |
-| crw (profile `browser`)           | `http://localhost:13001`                         | `ghcr.io/fastcrw/crw:0.43.2`                                     | Firecrawl-compatible crawler, AGPL-3.0. Health: `GET /health` (`{"status":"ok","version":"0.43.2"}`).                                                                |
+| Service                           | Host URL / port                                  | Image (pinned)                                                   | Dev credentials / notes                                                                                                                                                   |
+| --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`                          | owner `apex` / `apex`; app login `apex_app_login` / `apex_app_dev` (RLS, see "Database roles"). DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`. |
+| Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                                            | no auth                                                                                                                                                                   |
+| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`               | `minioadmin` / `minioadmin`                                                                                                                                               |
+| MinIO console                     | `http://localhost:9001`                          | (same)                                                           | `minioadmin` / `minioadmin`                                                                                                                                               |
+| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`                  | creates buckets, see section 6                                                                                                                                            |
+| Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                                 | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                             |
+| Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                                         | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                               |
+| Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                                | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here).      |
+| Langfuse v2                       | `http://localhost:3001`                          | `langfuse/langfuse:2.95.11`                                      | no seeded user: sign up locally on first visit                                                                                                                            |
+| Grafana                           | `http://localhost:3002`                          | `grafana/grafana:12.4.14`                                        | `admin` / `admin`. Datasources (Prometheus, Loki, Tempo) are provisioned. No dashboards yet (D1-07).                                                                      |
+| Prometheus                        | `http://localhost:9090`                          | `prom/prometheus:v3.16.0`                                        | no auth. Scrapes the OTel collector.                                                                                                                                      |
+| Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                                            | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                               |
+| Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                                          | no auth. Receives traces from the collector.                                                                                                                              |
+| OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`                   | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                                 |
+| LLM stub (OpenAI-compatible)      | `http://localhost:8001/v1`                       | built from `apps/llm-stub` (`apex/llm-stub:dev`)                 | no auth. Scenarios are baked into the image; select one with `X-Stub-Scenario`. See "LLM stub" below.                                                                     |
+| Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                                   | not buildable until D1-09                                                                                                                                                 |
+| Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace` (`apex/mock-marketplace:dev`) | synthetic data only, never deploy. Health: `curl -m 5 http://localhost:8002/healthz`.                                                                                     |
+| Web (profile `apps`)              | no host port                                     | built from `apps/web`                                            | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                            |
+| Camoufox (profile `browser`)      | `ws://localhost:13000/camoufox`                  | `ghcr.io/rjocoleman/camoufox-server:150.0.2`                     | experimental Playwright websocket (ADR-500). No HTTP health endpoint, so no compose healthcheck.                                                                          |
+| crw (profile `browser`)           | `http://localhost:13001`                         | `ghcr.io/fastcrw/crw:0.43.2`                                     | Firecrawl-compatible crawler, AGPL-3.0. Health: `GET /health` (`{"status":"ok","version":"0.43.2"}`).                                                                     |
+
+### Database roles (row-level security)
+
+PostgreSQL row-level security (RLS, D2-04) only protects anything if the application connects as a role
+that is **not** the table owner and **cannot bypass** RLS. The dev superuser `apex` does both, so the
+stack uses two DSNs:
+
+| Who                               | Role                                           | DSN / setting                                                               |
+| --------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------- |
+| Migrations, seed, `load_defaults` | `apex` (schema owner, superuser in dev)        | `MIGRATE_DATABASE_URL` (`postgresql://apex:apex@localhost:5432/apex`)       |
+| Orchestrator runtime              | `apex_app_login` (LOGIN, member of `apex_app`) | `DATABASE_URL` (`postgresql+asyncpg://apex_app_login:…@postgres:5432/apex`) |
+| Web / Prisma (today)              | `apex` (owner), unchanged                      | `DATABASE_URL` (`postgresql://apex:apex@…/apex?schema=public`)              |
+
+- `apex_app` is a `NOLOGIN … NOBYPASSRLS` group role created by the RLS migration
+  (`apps/web/prisma/migrations/20261109130000_row_level_security`). The login role `apex_app_login` is
+  created separately, because a password must never live in a migration.
+- `infra/postgres/bootstrap-app-role.sh` creates/converges `apex_app_login` (LOGIN, password from
+  `APEX_APP_DB_PASSWORD`, member of `apex_app`, `NOBYPASSRLS`). It is idempotent. The dev password is
+  `apex_app_dev` (see `.env.example`); never reuse it outside a local machine. `pnpm db:bootstrap` runs
+  the script against the host (needs `psql`); `pnpm dev:reset` runs it inside the Postgres container
+  when the host has no client.
+- **Order matters**: migrations (they create `apex_app`) → seed → `load_defaults` → bootstrap
+  `apex_app_login` → start the app services. `pnpm dev:reset` does exactly that.
+- **Existing volumes** (created before this change): either run `pnpm dev:reset`, or apply the pending
+  migrations and create the role without wiping data:
+  ```bash
+  docker compose up -d --wait postgres
+  DATABASE_URL=postgresql://apex:apex@localhost:5432/apex pnpm --filter @apex/web exec prisma migrate deploy
+  pnpm db:bootstrap
+  APEX_APP_DB_PASSWORD=apex_app_dev docker compose up -d --wait
+  ```
+  Without `psql` on the host:
+  `docker compose exec -T -e PGUSER=apex -e PGDATABASE=apex -e APEX_APP_DB_PASSWORD=apex_app_dev postgres sh -s < infra/postgres/bootstrap-app-role.sh`.
+- **Check that RLS is really on** (as the app role: no tenant → zero rows, with a tenant → its rows):
+  ```bash
+  docker compose exec -T postgres psql -U apex_app_login -d apex \
+    -c "SELECT count(*) FROM tenants" \
+    -c "SELECT set_config('app.tenant_id','tenant-a',true); SELECT count(*) FROM tenants"
+  ```
+  The first count is `0` and the second `1`. As `apex` (owner/superuser) both counts are `2`, which is
+  why the app must not use the owner DSN. An `INSERT` with no `app.tenant_id` is rejected by the
+  policy.
+- The web app keeps the owner DSN until the Prisma tenant extension sets `app.tenant_id` per
+  transaction (DEV-2/6 follow-up). Its runtime does not query the database today.
 
 ### LLM stub
 
@@ -259,6 +303,22 @@ Verified on a machine with a Docker daemon while building the mock marketplace a
 - `docker compose config -q` exits 0 with empty stderr; `--profile browser config --services` lists
   `camoufox` and `crw`, and the default profile lists neither.
 
+Verified on a machine with a Docker daemon while wiring the database roles (issue #221):
+
+- `docker compose up -d --wait postgres`, `prisma migrate deploy` and `prisma db seed` as `apex`, then
+  `infra/postgres/bootstrap-app-role.sh` (inside the container) twice: both runs exit 0 and the second
+  is a no-op apart from a membership NOTICE (idempotent).
+- As `apex_app_login`: `SELECT count(*) FROM tenants` is `0` with no `app.tenant_id`, `1` after
+  `set_config('app.tenant_id','tenant-a',true)` in the same transaction, and an `INSERT` without the
+  setting fails with `new row violates row-level security policy`. As `apex` (owner/superuser) the
+  count is `2`, which is exactly why the runtime role exists.
+- The orchestrator (`uv run uvicorn apex.main:app`) with
+  `DATABASE_URL=postgresql+asyncpg://apex_app_login:…` answers `GET /health` with `200`, and
+  `apex.db.session.tenant_session('tenant-a')` reports `('apex_app_login', 'tenant-a', 'tenant-a')`.
+- `helm lint`, `helm template` and kubeconform on the two new hook Jobs, `terraform fmt`/`validate`,
+  `actionlint`, `sh -n` and `shellcheck` on the scripts. The `web-migrations` image itself was not
+  built locally (it is built by CD); its steps were run on the host instead.
+
 **Not verified** (needs a machine with Docker):
 
 - Starting the stack in containers, service health, and whether every healthcheck command works inside its
@@ -271,11 +331,12 @@ Verified on a machine with a Docker daemon while building the mock marketplace a
 
 ## 10. Environment variables
 
-`.env.example` documents the dev values for apps (`DATABASE_URL`, `REDIS_URL`, `S3_*`, `AUTH_*`,
-`VAULT_*`, `UNLEASH_*`, `OTEL_*`, `CAMOUFOX_WS_ENDPOINT`, `CRW_BASE_URL`). Copy it to `.env.local`. Compose
-itself does not read `.env.local`: the services in `infra/docker-compose.yml` use hardcoded dev values,
-except the MinIO image variables above. The browser-stack endpoints use compose service names
-(`camoufox`, `crw`); from the host use ports 13000 and 13001.
+`.env.example` documents the dev values for apps (`DATABASE_URL`, `MIGRATE_DATABASE_URL`,
+`APEX_APP_DB_PASSWORD`, `REDIS_URL`, `S3_*`, `AUTH_*`, `VAULT_*`, `UNLEASH_*`, `OTEL_*`,
+`CAMOUFOX_WS_ENDPOINT`, `CRW_BASE_URL`). Copy it to `.env.local`. Compose itself does not read
+`.env.local`: the services in `infra/docker-compose.yml` use hardcoded dev values, except the MinIO
+image variables and `APEX_APP_DB_PASSWORD` (the orchestrator's app-role password), and the browser-stack
+endpoints use compose service names (`camoufox`, `crw`); from the host use ports 13000 and 13001.
 
 ## 11. Vault (dev secrets bootstrap)
 

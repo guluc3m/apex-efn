@@ -35,10 +35,18 @@ spec:
               containerPort: {{ .Values.orchestrator.containerPort }}
           envFrom:
             {{- include "apex.envFrom" (dict "root" $ "secretName" .Values.orchestrator.secretName) | nindent 12 }}
-          {{- with .Values.orchestrator.extraEnv }}
           env:
+            # Runtime DSN: member of apex_app, so row-level security applies (issue #221). The value
+            # comes from the database Secret, never from values, and overrides any DATABASE_URL that
+            # envFrom may also provide.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.app.secretName }}
+                  key: {{ .Values.database.app.urlKey }}
+            {{- with .Values.orchestrator.extraEnv }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- end }}
           securityContext:
             {{- include "apex.containerSecurityContext" $ | nindent 12 }}
           livenessProbe:

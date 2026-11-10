@@ -32,7 +32,10 @@ variable "kms_key_arn" {
 variable "secret_components" {
   description = "Components that get a Secrets Manager placeholder. Names become <prefix>/<env>/<component>."
   type        = list(string)
-  default     = ["orchestrator", "web", "browser-worker", "llm"]
+  # db-app holds {appDatabaseUrl, appPassword} for the apex_app_login runtime role (RLS applies).
+  # db-migrate holds {migrateDatabaseUrl} for the schema owner; only the External Secrets Operator
+  # reads it, never a runtime pod (D1-03, issue #221).
+  default = ["orchestrator", "web", "browser-worker", "llm", "db-app", "db-migrate"]
 }
 
 variable "rds_engine_version" {

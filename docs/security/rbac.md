@@ -110,6 +110,25 @@ Tokens carry `tenant_id` (from a user attribute, admin-only in the user profile)
 Tenant isolation is enforced from the token: a caller cannot choose a tenant with a header while
 authenticated, and `tenant_id` is never read from a body.
 
+## Database role and row-level security
+
+The token is only the first half. The orchestrator also runs under a PostgreSQL role that RLS can
+constrain (D1-03/D2-04, issue #221):
+
+- **Runtime role `apex_app_login`**: `LOGIN`, member of the `apex_app` group (`NOLOGIN`, `NOSUPERUSER`,
+  `NOBYPASSRLS`), created by `infra/postgres/bootstrap-app-role.sh` after the RLS migration. Every
+  transaction from `apex.db.session.tenant_session()` sets `app.tenant_id`; without it, tenant tables
+  return zero rows and refuse writes (fail closed).
+- **Schema owner / migrator `apex`**: owns the tables and runs migrations, the seed and
+  `load_defaults`. Only the pre-upgrade migration Job gets its DSN (`database.migrate` in the Helm
+  chart). It is never mounted into the orchestrator or web Deployments, because an owner or superuser
+  bypasses RLS.
+- **Web/BFF**: still on the owner DSN until its Prisma tenant extension sets `app.tenant_id` per
+  transaction (DEV-2/6). It does not query the database at runtime today.
+
+`docs/runbooks/local-dev.md` ("Database roles") has the dev commands and a transcript showing the
+difference between the two roles.
+
 ## Enforcement point
 
 Authentication is applied to the **whole `/v1` surface** in `apex/main.py`

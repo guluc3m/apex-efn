@@ -45,6 +45,12 @@ jobs:
           - app: web
             context: .
             file: apps/web/Dockerfile
+          # Migration image: same Dockerfile, migrator target (Prisma CLI + seed + psql). Used by the
+          # Helm pre-upgrade Job only; never by an app Deployment (issue #221).
+          - app: web-migrations
+            context: .
+            file: apps/web/Dockerfile
+            target: migrator
           - app: browser-worker
             context: .
             file: apps/browser-worker/Dockerfile
@@ -73,6 +79,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -188,6 +195,9 @@ jobs:
             serviceAccount:
               annotations:
                 eks.amazonaws.com/role-arn: "${BROWSER_WORKER_ROLE_ARN}"
+          migrations:
+            image:
+              tag: "${tag}"
           EOF
           helm upgrade --install "$HELM_RELEASE" infra/helm/apex \
             --namespace "$HELM_NAMESPACE" --create-namespace \
