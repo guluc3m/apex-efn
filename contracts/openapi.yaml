@@ -561,7 +561,9 @@ paths:
       summary: Transcript of the chat with the seller, oldest first.
       description: 'Messages already exchanged, with their role. Drafts waiting for approval are not here: they
 
-        are `pending_draft` on the negotiation until a human approves or rejects them.'
+        are `pending_draft` on the negotiation until a human approves or rejects them. A cursor this server
+
+        did not issue answers 400 with reason `invalid_cursor`.'
       parameters:
       - {$ref: '#/components/parameters/Cursor'}
       - {$ref: '#/components/parameters/Limit'}
@@ -571,6 +573,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/NegotiationMessagePage'}
+        '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}

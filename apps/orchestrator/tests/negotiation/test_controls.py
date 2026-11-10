@@ -236,3 +236,102 @@ class TestOpenRequestCarriesTheOffer:
         req: OpenRequest = replace(request(), offer_id="offer-42")
         session = await h.engine.start(req, idempotency_key="k")
         assert session.offer_id == "offer-42"
+
+    async def test_the_mission_and_trace_are_persisted_for_event_routing(self) -> None:
+        h = harness(cooperative_seller())
+        req: OpenRequest = replace(request(), mission_id="m-7", trace_id="tr-9")
+        session = await h.engine.start(req, idempotency_key="k")
+        assert session.mission_id == "m-7"
+        assert session.trace_id == "tr-9"
+
+
+class TestHumanMessages:
+    """A human holding the chat writes to the seller (D5-08 controls, D5-07c contract)."""
+
+    async def test_a_human_message_is_sent_as_written_and_attributed(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.take_over(session.id, tenant_id=T)
+
+        sent = await h.engine.send_human(
+            session.id, "  Can you do 400?  ", author="buyer-1", tenant_id=T
+        )
+
+        assert h.chat.sent == ["Can you do 400?"]  # trimmed, otherwise untouched
+        assert sent.transcript[-1].role == "human"
+        assert sent.transcript[-1].text == "Can you do 400?"
+        assert sent.transcript[-1].approved_by == "buyer-1"
+        assert sent.human_in_control is True  # the agent still has no say
+
+    async def test_it_is_refused_without_a_takeover(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.send_human(session.id, "hello", author="buyer-1", tenant_id=T)
+        assert _code(exc) == "not_in_human_control"
+        assert h.chat.sent == []
+
+    async def test_it_is_refused_on_a_finished_negotiation(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.abort(session.id, reason="buyer_cancelled", tenant_id=T)
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.send_human(session.id, "hello", author="buyer-1", tenant_id=T)
+        assert _code(exc) == "terminal"
+
+    async def test_an_empty_message_is_refused(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.take_over(session.id, tenant_id=T)
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.send_human(session.id, "   ", author="buyer-1", tenant_id=T)
+        assert _code(exc) == "empty_message"
+        assert h.chat.sent == []
+
+    async def test_a_message_over_the_configured_length_is_refused(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(params(max_message_chars=200)), idempotency_key="k")
+        await h.engine.take_over(session.id, tenant_id=T)
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.send_human(session.id, "x" * 201, author="buyer-1", tenant_id=T)
+        assert _code(exc) == "message_too_long"
+        assert h.chat.sent == []
+
+    async def test_the_hourly_cap_refuses_instead_of_parking(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(
+            request(params(semi_automatic=False, max_messages_per_hour=1)),
+            idempotency_key="k",
+        )
+        assert len(h.chat.sent) == 1  # the opening message used the hour's allowance
+        await h.engine.take_over(session.id, tenant_id=T)
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.send_human(session.id, "one more", author="buyer-1", tenant_id=T)
+        assert _code(exc) == "rate_limited"
+        assert len(h.chat.sent) == 1
+
+    async def test_another_tenant_cannot_write(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.take_over(session.id, tenant_id=T)
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.send_human(session.id, "hello", author="x", tenant_id="tenant-b")
+        assert _code(exc) == "not_found"
+        assert h.chat.sent == []
+
+
+class TestReadOne:
+    async def test_get_is_tenant_checked(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        same = await h.engine.get(session.id, tenant_id=T)
+        assert same.id == session.id
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.get(session.id, tenant_id="tenant-b")
+        assert _code(exc) == "not_found"
+
+    async def test_get_of_an_unknown_id_is_not_found(self) -> None:
+        h = harness(cooperative_seller())
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.get("nope", tenant_id=T)
+        assert _code(exc) == "not_found"

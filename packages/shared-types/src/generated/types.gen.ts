@@ -2498,6 +2498,10 @@ export type ListNegotiationMessagesData = {
 
 export type ListNegotiationMessagesErrors = {
   /**
+   * RFC 9457 problem.
+   */
+  400: Problem
+  /**
    * Missing or invalid token.
    */
   401: Problem
