@@ -13,11 +13,12 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from apex.api import keys as keys_api
 from apex.auth.deps import current_principal
 from apex.auth.models import Principal
-from apex.common.clock import FixedClock
+from apex.common.clock import FixedClock, get_clock
 from apex.common.errors import Problem
 from apex.contracts.generated.models import Decision, DecisionStatus, DecisionType
 from apex.db.models import SigningKey
@@ -56,13 +57,15 @@ def seeded(migrated_db: str, app_db: str) -> str:
                 "VALUES (%s, %s, 'ES', 'EUR', %s, %s)",
                 [tenant, tenant, T0, T0],
             )
-        for user in ("alice", "bob", "carol", "dave", "erin"):
+        for user in ("alice", "bob", "carol", "dave", "erin", "frank"):
             admin.execute(
                 "INSERT INTO users (id, email, display_name, external_subject, created_at, updated_at) "
                 "VALUES (%s, %s, %s, %s, %s, %s)",
                 [f"user-{user}", f"{user}@example.test", user, user, T0, T0],
             )
-        members = [(TENANT, u) for u in ("alice", "bob", "carol", "erin")] + [(OTHER, "dave")]
+        members = [(TENANT, u) for u in ("alice", "bob", "carol", "erin", "frank")] + [
+            (OTHER, "dave")
+        ]
         for tenant, user in members:
             admin.execute(
                 "INSERT INTO memberships (id, tenant_id, user_id, role, created_at) "
@@ -99,8 +102,21 @@ def _decision(subject_ref: str, type_: DecisionType = DecisionType.revoke_key) -
 
 
 class Harness:
-    def __init__(self, app: FastAPI, client: httpx.AsyncClient, decisions: Signed) -> None:
-        self.app, self.client, self.decisions = app, client, decisions
+    def __init__(
+        self,
+        app: FastAPI,
+        client: httpx.AsyncClient,
+        decisions: Signed,
+        clock: FixedClock,
+        factory: async_sessionmaker[AsyncSession],
+    ) -> None:
+        self.app, self.client, self.decisions, self.clock, self.factory = (
+            app,
+            client,
+            decisions,
+            clock,
+            factory,
+        )
         self.as_user("alice")
 
     def as_user(
@@ -128,15 +144,17 @@ class Harness:
 @pytest.fixture
 async def h(seeded: str) -> AsyncIterator[Harness]:
     engine = create_engine(_asyncpg(seeded), pool_size=2)
+    h_clock = FixedClock(T0 + timedelta(minutes=5))
     app = create_app()
     decisions = Signed()
-    app.dependency_overrides[keys_api.get_sessionmaker] = lambda: create_sessionmaker(engine)
-    app.dependency_overrides[keys_api.get_clock] = lambda: FixedClock(T0 + timedelta(minutes=5))
+    factory = create_sessionmaker(engine)
+    app.dependency_overrides[keys_api.get_sessionmaker] = lambda: factory
+    app.dependency_overrides[get_clock] = lambda: h_clock
     app.dependency_overrides[keys_api.get_decision_verifier] = lambda: decisions
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://t"
     ) as client:
-        yield Harness(app, client, decisions)
+        yield Harness(app, client, decisions, h_clock, factory)
     await engine.dispose()
 
 

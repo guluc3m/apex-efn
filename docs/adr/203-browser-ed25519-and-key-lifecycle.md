@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (D2-07). Needs Tech Lead approval.
+Accepted on 2026-11-10 by the Tech Lead (PR #269).
 
 ## Context
 

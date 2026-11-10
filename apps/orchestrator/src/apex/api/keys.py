@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from apex.auth.deps import require_signer
 from apex.auth.models import Principal
-from apex.common.clock import Clock, SystemClock
+from apex.common.clock import Clock, get_clock
 from apex.common.errors import Problem, not_implemented
 from apex.common.ids import IdGenerator
 from apex.contracts.generated.models import (
@@ -61,10 +61,6 @@ def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
     return default_sessionmaker()
 
 
-def get_clock() -> Clock:
-    return SystemClock()
-
-
 async def get_enrollment_max_age(request: Request, principal: Signer) -> timedelta:
     """``signing.session_minutes`` of the caller's tenant: the same freshness a signing session gets."""
     services = getattr(request.app.state, "app_services", None)
@@ -96,7 +92,7 @@ def _reauth(detail: str) -> Problem:
     )
 
 
-async def _member_id(session: AsyncSession, principal: Principal) -> str:
+async def member_id(session: AsyncSession, principal: Principal) -> str:
     user_id = await user_id_for_subject(session, principal.user_id)
     if user_id is None:
         raise Problem(
@@ -111,7 +107,7 @@ async def _member_id(session: AsyncSession, principal: Principal) -> str:
 @router.get("/me", response_model=SigningKeyList)
 async def list_my_keys(principal: Signer, sessions: Sessions) -> SigningKeyList:
     async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
-        rows = await keys.list_owner_keys(session, await _member_id(session, principal))
+        rows = await keys.list_owner_keys(session, await member_id(session, principal))
         return SigningKeyList(items=[_view(row) for row in rows])
 
 
@@ -134,7 +130,7 @@ async def register_my_key(
                 session,
                 key_id=IdGenerator(clock).new_id(),
                 tenant_id=principal.tenant_id,
-                user_id=await _member_id(session, principal),
+                user_id=await member_id(session, principal),
                 public_key=body.public_key,
                 label=body.label,
                 now=now,
@@ -161,7 +157,7 @@ async def revoke_key(
         key = await session.get(models.SigningKey, id)  # RLS: another tenant's key is not found
         if key is None:
             raise Problem(404, "Not Found", detail=f"signing key {id} not found")
-        if key.owner_id != await _member_id(session, principal) and not principal.has_role(
+        if key.owner_id != await member_id(session, principal) and not principal.has_role(
             *KEY_ADMIN_ROLES
         ):
             raise Problem(
