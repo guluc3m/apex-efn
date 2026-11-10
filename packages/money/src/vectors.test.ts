@@ -1,7 +1,9 @@
+import type { FxRate } from '@apex/shared-types/contracts'
 import type { Currency } from '@apex/shared-types/currency'
 import { loadVectorFiles, mismatch, type VectorFile } from '@apex/test-vectors'
 import { describe, expect, it } from 'vitest'
 
+import { convert } from './fx.js'
 import { Money } from './money.js'
 
 type Engine = (input: unknown, config: unknown) => unknown
@@ -28,6 +30,17 @@ const ENGINES: Record<string, Engine> = {
     money(i as In)
       .allocate((i as { ratios: number[] }).ratios)
       .map((m) => m.amountMinor),
+  'fx.convert': (i, c) => {
+    const {
+      money: m,
+      to,
+      rates,
+      now,
+    } = i as { money: In; to: Currency; rates: FxRate[]; now: string }
+    return convert(money(m), to, rates, now, {
+      maxAgeHours: (c as { max_age_hours: number }).max_age_hours,
+    })
+  },
 }
 
 function run(files: VectorFile[]) {
@@ -51,6 +64,7 @@ function run(files: VectorFile[]) {
 }
 
 run(loadVectorFiles('money'))
+run(loadVectorFiles('fx'))
 
 describe('vector framework', () => {
   it('compares numbers within tolerance only', () => {

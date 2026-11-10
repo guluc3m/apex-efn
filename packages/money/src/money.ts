@@ -40,7 +40,7 @@ export function divideHalfAwayFromZero(n: bigint, d: bigint): bigint {
 }
 
 /** A decimal string as an exact fraction `num / den`. */
-function parseDecimal(value: unknown): { num: bigint; den: bigint } {
+export function parseDecimal(value: unknown): { num: bigint; den: bigint } {
   const match = typeof value === 'string' ? DECIMAL.exec(value) : null
   if (!match)
     throw new MoneyError('invalid_decimal', `Not a plain decimal string: ${String(value)}`)
