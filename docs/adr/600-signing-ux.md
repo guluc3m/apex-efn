@@ -6,7 +6,7 @@ Proposed (draft, D6-03a; needs TL approval)
 
 ## Context
 
-D6-03 shows the 15-minute signing window and recovers from `428 reauth_required`. ADR-900 Q11 chose Keycloak step-up (ACR + `auth_time`) over a WebAuthn relying party in the orchestrator. D2-07 (keys, `@apex/crypto-client`), D2-08 (signing sessions) and D1-05 (OIDC login) are not merged yet.
+D6-03 shows the 15-minute signing window and recovers from `428 reauth_required`. ADR-900 Q11 chose Keycloak step-up (ACR + `auth_time`) over a WebAuthn relying party in the orchestrator. D2-07 (keys, `@apex/crypto-client`) and D2-08 (signing sessions) are merged; the web side of D1-05 (OIDC login) is not.
 
 ## Decision
 
