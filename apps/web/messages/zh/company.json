@@ -76,12 +76,6 @@
   "rules": {
     "title": "决策规则 · 版本 {version}",
     "intro": "每次更改都是用通行密钥签署的决策,并生成新版本。旧的评估保留其原有版本。",
-    "scope": "范围",
-    "scopes": {
-      "all": "整个公司",
-      "bearings": "轴承",
-      "valves": "阀门"
-    },
     "caption": "生效的决策规则",
     "rule": "规则",
     "value": "值",
@@ -94,29 +88,6 @@
       "seller": "卖家可信度",
       "signing": "签名与审批",
       "negotiation": "谈判"
-    },
-    "values": {
-      "goGate": "进入审核",
-      "medium": "中"
-    },
-    "origins": {
-      "template": "模板",
-      "proposed": "拟议更改",
-      "policy": "你的政策",
-      "category": "按类别",
-      "required": "必填"
-    },
-    "proposalTitle": "拟议更改",
-    "impact": "据服务器计算,按当前未结报价:{n} 项将由正常变为异常,并进入审核队列。",
-    "reason": "原因(必填)",
-    "sign": "用通行密钥签名",
-    "signNote": "待连接:签名和规则更改尚无后端",
-    "pending": "待连接",
-    "history": "历史",
-    "by": {
-      "finance": "财务",
-      "owner": "所有者",
-      "template": "模板"
     },
     "names": {
       "sanity_z_ok": "正常价格上限",
@@ -131,8 +102,35 @@
       "neg_max_rounds": "最大谈判轮数",
       "neg_max_discount": "最大折扣 · 轴承"
     },
-    "noNewValue": "尚未选择新值",
-    "changeRule": "更改 {rule}"
+    "changeRule": "更改 {rule}",
+    "origins": {
+      "global": "全局",
+      "tenant": "贵公司",
+      "category": "按类别"
+    },
+    "category": "类别",
+    "categoryHint": "留空表示整个公司",
+    "apply": "应用",
+    "loading": "正在加载规则",
+    "error": "无法加载规则。",
+    "retry": "重试",
+    "empty": "此范围没有规则。",
+    "version": "版本 {version} · {hash}",
+    "other": "其他",
+    "proposalTitle": "提议更改",
+    "pick": "用“更改”按钮选择一条规则。",
+    "newValue": "新值",
+    "newValueHint": "数字、文本，或 null 表示未设置",
+    "propose": "提议更改",
+    "proposed": "决定 {id} 已创建，等待签名。签名前不会有任何变化。",
+    "proposeFailed": "无法提议此更改。",
+    "stale": "规则已在此期间更改。请刷新后重新提议。",
+    "sign": "使用通行密钥签名",
+    "signDisabled": "待连接：决定签名尚未接通",
+    "signNote": "更改是一项决定，需要立即通过通行密钥重新验证后签名。",
+    "noPermission": "只有财务、管理员或所有者可以更改规则。",
+    "history": "历史",
+    "historyPending": "待连接：尚无历史记录接口"
   },
   "audit": {
     "title": "审计日志",

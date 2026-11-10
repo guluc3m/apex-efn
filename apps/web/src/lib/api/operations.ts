@@ -11,6 +11,8 @@ import type {
   ListMySigningKeysResponse,
   OpenSigningSessionData,
   OpenSigningSessionResponse,
+  ProposeConfigChangeData,
+  ProposeConfigChangeResponse,
   RegisterMySigningKeyData,
   RegisterMySigningKeyResponse,
   UploadFinancialCsvResponse,
@@ -84,6 +86,14 @@ export function createOperations(client: ApiClient) {
       client.request<GetEffectiveConfigResponse>('/v1/config/effective', {
         path: undefined,
         query,
+        signal,
+      }),
+
+    proposeConfigChange: (body: ProposeConfigChangeData['body'], signal?: AbortSignal) =>
+      client.request<ProposeConfigChangeResponse>('/v1/config/proposals', {
+        method: 'POST',
+        path: undefined,
+        body,
         signal,
       }),
 

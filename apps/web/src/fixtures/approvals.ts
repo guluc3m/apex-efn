@@ -1,4 +1,4 @@
-// //todo_#165: sustituir por la bandeja de aprobaciones real (doble control, documentos y seguimiento) cuando exista el BFF
+// //todo_#165: sustituir por la bandeja de aprobaciones real (doble control, documentos y seguimiento) cuando exista el contrato (issue #302)
 export type ApprovalStatus = 'sign' | 'progress' | 'closed'
 export const APPROVAL_TABS: readonly ApprovalStatus[] = ['sign', 'progress', 'closed']
 

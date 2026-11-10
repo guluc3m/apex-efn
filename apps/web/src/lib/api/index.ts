@@ -1,4 +1,4 @@
-export { api, queryKeys, useCreateMission, useCreateSourcingRequest, useEffectiveConfig, useMission } from './hooks'
+export { api, queryKeys, useCreateMission, useCreateSourcingRequest, useEffectiveConfig, useMission, useProposeConfigChange } from './hooks'
 export { createApiClient, type ApiClient } from './client'
 export { createOperations, type Operations } from './operations'
 export { subscribeMissionEvents } from './events'

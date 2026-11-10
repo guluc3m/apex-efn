@@ -76,12 +76,6 @@
   "rules": {
     "title": "Reglas de decisión · versión {version}",
     "intro": "Cada cambio es una decisión firmada con passkey y crea una versión nueva. Las evaluaciones antiguas guardan la suya.",
-    "scope": "Ámbito",
-    "scopes": {
-      "all": "Toda la empresa",
-      "bearings": "Rodamientos",
-      "valves": "Válvulas"
-    },
     "caption": "Reglas de decisión efectivas",
     "rule": "Regla",
     "value": "Valor",
@@ -94,29 +88,6 @@
       "seller": "Confianza del vendedor",
       "signing": "Firma y aprobación",
       "negotiation": "Negociación"
-    },
-    "values": {
-      "goGate": "Ir a gate",
-      "medium": "media"
-    },
-    "origins": {
-      "template": "Plantilla",
-      "proposed": "Cambio propuesto",
-      "policy": "Tu política",
-      "category": "Por categoría",
-      "required": "Obligatorio"
-    },
-    "proposalTitle": "Cambio propuesto",
-    "impact": "Según el servidor, con las ofertas abiertas: {n} pasarían de normal a atípico y entrarían en la cola de gate.",
-    "reason": "Motivo (obligatorio)",
-    "sign": "Firmar con passkey",
-    "signNote": "Pendiente de conectar: la firma y el cambio de reglas aún no tienen backend",
-    "pending": "Pendiente de conectar",
-    "history": "Historial",
-    "by": {
-      "finance": "Finanzas",
-      "owner": "Owner",
-      "template": "Plantilla"
     },
     "names": {
       "sanity_z_ok": "Precio normal hasta",
@@ -131,8 +102,35 @@
       "neg_max_rounds": "Rondas máximas",
       "neg_max_discount": "Descuento máximo · Rodamientos"
     },
-    "noNewValue": "Nuevo valor pendiente de elegir",
-    "changeRule": "Cambiar {rule}"
+    "changeRule": "Cambiar {rule}",
+    "origins": {
+      "global": "Global",
+      "tenant": "Tu empresa",
+      "category": "Por categoría"
+    },
+    "category": "Categoría",
+    "categoryHint": "Vacío para toda la empresa",
+    "apply": "Aplicar",
+    "loading": "Cargando reglas",
+    "error": "No se pudieron cargar las reglas.",
+    "retry": "Reintentar",
+    "empty": "No hay reglas para este ámbito.",
+    "version": "Versión {version} · {hash}",
+    "other": "Otras",
+    "proposalTitle": "Proponer un cambio",
+    "pick": "Elige una regla con el botón Cambiar.",
+    "newValue": "Nuevo valor",
+    "newValueHint": "Número, texto o null para dejarlo sin definir",
+    "propose": "Proponer cambio",
+    "proposed": "Decisión {id} creada y pendiente de firma. Nada cambia hasta que se firme.",
+    "proposeFailed": "No se pudo proponer el cambio.",
+    "stale": "Las reglas cambiaron entretanto. Recarga y vuelve a proponer.",
+    "sign": "Firmar con passkey",
+    "signDisabled": "Pendiente de conexión: la firma de decisiones aún no está conectada",
+    "signNote": "Un cambio es una decisión firmada con reautenticación inmediata por passkey.",
+    "noPermission": "Solo Finanzas, administración o propietario pueden cambiar reglas.",
+    "history": "Historial",
+    "historyPending": "Pendiente de conexión: aún no hay endpoint de historial"
   },
   "audit": {
     "title": "Registro de auditoría",
