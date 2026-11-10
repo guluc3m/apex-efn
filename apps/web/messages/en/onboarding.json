@@ -185,9 +185,16 @@
     "drop": "Drop your financial CSV here",
     "format": "Long format, UTF-8, amounts in cents. Separator detected automatically.",
     "choose": "Choose file",
-    "selected": "File selected ({size}). Not uploaded or read yet.",
+    "selected": "File selected ({size}). Not uploaded yet.",
     "template": "Download template",
-    "pending": "Not connected yet"
+    "pending": "Not connected yet",
+    "upload": "Upload and import",
+    "uploading": "Importing…",
+    "uploadError": "The file could not be imported. Check the format and try again.",
+    "resultTitle": "Import result",
+    "result": "{ok} rows accepted, {rejected} rejected.",
+    "rejection": "Row {row}: {message}",
+    "notActivated": "Nothing is active yet: activating the snapshot needs your signature."
   },
   "assistant": {
     "title": "Setup assistant",

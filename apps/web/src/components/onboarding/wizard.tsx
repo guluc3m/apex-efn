@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { assistantMessages, platforms, stepStatus } from '@/fixtures/onboarding'
 import { api } from '@/lib/api'
 import { toProfilePatch } from '@/lib/onboarding-profile'
+import { ensureSession } from '@/lib/onboarding-session'
 import { useOnboarding } from '@/stores/onboarding'
 
 import { AppLink } from '../app-link'
@@ -68,14 +69,9 @@ export function OnboardingWizard({ step }: { step: StepId }) {
       go()
       return
     }
-    const { drafts, sessionId, setSessionId } = useOnboarding.getState()
     try {
-      let id = sessionId
-      if (!id) {
-        id = (await api.createOnboardingSession({ base_currency: drafts.presupuesto.divisa as 'EUR' | 'USD' | 'CNY' })).id
-        setSessionId(id)
-      }
-      await api.updateOnboardingSession(id, { company_profile: toProfilePatch(step, drafts) })
+      const id = await ensureSession()
+      await api.updateOnboardingSession(id, { company_profile: toProfilePatch(step, useOnboarding.getState().drafts) })
       setSaveError(false)
       go()
     } catch {
