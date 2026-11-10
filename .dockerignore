@@ -1,0 +1,37 @@
+# Repo-root Docker build context (apps/mock-marketplace image, D1-03).
+# Keep the context small and free of secrets/local state; the Dockerfile copies
+# only the workspace manifests and the mock-marketplace sources explicitly.
+
+.git
+.gitignore
+.claude
+
+# Installed dependencies and build outputs are rebuilt inside the image.
+**/node_modules
+**/.pnpm-store
+**/.turbo
+**/dist
+**/.next
+**/out
+**/build
+**/coverage
+
+# Python environments and caches (unused by the Node image).
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+
+# Local environment files and editor state.
+.env
+.env.local
+.env.*.local
+**/.env.local
+.idea
+.vscode
+**/*.swp
+**/*.swo
+.DS_Store

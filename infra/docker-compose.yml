@@ -320,9 +320,9 @@ services:
       start_period: 20s
 
   # =============================================================================
-  # Application services. Off by default: they need Dockerfiles that land with
-  # D1-09 (images) and apps/mock-marketplace with D5-04. Start with
-  # `docker compose --profile apps up -d --build` once those exist.
+  # Application services. Off by default. mock-marketplace builds from source
+  # (D1-03); orchestrator, web and browser-worker wait for their Dockerfiles in
+  # D1-09. Start with `docker compose --profile apps up -d --build`.
   # The web app is not published on the host: `pnpm dev` runs Next.js on :3000.
   # =============================================================================
   orchestrator:
@@ -374,14 +374,91 @@ services:
       redis:
         condition: service_healthy
 
+  # Built from source (D1-03). The context is the repo root because the app uses
+  # the workspace tsconfig; see apps/mock-marketplace/Dockerfile.
   mock-marketplace:
     profiles: ['apps']
     build:
-      context: ../apps/mock-marketplace
+      context: ..
+      dockerfile: apps/mock-marketplace/Dockerfile
+    image: apex/mock-marketplace:dev
     container_name: apex-mock-marketplace
+    environment:
+      PORT: '8002'
+      HOST: 0.0.0.0
+      MOCK_MARKETPLACE_SEED: '0'
     # Provisional host port. D5-04 confirms it.
     ports:
       - '8002:8002'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:8002/healthz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # =============================================================================
+  # Browser stack (ADR-500), profile `browser`. Off by default: it is
+  # experimental and only the browser worker (D5-02) needs it.
+  #   docker compose --profile browser up -d camoufox crw
+  #
+  # camoufox: shared anti-detect Firefox driven by Playwright over Juggler. The
+  # browser worker connects with firefox.connect(CAMOUFOX_WS_ENDPOINT) and its
+  # playwright-core MUST match this image's Playwright major.minor (ADR-500,
+  # D5-02). Server mode is experimental and one server is one browser.
+  # No health endpoint: GET / answers 200 "Running" but that only proves the HTTP
+  # shim is up, so there is no compose healthcheck.
+  # =============================================================================
+  camoufox:
+    profiles: ['browser']
+    image: ghcr.io/rjocoleman/camoufox-server:150.0.2
+    container_name: apex-camoufox
+    environment:
+      PORT: '3000'
+      # Clients connect to ws://camoufox:3000/camoufox
+      WS_PATH: camoufox
+    expose:
+      - '3000'
+    # Host 13000 avoids 3000 (pnpm dev / Next.js) and 3001 (Langfuse).
+    ports:
+      - '13000:3000'
+    shm_size: '1gb'
+    restart: unless-stopped
+
+  # =============================================================================
+  # crw: Firecrawl-compatible crawler (Rust, AGPL-3.0; see ADR-500). Used for
+  # reading only, POST /v1/scrape with formats html|markdown|links. It respects
+  # robots.txt by default. The image is a separate unmodified service: the AGPL
+  # review is a TL item recorded in ADR-500.
+  # Health: GET /health -> {"active_crawl_jobs":0,"status":"ok","version":"0.43.2"}.
+  # The image has no curl/wget/python, only bash, so the probe uses /dev/tcp.
+  # =============================================================================
+  crw:
+    profiles: ['browser']
+    image: ghcr.io/fastcrw/crw:0.43.2
+    container_name: apex-crw
+    expose:
+      - '3000'
+    ports:
+      - '13001:3000'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "bash -c 'exec 3<>/dev/tcp/127.0.0.1/3000; printf \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \"200 OK\"'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
 
 volumes:
   postgres_data:
