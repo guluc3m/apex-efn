@@ -52,7 +52,9 @@ resource "aws_iam_role" "this" {
 }
 
 # Orchestrator: attachments and CSV read/write, audit trail append-only (no delete, no overwrite
-# beyond what Object Lock allows), KMS for those buckets, and its own secret.
+# beyond what Object Lock allows), KMS for those buckets, its own secret, and the app database DSN
+# (apex_app_login, subject to RLS). The migrator DSN (db-migrate) is deliberately NOT readable here:
+# a compromised orchestrator could otherwise bypass row-level security.
 data "aws_iam_policy_document" "orchestrator" {
   statement {
     sid       = "ObjectsAttachmentsCsv"
@@ -72,16 +74,17 @@ data "aws_iam_policy_document" "orchestrator" {
   statement {
     sid       = "OwnSecret"
     actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
-    resources = [var.secret_arns["orchestrator"]]
+    resources = compact([var.secret_arns["orchestrator"], try(var.secret_arns["db-app"], "")])
   }
 }
 
-# Web (BFF): reads its own secret only (OIDC client settings). It never touches S3 or the database.
+# Web (BFF): reads its own secret (OIDC client settings) and the app database DSN it may need once
+# its Prisma tenant extension lands. It never touches S3. The migrator DSN is not readable here either.
 data "aws_iam_policy_document" "web" {
   statement {
     sid       = "OwnSecret"
     actions   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
-    resources = [var.secret_arns["web"]]
+    resources = compact([var.secret_arns["web"], try(var.secret_arns["db-app"], "")])
   }
   statement {
     sid       = "Kms"
