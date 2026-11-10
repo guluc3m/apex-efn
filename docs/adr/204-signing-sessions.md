@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (D2-08). Needs Tech Lead approval.
+Accepted on 2026-11-10 by the Tech Lead (delegated to the DEV-2 agent by @Toriomg; decisions recorded on #273, #30 and #272).
 
 ## Context
 
