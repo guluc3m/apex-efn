@@ -321,14 +321,16 @@ services:
 
   # =============================================================================
   # Application services. Off by default. mock-marketplace builds from source
-  # (D1-03); orchestrator, web and browser-worker wait for their Dockerfiles in
-  # D1-09. Start with `docker compose --profile apps up -d --build`.
+  # (D1-03); orchestrator, web and browser-worker build from the repo root so their
+  # Dockerfiles can resolve the workspace (pnpm) or the repo-root config/defaults
+  # (uv). Start with `docker compose --profile apps up -d --build`.
   # The web app is not published on the host: `pnpm dev` runs Next.js on :3000.
   # =============================================================================
   orchestrator:
     profiles: ['apps']
     build:
-      context: ../apps/orchestrator
+      context: ..
+      dockerfile: apps/orchestrator/Dockerfile
     container_name: apex-orchestrator
     environment:
       DATABASE_URL: postgresql://apex:apex@postgres:5432/apex
@@ -348,7 +350,8 @@ services:
   web:
     profiles: ['apps']
     build:
-      context: ../apps/web
+      context: ..
+      dockerfile: apps/web/Dockerfile
     container_name: apex-web
     environment:
       DATABASE_URL: postgresql://apex:apex@postgres:5432/apex?schema=public
@@ -364,7 +367,8 @@ services:
   browser-worker:
     profiles: ['apps']
     build:
-      context: ../apps/browser-worker
+      context: ..
+      dockerfile: apps/browser-worker/Dockerfile
     container_name: apex-browser-worker
     environment:
       REDIS_URL: redis://redis:6379

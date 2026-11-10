@@ -1,0 +1,54 @@
+# Staging overrides. Image tags are set by CD (sha-<short>), never here.
+# Domains, IRSA role ARNs and bucket names come from the environment (see docs/runbooks/deploy.md).
+# Remote keys follow the convention apex/staging/<component>; create those secrets in Terraform (environments/staging).
+
+config:
+  AWS_REGION: ''
+  S3_BUCKET_ATTACHMENTS: ''
+  S3_BUCKET_CSV: ''
+  S3_BUCKET_AUDIT: ''
+  LLM_GATEWAY_URL: ''
+
+orchestrator:
+  replicaCount: 1
+  externalSecret:
+    remoteKey: apex/staging/orchestrator
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
+
+web:
+  replicaCount: 1
+  externalSecret:
+    remoteKey: apex/staging/web
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
+
+browserWorker:
+  replicaCount: 1
+  externalSecret:
+    remoteKey: apex/staging/browser-worker
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1536Mi
+
+llm:
+  enabled: false
+  externalSecret:
+    remoteKey: apex/staging/llm
+
+externalSecrets:
+  enabled: true
+
+ingress:
+  enabled: false

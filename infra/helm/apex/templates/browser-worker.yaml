@@ -1,0 +1,61 @@
+{{- if .Values.browserWorker.enabled }}
+{{- $c := dict "root" $ "component" "browser-worker" }}
+{{- $sa := include "apex.serviceAccountName" (dict "root" $ "component" "browser-worker" "sa" .Values.browserWorker.serviceAccount) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apex.componentName" $c }}
+  labels:
+    {{- include "apex.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.browserWorker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "apex.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "apex.selectorLabels" $c | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $sa }}
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "apex.podSecurityContext" $ | nindent 8 }}
+      {{- with .Values.browserWorker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.browserWorker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: browser-worker
+          image: {{ include "apex.image" (dict "root" $ "image" .Values.browserWorker.image) | quote }}
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            {{- include "apex.envFrom" (dict "root" $ "secretName" .Values.browserWorker.secretName) | nindent 12 }}
+          {{- with .Values.browserWorker.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- include "apex.containerSecurityContext" $ | nindent 12 }}
+          resources:
+            {{- toYaml .Values.browserWorker.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.browserWorker.shmSize }}
+{{- end }}

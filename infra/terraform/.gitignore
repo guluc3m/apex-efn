@@ -1,0 +1,9 @@
+# Local Terraform state, provider cache and real variable values
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+*.tfplan

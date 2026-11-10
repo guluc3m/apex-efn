@@ -1,0 +1,7 @@
+apiVersion: v2
+name: apex
+description: APEX-EFN platform - web (Next.js), orchestrator (FastAPI), browser-worker, and an optional self-hosted LLM endpoint.
+type: application
+version: 0.1.0
+# Default image tag for every component. CD always overrides it with sha-<short> (see .github/workflows/cd.yml).
+appVersion: '0.1.0'

@@ -1,0 +1,172 @@
+# Default values for the APEX-EFN umbrella chart.
+#
+# Conventions:
+# - Images are pulled from GHCR (ghcr.io/guluc3m/apex-efn/<app>). Tags default to Chart.AppVersion;
+#   CD always sets sha-<short>. Never deploy `latest`.
+# - Secret VALUES are never in this chart. Each component reads an existing Kubernetes Secret
+#   (`<component>.secretName`). That Secret is filled either by External Secrets Operator
+#   (`externalSecrets.enabled: true`, from AWS Secrets Manager) or by an operator out of band.
+# - Values marked REQUIRED or empty strings are environment facts (domains, bucket names, model names).
+#   They are deliberately not defaulted here.
+
+nameOverride: ''
+fullnameOverride: ''
+
+# Pull secrets for private GHCR packages. Each entry is {name: <Secret of type kubernetes.io/dockerconfigjson>}.
+imagePullSecrets: []
+
+# Non-secret environment shared by all app components (rendered into the <fullname>-config ConfigMap).
+config:
+  LOG_LEVEL: 'info'
+  AWS_REGION: ''
+  S3_BUCKET_ATTACHMENTS: ''
+  S3_BUCKET_CSV: ''
+  S3_BUCKET_AUDIT: ''
+  LLM_GATEWAY_URL: ''
+  OTEL_EXPORTER_OTLP_ENDPOINT: ''
+
+orchestrator:
+  enabled: true
+  image:
+    repository: ghcr.io/guluc3m/apex-efn/orchestrator
+    tag: ''
+  replicaCount: 2
+  containerPort: 8000
+  # Secret with DATABASE_URL, REDIS_URL, LLM_GATEWAY_API_KEY, etc. (see docs/runbooks/deploy.md).
+  secretName: apex-orchestrator
+  externalSecret:
+    # AWS Secrets Manager secret name holding the orchestrator's keys (used when externalSecrets.enabled).
+    remoteKey: ''
+  serviceAccount:
+    create: true
+    name: ''
+    # IRSA role for S3 (attachments, csv, audit) and KMS. Required on EKS, empty means no AWS access.
+    annotations: {}
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  extraEnv: []
+
+web:
+  enabled: true
+  image:
+    repository: ghcr.io/guluc3m/apex-efn/web
+    tag: ''
+  replicaCount: 2
+  containerPort: 3000
+  secretName: apex-web
+  externalSecret:
+    remoteKey: ''
+  serviceAccount:
+    create: true
+    name: ''
+    annotations: {}
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  extraEnv: []
+
+browserWorker:
+  enabled: true
+  image:
+    repository: ghcr.io/guluc3m/apex-efn/browser-worker
+    tag: ''
+  replicaCount: 1
+  secretName: apex-browser-worker
+  externalSecret:
+    remoteKey: ''
+  serviceAccount:
+    create: true
+    name: ''
+    annotations: {}
+  # Chromium needs a large /dev/shm. Kubernetes gives containers 64Mi by default, which crashes it.
+  shmSize: 1Gi
+  # Dedicated, tainted node pool (see infra/terraform: node group "browser").
+  nodeSelector:
+    apex.io/nodepool: browser
+  tolerations:
+    - key: apex.io/nodepool
+      operator: Equal
+      value: browser
+      effect: NoSchedule
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      memory: 2Gi
+  extraEnv: []
+
+# Optional self-hosted LLM endpoint (OpenAI-compatible /v1 via vLLM). Disabled by default.
+# Requires a GPU node pool (infra/terraform variable gpu_node_count > 0) and `llm.model`.
+llm:
+  enabled: false
+  image:
+    # Pinned tag, verified to exist on Docker Hub. Bump together with the model choice (ADR-002).
+    repository: vllm/vllm-openai
+    tag: v0.8.5
+  # Model identifier served on /v1/models. REQUIRED when enabled. Not chosen by the chart.
+  model: ''
+  replicaCount: 1
+  containerPort: 8000
+  secretName: apex-llm
+  externalSecret:
+    remoteKey: ''
+  # Shared memory for tensor parallelism / multiprocessing.
+  shmSize: 2Gi
+  nodeSelector:
+    apex.io/nodepool: gpu
+  tolerations:
+    - key: apex.io/nodepool
+      operator: Equal
+      value: gpu
+      effect: NoSchedule
+  # Placeholder sizes for a single-GPU dev/staging test. Size them for the chosen model before enabling.
+  # For extended resources such as nvidia.com/gpu the request is taken from the limit.
+  resources:
+    requests:
+      cpu: '4'
+      memory: 16Gi
+    limits:
+      memory: 24Gi
+      nvidia.com/gpu: 1
+  extraArgs: []
+  extraEnv: []
+
+ingress:
+  # Disabled until the staging/production domains exist. When enabled, both hosts are REQUIRED.
+  enabled: false
+  className: ''
+  annotations: {}
+  web:
+    host: ''
+  api:
+    # Routes /v1 and /health to the orchestrator.
+    host: ''
+  tls:
+    enabled: false
+    secretName: ''
+
+externalSecrets:
+  # Requires the External Secrets Operator (>= v0.16, API external-secrets.io/v1) in the cluster.
+  enabled: false
+  storeKind: ClusterSecretStore
+  # Name of the ClusterSecretStore backed by AWS Secrets Manager (created as a cluster add-on, see docs/runbooks/deploy.md).
+  storeName: aws-secrets-manager
+  refreshInterval: 1h

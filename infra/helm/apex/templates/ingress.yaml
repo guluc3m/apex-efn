@@ -1,0 +1,53 @@
+{{- if .Values.ingress.enabled }}
+{{- $webHost := required "ingress.web.host is required when ingress.enabled=true" .Values.ingress.web.host }}
+{{- $apiHost := required "ingress.api.host is required when ingress.enabled=true" .Values.ingress.api.host }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "apex.fullname" . }}
+  labels:
+    {{- include "apex.labels" (dict "root" $ "component" "ingress") | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $webHost | quote }}
+        - {{ $apiHost | quote }}
+      secretName: {{ required "ingress.tls.secretName is required when ingress.tls.enabled=true" .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $webHost | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "apex.componentName" (dict "root" $ "component" "web") }}
+                port:
+                  name: http
+    - host: {{ $apiHost | quote }}
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "apex.componentName" (dict "root" $ "component" "orchestrator") }}
+                port:
+                  name: http
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "apex.componentName" (dict "root" $ "component" "orchestrator") }}
+                port:
+                  name: http
+{{- end }}
