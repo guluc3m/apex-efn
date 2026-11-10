@@ -72,3 +72,11 @@ Tokens carry `tenant_id` (from a user attribute, admin-only in the user profile)
 
 Tenant isolation is enforced from the token: a caller cannot choose a tenant with a header while
 authenticated, and `tenant_id` is never read from a body.
+
+## Enforcement point
+
+Authentication is applied to the **whole `/v1` surface** in `apex/main.py`
+(`include_router(..., dependencies=[Depends(current_principal)])`), not per router. A stub that does not
+depend on the tenant helper is therefore still closed to anonymous callers. When DEV-5 implements
+`POST /v1/webhooks/platforms/{platform}` it must be mounted outside that dependency and authenticate the
+platform by signature instead of a user token.

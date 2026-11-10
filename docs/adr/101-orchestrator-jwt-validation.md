@@ -58,3 +58,9 @@ ADR-900 Q11 uses Keycloak step-up (ACR + `auth_time`).
 - A token minted for another tenant is accepted as long as its `tenant_id` claim is valid; membership is
   asserted by Keycloak at login, not re-checked against the database per request. D2-04's RLS is the
   second line of defence for data access.
+
+10. **Enforcement point:** authentication is a dependency of the whole `/v1` router mounted in
+    `main.py`, not of individual routes. Several stubs (audit, decisions, keys, signing) had no tenant
+    dependency and were reachable anonymously; a per-router rule would have left that hole open. Role
+    checks stay per route (owning lane). The platform webhooks route must later be mounted outside this
+    dependency and authenticate the platform by signature.

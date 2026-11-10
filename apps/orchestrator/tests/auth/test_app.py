@@ -106,6 +106,22 @@ def test_disabled_auth_answers_503(app: FastAPI, monkeypatch) -> None:
     assert response.status_code == 503
 
 
+def test_a_route_without_its_own_auth_dependency_is_still_protected(
+    app: FastAPI, make_token, monkeypatch
+) -> None:
+    # GET /v1/audit is a stub owned by DEV-2 and depends on no tenant helper of its own. Authentication
+    # is applied to the whole /v1 surface, so an unauthenticated call must not fall through to the stub.
+    monkeypatch.delenv("APEX_ALLOW_TENANT_HEADER", raising=False)
+
+    anonymous = TestClient(app).get("/v1/audit")
+    authenticated = TestClient(app).get(
+        "/v1/audit", headers={"authorization": f"Bearer {make_token()}"}
+    )
+
+    assert anonymous.status_code == 401
+    assert authenticated.status_code != 401
+
+
 def test_a_real_route_is_no_longer_blocked_by_the_placeholder(app: FastAPI, make_token) -> None:
     response = TestClient(app).get("/v1/audit", headers={"authorization": f"Bearer {make_token()}"})
 
