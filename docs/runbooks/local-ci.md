@@ -48,7 +48,7 @@ A job that needs Docker and finds the target present but no Docker running **fai
 
 #### The `integration` job
 
-`ci/integration.sh` runs two phases. Each phase skips with its own reason when its target does not exist:
+`ci/integration.sh` runs three phases. Each phase skips with its own reason when its target does not exist:
 
 - **Phase A, Vault (no Docker).** Target: a test marked `vault_integration` under `apps/orchestrator/tests`, or the
   real-Vault block in `apps/browser-worker/src` (gated by `VAULT_INTEGRATION_ADDR`). The script downloads the pinned
@@ -57,9 +57,13 @@ A job that needs Docker and finds the target present but no Docker running **fai
   and stops it. The stop sends SIGTERM and, after 10 s, SIGKILL.
 - **Phase B, Testcontainers (Docker).** Target: a test marked `integration`. Without Docker this phase **fails**
   with `requires Docker`.
+- **Phase C, adversarial negotiation (D5-09, no Docker).** Target: `apps/orchestrator/tests/negotiation/adversarial`.
+  It boots the mock marketplace with `tsx`, so it needs Node and `pnpm install`. It runs with
+  `APEX_REQUIRE_MOCK_MARKETPLACE=1`, which turns a missing Node or mock into a **failure** instead of a skip, so
+  the suite cannot silently disappear from CI.
 
-The job result: `FAIL` if either phase fails. `PASS` if at least one phase ran and none failed (the message says which
-phases ran). `SKIP` only if both phases skip. Markers:
+The job result: `FAIL` if any phase fails. `PASS` if at least one phase ran and none failed (the message says which
+phases ran). `SKIP` only if all phases skip. Markers:
 
 | Marker              | Meaning                                                                                                                  | Excluded from the unit run (`ci/python.sh`) |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
