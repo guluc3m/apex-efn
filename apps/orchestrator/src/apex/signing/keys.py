@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apex.db.models import SigningKey, SigningKeyOwnerType
 from apex.platform.vault import TransitPublicKey, VaultClient
 from apex.signing.ed25519 import load_public_key
+from apex.signing.sessions import invalidate_key_sessions
 
 ALG = "Ed25519"
 
@@ -110,6 +111,9 @@ async def revoke(session: AsyncSession, key_id: str, *, reason: str, now: dateti
         raise KeyAlreadyRevoked(key_id)
     key.revoked_at = now
     key.revoked_reason = reason
+    await invalidate_key_sessions(
+        session, key_id, now=now
+    )  # criterion 22: at once, same transaction
     await session.flush()
     return key
 
