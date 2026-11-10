@@ -7,39 +7,35 @@ from typing import Any
 
 import pytest
 
+from apex.domain.money import Money
 from tests.domain.vectors import ROOT, cases, domain_files, load_file, mismatch
 
 
-class CodedError(Exception):
-    def __init__(self, code: str) -> None:
-        super().__init__(code)
-        self.code = code
+def _money(data: dict[str, Any]) -> Money:
+    return Money(data["amount_minor"], data["currency"])
 
 
-# D3-01 framework sample. D3-02 replaces these adapters with the real money engine.
-def _half_away_division(data: dict[str, Any], _config: Any) -> int | str:
-    n, d = int(data["numerator"]), int(data["denominator"])
-    if d == 0:
-        raise CodedError("division_by_zero")
-    q, r = divmod(abs(n), abs(d))
-    if 2 * r >= abs(d):
-        q += 1
-    q = -q if (n < 0) != (d < 0) else q
-    return str(q) if isinstance(data["numerator"], str) else q
+def _out(m: Money) -> dict[str, Any]:
+    return {"amount_minor": m.amount_minor, "currency": m.currency.value}
 
 
-def _mean(xs: list[float], _config: Any) -> float:
-    if not xs:
-        raise CodedError("empty_sample")
-    return sum(xs) / len(xs)
+def _arithmetic(data: dict[str, Any], _config: Any) -> dict[str, Any]:
+    a, b = _money(data["a"]), _money(data["b"])
+    return _out(a + b if data["op"] == "add" else a - b)
 
 
+# Engine ids of packages/test-vectors/money (ADR-301). packages/money/src/vectors.test.ts runs the same files.
 ENGINES: dict[str, Callable[[Any, Any], Any]] = {
-    "sample.half_away_division": _half_away_division,
-    "sample.mean": _mean,
+    "money.new": lambda d, _c: _out(_money(d)),
+    "money.parse": lambda d, _c: _out(Money.parse(d["amount"], d["currency"])),
+    "money.to_decimal": lambda d, _c: _money(d).to_decimal_string(),
+    "money.arithmetic": _arithmetic,
+    "money.multiply": lambda d, _c: _money(d).multiply(d["factor"]).amount_minor,
+    "money.divide": lambda d, _c: _money(d).divide(d["divisor"]).amount_minor,
+    "money.allocate": lambda d, _c: [m.amount_minor for m in _money(d).allocate(d["ratios"])],
 }
 
-VECTORS, ERRORS = cases("sample")
+VECTORS, ERRORS = cases("money")
 
 
 @pytest.mark.parametrize(("file", "vector"), VECTORS)
