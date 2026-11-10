@@ -3,11 +3,13 @@
 import { Button, Checkbox, Icon } from '@apex/ui'
 import { FileText, FolderOpen, Download, Plus, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FormProvider, useForm, useFormContext, type FieldValues } from 'react-hook-form'
 import type { z } from 'zod'
 
 import { certifications, effectiveThresholds } from '@/fixtures/onboarding'
+import { api } from '@/lib/api'
+import { ensureSession } from '@/lib/onboarding-session'
 import { useOnboarding } from '@/stores/onboarding'
 
 import { CellInput, CheckGroup, SelectField, TextField } from './fields'
@@ -213,6 +215,24 @@ export function FinanceStep() {
   const csv = useOnboarding((s) => s.csv)
   const setCsv = useOnboarding((s) => s.setCsv)
   const input = useRef<HTMLInputElement>(null)
+  // The File never enters the store: only its name/size and the server's report do.
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const result = useOnboarding((s) => s.financialImport)
+  const setResult = useOnboarding((s) => s.setFinancialImport)
+  const upload = async () => {
+    if (!file) return
+    setBusy(true)
+    setFailed(false)
+    try {
+      setResult(await api.uploadFinancialCsv(await ensureSession(), file))
+    } catch {
+      setFailed(true)
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
     <>
       <div className="flex flex-col items-start gap-1 border border-dashed border-line-strong p-6">
@@ -229,8 +249,10 @@ export function FinanceStep() {
           tabIndex={-1}
           aria-label={t('choose')}
           onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) setCsv({ name: file.name, size: file.size })
+            const picked = e.target.files?.[0]
+            setFile(picked ?? null)
+            setResult(null)
+            setCsv(picked ? { name: picked.name, size: picked.size } : null)
           }}
         />
         <Button variant="sec" onClick={() => input.current?.click()}>
@@ -245,7 +267,34 @@ export function FinanceStep() {
             {csv.name}
           </strong>
           <span className="text-[13px] text-ink-muted">{t('selected', { size: formatSize(csv.size) })}</span>
+          <div>
+            <Button variant="pri" onClick={() => void upload()} disabled={busy || !file}>
+              <Icon icon={Upload} />
+              {busy ? t('uploading') : t('upload')}
+            </Button>
+          </div>
         </div>
+      )}
+      {failed && (
+        <p role="alert" className="m-0 text-bad">
+          {t('uploadError')}
+        </p>
+      )}
+      {result && (
+        <section className="flex flex-col gap-2 border border-line bg-panel p-4" role="status" aria-label={t('resultTitle')}>
+          <strong className="font-semibold">{t('result', { ok: result.report.rows_ok, rejected: result.report.rows_rejected })}</strong>
+          <ul className="m-0 list-none p-0 text-[13px] text-ink-muted">
+            {result.report.rejections.map((r) => (
+              <li key={`${r.row}-${r.reason_code}`}>{t('rejection', { row: r.row, message: r.message })}</li>
+            ))}
+          </ul>
+          {result.report.warnings.map((w) => (
+            <p key={w} className="m-0 text-[13px]">
+              {w}
+            </p>
+          ))}
+          <span className="text-[13px] text-ink-muted">{t('notActivated')}</span>
+        </section>
       )}
       {/* //todo_#152: plantilla y documentación de métricas aceptadas */}
       <div>

@@ -13,6 +13,7 @@ import type {
   OpenSigningSessionResponse,
   RegisterMySigningKeyData,
   RegisterMySigningKeyResponse,
+  UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
 } from '@apex/shared-types/contracts'
@@ -47,6 +48,18 @@ export function createOperations(client: ApiClient) {
         body,
         signal,
       }),
+
+    /** Multipart upload; the server parses it and returns a draft import. Nothing is activated. */
+    uploadFinancialCsv: (onboardingId: string, file: File, signal?: AbortSignal) => {
+      const body = new FormData()
+      body.append('file', file)
+      return client.request<UploadFinancialCsvResponse>('/v1/onboarding/{id}/financial-csv', {
+        method: 'POST',
+        path: { id: onboardingId },
+        body,
+        signal,
+      })
+    },
 
     createSourcingRequest: (body: CreateSourcingRequestData['body'], signal?: AbortSignal) =>
       client.request<CreateSourcingRequestResponse>('/v1/sourcing-requests', {

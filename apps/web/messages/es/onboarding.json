@@ -185,9 +185,16 @@
     "drop": "Arrastra aquí tu CSV financiero",
     "format": "Formato largo, UTF-8, importes en céntimos. Separador detectado automáticamente.",
     "choose": "Elegir archivo",
-    "selected": "Archivo seleccionado ({size}). Aún no se ha subido ni leído.",
+    "selected": "Archivo seleccionado ({size}). Aún sin subir.",
     "template": "Descargar plantilla",
-    "pending": "Pendiente de conectar"
+    "pending": "Pendiente de conectar",
+    "upload": "Subir e importar",
+    "uploading": "Importando…",
+    "uploadError": "No se pudo importar el archivo. Revisa el formato e inténtalo de nuevo.",
+    "resultTitle": "Resultado de la importación",
+    "result": "{ok} filas aceptadas, {rejected} rechazadas.",
+    "rejection": "Fila {row}: {message}",
+    "notActivated": "Aún no hay nada activo: activar el snapshot requiere tu firma."
   },
   "assistant": {
     "title": "Asistente de alta",

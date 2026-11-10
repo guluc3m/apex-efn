@@ -185,9 +185,16 @@
     "drop": "将财务 CSV 拖到此处",
     "format": "长格式，UTF-8，金额以分为单位。自动识别分隔符。",
     "choose": "选择文件",
-    "selected": "已选择文件（{size}）。尚未上传或读取。",
+    "selected": "已选择文件（{size}）。尚未上传。",
     "template": "下载模板",
-    "pending": "尚未接入"
+    "pending": "尚未接入",
+    "upload": "上传并导入",
+    "uploading": "正在导入…",
+    "uploadError": "无法导入该文件。请检查格式后重试。",
+    "resultTitle": "导入结果",
+    "result": "已接受 {ok} 行，拒绝 {rejected} 行。",
+    "rejection": "第 {row} 行：{message}",
+    "notActivated": "尚未生效：激活快照需要您的签名。"
   },
   "assistant": {
     "title": "设置助手",

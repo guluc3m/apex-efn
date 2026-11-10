@@ -1,3 +1,4 @@
+import type { UploadFinancialCsvResponse } from '@apex/shared-types/contracts'
 import { create } from 'zustand'
 
 import type { Drafts, FormStepId } from '@/components/onboarding/schemas'
@@ -14,6 +15,8 @@ interface OnboardingStore {
   drafts: Drafts
   csv: CsvSelection | null
   sessionId: string | null
+  financialImport: UploadFinancialCsvResponse | null
+  setFinancialImport: (i: UploadFinancialCsvResponse | null) => void
   setSessionId: (id: string) => void
   save: <K extends FormStepId>(step: K, values: Drafts[K]) => void
   setCsv: (csv: CsvSelection | null) => void
@@ -23,6 +26,8 @@ export const useOnboarding = create<OnboardingStore>((set) => ({
   drafts: initialDrafts,
   csv: null,
   sessionId: null,
+  financialImport: null,
+  setFinancialImport: (financialImport) => set({ financialImport }),
   setSessionId: (sessionId) => set({ sessionId }),
   save: (step, values) => set((s) => ({ drafts: { ...s.drafts, [step]: values } })),
   setCsv: (csv) => set({ csv }),
