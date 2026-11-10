@@ -17,7 +17,12 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from apex.negotiation.engine import NegotiationEngine, NegotiationError, OpenRequest
-from apex.negotiation.models import NegotiationOutcome, NegotiationParams, NegotiationSession
+from apex.negotiation.models import (
+    BEST_QUOTE_ABOVE_TARGET,
+    NegotiationOutcome,
+    NegotiationParams,
+    NegotiationSession,
+)
 from apex.negotiation.ports import NegotiationStore
 
 
@@ -52,13 +57,27 @@ it reads tenant config (``neg.*``) and the buyer profile, and fails loudly on un
 
 
 def to_result(session: NegotiationSession) -> NegotiationResult:
+    """Map the session onto the graph's result.
+
+    ``price_minor`` is set for an agreement **and** for the escalation of #241, where a real discount above
+    the target goes to the human gate: the gate needs the number to judge it, and ``reason`` says which case
+    it is. Every other outcome carries no price, so nothing downstream can mistake a rejected quote for an
+    accepted one.
+    """
     agreed = session.status is NegotiationOutcome.AGREED and session.agreed is not None
+    gate_quote = (
+        session.best_quote
+        if session.status is NegotiationOutcome.ESCALATED
+        and session.stop_reason == BEST_QUOTE_ABOVE_TARGET
+        else None
+    )
+    quote = session.agreed if agreed else gate_quote
     return NegotiationResult(
         outcome=session.status,
         negotiation_id=session.id,
-        price_minor=session.agreed.unit_price_minor if agreed and session.agreed else None,
-        currency=session.agreed.currency if agreed and session.agreed else None,
-        quantity=session.params.quantity if agreed else None,
+        price_minor=quote.unit_price_minor if quote is not None else None,
+        currency=quote.currency if quote is not None else None,
+        quantity=session.params.quantity if quote is not None else None,
         reason=session.stop_reason,
     )
 

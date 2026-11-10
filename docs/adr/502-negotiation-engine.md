@@ -72,6 +72,25 @@ for a human approval (spec 10).
    browser worker (D5-01, D5-03). Transcripts and screenshots in S3, plus the approve-send HTTP
    endpoint (contract PR after D2-01), are follow-ups in D5-07c.
 
+## Revision 2026-11-10: a quote above the target goes to the gate (#241)
+
+The playbook refuses to concede past `target_discount`, which stays. What changed is what happens when the
+seller holds **between the target and the list price**: the negotiation used to end `no_agreement`, and the
+mission graph maps that to rejecting the offer, so a real discount (a 7% one in the D5-09 suite) disappeared
+without a human seeing it.
+
+Decision (TL, option 2 of #241): the engine stops with `escalated` and `stop_reason =
+best_quote_above_target`, and `NegotiationResult.price_minor` carries the best grounded quote for that case
+along with its currency and quantity. `price_minor` stays `null` for every other non-agreed outcome, so nothing
+downstream can mistake a rejected quote for an accepted one.
+
+The rule is `quote_for_the_gate`: the best quote must be a real discount, strictly below the listed price.
+A seller who never moves off the list price still ends `no_agreement`; a seller at or below the target still
+ends `agreed` through the written summary.
+
+Consumers: DEV-4's gate reads `price_minor` on `escalated` (it used to read it only on `agreed`). The human
+still signs before anything is bought.
+
 ## Consequences
 
 - Criterion 13 and the core of criterion 14 are testable without an LLM, a browser or a database. The
@@ -84,4 +103,4 @@ for a human approval (spec 10).
 ## Related
 
 - PROMPT-IMPLEMENTACION.md 3.6, 9 (criteria 13, 14), 10
-- ADR-403, ADR-500, ADR-501, ADR-900; issues #66, #115; PR #112
+- ADR-403, ADR-500, ADR-501, ADR-900; issues #66, #115, #241; PR #112
