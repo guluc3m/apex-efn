@@ -11,7 +11,7 @@ describe('getViewer', () => {
   beforeEach(() => getSession.mockReset())
   it('picks the highest-privilege role', async () => {
     getSession.mockResolvedValue(withRoles(['buyer', 'admin']))
-    expect(await getViewer()).toEqual({ role: 'admin', tenantId: 't1' })
+    expect(await getViewer()).toEqual({ userId: null, role: 'admin', tenantId: 't1' })
   })
   it('falls back to viewer without a session or roles', async () => {
     getSession.mockResolvedValue(null)

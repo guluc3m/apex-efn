@@ -3,8 +3,7 @@ import * as React from 'react'
 import { cn } from '../../lib/utils.js'
 
 export interface SigningSealProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Dispara los 600 ms una vez. Solo desde estado simulado de fixture hasta que haya firma real. */
-  // //todo_#150: activar con la confirmación real de la API de firmas
+  /** Dispara los 600 ms una vez. Solo con la confirmación real de la API de firmas, nunca con estado simulado. */
   playing: boolean
 }
 

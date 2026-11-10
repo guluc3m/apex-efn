@@ -26,6 +26,14 @@ export class SigningUnsupportedError extends Error {
   }
 }
 
+/** Generates a non-exportable key, registers its public half, and stores it on this device only after the server accepts it. */
+export async function enrollKey(userId: string, d: Pick<OpenSessionDeps, 'keys' | 'isSupported' | 'registerKey'>): Promise<SigningKey> {
+  if (!(await d.isSupported())) throw new SigningUnsupportedError()
+  const key = await d.registerKey({ public_key: await d.keys.generateKey(), alg: 'Ed25519' })
+  await d.keys.persist(userId, key.id)
+  return key
+}
+
 /**
  * Opens a signing window for `userId`. Enrolls a device key first when the device has none or the
  * server no longer lists it as active. Never falls back to a server-held key (ADR-203): when the
@@ -40,11 +48,7 @@ export async function openSigningSession(userId: string, d: OpenSessionDeps): Pr
     const loaded = d.keys.loadedKeyId
     if (loaded && registered.has(loaded)) keyId = loaded
   }
-  if (!keyId) {
-    const key = await d.registerKey({ public_key: await d.keys.generateKey(), alg: 'Ed25519' })
-    await d.keys.persist(userId, key.id)
-    keyId = key.id
-  }
+  keyId ??= (await enrollKey(userId, d)).id
 
   const session = await d.openSession({
     key_id: keyId,

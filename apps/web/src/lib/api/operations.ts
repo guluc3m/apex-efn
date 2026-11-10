@@ -2,6 +2,9 @@ import type {
   AbortNegotiationResponse,
   ApproveNegotiationDraftData,
   ApproveNegotiationDraftResponse,
+  CloseSigningSessionResponse,
+  CreateDecisionData,
+  CreateDecisionResponse,
   CreateMissionData,
   CreateMissionResponse,
   CreateOnboardingSessionData,
@@ -27,6 +30,7 @@ import type {
   ListDealsResponse,
   ListGateQueueData,
   ListGateQueueResponse,
+  GetSigningSessionResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
   OpenSigningSessionResponse,
@@ -39,6 +43,10 @@ import type {
   SendHumanNegotiationMessageData,
   SendHumanNegotiationMessageResponse,
   TakeoverNegotiationResponse,
+  RevokeSigningKeyData,
+  RevokeSigningKeyResponse,
+  SignDecisionData,
+  SignDecisionResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
@@ -228,6 +236,20 @@ export function createOperations(client: ApiClient) {
         path: { id },
         body: reason ? { reason } : undefined,
       }),
+    getSigningSession: (id: string, signal?: AbortSignal) =>
+      client.request<GetSigningSessionResponse>('/v1/signing-sessions/{id}', { path: { id }, signal }),
+
+    closeSigningSession: (id: string, signal?: AbortSignal) =>
+      client.request<CloseSigningSessionResponse>('/v1/signing-sessions/{id}', { method: 'DELETE', path: { id }, signal }),
+
+    createDecision: (body: CreateDecisionData['body'], signal?: AbortSignal) =>
+      client.request<CreateDecisionResponse>('/v1/decisions', { method: 'POST', path: undefined, body, signal }),
+
+    signDecision: (id: string, body: SignDecisionData['body'], signal?: AbortSignal) =>
+      client.request<SignDecisionResponse>('/v1/decisions/{id}/sign', { method: 'POST', path: { id }, body, signal }),
+
+    revokeSigningKey: (id: string, body: RevokeSigningKeyData['body'], signal?: AbortSignal) =>
+      client.request<RevokeSigningKeyResponse>('/v1/keys/{id}/revoke', { method: 'POST', path: { id }, body, signal }),
   }
 }
 

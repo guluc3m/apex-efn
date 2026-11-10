@@ -1,7 +1,6 @@
 {
   "title": "Decision signing",
   "intro": "Ed25519 key in this browser, 15-minute passkey session and re-authentication when the rule requires it.",
-  "pending": "Not connected yet",
   "viewerTitle": "Your role is read-only",
   "viewerBody": "The viewer role never signs. You can review keys, but not create or revoke them.",
   "viewerReason": "The viewer role cannot sign",
@@ -37,5 +36,13 @@
   "revokedNote": "Its signatures still verify",
   "revokeTitle": "Revoke this key",
   "revokeBody": "The signing session is closed. Earlier signatures still verify with this key.",
-  "revokeConfirm": "Revoke key"
+  "revokeConfirm": "Revoke key",
+  "noUser": "No signed-in user",
+  "needSession": "Open a signing session first (passkey)",
+  "sessionLive": "Session open: {count, plural, one {# signature left} other {# signatures left}}.",
+  "sessionClose": "Close session",
+  "stepUpFailed": "Passkey re-authentication could not start. Nothing was signed.",
+  "errorGeneric": "Something went wrong. Nothing was signed.",
+  "keysError": "Could not load your keys.",
+  "sealedTitle": "Key revoked with a signed decision"
 }
