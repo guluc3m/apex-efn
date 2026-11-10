@@ -58,6 +58,7 @@ describe('SigningClient enrollment and storage', () => {
     const later = new SigningClient()
     await expect(later.load('user-2')).resolves.toBe(false)
     await expect(later.load('user-1')).resolves.toBe(true)
+    expect(later.loadedKeyId).toBe('key-1')
     const payload = { b: 1, a: 'x' }
     const signed = await later.sign(payload)
     expect(signed.keyId).toBe('key-1')

@@ -8,6 +8,11 @@ import type {
   GetEffectiveConfigData,
   GetEffectiveConfigResponse,
   GetMissionResponse,
+  ListMySigningKeysResponse,
+  OpenSigningSessionData,
+  OpenSigningSessionResponse,
+  RegisterMySigningKeyData,
+  RegisterMySigningKeyResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
 } from '@apex/shared-types/contracts'
@@ -66,6 +71,25 @@ export function createOperations(client: ApiClient) {
       client.request<GetEffectiveConfigResponse>('/v1/config/effective', {
         path: undefined,
         query,
+        signal,
+      }),
+
+    listMySigningKeys: (signal?: AbortSignal) =>
+      client.request<ListMySigningKeysResponse>('/v1/keys/me', { path: undefined, signal }),
+
+    registerMySigningKey: (body: RegisterMySigningKeyData['body'], signal?: AbortSignal) =>
+      client.request<RegisterMySigningKeyResponse>('/v1/keys/me', {
+        method: 'POST',
+        path: undefined,
+        body,
+        signal,
+      }),
+
+    openSigningSession: (body: OpenSigningSessionData['body'], signal?: AbortSignal) =>
+      client.request<OpenSigningSessionResponse>('/v1/signing-sessions', {
+        method: 'POST',
+        path: undefined,
+        body,
         signal,
       }),
   }

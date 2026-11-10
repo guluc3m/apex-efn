@@ -4,6 +4,7 @@ import type {
   MissionEvent,
   OnboardingSession,
   Problem,
+  SigningSession,
   SourcingRequest,
 } from '@apex/shared-types/contracts'
 import { http, HttpResponse } from 'msw'
@@ -81,6 +82,22 @@ export const reauthProblemFixture: Problem & { error: 'reauth_required'; reason:
   reason: 'session_expired',
 }
 
+// Inert fixture window (the real length comes from the server's expires_at, never from the UI).
+export const signingSessionFixture: SigningSession = {
+  id: 'ss_mock_1',
+  user_id: 'user_mock_1',
+  key_id: 'key_mock_1',
+  auth_method: 'keycloak_step_up',
+  auth_at: NOW,
+  expires_at: '2026-11-09T09:15:00Z',
+  device_fingerprint_ref: 'device_mock_1',
+  decisions_signed: [],
+  max_decisions: 5,
+  remaining_decisions: 5,
+  status: 'active',
+  server_time: NOW,
+}
+
 const API = '*/api/v1'
 
 export const handlers = [
@@ -94,5 +111,12 @@ export const handlers = [
     const body = `id: 1\nevent: state_changed\ndata: ${JSON.stringify({ ...missionEventFixture, mission_id: params.id })}\n\n`
     return new HttpResponse(body, { headers: { 'content-type': 'text/event-stream' } })
   }),
+  http.post(`${API}/signing-sessions`, () => HttpResponse.json(signingSessionFixture, { status: 201 })),
+  http.get(`${API}/signing-sessions/:id`, ({ params }) =>
+    HttpResponse.json({ ...signingSessionFixture, id: String(params.id) }),
+  ),
+  http.delete(`${API}/signing-sessions/:id`, ({ params }) =>
+    HttpResponse.json({ ...signingSessionFixture, id: String(params.id), status: 'closed' }),
+  ),
   http.get(`${API}/config/effective`, () => HttpResponse.json(effectiveConfigFixture)),
 ]

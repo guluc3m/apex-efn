@@ -29,7 +29,8 @@
     "exhausted": "签名次数已用完",
     "open": "开启签名会话",
     "reauth": "重新验证以签名",
-    "timer": "剩余时间：{time}"
+    "timer": "剩余时间：{time}",
+    "left": "剩余 {count} 次签名"
   },
   "userMenu": {
     "trigger": "用户菜单：{name}",

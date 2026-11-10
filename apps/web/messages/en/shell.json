@@ -29,7 +29,8 @@
     "exhausted": "No signatures left",
     "open": "Open signing session",
     "reauth": "Re-authenticate to sign",
-    "timer": "Time left: {time}"
+    "timer": "Time left: {time}",
+    "left": "{count, plural, one {# signature left} other {# signatures left}}"
   },
   "userMenu": {
     "trigger": "User menu: {name}",
