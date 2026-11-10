@@ -9,8 +9,9 @@ caller through `apex.auth.deps.current_principal`:
 
 1. `Authorization: Bearer <access token>` → the token is verified against the realm's JWKS. **Algorithm is
    pinned to RS256**, so `alg=none` and HS256-with-the-public-key (algorithm confusion) are refused before
-   any signature check. `iss`, `aud`, `exp`, `iat`, `nbf` and `sub` are required; `auth_time` is kept for
-   the step-up signing session (ADR-900, Q11).
+   any signature check. `iss`, `aud`, `exp`, `iat`, `nbf` and `sub` are required; `auth_time` and `acr` are
+   kept for the step-up signing session (ADR-900, Q11). A captured `acr` that is not a string is refused as
+   `malformed`, so a client cannot smuggle a JSON object into the principal.
 2. No bearer token + `APEX_ALLOW_TENANT_HEADER=true` → **development principal**: tenant from
    `X-Tenant-Id`, roles from `APEX_DEV_ROLES` (filtered to the closed set). Off by default. A valid bearer
    token always wins over the header; the two are never merged.
@@ -53,10 +54,20 @@ Keycloak provider. Files: `src/auth.ts`, `src/server/auth/{config,token,session,
   within 30 s of expiry the `jwt` callback refreshes it against
   `{issuer}/protocol/openid-connect/token`; a failed refresh marks the token invalid
   (`error: RefreshAccessTokenError`, access token dropped) instead of continuing with a stale token.
-- **What the browser sees.** Only `user.id`, `user.tenantId`, `user.roles` and `user.authTime`. Tokens are
-  never copied into the session object: the `session` callback rebuilds it field by field, and
-  `getSession()` rebuilds it again so a future callback cannot leak a token. `GET /api/auth/session` is
-  safe to call from the client.
+- **What the browser sees.** `user_id` at the top level plus the `user` object (`id`, `user_id`,
+  `tenantId`, `roles`, `authTime`). `user_id` is the Keycloak `sub`; `user.id` is kept for compatibility and
+  always equals it. `getSession()` (`src/server/auth/session.ts`) rebuilds both field by field, so a future
+  callback cannot leak a token. Tokens are never copied into the session object, never logged and never put
+  in a URL. `GET /api/auth/session` is safe to call from the client.
+- **External subject provisioning (#270).** On the first sign-in only (the `jwt` callback runs with
+  `account` present), `src/server/auth/provision.ts` sets `users.external_subject = <token sub>` when a row
+  with the same email still has a null subject: `updateMany({ where: { email, externalSubject: null } })`.
+  It never overwrites an existing subject, so a different IdP subject cannot take over an account by
+  claiming the same email. A missing email or a database failure is logged and the login continues.
+  **RLS caveat:** this write happens during sign-in, **before any tenant context**, under the web app's
+  owner DSN. The Prisma tenant extension (`prisma/tenant-extension.ts`, DEV-2) is not used here because
+  `tenant_session()` fails closed without `app.tenant_id`; when the web app adopts it, this call must move
+  to an explicitly documented pre-tenant bootstrap path (see "Database role and row-level security").
 - **Server-side token access.** `getAccessToken()` (`src/server/auth/token.ts`) decrypts the cookie with
   `next-auth/jwt` and returns `string | null`. It is for Route Handlers/Server Components only (the BFF
   proxy uses it to set `Authorization: Bearer …`). It must never be imported into a Client Component and
@@ -66,9 +77,22 @@ Keycloak provider. Files: `src/auth.ts`, `src/server/auth/{config,token,session,
   localized route requires a session; an unauthenticated page request is redirected to the sign-in entry
   with `callbackUrl`, which goes straight to Keycloak. Protected `/api/*` calls get `401
 application/problem+json` instead of an HTML redirect.
-- **Signing step-up (D2-08).** `authTime` is the Keycloak `auth_time` of the current session. The web
+- **Signing step-up (D2-08, #279).** `authTime` is the Keycloak `auth_time` of the current session. The web
   layer only exposes it; DEV-2 uses it (via the token) to open the 15-minute signing session (ADR-900
   Q11). Merely having a web session does not authorise a signature.
+  - On `428 reauth_required`, the client calls `startStepUp()` (`src/lib/signing/step-up.ts`). It sends the
+    browser to `/api/auth/signin?stepUp=1&callbackUrl=<current path>` and resolves `true`; outside a
+    browser (or if redirecting throws) it resolves `false`, so the 428 is surfaced and nothing is signed
+    silently.
+  - `src/app/api/auth/signin/route.ts` handles `stepUp=1` by calling Auth.js `signIn` with three
+    arguments: the provider, the redirect options, and the authorization parameters `acr_values`
+    (`STEP_UP_ACR`), `max_age: '0'` and `prompt: 'login'`. The three parameters reach the Keycloak
+    authorization URL; only same-site absolute `callbackUrl` values are accepted.
+  - `STEP_UP_ACR` is defined once in `src/lib/signing/step-up-acr.ts` (`urn:apex:loa:2`) and must match the
+    realm's `acr.loa.map`. Auth.js forwards the parameters as query parameters of the sign-in POST and
+    `@auth/core` copies them into the authorization URL.
+  - The server never trusts the request: D2-08 validates the resulting token's `auth_time` and (once wired)
+    `acr`. The step-up is a request for fresh strong authentication, not a grant.
 - **Logout.** `signOut()` clears the Auth.js cookie. The Keycloak SSO session is not ended yet (no
   `end_session_endpoint` call), so a new login can reuse it until it expires; wiring RP-initiated logout
   is a follow-up.
@@ -104,8 +128,23 @@ endpoint that the matrix marks as restricted. This table is the contract those l
 `infra/keycloak/realm-apex.json` defines realm `apex`, clients `apex-web` (code flow, no password grant)
 and `apex-orchestrator`, roles `owner|admin|buyer|finance|viewer`, `CONFIGURE_TOTP` as a default required
 action, two tenant groups and ten test users (`*-a@apex.local`, `*-b@apex.local`, password `apex-dev`).
-Tokens carry `tenant_id` (from a user attribute, admin-only in the user profile), `roles` and the audience
-`apex-orchestrator` through protocol mappers.
+Tokens carry `tenant_id` (from a user attribute, admin-only in the user profile), `roles`, the audience
+`apex-orchestrator` and — because the built-in `acr` client scope is a default scope of `apex-web` — the
+`acr` claim through the `acr loa level` mapper.
+
+**ACR / step-up mapping (#279, #272).** The realm declares the Keycloak 26 realm attribute
+`"acr.loa.map": "{\"urn:apex:loa:2\": 2}"`: `urn:apex:loa:2` maps to Level of Authentication 2, the value
+requested by `STEP_UP_ACR`. The attribute is stored by Keycloak as a realm attribute (a JSON string) and is
+visible through `GET /admin/realms/apex`; the `acr` client scope is a default scope of both clients, so the
+`acr` claim is emitted in the ID and access tokens. Verified against Keycloak 26.0 (the compose image) by
+importing this realm into a fresh database and reading the admin API.
+
+**Known limit.** A realm mapping alone does not _enforce_ a LoA: Keycloak only demands the stronger
+authenticator when the browser flow has a `Condition - Level of Authentication` subflow for that level. This
+realm keeps the built-in browser flow, so the step-up currently forces a fresh login (`prompt=login`,
+`max_age=0`) and the orchestrator anchors the signing window on `auth_time`; it does not yet reject a token
+whose `acr` is below `urn:apex:loa:2`. Adding the LoA-2 conditional subflow, and requiring `acr` in the
+signing session (D2-08), is the follow-up that turns the mapping into enforcement.
 
 Tenant isolation is enforced from the token: a caller cannot choose a tenant with a header while
 authenticated, and `tenant_id` is never read from a body.
@@ -124,7 +163,9 @@ constrain (D1-03/D2-04, issue #221):
   chart). It is never mounted into the orchestrator or web Deployments, because an owner or superuser
   bypasses RLS.
 - **Web/BFF**: still on the owner DSN until its Prisma tenant extension sets `app.tenant_id` per
-  transaction (DEV-2/6). It does not query the database at runtime today.
+  transaction (DEV-2/6). Its one runtime write is the `users.external_subject` link at sign-in (#270), which
+  runs before any tenant context exists and therefore cannot use `tenant_session()`. Moving it behind the
+  app role requires a pre-tenant bootstrap policy or an explicit exception; that design is DEV-2/6's.
 
 `docs/runbooks/local-dev.md` ("Database roles") has the dev commands and a transcript showing the
 difference between the two roles.
