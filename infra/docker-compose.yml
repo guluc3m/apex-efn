@@ -204,16 +204,35 @@ services:
       start_period: 60s
 
   # =============================================================================
-  # LLM stub (Mockoon). Temporary: replaced by apps/llm-stub (D4-02), then removed.
+  # LLM stub: OpenAI-compatible, scenario-driven (apps/llm-stub, D4-02).
+  # Built from source here (D1-03); scenarios are baked into the image, so there is
+  # no fixture mount. Select a scenario with the X-Stub-Scenario header.
   # =============================================================================
   llm-stub:
-    image: mockoon/cli:9.10.0
+    build:
+      context: ../apps/llm-stub
+      dockerfile: Dockerfile
+    image: apex/llm-stub:dev
     container_name: apex-llm-stub
-    command: --data /data/openai-stub.json --port 8001
+    environment:
+      LLM_STUB_SCENARIOS_DIR: /app/scenarios
+      LLM_STUB_HOST: 0.0.0.0
+      LLM_STUB_PORT: '8001'
     ports:
       - '8001:8001'
-    volumes:
-      - ./mocks:/data:ro
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2).status == 200 else 1)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
 
   # =============================================================================
   # Observability: OpenTelemetry Collector -> Tempo (traces), Prometheus (metrics),
