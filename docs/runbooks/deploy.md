@@ -43,12 +43,40 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
    terraform output                      # cluster_name, bucket names, irsa_role_arns, secret_names
    ```
 2. **Secret values** (Terraform only creates the empty secrets). Write one JSON object per secret in AWS Secrets Manager,
-   named as `secret_names` (for example `apex/staging/orchestrator`). The keys of the JSON are the environment
-   variables the app reads (`DATABASE_URL`, `REDIS_URL`, `LLM_GATEWAY_API_KEY`, ...). Values never go to Git,
-   Helm values or CI logs.
-3. **Cluster add-ons:** External Secrets Operator, the `aws-secrets-manager` ClusterSecretStore, and an ingress
-   controller if you need one.
-4. **Repository variables** (Settings → Secrets and variables → Actions → Variables, **repository level**, because
+   named as `secret_names`. Values never go to Git, Helm values or CI logs. The database uses **two** secrets so the
+   schema owner never reaches a runtime pod (issue #221):
+
+   | Secret                                            | Keys                                              | Content                                                                                                                                                                                                      |
+   | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `apex/staging/db-migrate`                         | `migrateDatabaseUrl`                              | Owner DSN, `postgresql://apex_owner:<master password>@<postgres_endpoint>/apex`. Build it from `terraform output postgres_endpoint` and the RDS-managed master secret (`postgres_master_user_secret_arn`).   |
+   | `apex/staging/db-app`                             | `appDatabaseUrl`, `appPassword`                   | App DSN used by the orchestrator, `postgresql+asyncpg://apex_app_login:<app password>@<postgres_endpoint>/apex`, plus the same password. Generate it once; `bootstrap-app-role.sh` converges the role to it. |
+   | `apex/staging/orchestrator`                       | `REDIS_URL`, `LLM_GATEWAY_API_KEY`, ...           | Runtime settings. `DATABASE_URL` comes from `db-app` (see the Helm chart's `database.app`), not from here.                                                                                                   |
+   | `apex/staging/web`                                | `DATABASE_URL`, `REDIS_URL`, OIDC client settings | Today the **owner** DSN: the Prisma tenant extension that sets `app.tenant_id` is a DEV-2/6 follow-up.                                                                                                       |
+   | `apex/staging/browser-worker`, `apex/staging/llm` | component settings                                | Vault/Redis/model settings.                                                                                                                                                                                  |
+
+   The External Secrets Operator materialises `apex-db-app` and `apex-db-migrate` as Kubernetes Secrets. The migration
+   Job reads both; the Deployments only read `apex-db-app`. The orchestrator and web IRSA roles are allowed to read
+   `db-app` but **not** `db-migrate` (infra/terraform `workload_iam`): a runtime pod with the owner DSN could bypass
+   row-level security.
+
+3. **Cluster add-ons:** External Secrets Operator (with its own IRSA role allowed to read every `apex/staging/*`
+   secret), the `aws-secrets-manager` ClusterSecretStore, and an ingress controller if you need one. ESO must work
+   **before** the first Helm install, because the migration Job waits for the two database Secrets.
+
+4. **Database bootstrap and the application role** happen during the Helm upgrade, in this order (pre-install /
+   pre-upgrade hook Jobs, `infra/helm/apex/templates/migrations.yaml`):
+
+   1. `<release>-migrate` (weight -5), as the schema owner: `prisma migrate deploy`, then the optional demo seed
+      (`migrations.seed`), then `infra/postgres/bootstrap-app-role.sh`, which creates/updates
+      `apex_app_login` (LOGIN, member of `apex_app`, `NOBYPASSRLS`) with `appPassword`.
+   2. `<release>-load-defaults` (weight 0): `python -m apex.tenant_config.load_defaults` for
+      `migrations.loadDefaults.tenantIds`.
+
+   Helm waits for both Jobs before it creates or updates the Deployments, so the app pods never roll against a
+   schema-less database or a missing login role. The first install therefore needs the secrets from step 2 and ESO
+   working. `migrations.seed: false` in a tenant environment with real data.
+
+5. **Repository variables** (Settings → Secrets and variables → Actions → Variables, **repository level**, because
    the `prepare` job reads them without an environment):
 
    | Variable                                                                       | Source                            |
@@ -62,22 +90,27 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
    Once all nine are set, the next run of CD deploys. Until then, CD still publishes the images and the deploy job
    prints a notice that says what is missing.
 
-5. **Helm** runs from CD. For a manual first install (same values as CD):
+6. **Helm** runs from CD. For a manual first install (same values as CD):
    ```bash
    helm upgrade --install apex infra/helm/apex -n apex-staging --create-namespace \
      -f infra/helm/apex/values-staging.yaml \
      --set-string orchestrator.image.tag=sha-<short> --set-string web.image.tag=sha-<short> \
-     --set-string browserWorker.image.tag=sha-<short> --atomic --timeout 10m
+     --set-string browserWorker.image.tag=sha-<short> --set-string migrations.image.tag=sha-<short> \
+     --atomic --timeout 10m
    ```
    Also set the IRSA annotations and `config.*` values (see `.github/workflows/cd.yml`, which generates them).
+   `migrations.image` is the `migrator` target of `apps/web/Dockerfile`, published by CD as
+   `ghcr.io/guluc3m/apex-efn/web-migrations`; build it locally with
+   `docker build -f apps/web/Dockerfile --target migrator -t apex/web-migrations:dev .`.
 
 ## 4. How CD works (`.github/workflows/cd.yml`)
 
 - Trigger: push to `main`, or manual `workflow_dispatch`.
-- `images`: builds `orchestrator`, `web` and `browser-worker`, all with **context = repo root** (so the
-  orchestrator sees `apps/llm-stub` as the `[tool.uv.sources]` path source and `config/defaults`, and the
+- `images`: builds `orchestrator`, `web`, `web-migrations` and `browser-worker`, all with **context = repo root**
+  (so the orchestrator sees `apps/llm-stub` as the `[tool.uv.sources]` path source and `config/defaults`, and the
   pnpm images see the whole workspace), and pushes them to `ghcr.io/guluc3m/apex-efn/<app>` with tags
-  `sha-<7 chars>` and `main`, plus provenance and SBOM.
+  `sha-<7 chars>` and `main`, plus provenance and SBOM. `web-migrations` is the `migrator` target of
+  `apps/web/Dockerfile` (Prisma CLI + seed + psql) used only by the pre-upgrade Job.
 - `prepare`: checks the nine repository variables. If any is missing, the next job is skipped and a notice says which.
 - `deploy-staging`: OIDC to AWS (no stored keys), `aws eks update-kubeconfig`, then
   `helm upgrade --install --atomic --timeout 10m`. `--atomic` rolls back automatically if the rollout fails.
@@ -94,6 +127,9 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
 - Helm rolls back **only Kubernetes objects**. It does not roll back database migrations, Object Lock
   objects, or Secrets Manager values. Check the migration state before rolling back an image that depends on a
   newer schema.
+- The pre-upgrade migration hooks do **not** run on `helm rollback`. Rolling back to an image that expects an
+  older schema still leaves the database migrated forward (Prisma migrations are forward-only). Treat a
+  migration that drops or renames columns as a two-release change (expand, then contract).
 
 ## 6. Checks run on this change
 
@@ -103,6 +139,9 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
   up against Redis/Vault).
 - `helm lint`, `helm template` (defaults, staging, GPU workload enabled, ingress + HPA), kubeconform `-strict`
   against Kubernetes 1.31 schemas.
+- Issue #221 adds the two migration hook Jobs (`migrate`, `load-defaults`) and the two database Secrets to the
+  chart. `helm template` (defaults and staging) and kubeconform were re-run on them; the RLS transcript in
+  `docs/runbooks/local-dev.md` was produced against the local compose stack with the real bootstrap script.
 - `terraform fmt -check`, `terraform init -backend=false` + `validate` in `environments/staging`, `tflint` (AWS
   ruleset). `terraform plan` still refuses to run until the required variables (`region`, `eks_public_access_cidrs`)
   are set.
@@ -125,5 +164,11 @@ Nothing was pushed, applied or deployed: there is no AWS account, GHCR package s
 - **`llm-stub` and `mock-marketplace` images.** Dev-only services, not part of the staging chart. Their Dockerfiles
   land in D4-02 and D5-04; add Helm Deployments/values later if they are ever run in staging.
 - **Environment protection.** The deploy job uses `environment: staging`. Add required reviewers in GitHub once wanted.
-- **Production environment, RDS migrations job, backups and restore drills, DR region, cost alarms.** Not in scope.
-- **Pod `automountServiceAccountToken`** is not disabled on the app pods. Low risk, but worth tightening.
+- **Production environment, backups and restore drills, DR region, cost alarms.** Not in scope. The RDS migrations
+  Job now exists (pre-upgrade hook, issue #221), but it has never run against a real RDS instance.
+- **Pod `automountServiceAccountToken`** is not disabled on the app pods. Low risk, but worth tightening. The two
+  migration Jobs already set it to `false`.
+- **`web-migrations` image size.** It is built from the full workspace (`builder` stage) so it carries
+  `node_modules`; acceptable for a per-release Job on staging, revisit before production.
+- **Web database role.** The web Deployment keeps the owner DSN until the Prisma tenant extension sets
+  `app.tenant_id` (DEV-2/6). `database.webUrlKey` in the chart is the switch, empty on purpose today.

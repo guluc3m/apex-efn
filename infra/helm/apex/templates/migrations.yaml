@@ -1,0 +1,145 @@
+{{- if .Values.migrations.enabled }}
+{{- /*
+  Pre-install/pre-upgrade hooks (D1-03, issue #221). Helm runs hooks in weight order and waits for
+  each Job to succeed before it creates or updates the release's Deployments. The order is:
+
+    1. migrate (weight -5): prisma migrate deploy as the schema owner, optional seed, then
+       infra/postgres/bootstrap-app-role.sh, which creates apex_app_login (member of apex_app).
+    2. load-defaults (weight 0, optional): python -m apex.tenant_config.load_defaults.
+
+  Credentials come from the database Secrets (database.app / database.migrate in values.yaml). The
+  schema-owner DSN is never mounted into a Deployment. A failed hook fails the upgrade; with
+  `--atomic` Helm rolls the release back, but never the database: check the migration state first
+  (docs/runbooks/deploy.md).
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "apex.componentName" (dict "root" $ "component" "migrate") }}
+  labels:
+    {{- include "apex.labels" (dict "root" $ "component" "migrate") | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: '-5'
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrations.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrations.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        {{- include "apex.selectorLabels" (dict "root" $ "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "apex.podSecurityContext" $ | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "apex.image" (dict "root" $ "image" .Values.migrations.image) | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ['/bin/sh', '-c']
+          args:
+            - |
+              set -eu
+              cd /app/apps/web
+              echo "[migrate] prisma migrate deploy (schema owner)"
+              pnpm exec prisma migrate deploy
+              if [ "${APEX_DB_SEED}" = "true" ]; then
+                echo "[migrate] prisma db seed (idempotent demo data)"
+                pnpm exec prisma db seed
+              fi
+              echo "[migrate] bootstrap the application login role (apex_app_login)"
+              /usr/local/bin/bootstrap-app-role.sh
+          env:
+            # Prisma reads DATABASE_URL. In this Job both point at the schema owner, which is the only
+            # role allowed to run DDL. The app Deployments never see this Secret.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.migrate.secretName }}
+                  key: {{ .Values.database.migrate.urlKey }}
+            - name: MIGRATE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.migrate.secretName }}
+                  key: {{ .Values.database.migrate.urlKey }}
+            - name: APEX_APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.app.secretName }}
+                  key: {{ .Values.database.app.passwordKey }}
+            - name: APEX_DB_SEED
+              value: {{ .Values.migrations.seed | quote }}
+          securityContext:
+            {{- include "apex.containerSecurityContext" $ | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- if .Values.migrations.loadDefaults.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "apex.componentName" (dict "root" $ "component" "load-defaults") }}
+  labels:
+    {{- include "apex.labels" (dict "root" $ "component" "load-defaults") | nindent 4 }}
+  annotations:
+    # After the seed (hook weight 0 > -5). Never before the schema exists.
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: '0'
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrations.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrations.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        {{- include "apex.selectorLabels" (dict "root" $ "component" "load-defaults") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "apex.podSecurityContext" $ | nindent 8 }}
+      containers:
+        - name: load-defaults
+          image: {{ include "apex.image" (dict "root" $ "image" .Values.orchestrator.image) | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ['python', '-m', 'apex.tenant_config.load_defaults']
+          env:
+            - name: APEX_TENANT_IDS
+              value: {{ join "," .Values.migrations.loadDefaults.tenantIds | quote }}
+            # App DSN, least privilege. Today the CLI validates the defaults and persists nothing
+            # (D4-03 TODO); when it writes, it must go through the tenant session.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.app.secretName }}
+                  key: {{ .Values.database.app.urlKey }}
+          securityContext:
+            {{- include "apex.containerSecurityContext" $ | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}
+{{- end }}

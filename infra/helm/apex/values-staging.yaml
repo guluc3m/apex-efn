@@ -9,6 +9,22 @@ config:
   S3_BUCKET_AUDIT: ''
   LLM_GATEWAY_URL: ''
 
+# Secrets Manager placeholders created by infra/terraform (data module): apex/staging/db-app holds
+# {appDatabaseUrl, appPassword} for the apex_app_login runtime role, apex/staging/db-migrate holds
+# {migrateDatabaseUrl} for the schema owner. Values are written out of band, never here.
+database:
+  app:
+    externalSecret:
+      remoteKey: apex/staging/db-app
+  migrate:
+    externalSecret:
+      remoteKey: apex/staging/db-migrate
+
+migrations:
+  seed: true
+  loadDefaults:
+    enabled: true
+
 orchestrator:
   replicaCount: 1
   externalSecret:
