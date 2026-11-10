@@ -2110,6 +2110,21 @@ export const zAbortNegotiationPath = z.object({
  */
 export const zAbortNegotiationResponse = zNegotiation
 
+export const zReopenNegotiationBody = zNegotiationControl
+
+export const zReopenNegotiationHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zReopenNegotiationPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Negotiation reopened and waiting for the seller.
+ */
+export const zReopenNegotiationResponse = zNegotiation
+
 export const zGetNegotiationPath = z.object({
   id: z.string().min(1),
 })

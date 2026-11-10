@@ -91,6 +91,7 @@ _ERRORS: dict[str, tuple[int, str]] = {
     "not_found": (404, "Not Found"),
     "terminal": (409, "Conflict"),
     "not_in_human_control": (409, "Conflict"),
+    "not_aborted": (409, "Conflict"),
     "seller_busy": (409, "Conflict"),
     "human_in_control": (409, "Conflict"),
     "draft_not_pending": (409, "Conflict"),
@@ -158,6 +159,23 @@ async def abort_negotiation(
     """Stop the negotiation cleanly. The first call records the reason; later calls keep it."""
     try:
         session = await control.abort(id, tenant_id=tenant_id, reason=body.reason if body else None)
+    except NegotiationError as exc:
+        raise _problem(exc) from exc
+    return to_contract(session)
+
+
+@router.post("/{id}/reopen", response_model=Negotiation)
+async def reopen_negotiation(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    control: Annotated[NegotiationControlService, Depends(get_negotiation_control)],
+    body: NegotiationControlRequest | None = None,
+) -> Negotiation:
+    """Reopen an aborted negotiation. The transcript and the rounds used are kept."""
+    try:
+        session = await control.reopen(
+            id, tenant_id=tenant_id, reason=body.reason if body else None
+        )
     except NegotiationError as exc:
         raise _problem(exc) from exc
     return to_contract(session)

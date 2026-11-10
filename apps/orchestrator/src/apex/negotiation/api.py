@@ -72,6 +72,7 @@ MAX_PAGE_SIZE = 200
 """Upper bound of the contract's ``Limit`` parameter."""
 
 ABORT_REASON_DEFAULT = "human_abort"
+REOPEN_REASON_DEFAULT = "human_reopen"
 """``stop_reason`` recorded when the caller aborts without a reason. A closed label, not a business value."""
 
 
@@ -240,6 +241,13 @@ class NegotiationControlService:
     ) -> NegotiationSession:
         return await self._engine.abort(
             negotiation_id, tenant_id=tenant_id, reason=reason or ABORT_REASON_DEFAULT
+        )
+
+    async def reopen(
+        self, negotiation_id: str, *, tenant_id: str, reason: str | None = None
+    ) -> NegotiationSession:
+        return await self._engine.reopen(
+            negotiation_id, tenant_id=tenant_id, reason=reason or REOPEN_REASON_DEFAULT
         )
 
     async def get(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:

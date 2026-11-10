@@ -448,6 +448,28 @@ class NegotiationEngine:
                 await self._finish(session, NegotiationOutcome.ABORTED, reason)
             return session
 
+    async def reopen(
+        self, negotiation_id: str, *, tenant_id: str, reason: str
+    ) -> NegotiationSession:
+        """Reopens an aborted negotiation so a human or the agent can continue it (#128).
+
+        The transcript and the rounds already used are kept: reopening does not buy back concessions. The
+        seller is claimed again (another negotiation may have taken it since the abort, which answers
+        ``seller_busy``), the stop reason is cleared and the negotiation goes back to waiting for the seller.
+        Only ``aborted`` can be reopened; a finished negotiation is not revived by accident.
+        """
+        async with self._locked(negotiation_id):
+            session = await self._load(negotiation_id, tenant_id)
+            if session.status is not NegotiationOutcome.ABORTED:
+                raise NegotiationError("not_aborted", "only an aborted negotiation can be reopened")
+            await self._claim_seller(session)
+            session.stop_reason = None
+            session.reopen_reason = reason
+            session.status = NegotiationOutcome.AWAITING_SELLER
+            session.pending = None
+            await self._store.save(session)
+            return session
+
     # ------------------------------------------------------------------ internals
 
     async def get(self, negotiation_id: str, *, tenant_id: str) -> NegotiationSession:

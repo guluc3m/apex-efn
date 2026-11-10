@@ -495,3 +495,69 @@ def test_a_human_message_over_the_hourly_cap_is_409(rig: Rig) -> None:
     assert response.status_code == 409
     _problem(response, "rate_limited")
     assert len(rig.h.chat.sent) == 1  # only the opening message
+
+
+# ----- reopen (#128) -----------------------------------------------------------------------------
+
+
+def test_reopen_returns_an_aborted_negotiation_to_running(rig: Rig) -> None:
+    negotiation_id = _start(rig.h)
+    with TestClient(rig.app) as client:
+        client.post(
+            f"/v1/negotiations/{negotiation_id}/abort",
+            headers=_h(),
+            json={"reason": "buyer_cancelled"},
+        )
+        response = client.post(
+            f"/v1/negotiations/{negotiation_id}/reopen",
+            headers=_h(),
+            json={"reason": "seller_called_back"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "running"
+    stored = asyncio.run(rig.h.store.get(negotiation_id))
+    assert stored is not None
+    assert stored.stop_reason is None
+    assert stored.reopen_reason == "seller_called_back"
+
+
+def test_reopen_without_a_body_uses_the_closed_default_reason(rig: Rig) -> None:
+    negotiation_id = _start(rig.h)
+    with TestClient(rig.app) as client:
+        client.post(f"/v1/negotiations/{negotiation_id}/abort", headers=_h())
+        response = client.post(f"/v1/negotiations/{negotiation_id}/reopen", headers=_h())
+
+    assert response.status_code == 200
+    stored = asyncio.run(rig.h.store.get(negotiation_id))
+    assert stored is not None
+    assert stored.reopen_reason == "human_reopen"
+
+
+def test_reopen_of_a_live_negotiation_is_409(rig: Rig) -> None:
+    negotiation_id = _start(rig.h)
+    with TestClient(rig.app) as client:
+        response = client.post(f"/v1/negotiations/{negotiation_id}/reopen", headers=_h())
+    assert response.status_code == 409
+    _problem(response, "not_aborted")
+
+
+def test_reopen_of_another_tenants_negotiation_is_404(rig: Rig) -> None:
+    negotiation_id = _start(rig.h)
+    with TestClient(rig.app) as client:
+        client.post(f"/v1/negotiations/{negotiation_id}/abort", headers=_h())
+        response = client.post(f"/v1/negotiations/{negotiation_id}/reopen", headers=_h("tenant-b"))
+    assert response.status_code == 404
+    _problem(response, "not_found")
+
+
+def test_reopen_is_409_when_another_negotiation_holds_the_seller(rig: Rig) -> None:
+    first = _start(rig.h, key="neg-1")
+    with TestClient(rig.app) as client:
+        client.post(f"/v1/negotiations/{first}/abort", headers=_h())
+    _start(rig.h, key="neg-2")  # takes the seller again
+
+    with TestClient(rig.app) as client:
+        response = client.post(f"/v1/negotiations/{first}/reopen", headers=_h())
+    assert response.status_code == 409
+    _problem(response, "seller_busy")

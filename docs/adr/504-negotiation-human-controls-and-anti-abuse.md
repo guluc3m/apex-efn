@@ -59,6 +59,19 @@ face, and nothing prevented two missions from opening two chats with one seller.
    (they raise loudly if reached). It answers `404` for ids it does not know. When DEV-4 wires the mission
    graph it injects the shared engine through `get_negotiation_control`, as the gate router already does.
 
+8. **Reopening is a human control, not a signed decision (#128).** `POST /v1/negotiations/{id}/reopen`
+   revives an **aborted** negotiation: the stop reason is cleared, the reason for reopening is recorded
+   (`reopen_reason`), the transcript and the rounds already used are kept, and the seller is claimed again — so
+   if another negotiation took it in the meantime the answer is `409 seller_busy`. Anything that is not aborted
+   answers `409 not_aborted`; a finished negotiation is not revived by accident.
+   - Reopening buys **no extra concessions**: the ladder position and `rounds_sent` survive, so the agent cannot
+     use it to negotiate a second time from the start. A human can take over and continue by hand, which is the
+     realistic case (the seller called back).
+   - It is **not** a signed decision because it commits nothing and is reversible (abort again). The contract
+     still requires `Idempotency-Key`, and the reason is kept for the audit trail.
+   - The seller claim is the admission test, so reopening cannot create the second simultaneous conversation
+     with one seller that the rest of this ADR forbids.
+
 ## Consequences and limits
 
 - `InMemorySellerGuard` and `InMemorySellerSendLog` are process-local, like the engine's per-negotiation
