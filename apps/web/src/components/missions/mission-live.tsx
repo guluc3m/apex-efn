@@ -5,7 +5,7 @@ import { Button, Icon } from '@apex/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { CircleX, Columns3, Pause, Plus } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 import { AppLink } from '@/components/app-link'
 import { ErrorPanel } from '@/components/error-panel'
@@ -13,6 +13,8 @@ import { ApiError, queryKeys, subscribeMissionEvents, useMission } from '@/lib/a
 import { PHASES, phaseStates, pushEvent } from '@/lib/missions'
 
 import { MissionActivity } from './mission-activity'
+import { MissionFunnel } from './mission-funnel'
+import { MissionOffers } from './mission-offers'
 import { MissionPhases } from './mission-phases'
 
 /** Events that change the counters on the mission, so the mission is read again. */
@@ -91,9 +93,12 @@ export function MissionLive({ missionId }: { missionId: string }) {
       <MissionPhases phases={phases} />
       <div className="flex flex-wrap items-start">
         <div className="min-w-0 flex-[999_1_760px] px-gutter-page py-gutter-panel">
-          <p className="border border-line bg-panel p-4 text-ink-soft">{t('offersPending', { found: mission.offers_discovered, negotiated: mission.offers_negotiated, gate: mission.offers_in_gate })}</p>
+          <Suspense>
+            <MissionOffers missionId={missionId} />
+          </Suspense>
         </div>
         <aside className="min-w-0 flex-[1_1_340px] border-l border-line p-gutter-panel" aria-label={t('side')}>
+          <MissionFunnel missionId={missionId} />
           <MissionActivity
             items={events.map((e) => ({ id: e.id, kind: e.type, time: format.dateTime(new Date(e.at), { timeStyle: 'medium' }) }))}
             live={!streamLost}

@@ -1,0 +1,32 @@
+{
+  "title": "מדוע רמת אמון זו",
+  "notEvaluated": "טרם נבדק",
+  "bandScore": "{band} · {score}",
+  "noSignals": "אין אותות זמינים.",
+  "penalties": "קנסות",
+  "flags": "סימני מניפולציה",
+  "model": "מודל {version}",
+  "showHistory": "הצג היסטוריה",
+  "loading": "טוען היסטוריה",
+  "error": "לא ניתן לטעון את ההיסטוריה",
+  "retry": "ניסיון חוזר",
+  "noHistory": "אין חישובים קודמים.",
+  "band": {
+    "high": "גבוה",
+    "medium": "בינוני",
+    "low": "נמוך",
+    "untrusted": "לא אמין",
+    "insufficient_data": "אין מספיק נתונים"
+  },
+  "flag": {
+    "burst_velocity": "פרץ ביקורות",
+    "five_star_anomaly": "שיעור חריג של 5 כוכבים",
+    "low_verified_share": "שיעור מאומת נמוך",
+    "duplicate_text": "טקסט כפול",
+    "creation_correlation": "זינוק סביב יצירת החשבון"
+  },
+  "severity": {
+    "warning": "אזהרה",
+    "critical": "קריטי"
+  }
+}

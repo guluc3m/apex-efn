@@ -7,10 +7,30 @@
     "emptyBody": "描述您要采购的物品，第一个任务就会开始寻找报价。",
     "caption": "采购任务",
     "noMatch": "没有符合此筛选条件的任务",
-    "cols": { "mission": "任务", "state": "状态", "phase": "阶段", "offers": "报价", "finalists": "入围", "launched": "启动时间" },
-    "state": { "running": "进行中", "valuation": "评估中", "closed": "已关闭", "cancelled": "已取消" },
-    "phase": { "search": "搜索", "filter": "信任与价格", "negotiation": "谈判", "valuation": "评估" },
-    "filters": { "state": "状态", "all": "全部" }
+    "cols": {
+      "mission": "任务",
+      "state": "状态",
+      "phase": "阶段",
+      "offers": "报价",
+      "finalists": "入围",
+      "launched": "启动时间"
+    },
+    "state": {
+      "running": "进行中",
+      "valuation": "评估中",
+      "closed": "已关闭",
+      "cancelled": "已取消"
+    },
+    "phase": {
+      "search": "搜索",
+      "filter": "信任与价格",
+      "negotiation": "谈判",
+      "valuation": "评估"
+    },
+    "filters": {
+      "state": "状态",
+      "all": "全部"
+    }
   },
   "request": {
     "title": "新建采购任务",
@@ -37,16 +57,23 @@
       }
     },
     "review": {
-      "country": "收货国家", "countryHint": "ES", "none": "未填写", "empty": "助手理解您的需求后，会在此处显示。",
+      "country": "收货国家",
+      "countryHint": "ES",
+      "none": "未填写",
+      "empty": "助手理解您的需求后，会在此处显示。",
       "title": "请核对我们的理解",
       "product": "产品",
       "category": "类别",
-      "categories": { "bearings": "轴承" },
+      "categories": {
+        "bearings": "轴承"
+      },
       "quantity": "数量",
       "destination": "目的地",
       "deadline": "最迟交付日期",
       "payment": "付款方式",
-      "payments": { "net60": "60 天" },
+      "payments": {
+        "net60": "60 天"
+      },
       "spec": "规格",
       "tolerances": "公差",
       "tolerancesMissing": "您未填写",
@@ -60,8 +87,15 @@
       "expired": "（会话已过期：请在“公司”中重新登录）",
       "disabled": "已被管理员停用"
     },
-    "envelope": { "label": "轴承预算额度", "available": "可用" },
-    "profile": { "label": "排名方案", "operational": "业务采购员", "cfo": "CFO / 财务" },
+    "envelope": {
+      "label": "轴承预算额度",
+      "available": "可用"
+    },
+    "profile": {
+      "label": "排名方案",
+      "operational": "业务采购员",
+      "cfo": "CFO / 财务"
+    },
     "noSnapshot": {
       "title": "财务快照未激活",
       "body": "无法启动：报价将没有可比较的基准。",
@@ -81,8 +115,18 @@
     "heading": "任务 {id}",
     "meta": "{state} · 启动于 {date}",
     "failed": "任务失败：{detail}",
-    "offersPending": "已找到 {found} 条报价，{negotiated} 条已谈判，{gate} 条在人工关口。报价矩阵尚未接入。",
-    "state": { "created": "已创建", "planning": "规划中", "sourcing": "搜索中", "enriching": "补充信息中", "evaluating": "评估中", "negotiating": "谈判中", "awaiting_decision": "等待您的决定", "completed": "已完成", "cancelled": "已取消", "failed": "失败" },
+    "state": {
+      "created": "已创建",
+      "planning": "规划中",
+      "sourcing": "搜索中",
+      "enriching": "补充信息中",
+      "evaluating": "评估中",
+      "negotiating": "谈判中",
+      "awaiting_decision": "等待您的决定",
+      "completed": "已完成",
+      "cancelled": "已取消",
+      "failed": "失败"
+    },
     "new": "新建任务",
     "compare": "查看对比",
     "pause": "暂停",
@@ -91,16 +135,44 @@
     "side": "任务漏斗与动态",
     "phases": {
       "label": "任务阶段",
-      "state": { "done": "已完成", "running": "进行中", "pending": "待开始" },
-      "search": { "title": "搜索", "running": "搜索中 · {n} 条报价", "done": "已找到 {n} 条报价", "pending": "待开始" },
-      "filter": { "title": "信任与价格", "running": "正在检查信任与价格", "done": "{n} 条在人工关口", "pending": "待开始" },
-      "negotiation": { "title": "谈判", "running": "目前已谈判 {n} 条", "done": "已谈判 {n} 条", "pending": "待开始" },
-      "valuation": { "title": "评估", "running": "等待您的决定", "done": "任务已完成", "pending": "谈判结束后开始" }
+      "state": {
+        "done": "已完成",
+        "running": "进行中",
+        "pending": "待开始"
+      },
+      "search": {
+        "title": "搜索",
+        "running": "搜索中 · {n} 条报价",
+        "done": "已找到 {n} 条报价",
+        "pending": "待开始"
+      },
+      "filter": {
+        "title": "信任与价格",
+        "running": "正在检查信任与价格",
+        "done": "{n} 条在人工关口",
+        "pending": "待开始"
+      },
+      "negotiation": {
+        "title": "谈判",
+        "running": "目前已谈判 {n} 条",
+        "done": "已谈判 {n} 条",
+        "pending": "待开始"
+      },
+      "valuation": {
+        "title": "评估",
+        "running": "等待您的决定",
+        "done": "任务已完成",
+        "pending": "谈判结束后开始"
+      }
     },
     "funnel": {
       "caption": "任务漏斗：到达各阶段的报价数",
-      "aria": "任务漏斗：找到 {found} 条报价，{passed} 条通过过滤，{negotiated} 条已谈判，{finalists} 条入围。",
-      "stages": { "found": "已找到", "passed": "通过过滤", "negotiated": "已谈判", "finalists": "入围" }
+      "aria": "任务漏斗：找到 {found} 条报价，{negotiated} 条已谈判，{gate} 条在关口。",
+      "stages": {
+        "found": "已找到",
+        "negotiated": "已谈判",
+        "gate": "在关口"
+      }
     },
     "activity": {
       "title": "动态",
@@ -125,21 +197,65 @@
     "offers": {
       "caption": "按卖家列出的任务报价",
       "empty": "没有符合这些筛选条件的报价",
-      "footer": "显示 {shown} / {total}。信任度始终紧邻价格。箭头表示与中位数的差异：蓝色为低于，红色为高于。",
-      "cols": { "seller": "卖家", "platform": "平台", "price": "单价", "band": "价格区间", "confidence": "信任度", "verdict": "结论", "signature": "签名", "status": "状态", "landed": "到岸成本" },
-      "platform": { "p1": "平台 1", "p2": "平台 2" },
-      "band": { "normal": "正常", "atypical": "异常", "implausible": "不合理", "insufficient_reference": "无参考" },
-      "confidence": { "high": "高 · {score}", "medium": "中 · {score}", "low": "低 · {score}", "untrusted": "不可信 · {score}", "insufficient_data": "数据不足" },
-      "verdict": { "within_budget": "预算内", "stretch": "接近上限", "out_of_budget": "超出预算" },
-      "signature": { "signed": "已签名", "pending": "未签名", "invalid": "签名无效" },
-      "status": {
-        "awaiting_approval": "消息待批准",
-        "negotiating": "谈判中 · 第 {round} 轮",
-        "aborted": "已中止 · 第 {round} 轮",
-        "gate_low_confidence": "审核中：信任度低",
-        "filtered_implausible": "已过滤：价格不合理"
+      "footer": "显示 {shown} 条。信任度始终紧邻价格。箭头表示与中位数的差异：蓝色为低于，红色为高于。",
+      "cols": {
+        "seller": "卖家",
+        "platform": "平台",
+        "price": "单价",
+        "band": "价格区间",
+        "confidence": "信任度",
+        "verdict": "结论",
+        "status": "状态",
+        "landed": "到岸成本"
       },
-      "filters": { "status": "状态", "band": "价格", "verdict": "结论", "platform": "平台", "all": "全部" }
+      "band": {
+        "normal": "正常",
+        "atypical": "异常",
+        "implausible": "不合理",
+        "insufficient_reference": "无参考"
+      },
+      "confidence": {
+        "high": "高 · {score}",
+        "medium": "中 · {score}",
+        "low": "低 · {score}",
+        "untrusted": "不可信 · {score}",
+        "insufficient_data": "数据不足"
+      },
+      "verdict": {
+        "within_budget": "预算内",
+        "stretch": "接近上限",
+        "out_of_budget": "超出预算"
+      },
+      "status": {
+        "discovered": "已发现",
+        "enriched": "已补全",
+        "trust_scored": "已评估信任",
+        "sanity_checked": "已核查价格",
+        "financially_checked": "已核查财务",
+        "gate_pending": "待审核关口",
+        "gate_approved": "关口已通过",
+        "gate_rejected": "关口已拒绝",
+        "negotiating": "谈判中",
+        "negotiated": "已谈判",
+        "sanity_rechecked": "价格已复核",
+        "scored": "已评分",
+        "awaiting_human": "等待人工",
+        "signed": "已签名",
+        "approved": "已批准",
+        "rejected": "已拒绝",
+        "purchased": "已采购"
+      },
+      "filters": {
+        "status": "状态",
+        "band": "价格",
+        "verdict": "结论",
+        "platform": "平台",
+        "all": "全部"
+      },
+      "pending": "待处理",
+      "above": "高于中位数",
+      "below": "低于中位数",
+      "more": "还有更多报价未在此显示。"
     }
   }
 }

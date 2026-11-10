@@ -1,30 +1,76 @@
 {
   "back": "返回任务",
-  "context": "{code} · {n} 个入围供应商",
+  "context": "任务 {code}",
   "profile": "偏好方案",
-  "profiles": { "operative": "运营采购员", "cfo": "首席财务官 / 财务" },
   "export": "导出对比",
   "decide": "就 {name} 做决定",
   "pending": "尚未连接",
   "tableCaption": "入围供应商对比",
   "rank": "第 {n}",
-  "rows": { "criterion": "标准", "price": "单价", "band": "价格区间", "confidence": "可信度", "verdict": "财务结论", "signature": "签名", "landed": "到岸成本", "lead": "交期", "score": "评分", "vsFirst": "与第 1 名相比" },
-  "delta": { "down": "低于中位数", "up": "高于中位数" },
-  "deltaNote": "箭头：价格相对于中位数 {median}/件 的差异。蓝色为低于，红色为高于。",
-  "price": { "normal": "正常", "atypical": "异常", "implausible": "不合理" },
-  "confidence": { "high": "高", "medium": "中", "low": "低", "untrusted": "不可信", "insufficient_data": "数据不足" },
-  "verdict": { "within_budget": "预算内", "stretch": "接近上限", "out_of_budget": "超出预算" },
-  "signature": { "signed": "已签名", "pending": "未签名", "invalid": "无效" },
+  "rows": {
+    "criterion": "标准",
+    "price": "单价",
+    "band": "价格区间",
+    "confidence": "可信度",
+    "verdict": "财务结论",
+    "landed": "到岸成本",
+    "lead": "交期",
+    "score": "评分",
+    "vsFirst": "与第 1 名相比"
+  },
+  "delta": {
+    "down": "低于中位数",
+    "up": "高于中位数"
+  },
+  "deltaNote": "箭头：价格相对市场中位数的差异。蓝色为低于，红色为高于。",
+  "price": {
+    "normal": "正常",
+    "atypical": "异常",
+    "implausible": "不合理",
+    "insufficient_reference": "无参考"
+  },
+  "verdict": {
+    "within_budget": "预算内",
+    "stretch": "接近上限",
+    "out_of_budget": "超出预算"
+  },
   "chart": {
     "caption": "各标准对评分的贡献",
-    "criteria": { "price": "价格", "trust": "可信度", "lead": "交期", "verdict": "财务结论" },
+    "criteria": {
+      "landed_cost": "到岸成本",
+      "lead_time": "交期",
+      "seller_confidence": "供应商可信度",
+      "financial_fit": "财务匹配",
+      "margin_potential": "利润潜力",
+      "spec_match": "规格匹配",
+      "compliance_risk": "合规风险",
+      "negotiation_gain": "谈判收益"
+    },
     "row": "{name}：评分 {score}（{parts}）"
   },
   "savings": {
     "title": "节省",
     "list": "相对标价，本次任务",
-    "median": "相对市场中位数",
-    "year": "{category}，2026 年",
-    "memory": "价格记忆"
+    "median": "相对市场中位数"
+  },
+  "applyProfile": "应用",
+  "noProfile": {
+    "title": "选择排序偏好方案",
+    "body": "输入偏好方案的 id 以对本任务的报价排序。排名由后端计算。"
+  },
+  "empty": {
+    "title": "没有已排序的报价",
+    "body": "没有报价满足该方案的硬性约束。"
+  },
+  "headline": "{name} 排名第一",
+  "versions": "配置 {config} · 模型 {model}",
+  "days": "{n} 天",
+  "missing": "{n} 条已排序报价不在已加载的页面中。",
+  "excluded": {
+    "title": "被硬性约束排除"
+  },
+  "distribution": {
+    "none": "尚无价格核查。",
+    "caption": "各报价单价。虚线：市场中位数 {median}。"
   }
 }

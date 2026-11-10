@@ -7,10 +7,30 @@
     "emptyBody": "תארו מה צריך לרכוש והמשימה הראשונה תתחיל לחפש הצעות.",
     "caption": "משימות רכש",
     "noMatch": "אין משימה התואמת למסנן זה",
-    "cols": { "mission": "משימה", "state": "סטטוס", "phase": "שלב", "offers": "הצעות", "finalists": "מועמדים סופיים", "launched": "הופעלה" },
-    "state": { "running": "בתהליך", "valuation": "בהערכה", "closed": "סגורה", "cancelled": "בוטלה" },
-    "phase": { "search": "חיפוש", "filter": "אמון ומחיר", "negotiation": "משא ומתן", "valuation": "הערכה" },
-    "filters": { "state": "סטטוס", "all": "הכול" }
+    "cols": {
+      "mission": "משימה",
+      "state": "סטטוס",
+      "phase": "שלב",
+      "offers": "הצעות",
+      "finalists": "מועמדים סופיים",
+      "launched": "הופעלה"
+    },
+    "state": {
+      "running": "בתהליך",
+      "valuation": "בהערכה",
+      "closed": "סגורה",
+      "cancelled": "בוטלה"
+    },
+    "phase": {
+      "search": "חיפוש",
+      "filter": "אמון ומחיר",
+      "negotiation": "משא ומתן",
+      "valuation": "הערכה"
+    },
+    "filters": {
+      "state": "סטטוס",
+      "all": "הכול"
+    }
   },
   "request": {
     "title": "משימת רכש חדשה",
@@ -37,16 +57,23 @@
       }
     },
     "review": {
-      "country": "מדינת יעד", "countryHint": "ES", "none": "לא צוין", "empty": "לאחר שהעוזר יפרש את הבקשה, יופיע כאן מה שהבין.",
+      "country": "מדינת יעד",
+      "countryHint": "ES",
+      "none": "לא צוין",
+      "empty": "לאחר שהעוזר יפרש את הבקשה, יופיע כאן מה שהבין.",
       "title": "בדקו מה הבנו",
       "product": "מוצר",
       "category": "קטגוריה",
-      "categories": { "bearings": "מיסבים" },
+      "categories": {
+        "bearings": "מיסבים"
+      },
       "quantity": "כמות",
       "destination": "יעד",
       "deadline": "לספק לפני",
       "payment": "תשלום",
-      "payments": { "net60": "60 יום" },
+      "payments": {
+        "net60": "60 יום"
+      },
       "spec": "מפרט",
       "tolerances": "סבילויות",
       "tolerancesMissing": "לא ציינתם",
@@ -60,8 +87,15 @@
       "expired": "(הסשן פג: התחברו מחדש תחת חברה)",
       "disabled": "הושבתה על ידי מנהל המערכת"
     },
-    "envelope": { "label": "מעטפת מיסבים", "available": "זמין" },
-    "profile": { "label": "פרופיל דירוג", "operational": "קונה תפעולי", "cfo": "סמנכ\"ל כספים" },
+    "envelope": {
+      "label": "מעטפת מיסבים",
+      "available": "זמין"
+    },
+    "profile": {
+      "label": "פרופיל דירוג",
+      "operational": "קונה תפעולי",
+      "cfo": "סמנכ\"ל כספים"
+    },
     "noSnapshot": {
       "title": "תצלום המצב הפיננסי אינו פעיל",
       "body": "אי אפשר להפעיל: לא יהיה מול מה להשוות את ההצעות.",
@@ -81,8 +115,18 @@
     "heading": "משימה {id}",
     "meta": "{state} · הופעלה ב-{date}",
     "failed": "המשימה נכשלה: {detail}",
-    "offersPending": "נמצאו {found} הצעות, {negotiated} במשא ומתן ו-{gate} בשער. מטריצת ההצעות טרם חוברה.",
-    "state": { "created": "נוצרה", "planning": "בתכנון", "sourcing": "בחיפוש", "enriching": "בהעשרה", "evaluating": "בהערכה", "negotiating": "במשא ומתן", "awaiting_decision": "ממתינה להחלטתכם", "completed": "הושלמה", "cancelled": "בוטלה", "failed": "נכשלה" },
+    "state": {
+      "created": "נוצרה",
+      "planning": "בתכנון",
+      "sourcing": "בחיפוש",
+      "enriching": "בהעשרה",
+      "evaluating": "בהערכה",
+      "negotiating": "במשא ומתן",
+      "awaiting_decision": "ממתינה להחלטתכם",
+      "completed": "הושלמה",
+      "cancelled": "בוטלה",
+      "failed": "נכשלה"
+    },
     "new": "משימה חדשה",
     "compare": "צפייה בהשוואה",
     "pause": "השהיה",
@@ -91,16 +135,44 @@
     "side": "משפך המשימה ופעילות",
     "phases": {
       "label": "שלבי המשימה",
-      "state": { "done": "הושלם", "running": "בתהליך", "pending": "ממתין" },
-      "search": { "title": "חיפוש", "running": "מחפש · {n} הצעות", "done": "נמצאו {n} הצעות", "pending": "ממתין" },
-      "filter": { "title": "אמינות ומחיר", "running": "בודק אמינות ומחיר", "done": "{n} בשער", "pending": "ממתין" },
-      "negotiation": { "title": "משא ומתן", "running": "{n} נוהלו עד כה", "done": "{n} נוהלו", "pending": "ממתין" },
-      "valuation": { "title": "הערכה", "running": "ממתינה להחלטתכם", "done": "המשימה הושלמה", "pending": "מתחילה עם סגירת המשא ומתן" }
+      "state": {
+        "done": "הושלם",
+        "running": "בתהליך",
+        "pending": "ממתין"
+      },
+      "search": {
+        "title": "חיפוש",
+        "running": "מחפש · {n} הצעות",
+        "done": "נמצאו {n} הצעות",
+        "pending": "ממתין"
+      },
+      "filter": {
+        "title": "אמינות ומחיר",
+        "running": "בודק אמינות ומחיר",
+        "done": "{n} בשער",
+        "pending": "ממתין"
+      },
+      "negotiation": {
+        "title": "משא ומתן",
+        "running": "{n} נוהלו עד כה",
+        "done": "{n} נוהלו",
+        "pending": "ממתין"
+      },
+      "valuation": {
+        "title": "הערכה",
+        "running": "ממתינה להחלטתכם",
+        "done": "המשימה הושלמה",
+        "pending": "מתחילה עם סגירת המשא ומתן"
+      }
     },
     "funnel": {
       "caption": "משפך המשימה: הצעות שהגיעו לכל שלב",
-      "aria": "משפך המשימה: נמצאו {found} הצעות, {passed} עוברות את המסננים, {negotiated} נוהל עליהן משא ומתן ו-{finalists} מועמדים סופיים.",
-      "stages": { "found": "נמצאו", "passed": "עברו מסננים", "negotiated": "נוהל משא ומתן", "finalists": "מועמדים סופיים" }
+      "aria": "משפך המשימה: נמצאו {found} הצעות, {negotiated} נוהל עליהן משא ומתן ו-{gate} בשער.",
+      "stages": {
+        "found": "נמצאו",
+        "negotiated": "נוהל משא ומתן",
+        "gate": "בשער"
+      }
     },
     "activity": {
       "title": "פעילות",
@@ -125,21 +197,65 @@
     "offers": {
       "caption": "הצעות המשימה לפי מוכר",
       "empty": "אין הצעות התואמות למסננים",
-      "footer": "מוצגות {shown} מתוך {total}. האמון תמיד לצד המחיר. החץ הוא ההפרש מהחציון: כחול – מתחת; אדום – מעל.",
-      "cols": { "seller": "מוכר", "platform": "פלטפורמה", "price": "מחיר/יחידה", "band": "טווח מחיר", "confidence": "אמון", "verdict": "הערכה", "signature": "חתימה", "status": "סטטוס", "landed": "עלות נחיתה" },
-      "platform": { "p1": "פלטפורמה 1", "p2": "פלטפורמה 2" },
-      "band": { "normal": "תקין", "atypical": "חריג", "implausible": "לא סביר", "insufficient_reference": "ללא ייחוס" },
-      "confidence": { "high": "גבוה · {score}", "medium": "בינוני · {score}", "low": "נמוך · {score}", "untrusted": "לא מהימן · {score}", "insufficient_data": "אין נתונים" },
-      "verdict": { "within_budget": "במסגרת התקציב", "stretch": "מתיחת תקציב", "out_of_budget": "מחוץ לתקציב" },
-      "signature": { "signed": "חתום", "pending": "לא חתום", "invalid": "חתימה לא תקינה" },
-      "status": {
-        "awaiting_approval": "הודעה ממתינה לאישור",
-        "negotiating": "במשא ומתן · סבב {round}",
-        "aborted": "הופסק · סבב {round}",
-        "gate_low_confidence": "בשער: אמון נמוך",
-        "filtered_implausible": "סונן: מחיר לא סביר"
+      "footer": "מוצגות {shown}. האמון תמיד לצד המחיר. החץ הוא ההפרש מהחציון: כחול – מתחת; אדום – מעל.",
+      "cols": {
+        "seller": "מוכר",
+        "platform": "פלטפורמה",
+        "price": "מחיר/יחידה",
+        "band": "טווח מחיר",
+        "confidence": "אמון",
+        "verdict": "הערכה",
+        "status": "סטטוס",
+        "landed": "עלות נחיתה"
       },
-      "filters": { "status": "סטטוס", "band": "מחיר", "verdict": "הערכה", "platform": "פלטפורמה", "all": "הכול" }
+      "band": {
+        "normal": "תקין",
+        "atypical": "חריג",
+        "implausible": "לא סביר",
+        "insufficient_reference": "ללא ייחוס"
+      },
+      "confidence": {
+        "high": "גבוה · {score}",
+        "medium": "בינוני · {score}",
+        "low": "נמוך · {score}",
+        "untrusted": "לא מהימן · {score}",
+        "insufficient_data": "אין נתונים"
+      },
+      "verdict": {
+        "within_budget": "במסגרת התקציב",
+        "stretch": "מתיחת תקציב",
+        "out_of_budget": "מחוץ לתקציב"
+      },
+      "status": {
+        "discovered": "התגלתה",
+        "enriched": "הועשרה",
+        "trust_scored": "אמון נבדק",
+        "sanity_checked": "מחיר נבדק",
+        "financially_checked": "פיננסים נבדקו",
+        "gate_pending": "בשער",
+        "gate_approved": "השער אושר",
+        "gate_rejected": "השער נדחה",
+        "negotiating": "במשא ומתן",
+        "negotiated": "נוהל משא ומתן",
+        "sanity_rechecked": "מחיר נבדק מחדש",
+        "scored": "נוקדה",
+        "awaiting_human": "ממתינה לאדם",
+        "signed": "נחתמה",
+        "approved": "אושרה",
+        "rejected": "נדחתה",
+        "purchased": "נרכשה"
+      },
+      "filters": {
+        "status": "סטטוס",
+        "band": "מחיר",
+        "verdict": "הערכה",
+        "platform": "פלטפורמה",
+        "all": "הכול"
+      },
+      "pending": "ממתין",
+      "above": "מעל החציון",
+      "below": "מתחת לחציון",
+      "more": "קיימות הצעות נוספות מעבר למוצג."
     }
   }
 }

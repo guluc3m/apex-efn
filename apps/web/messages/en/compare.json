@@ -1,30 +1,76 @@
 {
   "back": "Back to mission",
-  "context": "{code} · {n} finalists",
+  "context": "Mission {code}",
   "profile": "Profile",
-  "profiles": { "operative": "Operational buyer", "cfo": "CFO / finance" },
   "export": "Export comparison",
   "decide": "Decide on {name}",
   "pending": "Not connected yet",
   "tableCaption": "Comparison of the finalists",
   "rank": "#{n}",
-  "rows": { "criterion": "Criterion", "price": "Unit price", "band": "Price band", "confidence": "Confidence", "verdict": "Verdict", "signature": "Signature", "landed": "Landed cost", "lead": "Lead time", "score": "Score", "vsFirst": "Versus #1" },
-  "delta": { "down": "Below the median", "up": "Above the median" },
-  "deltaNote": "Arrow: price difference versus the median of {median}/unit. Blue, below; red, above.",
-  "price": { "normal": "Normal", "atypical": "Atypical", "implausible": "Implausible" },
-  "confidence": { "high": "high", "medium": "medium", "low": "low", "untrusted": "untrusted", "insufficient_data": "insufficient data" },
-  "verdict": { "within_budget": "Within budget", "stretch": "Stretch", "out_of_budget": "Out of budget" },
-  "signature": { "signed": "Signed", "pending": "Unsigned", "invalid": "Invalid" },
+  "rows": {
+    "criterion": "Criterion",
+    "price": "Unit price",
+    "band": "Price band",
+    "confidence": "Confidence",
+    "verdict": "Verdict",
+    "landed": "Landed cost",
+    "lead": "Lead time",
+    "score": "Score",
+    "vsFirst": "Versus #1"
+  },
+  "delta": {
+    "down": "Below the median",
+    "up": "Above the median"
+  },
+  "deltaNote": "Arrow: price difference versus the market median. Blue, below; red, above.",
+  "price": {
+    "normal": "Normal",
+    "atypical": "Atypical",
+    "implausible": "Implausible",
+    "insufficient_reference": "No reference"
+  },
+  "verdict": {
+    "within_budget": "Within budget",
+    "stretch": "Stretch",
+    "out_of_budget": "Out of budget"
+  },
   "chart": {
     "caption": "Contribution of each criterion to the score",
-    "criteria": { "price": "Price", "trust": "Confidence", "lead": "Lead time", "verdict": "Verdict" },
+    "criteria": {
+      "landed_cost": "Landed cost",
+      "lead_time": "Lead time",
+      "seller_confidence": "Seller confidence",
+      "financial_fit": "Financial fit",
+      "margin_potential": "Margin potential",
+      "spec_match": "Spec match",
+      "compliance_risk": "Compliance risk",
+      "negotiation_gain": "Negotiation gain"
+    },
     "row": "{name}: score {score} ({parts})"
   },
   "savings": {
     "title": "Savings",
     "list": "Versus list price, this mission",
-    "median": "Versus market median",
-    "year": "{category}, in 2026",
-    "memory": "Price memory"
+    "median": "Versus market median"
+  },
+  "applyProfile": "Apply",
+  "noProfile": {
+    "title": "Choose a ranking profile",
+    "body": "Enter the id of a profile to rank this mission’s offers. The ranking is computed by the backend."
+  },
+  "empty": {
+    "title": "No ranked offers",
+    "body": "No offer meets the profile’s hard constraints."
+  },
+  "headline": "{name} ranks first",
+  "versions": "Config {config} · model {model}",
+  "days": "{n} days",
+  "missing": "{n} ranked offers are not in the loaded page.",
+  "excluded": {
+    "title": "Excluded by hard constraints"
+  },
+  "distribution": {
+    "none": "No price checks yet.",
+    "caption": "Unit price per offer. Dashed line: market median {median}."
   }
 }

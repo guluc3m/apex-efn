@@ -1,30 +1,76 @@
 {
   "back": "Volver a la misión",
-  "context": "{code} · {n} finalistas",
+  "context": "Misión {code}",
   "profile": "Perfil",
-  "profiles": { "operative": "Comprador operativo", "cfo": "CFO / finanzas" },
   "export": "Exportar comparativa",
   "decide": "Decidir sobre {name}",
   "pending": "Pendiente de conectar",
   "tableCaption": "Comparativa de los finalistas",
   "rank": "{n}.º",
-  "rows": { "criterion": "Criterio", "price": "Precio/ud", "band": "Banda de precio", "confidence": "Confianza", "verdict": "Veredicto", "signature": "Firma", "landed": "Landed cost", "lead": "Plazo", "score": "Score", "vsFirst": "Frente al 1.º" },
-  "delta": { "down": "Por debajo de la mediana", "up": "Por encima de la mediana" },
-  "deltaNote": "Flecha: diferencia del precio frente a la mediana de {median}/ud. Azul, por debajo; rojo, por encima.",
-  "price": { "normal": "Normal", "atypical": "Atípico", "implausible": "Implausible" },
-  "confidence": { "high": "alta", "medium": "media", "low": "baja", "untrusted": "no fiable", "insufficient_data": "datos insuficientes" },
-  "verdict": { "within_budget": "En presupuesto", "stretch": "Al límite", "out_of_budget": "Fuera de presupuesto" },
-  "signature": { "signed": "Firmada", "pending": "Sin firmar", "invalid": "No válida" },
+  "rows": {
+    "criterion": "Criterio",
+    "price": "Precio/ud",
+    "band": "Banda de precio",
+    "confidence": "Confianza",
+    "verdict": "Veredicto",
+    "landed": "Landed cost",
+    "lead": "Plazo",
+    "score": "Score",
+    "vsFirst": "Frente al 1.º"
+  },
+  "delta": {
+    "down": "Por debajo de la mediana",
+    "up": "Por encima de la mediana"
+  },
+  "deltaNote": "Flecha: diferencia del precio frente a la mediana de mercado. Azul, por debajo; rojo, por encima.",
+  "price": {
+    "normal": "Normal",
+    "atypical": "Atípico",
+    "implausible": "Implausible",
+    "insufficient_reference": "Sin referencia"
+  },
+  "verdict": {
+    "within_budget": "En presupuesto",
+    "stretch": "Al límite",
+    "out_of_budget": "Fuera de presupuesto"
+  },
   "chart": {
     "caption": "Contribución de cada criterio al score",
-    "criteria": { "price": "Precio", "trust": "Confianza", "lead": "Plazo", "verdict": "Veredicto" },
+    "criteria": {
+      "landed_cost": "Landed cost",
+      "lead_time": "Plazo de entrega",
+      "seller_confidence": "Confianza del vendedor",
+      "financial_fit": "Ajuste financiero",
+      "margin_potential": "Margen potencial",
+      "spec_match": "Ajuste a especificación",
+      "compliance_risk": "Riesgo de cumplimiento",
+      "negotiation_gain": "Ganancia en negociación"
+    },
     "row": "{name}: score {score} ({parts})"
   },
   "savings": {
     "title": "Ahorro",
     "list": "Frente a precio de lista, esta misión",
-    "median": "Frente a mediana de mercado",
-    "year": "{category}, en 2026",
-    "memory": "Memoria de precios"
+    "median": "Frente a mediana de mercado"
+  },
+  "applyProfile": "Aplicar",
+  "noProfile": {
+    "title": "Elige un perfil de ranking",
+    "body": "Indica el id de un perfil para ordenar las ofertas de la misión. El ranking lo calcula el backend."
+  },
+  "empty": {
+    "title": "Sin ofertas ordenadas",
+    "body": "Ninguna oferta cumple las restricciones duras del perfil."
+  },
+  "headline": "{name} queda primero",
+  "versions": "Config {config} · modelo {model}",
+  "days": "{n} días",
+  "missing": "{n} ofertas ordenadas no están en la página cargada.",
+  "excluded": {
+    "title": "Excluidas por restricciones duras"
+  },
+  "distribution": {
+    "none": "Aún no hay verificaciones de precio.",
+    "caption": "Precio/ud de cada oferta. Línea discontinua: mediana de mercado {median}."
   }
 }

@@ -1,0 +1,32 @@
+{
+  "title": "可信度依据",
+  "notEvaluated": "尚未评估",
+  "bandScore": "{band} · {score}",
+  "noSignals": "暂无信号。",
+  "penalties": "扣分项",
+  "flags": "操纵迹象",
+  "model": "模型 {version}",
+  "showHistory": "查看历史",
+  "loading": "正在加载历史",
+  "error": "无法加载历史",
+  "retry": "重试",
+  "noHistory": "没有更早的计算。",
+  "band": {
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "untrusted": "不可信",
+    "insufficient_data": "数据不足"
+  },
+  "flag": {
+    "burst_velocity": "评价突增",
+    "five_star_anomaly": "五星占比异常",
+    "low_verified_share": "已验证占比低",
+    "duplicate_text": "重复文本",
+    "creation_correlation": "账号创建前后激增"
+  },
+  "severity": {
+    "warning": "警告",
+    "critical": "严重"
+  }
+}

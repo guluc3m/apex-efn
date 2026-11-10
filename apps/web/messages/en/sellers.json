@@ -1,0 +1,32 @@
+{
+  "title": "Why this confidence",
+  "notEvaluated": "Not evaluated yet",
+  "bandScore": "{band} · {score}",
+  "noSignals": "No signals available.",
+  "penalties": "Penalties",
+  "flags": "Manipulation flags",
+  "model": "Model {version}",
+  "showHistory": "Show history",
+  "loading": "Loading history",
+  "error": "Could not load the history",
+  "retry": "Retry",
+  "noHistory": "No earlier computations.",
+  "band": {
+    "high": "high",
+    "medium": "medium",
+    "low": "low",
+    "untrusted": "untrusted",
+    "insufficient_data": "insufficient data"
+  },
+  "flag": {
+    "burst_velocity": "Review burst",
+    "five_star_anomaly": "Abnormal 5-star share",
+    "low_verified_share": "Low verified share",
+    "duplicate_text": "Duplicate text",
+    "creation_correlation": "Spike around account creation"
+  },
+  "severity": {
+    "warning": "Warning",
+    "critical": "Critical"
+  }
+}
