@@ -115,7 +115,7 @@ Measured locally on the D1-04 branch. These are the facts a human needs before e
 
 Run locally with `pnpm audit --audit-level=high` (pnpm reports 31 findings: 9 high, 2 critical; the table below
 lists the unique high and critical advisories, 8 high and 2 critical) and `pip-audit` against the locked environment
-(3 findings, 2 packages). The job reports them without blocking. Fix owners are suggestions.
+(**0 findings**). The job reports them without blocking. Fix owners are suggestions.
 
 **pnpm (high and critical):**
 
@@ -130,16 +130,10 @@ lists the unique high and critical advisories, 8 high and 2 critical) and `pip-a
 | high     | `postcss` 8.4.31 (bundled by `next` 15.5.29, `apps/web`)                                 | Source-map disclosure via `sourceMappingURL` (two advisories) | Fixed in 8.5.18. Needs a Next upgrade or a pnpm override (DEV-6). The workspace's own postcss 8.5.32 is not affected. |
 | critical | `tinypool` (second advisory, same package)                                               | Prototype pollution gadget to RCE in `run()` options          | Same as above                                                                                                         |
 
-**pip-audit (`apps/orchestrator`, locked):**
-
-| Package             | Advisory                         | Finding                                                                                                                                                                                | Fix available?   |
-| ------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `python-jose` 3.5.0 | PYSEC-2026-4298 / CVE-2026-85394 | Accepts DER-encoded public keys in HMAC initialization. Forged HS256 tokens can pass verification when algorithms are not restricted. **Relevant to D1-05 (JWT validation via JWKS).** | No fixed version |
-| `ecdsa` 0.19.2      | PYSEC-2026-1325 / CVE-2024-23342 | Minerva timing attack on P-256 `sign_digest()`. The python-ecdsa maintainers do not fix it.                                                                                            | No fixed version |
-
-pip-audit does not report severity. Check the severity of `python-jose` in the advisory before enforcing. Its
-impact is high for JWT validation: **consider replacing `python-jose` with PyJWT** (pyproject is DEV-4's file,
-auth is DEV-1's D1-05).
+**pip-audit (`apps/orchestrator`, locked):** no findings. `python-jose` (CVE-2026-85394, no fix) and its `ecdsa`
+dependency were removed in D1-05 (ADR-900 #105: PyJWT). The export also strips local editable path dependencies
+(`apps/llm-stub`, a uv path dependency that is not on PyPI), so the audit now covers the third-party set instead
+of failing internally and reporting nothing.
 
 When a finding is fixed, remove it from this list. When the list is empty, make the audit blocking: set
 `AUDIT_MODE: blocking` in the `env` of the `dependency-audit` job's step in `.github/workflows/ci.yml` (the script
