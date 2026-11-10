@@ -6,7 +6,7 @@ import { defaultLocale, isLocale } from './routing'
 // Lista fija: cada dominio escribe solo en su archivo messages/<locale>/<ns>.json.
 const namespaces = [
   'common', 'shell', 'onboarding', 'missions', 'negotiation', 'decisions',
-  'gate', 'compare', 'signing', 'approvals', 'company', 'states',
+  'gate', 'compare', 'sellers', 'signing', 'approvals', 'company', 'states',
 ] as const
 
 export default getRequestConfig(async ({ requestLocale }) => {

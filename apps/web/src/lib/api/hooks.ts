@@ -10,6 +10,9 @@ export const api = createOperations(createApiClient())
 
 export const queryKeys = {
   mission: (id: string) => ['mission', id] as const,
+  missionOffers: (id: string) => ['mission', id, 'offers'] as const,
+  recommendation: (id: string, profile: string) => ['mission', id, 'recommendation', profile] as const,
+  sellerConfidence: (id: string) => ['seller', id, 'confidence'] as const,
   effectiveConfig: (category?: string) => ['config', 'effective', category ?? null] as const,
 }
 
@@ -31,6 +34,30 @@ export function useMission(id: string) {
   return useQuery({
     queryKey: queryKeys.mission(id),
     queryFn: ({ signal }) => api.getMission(id, signal),
+  })
+}
+
+/** First page (the API maximum) of offers; the matrix filters and sorts it locally. */
+export function useMissionOffers(id: string) {
+  return useQuery({
+    queryKey: queryKeys.missionOffers(id),
+    queryFn: ({ signal }) => api.listMissionOffers(id, { limit: 200 }, signal),
+  })
+}
+
+export function useMissionRecommendation(id: string, profile: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.recommendation(id, profile ?? ''),
+    queryFn: ({ signal }) => api.getMissionRecommendation(id, profile!, signal),
+    enabled: !!profile,
+  })
+}
+
+export function useSellerConfidence(id: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.sellerConfidence(id),
+    queryFn: ({ signal }) => api.getSellerConfidence(id, { limit: 10 }, signal),
+    enabled,
   })
 }
 

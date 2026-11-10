@@ -1,25 +1,36 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
-import { Bar, BarChart, LabelList, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import type { RankedOffer, ScoreCriterion } from '@apex/shared-types/contracts'
+import { useLocale, useTranslations } from 'next-intl'
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 
-import type { CriterionKey } from '@/fixtures/compare'
-
-const CRITERIA: CriterionKey[] = ['price', 'trust', 'lead', 'verdict']
-const FILL: Record<CriterionKey, string> = { price: 'var(--ink-muted)', trust: 'var(--accent)', lead: 'var(--line-strong)', verdict: 'var(--raised)' }
-const TEXT: Record<CriterionKey, string> = { price: 'var(--on-accent)', trust: 'var(--on-accent)', lead: 'var(--ink)', verdict: 'var(--ink)' }
-const fmt = (v: number) => v.toFixed(2).replace('.', ',')
+// One fill per criterion; a criterion keeps its colour across offers.
+const FILL: Record<ScoreCriterion, string> = {
+  landed_cost: 'var(--ink-muted)',
+  lead_time: 'var(--line-strong)',
+  seller_confidence: 'var(--accent)',
+  financial_fit: 'var(--raised)',
+  margin_potential: 'var(--good)',
+  spec_match: 'var(--warn)',
+  compliance_risk: 'var(--bad)',
+  negotiation_gain: 'var(--ink-soft)',
+}
 
 export interface ScoreRow {
   name: string
-  score: string
-  parts: Record<CriterionKey, number>
+  ranked: RankedOffer
 }
 
-/** Barras apiladas por criterio MCDA. Las contribuciones llegan calculadas; aquí solo se dibujan. */
+/** Stacked bars of the contribution of each criterion. Contributions arrive computed; this only draws them. */
 export function ScoreChart({ rows }: { rows: ScoreRow[] }) {
   const t = useTranslations('compare.chart')
-  const data = rows.map((r) => ({ name: r.name, ...r.parts }))
+  const locale = useLocale()
+  const fmt = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const criteria = [...new Set(rows.flatMap((r) => r.ranked.breakdown.map((b) => b.criterion)))]
+  const data = rows.map((r) => ({
+    name: r.name,
+    ...Object.fromEntries(r.ranked.breakdown.map((b) => [b.criterion, b.contribution])),
+  }))
 
   return (
     <figure className="m-0 flex flex-col gap-2">
@@ -29,18 +40,28 @@ export function ScoreChart({ rows }: { rows: ScoreRow[] }) {
           <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 8 }}>
             <XAxis dataKey="name" tick={{ fill: 'var(--ink-muted)', fontSize: 13 }} stroke="var(--line-strong)" />
             <YAxis hide domain={[0, 1]} />
-            {CRITERIA.map((k) => (
-              <Bar key={k} dataKey={k} stackId="s" fill={FILL[k]} stroke="var(--control-border)" isAnimationActive={false}>
-                <LabelList dataKey={k} position="center" formatter={(v: number) => `${t(`criteria.${k}`)} ${fmt(v)}`} fill={TEXT[k]} fontSize={13} />
-              </Bar>
+            {criteria.map((k) => (
+              <Bar key={k} dataKey={k} stackId="s" fill={FILL[k]} stroke="var(--control-border)" isAnimationActive={false} />
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <ul className="m-0 flex flex-wrap gap-x-4 gap-y-1 p-0 text-[13px]">
+        {criteria.map((k) => (
+          <li key={k} className="flex list-none items-center gap-1.5">
+            <span className="inline-block size-3 border border-control-border" style={{ background: FILL[k] }} aria-hidden="true" />
+            {t(`criteria.${k}`)}
+          </li>
+        ))}
+      </ul>
       <ul className="sr-only">
         {rows.map((r) => (
-          <li key={r.name}>
-            {t('row', { name: r.name, score: r.score, parts: CRITERIA.map((k) => `${t(`criteria.${k}`)} ${fmt(r.parts[k])}`).join(', ') })}
+          <li key={r.ranked.offer_id}>
+            {t('row', {
+              name: r.name,
+              score: fmt.format(r.ranked.score),
+              parts: r.ranked.breakdown.map((b) => `${t(`criteria.${b.criterion}`)} ${fmt.format(b.contribution)}`).join(', '),
+            })}
           </li>
         ))}
       </ul>

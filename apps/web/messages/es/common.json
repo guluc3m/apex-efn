@@ -1,1 +1,9 @@
-{"appName":"APEX-EFN","tagline":"Compras B2B por volumen: sourcing, negociación y decisión firmada."}
+{
+  "appName": "APEX-EFN",
+  "tagline": "Compras B2B por volumen: sourcing, negociación y decisión firmada.",
+  "query": {
+    "loading": "Cargando",
+    "error": "No se pudieron cargar los datos",
+    "retry": "Reintentar"
+  }
+}

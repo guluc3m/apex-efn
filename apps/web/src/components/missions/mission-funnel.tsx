@@ -3,13 +3,33 @@
 import { useTranslations } from 'next-intl'
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 
+import { QueryBoundary } from '@/components/query-boundary'
+import { useMission } from '@/lib/api'
+
 interface Stage {
   id: string
   n: number
 }
 
-// //todo_#157: embudo real de la misión (conteos de la API)
-export function MissionFunnel({ stages }: { stages: readonly Stage[] }) {
+/** Funnel from the mission counters the API returns (discovered, negotiated, in gate). */
+export function MissionFunnel({ missionId }: { missionId: string }) {
+  const query = useMission(missionId)
+  return (
+    <QueryBoundary query={query}>
+      {(m) => (
+        <FunnelChart
+          stages={[
+            { id: 'found', n: m.offers_discovered },
+            { id: 'negotiated', n: m.offers_negotiated },
+            { id: 'gate', n: m.offers_in_gate },
+          ]}
+        />
+      )}
+    </QueryBoundary>
+  )
+}
+
+function FunnelChart({ stages }: { stages: readonly Stage[] }) {
   const t = useTranslations('missions.detail.funnel')
   const data = stages.map((s) => ({ ...s, name: t(`stages.${s.id}`) }))
   const last = stages.length - 1

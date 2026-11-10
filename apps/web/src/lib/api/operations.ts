@@ -7,7 +7,13 @@ import type {
   CreateSourcingRequestResponse,
   GetEffectiveConfigData,
   GetEffectiveConfigResponse,
+  GetMissionRecommendationData,
+  GetMissionRecommendationResponse,
   GetMissionResponse,
+  GetSellerConfidenceData,
+  GetSellerConfidenceResponse,
+  ListMissionOffersData,
+  ListMissionOffersResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
   OpenSigningSessionResponse,
@@ -81,6 +87,19 @@ export function createOperations(client: ApiClient) {
 
     getMission: (id: string, signal?: AbortSignal) =>
       client.request<GetMissionResponse>('/v1/missions/{id}', { path: { id }, signal }),
+
+    listMissionOffers: (id: string, query?: ListMissionOffersData['query'], signal?: AbortSignal) =>
+      client.request<ListMissionOffersResponse>('/v1/missions/{id}/offers', { path: { id }, query, signal }),
+
+    getMissionRecommendation: (id: string, profile: GetMissionRecommendationData['query']['profile'], signal?: AbortSignal) =>
+      client.request<GetMissionRecommendationResponse>('/v1/missions/{id}/recommendation', {
+        path: { id },
+        query: { profile },
+        signal,
+      }),
+
+    getSellerConfidence: (id: string, query?: GetSellerConfidenceData['query'], signal?: AbortSignal) =>
+      client.request<GetSellerConfidenceResponse>('/v1/sellers/{id}/confidence', { path: { id }, query, signal }),
 
     getEffectiveConfig: (query?: GetEffectiveConfigData['query'], signal?: AbortSignal) =>
       client.request<GetEffectiveConfigResponse>('/v1/config/effective', {

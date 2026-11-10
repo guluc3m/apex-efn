@@ -1,0 +1,32 @@
+{
+  "title": "Por qué esta confianza",
+  "notEvaluated": "Aún sin evaluar",
+  "bandScore": "{band} · {score}",
+  "noSignals": "Sin señales disponibles.",
+  "penalties": "Penalizaciones",
+  "flags": "Indicios de manipulación",
+  "model": "Modelo {version}",
+  "showHistory": "Ver historial",
+  "loading": "Cargando historial",
+  "error": "No se pudo cargar el historial",
+  "retry": "Reintentar",
+  "noHistory": "Sin cálculos anteriores.",
+  "band": {
+    "high": "alta",
+    "medium": "media",
+    "low": "baja",
+    "untrusted": "no fiable",
+    "insufficient_data": "datos insuficientes"
+  },
+  "flag": {
+    "burst_velocity": "Ráfaga de reseñas",
+    "five_star_anomaly": "Proporción anómala de 5 estrellas",
+    "low_verified_share": "Pocas reseñas verificadas",
+    "duplicate_text": "Texto duplicado",
+    "creation_correlation": "Pico junto a la creación de la cuenta"
+  },
+  "severity": {
+    "warning": "Aviso",
+    "critical": "Crítico"
+  }
+}

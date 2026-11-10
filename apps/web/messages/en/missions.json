@@ -7,10 +7,30 @@
     "emptyBody": "Describe what you need to buy and the first mission will start looking for offers.",
     "caption": "Purchasing missions",
     "noMatch": "No mission matches this filter",
-    "cols": { "mission": "Mission", "state": "Status", "phase": "Phase", "offers": "Offers", "finalists": "Finalists", "launched": "Launched" },
-    "state": { "running": "In progress", "valuation": "Under evaluation", "closed": "Closed", "cancelled": "Cancelled" },
-    "phase": { "search": "Search", "filter": "Trust and price", "negotiation": "Negotiation", "valuation": "Evaluation" },
-    "filters": { "state": "Status", "all": "All" }
+    "cols": {
+      "mission": "Mission",
+      "state": "Status",
+      "phase": "Phase",
+      "offers": "Offers",
+      "finalists": "Finalists",
+      "launched": "Launched"
+    },
+    "state": {
+      "running": "In progress",
+      "valuation": "Under evaluation",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
+    },
+    "phase": {
+      "search": "Search",
+      "filter": "Trust and price",
+      "negotiation": "Negotiation",
+      "valuation": "Evaluation"
+    },
+    "filters": {
+      "state": "Status",
+      "all": "All"
+    }
   },
   "request": {
     "title": "New purchasing mission",
@@ -37,16 +57,23 @@
       }
     },
     "review": {
-      "country": "Delivery country", "countryHint": "ES", "none": "Not provided", "empty": "Once the assistant interprets your request, what it understood will appear here.",
+      "country": "Delivery country",
+      "countryHint": "ES",
+      "none": "Not provided",
+      "empty": "Once the assistant interprets your request, what it understood will appear here.",
       "title": "Review what we understood",
       "product": "Product",
       "category": "Category",
-      "categories": { "bearings": "Bearings" },
+      "categories": {
+        "bearings": "Bearings"
+      },
       "quantity": "Quantity",
       "destination": "Destination",
       "deadline": "Deliver before",
       "payment": "Payment",
-      "payments": { "net60": "60 days" },
+      "payments": {
+        "net60": "60 days"
+      },
       "spec": "Specification",
       "tolerances": "Tolerances",
       "tolerancesMissing": "You did not say",
@@ -60,8 +87,15 @@
       "expired": "(session expired: sign in again under Company)",
       "disabled": "disabled by the administrator"
     },
-    "envelope": { "label": "Bearings envelope", "available": "available" },
-    "profile": { "label": "Ranking profile", "operational": "Operational buyer", "cfo": "CFO / finance" },
+    "envelope": {
+      "label": "Bearings envelope",
+      "available": "available"
+    },
+    "profile": {
+      "label": "Ranking profile",
+      "operational": "Operational buyer",
+      "cfo": "CFO / finance"
+    },
     "noSnapshot": {
       "title": "The financial snapshot is not active",
       "body": "It cannot be launched: the offers would have nothing to be compared against.",
@@ -81,8 +115,18 @@
     "heading": "Mission {id}",
     "meta": "{state} · launched on {date}",
     "failed": "The mission failed: {detail}",
-    "offersPending": "{found} offers found, {negotiated} negotiated and {gate} in gate. The offers matrix is not connected yet.",
-    "state": { "created": "Created", "planning": "Planning", "sourcing": "Sourcing", "enriching": "Enriching", "evaluating": "Evaluating", "negotiating": "Negotiating", "awaiting_decision": "Awaiting your decision", "completed": "Completed", "cancelled": "Cancelled", "failed": "Failed" },
+    "state": {
+      "created": "Created",
+      "planning": "Planning",
+      "sourcing": "Sourcing",
+      "enriching": "Enriching",
+      "evaluating": "Evaluating",
+      "negotiating": "Negotiating",
+      "awaiting_decision": "Awaiting your decision",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed"
+    },
     "new": "New mission",
     "compare": "View comparison",
     "pause": "Pause",
@@ -91,16 +135,44 @@
     "side": "Mission funnel and activity",
     "phases": {
       "label": "Mission phases",
-      "state": { "done": "Completed", "running": "In progress", "pending": "Pending" },
-      "search": { "title": "Search", "running": "Searching · {n} offers", "done": "{n} offers found", "pending": "Pending" },
-      "filter": { "title": "Trust and price", "running": "Checking trust and price", "done": "{n} in gate", "pending": "Pending" },
-      "negotiation": { "title": "Negotiation", "running": "{n} negotiated so far", "done": "{n} negotiated", "pending": "Pending" },
-      "valuation": { "title": "Evaluation", "running": "Waiting for your decision", "done": "Mission completed", "pending": "Starts when negotiations close" }
+      "state": {
+        "done": "Completed",
+        "running": "In progress",
+        "pending": "Pending"
+      },
+      "search": {
+        "title": "Search",
+        "running": "Searching · {n} offers",
+        "done": "{n} offers found",
+        "pending": "Pending"
+      },
+      "filter": {
+        "title": "Trust and price",
+        "running": "Checking trust and price",
+        "done": "{n} in gate",
+        "pending": "Pending"
+      },
+      "negotiation": {
+        "title": "Negotiation",
+        "running": "{n} negotiated so far",
+        "done": "{n} negotiated",
+        "pending": "Pending"
+      },
+      "valuation": {
+        "title": "Evaluation",
+        "running": "Waiting for your decision",
+        "done": "Mission completed",
+        "pending": "Starts when negotiations close"
+      }
     },
     "funnel": {
       "caption": "Mission funnel: offers reaching each stage",
-      "aria": "Mission funnel: {found} offers found, {passed} pass the filters, {negotiated} negotiated and {finalists} finalists.",
-      "stages": { "found": "Found", "passed": "Pass filters", "negotiated": "Negotiated", "finalists": "Finalists" }
+      "aria": "Mission funnel: {found} offers found, {negotiated} negotiated and {gate} in the gate.",
+      "stages": {
+        "found": "Found",
+        "negotiated": "Negotiated",
+        "gate": "In gate"
+      }
     },
     "activity": {
       "title": "Activity",
@@ -125,21 +197,65 @@
     "offers": {
       "caption": "Mission offers by seller",
       "empty": "No offers match these filters",
-      "footer": "Showing {shown} of {total}. Confidence always sits next to the price. The arrow is the difference from the median: blue, below; red, above.",
-      "cols": { "seller": "Seller", "platform": "Platform", "price": "Price/unit", "band": "Price band", "confidence": "Confidence", "verdict": "Verdict", "signature": "Signature", "status": "Status", "landed": "Landed cost" },
-      "platform": { "p1": "Platform 1", "p2": "Platform 2" },
-      "band": { "normal": "Normal", "atypical": "Atypical", "implausible": "Implausible", "insufficient_reference": "No reference" },
-      "confidence": { "high": "high · {score}", "medium": "medium · {score}", "low": "low · {score}", "untrusted": "untrusted · {score}", "insufficient_data": "no data" },
-      "verdict": { "within_budget": "Within budget", "stretch": "Stretch", "out_of_budget": "Out of budget" },
-      "signature": { "signed": "Signed", "pending": "Unsigned", "invalid": "Invalid signature" },
-      "status": {
-        "awaiting_approval": "Message awaiting approval",
-        "negotiating": "Negotiating · round {round}",
-        "aborted": "Aborted · round {round}",
-        "gate_low_confidence": "In gate: low confidence",
-        "filtered_implausible": "Filtered: implausible price"
+      "footer": "Showing {shown}. Confidence always sits next to the price. The arrow is the difference from the median: blue, below; red, above.",
+      "cols": {
+        "seller": "Seller",
+        "platform": "Platform",
+        "price": "Price/unit",
+        "band": "Price band",
+        "confidence": "Confidence",
+        "verdict": "Verdict",
+        "status": "Status",
+        "landed": "Landed cost"
       },
-      "filters": { "status": "Status", "band": "Price", "verdict": "Verdict", "platform": "Platform", "all": "All" }
+      "band": {
+        "normal": "Normal",
+        "atypical": "Atypical",
+        "implausible": "Implausible",
+        "insufficient_reference": "No reference"
+      },
+      "confidence": {
+        "high": "high · {score}",
+        "medium": "medium · {score}",
+        "low": "low · {score}",
+        "untrusted": "untrusted · {score}",
+        "insufficient_data": "no data"
+      },
+      "verdict": {
+        "within_budget": "Within budget",
+        "stretch": "Stretch",
+        "out_of_budget": "Out of budget"
+      },
+      "status": {
+        "discovered": "Discovered",
+        "enriched": "Enriched",
+        "trust_scored": "Trust scored",
+        "sanity_checked": "Price checked",
+        "financially_checked": "Financially checked",
+        "gate_pending": "In gate",
+        "gate_approved": "Gate approved",
+        "gate_rejected": "Gate rejected",
+        "negotiating": "Negotiating",
+        "negotiated": "Negotiated",
+        "sanity_rechecked": "Price rechecked",
+        "scored": "Scored",
+        "awaiting_human": "Awaiting human",
+        "signed": "Signed",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "purchased": "Purchased"
+      },
+      "filters": {
+        "status": "Status",
+        "band": "Price",
+        "verdict": "Verdict",
+        "platform": "Platform",
+        "all": "All"
+      },
+      "pending": "Pending",
+      "above": "Above the median",
+      "below": "Below the median",
+      "more": "More offers exist than shown here."
     }
   }
 }

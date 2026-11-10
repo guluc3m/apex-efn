@@ -1,1 +1,9 @@
-{"appName":"APEX-EFN","tagline":"B2B bulk purchasing: sourcing, negotiation and signed decisions."}
+{
+  "appName": "APEX-EFN",
+  "tagline": "B2B bulk purchasing: sourcing, negotiation and signed decisions.",
+  "query": {
+    "loading": "Loading",
+    "error": "Could not load this data",
+    "retry": "Retry"
+  }
+}
