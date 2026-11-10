@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
@@ -12,6 +12,7 @@ from apex.api import config as config_api
 from apex.api import onboarding as onboarding_api
 from apex.api import router
 from apex.api import sourcing as sourcing_api
+from apex.auth.deps import current_principal
 from apex.common.errors import install_problem_handlers
 from apex.common.idempotency import (
     IdempotencyMiddleware,
@@ -74,7 +75,9 @@ def create_app(
         required=active.idempotency_required,
     )
 
-    application.include_router(router, prefix="/v1")
+    # D1-05: every versioned endpoint is authenticated, including the stubs that do not depend on the
+    # tenant yet. Owning lanes add the role checks; authentication is not optional per router.
+    application.include_router(router, prefix="/v1", dependencies=[Depends(current_principal)])
     if active_services is not None:
         _wire_services(application, active_services)
     setup_telemetry(application, service_name="apex-orchestrator")

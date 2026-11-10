@@ -1,48 +1,27 @@
-"""Tenant resolution for HTTP endpoints (temporary, until DEV-1's D1-05 lands).
+"""Tenant and role resolution for HTTP endpoints.
 
-Once ``apex.auth.deps.current_principal()`` exists, every router depends on it and takes ``tenant_id`` from
-the principal. Until then the tenant comes from the ``X-Tenant-Id`` header, which lets any caller act as any
-tenant. That is only acceptable on a developer machine, so the header is honoured **only** when
-``APEX_ALLOW_TENANT_HEADER=true``; otherwise every request is refused with 401 and the endpoints are closed.
+The tenant and the roles of a caller come from the authenticated principal (D1-05, DEV-1):
+``apex.auth.deps.current_principal``. Routers keep depending on ``get_tenant_id`` and ``get_roles`` so
+nothing had to be rewired when authentication landed.
+
+Local development keeps an opt-in escape hatch: with ``APEX_ALLOW_TENANT_HEADER=true`` and no bearer
+token, the caller is a development principal whose tenant is ``X-Tenant-Id`` and whose roles come from
+``APEX_DEV_ROLES``. A valid bearer token always wins over the header. The hatch is off by default and
+must stay off outside a developer machine.
 """
 
 from __future__ import annotations
 
-import os
 from typing import Annotated
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends
 
-ALLOW_TENANT_HEADER_ENV = "APEX_ALLOW_TENANT_HEADER"
-
-
-def tenant_header_enabled() -> bool:
-    return os.environ.get(ALLOW_TENANT_HEADER_ENV, "").strip().lower() == "true"
-
-
-def get_tenant_id(
-    x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
-) -> str:
-    if not tenant_header_enabled():
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="tenant authentication is not wired yet (D1-05); these endpoints are closed",
-        )
-    if not x_tenant_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing tenant")
-    return x_tenant_id
-
-
-def get_roles() -> tuple[str, ...]:
-    """Roles of the caller, for the endpoints that gate on them.
-
-    Roles come from the authenticated principal and **never** from a request body: a caller must not be able
-    to claim ``admin`` by adding a field. Until DEV-1's ``current_principal()`` lands (D1-05) there is no
-    principal, so this returns no roles and every role-gated action is refused. That is the fail-closed
-    behaviour: ``override_discard`` is unavailable rather than available to anyone.
-    """
-    return ()
-
+from apex.auth.deps import (
+    ALLOW_TENANT_HEADER_ENV,
+    current_principal,
+    tenant_header_enabled,
+)
+from apex.auth.models import Principal
 
 __all__ = [
     "ALLOW_TENANT_HEADER_ENV",
@@ -50,3 +29,16 @@ __all__ = [
     "get_tenant_id",
     "tenant_header_enabled",
 ]
+
+
+async def get_tenant_id(
+    principal: Annotated[Principal, Depends(current_principal)],
+) -> str:
+    return principal.tenant_id
+
+
+async def get_roles(
+    principal: Annotated[Principal, Depends(current_principal)],
+) -> tuple[str, ...]:
+    """Roles of the caller. Never read from a request body or a client-supplied role header."""
+    return principal.roles

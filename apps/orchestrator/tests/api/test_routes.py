@@ -54,7 +54,9 @@ def test_implemented_routes_are_not_stubs(app: FastAPI) -> None:
     """A route listed as implemented must not answer 501 any more."""
     client = TestClient(app, raise_server_exceptions=False)
     for method, path in sorted(IMPLEMENTED_ROUTES):
-        response = client.request(method, _concrete(path), json={})
+        response = client.request(
+            method, _concrete(path), json={}, headers={"X-Tenant-Id": "tenant-a"}
+        )
         assert response.status_code != 501, (method, path, response.status_code)
 
 
