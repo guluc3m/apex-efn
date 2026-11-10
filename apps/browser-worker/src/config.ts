@@ -13,6 +13,10 @@ const envSchema = z.object({
   IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().positive().default(86400),
   BROWSER_POOL_SIZE: z.coerce.number().int().positive().default(5),
   MAX_PAGES_PER_BROWSER: z.coerce.number().int().positive().default(50),
+  BROWSER_MAX_MEMORY_MB: z.coerce.number().int().min(0).default(1024),
+  BROWSER_ACQUIRE_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  BROWSER_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().default(300_000),
+  BROWSER_SWEEP_INTERVAL_MS: z.coerce.number().int().positive().default(30_000),
   PROXY_RESIDENTIAL_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   PROXY_DATACENTER_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   ARTIFACT_DIR: z.string().min(1).default('./artifacts'),
@@ -38,6 +42,14 @@ export interface WorkerConfig {
   idempotencyTtlSeconds: number
   browserPoolSize: number
   maxPagesPerBrowser: number
+  /** Resident memory above which a browser is recycled. `0` disables the check. */
+  browserMaxMemoryMb: number
+  /** How long a job waits for a free browser before it answers `timeout`. */
+  browserAcquireTimeoutMs: number
+  /** How long a browser with no open pages stays alive. */
+  browserIdleTimeoutMs: number
+  /** How often the pool watchdog applies the recycling rules. */
+  browserSweepIntervalMs: number
   proxyResidentialUrl: string | undefined
   proxyDatacenterUrl: string | undefined
   artifactDir: string
@@ -68,6 +80,10 @@ export function loadConfig(env: NodeJS.ProcessEnv): WorkerConfig {
     idempotencyTtlSeconds: values.IDEMPOTENCY_TTL_SECONDS,
     browserPoolSize: values.BROWSER_POOL_SIZE,
     maxPagesPerBrowser: values.MAX_PAGES_PER_BROWSER,
+    browserMaxMemoryMb: values.BROWSER_MAX_MEMORY_MB,
+    browserAcquireTimeoutMs: values.BROWSER_ACQUIRE_TIMEOUT_MS,
+    browserIdleTimeoutMs: values.BROWSER_IDLE_TIMEOUT_MS,
+    browserSweepIntervalMs: values.BROWSER_SWEEP_INTERVAL_MS,
     proxyResidentialUrl: values.PROXY_RESIDENTIAL_URL,
     proxyDatacenterUrl: values.PROXY_DATACENTER_URL,
     artifactDir: values.ARTIFACT_DIR,
