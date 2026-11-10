@@ -5,26 +5,28 @@ applied yet**. This runbook is for the first bootstrap and for day-to-day operat
 
 ## 1. Prerequisites
 
-| Item                                                                                                                              | Who                         | Notes                                                                                                                                                                                                                                                                     |
-| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AWS account for staging                                                                                                           | Human (TL)                  | Separate from production.                                                                                                                                                                                                                                                 |
-| Region (EU, GDPR)                                                                                                                 | TL decision                 | Variable `region`. No default.                                                                                                                                                                                                                                            |
-| **Audit Object Lock retention, in days**                                                                                          | **TL decision (issue #81)** | Variable `audit_object_lock_retention_days`. No default. COMPLIANCE mode: cannot be shortened after the first write.                                                                                                                                                      |
-| Public API CIDRs for EKS                                                                                                          | Human                       | Variable `eks_public_access_cidrs`. Must not include `0.0.0.0/0`.                                                                                                                                                                                                         |
-| Terraform remote state (S3 bucket + lock table)                                                                                   | Human                       | Created outside this repo. Then uncomment `backend.tf`.                                                                                                                                                                                                                   |
-| GitHub OIDC identity provider + deploy role                                                                                       | Human                       | Trust only `repo:guluc3m/apex-efn:ref:refs/heads/main` (and the `staging` environment). Permissions: ECR not needed; GHCR is used. Needs `eks:DescribeCluster` for `update-kubeconfig`. Its ARN goes in `deploy_role_arn` and in the repo variable `AWS_DEPLOY_ROLE_ARN`. |
-| GHCR packages                                                                                                                     | Human                       | Packages are private by default. Either make them public, or create a `kubernetes.io/dockerconfigjson` Secret (read:packages token) and set `imagePullSecrets` in the Helm values.                                                                                        |
-| EKS add-ons: External Secrets Operator (>= 0.16, API `external-secrets.io/v1`), an ingress controller (only if `ingress.enabled`) | Human                       | Installed in the cluster after Terraform.                                                                                                                                                                                                                                 |
-| ClusterSecretStore `aws-secrets-manager`                                                                                          | Human                       | Backed by AWS Secrets Manager with IRSA for ESO. The name must match `externalSecrets.storeName`.                                                                                                                                                                         |
+| Item                                                                                                                              | Who                       | Notes                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AWS account for staging                                                                                                           | Human (TL)                | Separate from production.                                                                                                                                                                                                                                                 |
+| Region (EU, GDPR)                                                                                                                 | TL decision               | Variable `region`. No default.                                                                                                                                                                                                                                            |
+| Audit Object Lock retention, in days                                                                                              | TL decision (ADR-900 #81) | Variable `audit_object_lock_retention_days`. Default **2190 (6 years)**, Spanish Commercial Code art. 30. COMPLIANCE mode: cannot be shortened after the first write.                                                                                                     |
+| Public API CIDRs for EKS                                                                                                          | Human                     | Variable `eks_public_access_cidrs`. Must not include `0.0.0.0/0`.                                                                                                                                                                                                         |
+| Terraform remote state (S3 bucket + lock table)                                                                                   | Human                     | Created outside this repo. Then uncomment `backend.tf`.                                                                                                                                                                                                                   |
+| GitHub OIDC identity provider + deploy role                                                                                       | Human                     | Trust only `repo:guluc3m/apex-efn:ref:refs/heads/main` (and the `staging` environment). Permissions: ECR not needed; GHCR is used. Needs `eks:DescribeCluster` for `update-kubeconfig`. Its ARN goes in `deploy_role_arn` and in the repo variable `AWS_DEPLOY_ROLE_ARN`. |
+| GHCR packages                                                                                                                     | Human                     | Packages are private by default. Either make them public, or create a `kubernetes.io/dockerconfigjson` Secret (read:packages token) and set `imagePullSecrets` in the Helm values.                                                                                        |
+| EKS add-ons: External Secrets Operator (>= 0.16, API `external-secrets.io/v1`), an ingress controller (only if `ingress.enabled`) | Human                     | Installed in the cluster after Terraform.                                                                                                                                                                                                                                 |
+| ClusterSecretStore `aws-secrets-manager`                                                                                          | Human                     | Backed by AWS Secrets Manager with IRSA for ESO. The name must match `externalSecrets.storeName`.                                                                                                                                                                         |
 
 ## 2. Terraform variables that must be set
 
 `infra/terraform/environments/staging/terraform.tfvars` (gitignored; copy from `terraform.tfvars.example`):
 
 - `region`
-- `audit_object_lock_retention_days` (TL decision)
 - `eks_public_access_cidrs`
 - `deploy_role_arn` (once the GitHub OIDC role exists; enables the CD access entry)
+
+`audit_object_lock_retention_days` no longer needs to be set: it defaults to **2190 (6 years)**, ADR-900 #81.
+Only override it to lengthen the retention — COMPLIANCE retention cannot be shortened once objects are written.
 
 Placeholders with defaults, to review before applying: `vpc_cidr`, instance types and sizes, node counts,
 `rds_instance_class`, `redis_node_type`, `eks_cluster_version`, `kubernetes_namespace`, `helm_release_name`.
@@ -72,8 +74,9 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
 ## 4. How CD works (`.github/workflows/cd.yml`)
 
 - Trigger: push to `main`, or manual `workflow_dispatch`.
-- `images`: builds `orchestrator` (context `apps/orchestrator`), `web` and `browser-worker` (context = repo root)
-  and pushes them to `ghcr.io/guluc3m/apex-efn/<app>` with tags `sha-<7 chars>` and `main`, plus provenance and SBOM.
+- `images`: builds `orchestrator` (context `apps`, so `apps/llm-stub` is present as the `[tool.uv.sources]`
+  path source), `web` and `browser-worker` (context = repo root) and pushes them to
+  `ghcr.io/guluc3m/apex-efn/<app>` with tags `sha-<7 chars>` and `main`, plus provenance and SBOM.
 - `prepare`: checks the nine repository variables. If any is missing, the next job is skipped and a notice says which.
 - `deploy-staging`: OIDC to AWS (no stored keys), `aws eks update-kubeconfig`, then
   `helm upgrade --install --atomic --timeout 10m`. `--atomic` rolls back automatically if the rollout fails.
@@ -91,20 +94,29 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
   objects, or Secrets Manager values. Check the migration state before rolling back an image that depends on a
   newer schema.
 
-## 6. Checks run on this change (no cluster, no AWS account)
+## 6. Checks run on this change
 
-- `helm lint`, `helm template` (defaults, staging, GPU workload enabled), kubeconform `-strict` against Kubernetes schemas.
-- `terraform fmt -check`, `terraform validate`, tflint with the AWS ruleset. `terraform plan` refuses to run until
-  the required variables are set.
-- actionlint with shellcheck on the workflows; hadolint on the three Dockerfiles.
+- Images built and run locally: `apex/orchestrator:dev` (boots, `GET /health` → 200, prompts present),
+  `apex/web:dev` (builds, but `next start` is **blocked** on DEV-6 `output: 'standalone'` — see section 7),
+  `apex/browser-worker:dev` (starts and stays up against Redis/Vault).
+- `helm lint`, `helm template` (defaults, staging, GPU workload enabled, ingress + HPA), kubeconform `-strict`
+  against Kubernetes 1.31 schemas.
+- `terraform fmt -check`, `terraform init -backend=false` + `validate` in `environments/staging`, `tflint` (AWS
+  ruleset). `terraform plan` still refuses to run until the required variables (`region`, `eks_public_access_cidrs`)
+  are set.
+- `actionlint` on `.github/workflows/*.yml`.
 
-Nothing was built, pushed, applied or deployed by the author of this change.
+Nothing was pushed, applied or deployed: there is no AWS account, GHCR package set or EKS cluster yet.
 
 ## 7. Not done yet (follow-ups)
 
-- **Next.js standalone output.** `apps/web/next.config.ts` has no `output: 'standalone'`. The image keeps the
-  pruned `pnpm deploy` node_modules and runs `next start`. Adding `output: 'standalone'` (DEV-6) would make the image
-  smaller. That is a recommendation for the web owner, not a change made here.
+- **Web image is blocked on DEV-6 (`output: 'standalone'`).** `next start` fails at startup: `pnpm deploy --prod`
+  strips TypeScript (a devDependency), but Next.js 15 re-loads `apps/web/next.config.ts` (a `.ts` config) at
+  `next start` time. It logs `Failed to load next.config.ts` and tries to auto-install TypeScript via `yarn add`,
+  which then fails on the `@apex/crypto-client` workspace package. The fix is the one-line DEV-6 change
+  `output: 'standalone'` in `apps/web/next.config.ts`, plus a matching Dockerfile change (run
+  `node .next/standalone/server.js` and copy `.next/static` + `public`). Until that lands, the web image does not
+  serve. Not fixed here because `next.config.ts` is DEV-6-owned.
 - **Chromium sandbox.** The browser worker runs as non-root in a read-only root filesystem. Chromium's own sandbox
   needs user namespaces, which may not be available in this pod. The app (D5-02) must choose between `--no-sandbox` with
   documented risk, or a sandbox-capable setup. This is not decided.
@@ -112,8 +124,14 @@ Nothing was built, pushed, applied or deployed by the author of this change.
 - **Browser worker health.** No HTTP endpoint yet, so no probes. Add probes when the internal API lands (D5-01).
 - **LLM workload.** Disabled by default. The image, resources and read-only root filesystem (with `HOME`, `XDG_CACHE_HOME`,
   `HF_HOME` in `/tmp`) are untested on a GPU node. Validate before enabling. Model choice is a TL/ADR decision.
-- **Orchestrator prompts.** `apps/orchestrator/prompts/` is not in the wheel (hatch packages only `src/apex`). If the
-  agents load prompts from disk, the image must copy them (DEV-4).
+- **Orchestrator config defaults.** The image boots and serves `/health`, but the wired routes answer 501 because
+  `config/defaults/tenant-config.v1.json` is not in the image (the orchestrator is built from `apps/`, and the file
+  lives at the repo root; `apex.tenant_config.defaults.DEFAULT_PATH` resolves it relative to the installed package).
+  Prompts **are** included (`/opt/venv/lib/python3.12/prompts`). To serve real requests, either build the
+  orchestrator from the repo root and copy `config/defaults`, or make `DEFAULT_PATH`/`PROMPTS_DIR` env-overridable
+  (DEV-4). This is a follow-up, not part of D1-09.
+- **`llm-stub` and `mock-marketplace` images.** Dev-only services, not part of the staging chart. Their Dockerfiles
+  land in D4-02 and D5-04; add Helm Deployments/values later if they are ever run in staging.
 - **Environment protection.** The deploy job uses `environment: staging`. Add required reviewers in GitHub once wanted.
 - **Production environment, RDS migrations job, backups and restore drills, DR region, cost alarms.** Not in scope.
 - **Pod `automountServiceAccountToken`** is not disabled on the app pods. Low risk, but worth tightening.
