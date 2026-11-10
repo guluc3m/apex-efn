@@ -8,6 +8,9 @@ services:
   # =============================================================================
   # PostgreSQL 16 + pgvector (one server, one database per service)
   # =============================================================================
+  # The application login role (member of apex_app) is NOT created here: passwords must never live in
+  # a migration. infra/postgres/bootstrap-app-role.sh creates it after the RLS migration, and
+  # `pnpm dev:reset` runs it before starting the app services. See docs/runbooks/local-dev.md.
   postgres:
     image: pgvector/pgvector:0.8.7-pg16-bookworm
     container_name: apex-postgres
@@ -333,7 +336,13 @@ services:
       dockerfile: apps/orchestrator/Dockerfile
     container_name: apex-orchestrator
     environment:
-      DATABASE_URL: postgresql://apex:apex@postgres:5432/apex
+      # Runtime DSN: apex_app_login is a member of apex_app, so row-level security applies (D2-04).
+      # SQLAlchemy's async engine needs the +asyncpg driver: a plain postgresql:// URL makes
+      # create_async_engine() try the sync psycopg2 dialect and fail at the first query.
+      DATABASE_URL: postgresql+asyncpg://apex_app_login:${APEX_APP_DB_PASSWORD:-apex_app_dev}@postgres:5432/apex
+      # DEV ONLY: migrations, seed and load_defaults use this owner DSN (dev-reset), and the future
+      # LangGraph checkpointer needs it for setup() (D4-06 follow-up). Not set in the Helm chart.
+      MIGRATE_DATABASE_URL: postgresql://apex:apex@postgres:5432/apex
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
       AUTH_ISSUER_URL: http://localhost:8080/realms/apex
@@ -354,6 +363,10 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: apex-web
     environment:
+      # Deliberately still the owner DSN. The web Prisma client does not set app.tenant_id per
+      # transaction yet (DEV-2/6 tenant extension), so connecting as apex_app_login would return zero
+      # tenant rows. The web runtime does not query the database today; switch this in the same change
+      # that lands the Prisma tenant extension (issue #221 follow-up).
       DATABASE_URL: postgresql://apex:apex@postgres:5432/apex?schema=public
       REDIS_URL: redis://redis:6379
       ORCHESTRATOR_URL: http://orchestrator:8000

@@ -225,4 +225,9 @@ for `tenant-a` under a unique account name. Both write only to the dev mount. Do
 - Vault tokens and `VAULT_TOKEN` values (the dev root token is a public placeholder, but the rule applies anyway).
 - age private keys (`AGE-SECRET-KEY-1...`), Transit private material (impossible by design), and any decrypted sops output.
 - Marketplace credentials and session state (cookies, storage state).
+- Database credentials: `APEX_APP_DB_PASSWORD`, `MIGRATE_DATABASE_URL`, `appDatabaseUrl`, `appPassword`
+  and `migrateDatabaseUrl`. The app DSN is a member of `apex_app` (subject to RLS); the migrator DSN is
+  the schema owner and must never be mounted into a runtime pod or printed by the migration Job
+  (`infra/postgres/bootstrap-app-role.sh` reads the password from the environment and never echoes it).
+  The dev password `apex_app_dev` is a public placeholder for local use only.
 - Financial values from the CSV import (spec §3.1.1), which are not secrets but follow the same redaction rules.
