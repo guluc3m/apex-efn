@@ -21,7 +21,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from apex.common.errors import Problem
+from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
 from apex.contracts.generated.models import Negotiation, NegotiationControlRequest
 from apex.negotiation.api import NegotiationControlService, build_default_control, to_contract

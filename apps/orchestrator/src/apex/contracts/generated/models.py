@@ -1643,6 +1643,18 @@ class Negotiation(BaseModel):
             description="Draft waiting for a human. Present when `state` is `awaiting_approval`."
         ),
     ] = None
+    mission_id: Annotated[
+        str | None,
+        Field(
+            description="Mission that opened this negotiation. Lets the orchestrator route new messages and\nstate changes onto that mission's SSE stream instead of polling."
+        ),
+    ] = None
+    trace_id: Annotated[
+        str | None,
+        Field(
+            description="Trace identifier of the request that opened the negotiation, propagated from the mission."
+        ),
+    ] = None
 
 
 class NegotiationMessagePage(BaseModel):

@@ -1926,6 +1926,14 @@ components:
           - {$ref: '#/components/schemas/NegotiationDraft'}
           - {type: 'null'}
           description: Draft waiting for a human. Present when `state` is `awaiting_approval`.
+        mission_id:
+          type: [string, 'null']
+          description: 'Mission that opened this negotiation. Lets the orchestrator route new messages and
+
+            state changes onto that mission''s SSE stream instead of polling.'
+        trace_id:
+          type: [string, 'null']
+          description: Trace identifier of the request that opened the negotiation, propagated from the mission.
     NegotiationDraft:
       type: object
       description: 'Message the agent wrote but did not send: Phase 1 sends nothing without a human approval

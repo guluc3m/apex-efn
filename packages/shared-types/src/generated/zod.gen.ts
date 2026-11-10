@@ -1172,6 +1172,8 @@ export const zNegotiation = z.object({
   max_rounds: z.number().int().nullable(),
   guardrail_hits: z.array(zGuardrailHit),
   pending_draft: zNegotiationDraft.nullish(),
+  mission_id: z.string().nullish(),
+  trace_id: z.string().nullish(),
 })
 
 export type negotiationZodType = z.infer<typeof zNegotiation>

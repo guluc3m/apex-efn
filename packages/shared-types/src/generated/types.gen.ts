@@ -812,6 +812,15 @@ export type Negotiation = {
    * Draft waiting for a human. Present when `state` is `awaiting_approval`.
    */
   pending_draft?: NegotiationDraft | null
+  /**
+   * Mission that opened this negotiation. Lets the orchestrator route new messages and
+   * state changes onto that mission's SSE stream instead of polling.
+   */
+  mission_id?: string | null
+  /**
+   * Trace identifier of the request that opened the negotiation, propagated from the mission.
+   */
+  trace_id?: string | null
 }
 
 /**
