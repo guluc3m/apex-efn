@@ -1,78 +1,87 @@
-import type { RawSellerSignals } from '@apex/shared-types/seller'
+import type { SellerSignalSnapshot } from '@apex/shared-types/contracts'
+import { loadVectorFiles } from '@apex/test-vectors'
+import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 
-import { SellerConfidenceEngine } from './engine.js'
+import { computeSellerConfidence, RAW_SIGNALS, trustConfigFrom } from './engine.js'
 
-const NOW = '2026-01-01T00:00:00.000Z'
+// Properties of the D3-06 mirror. Known answers live in packages/test-vectors/trust (vectors.test.ts).
+const raw = loadVectorFiles('trust').find((f) => f.engine === 'trust.compute')!.vectors[0]!
+  .config as {
+  config_version: string
+} & Record<string, unknown>
+const { config_version, ...seller } = raw
+const cfg = trustConfigFrom(seller, config_version)
+const NOW = '2026-11-10T00:00:00Z'
 
-const META = {
-  capturedAt: '2026-01-01T00:00:00.000Z',
-  platform: 'test',
-  platformSellerId: 's1',
-}
+const share = fc.option(fc.double({ min: 0, max: 1, noNaN: true }), { nil: null })
+const count = fc.option(fc.integer({ min: 0, max: 1_000_000 }), { nil: null })
+const flag = fc.option(fc.boolean(), { nil: null })
+const snapshots = fc.record({
+  account_age_days: count,
+  months_active_last_12: fc.option(fc.integer({ min: 0, max: 12 }), { nil: null }),
+  lifetime_transactions: count,
+  transactions_12m: count,
+  repeat_buyer_share: share,
+  published_products_count: count,
+  catalog_churn_30d: share,
+  spec_completeness_avg: share,
+  reviews_total: count,
+  reviews_12m: count,
+  rating_avg: fc.option(fc.double({ min: 1, max: 5, noNaN: true }), { nil: null }),
+  rating_count: count,
+  verified_review_share: share,
+  response_rate: share,
+  identity_verified: flag,
+  trade_assurance: flag,
+  escrow_available: flag,
+  dispute_rate: share,
+  refund_rate: share,
+})
+const snap = (f: Record<string, unknown>): SellerSignalSnapshot => ({
+  id: 's',
+  seller_id: 'x',
+  data_completeness: 0,
+  captured_at: NOW,
+  ...f,
+})
 
-const STRONG: RawSellerSignals = {
-  ...META,
-  accountAgeDays: 1500,
-  monthsActiveLast12: 12,
-  lifetimeTransactions: 20000,
-  publishedProductsCount: 2000,
-  reviewsTotal: 1000,
-  reviews12m: 120,
-  ratingAvg: 4.7,
-  ratingCount: 1000,
-  verifiedReviewShare: 0.9,
-  identityVerified: true,
-  tradeAssurance: true,
-  escrowAvailable: true,
-  disputeRate: 0,
-  refundRate: 0,
-}
-
-const engine = new SellerConfidenceEngine()
-
-describe('SellerConfidenceEngine', () => {
-  it('is deterministic and carries the model version', () => {
-    const first = engine.compute('s1', STRONG, 'snap', NOW)
-    expect(engine.compute('s1', STRONG, 'snap', NOW)).toEqual(first)
-    expect(first.computedAt).toBe(NOW)
-    expect(first.modelVersion).toBe('1.0.0')
-  })
-
-  it('rates a strong seller as high', () => {
-    expect(engine.compute('s1', STRONG, 'snap', NOW).band).toBe('high')
-  })
-
-  it('returns insufficient_data below the minimum of signals', () => {
-    const result = engine.compute('s1', { ...META, accountAgeDays: 100 }, 'snap', NOW)
-    expect(result.band).toBe('insufficient_data')
-    expect(result.score).toBe(0)
-  })
-
-  it('caps the band to low when reviews look manipulated', () => {
-    const result = engine.compute('s1', { ...STRONG, verifiedReviewShare: 0.05 }, 'snap', NOW)
-    expect(result.band).toBe('low')
-    expect(result.flags.map((f) => f.type)).toContain('low_verified_share')
-  })
-
-  it('penalises disputes and refunds', () => {
-    const clean = engine.compute('s1', STRONG, 'snap', NOW)
-    const risky = engine.compute(
-      's1',
-      { ...STRONG, disputeRate: 0.2, refundRate: 0.3 },
-      'snap',
-      NOW
+describe('computeSellerConfidence', () => {
+  it('keeps score, band and flags consistent', () => {
+    fc.assert(
+      fc.property(snapshots, (f) => {
+        const r = computeSellerConfidence(snap(f), cfg, NOW)
+        const present = RAW_SIGNALS.filter((n) => (f as Record<string, unknown>)[n] != null).length
+        if (present < cfg.minSignals) return r.band === 'insufficient_data' && r.score === null
+        if (r.score === null || r.score < 0 || r.score > 100) return false
+        if (Object.values(r.signals_normalized).some((v) => v < 0 || v > 1)) return false
+        if (r.flags.length && (r.band === 'high' || r.band === 'medium')) return false
+        return r.score >= cfg.bandLow || r.band === 'untrusted'
+      })
     )
-    expect(risky.score).toBeLessThan(clean.score)
-    expect(risky.penalties).toHaveLength(2)
   })
 
-  it('rejects weights that do not sum to 1', () => {
-    expect(
-      () =>
-        new SellerConfidenceEngine({
-          weights: { age: 0.5, sales: 0.5, catalog: 0.5, reviews: 0, institutional: 0 },
-        })
-    ).toThrow(/sum to 1/)
+  it('never lowers the score for an institutional guarantee', () => {
+    fc.assert(
+      fc.property(
+        snapshots,
+        fc.constantFrom('identity_verified', 'trade_assurance', 'escrow_available'),
+        (f, k) => {
+          const without = computeSellerConfidence(snap({ ...f, [k]: false }), cfg, NOW)
+          const withIt = computeSellerConfidence(snap({ ...f, [k]: true }), cfg, NOW)
+          return without.score === null || (withIt.score ?? -1) >= without.score
+        }
+      )
+    )
+  })
+
+  it('is deterministic', () => {
+    fc.assert(
+      fc.property(snapshots, (f) => {
+        expect(computeSellerConfidence(snap(f), cfg, NOW)).toEqual(
+          computeSellerConfidence(snap(f), cfg, NOW)
+        )
+      })
+    )
   })
 })

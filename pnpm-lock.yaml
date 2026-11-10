@@ -369,6 +369,9 @@ importers:
       '@apex/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
+      '@apex/test-vectors':
+        specifier: workspace:*
+        version: link:../test-vectors
       '@apex/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
+from datetime import date, datetime
+from statistics import NormalDist
 from typing import Any
 
 import pytest
 
-from apex.contracts.generated.models import FxRate
+from apex.contracts.generated.models import FxRate, SellerSignalSnapshot
 from apex.domain.fx import FxConfig, convert
 from apex.domain.money import Money
+from apex.domain.trust import Review, TrustConfig, compute
 from tests.domain.vectors import ROOT, cases, domain_files, load_file, mismatch
 
 
@@ -40,6 +42,23 @@ def _convert(data: dict[str, Any], config: Any) -> dict[str, Any]:
     return result.model_dump(mode="json")
 
 
+def _trust(data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+    seller = {k: v for k, v in config.items() if k != "config_version"}
+    reviews = data.get("reviews")
+    result = compute(
+        SellerSignalSnapshot.model_validate(data["snapshot"]),
+        TrustConfig.from_mapping(seller, config["config_version"]),
+        now=datetime.fromisoformat(data["now"]),
+        reviews=None
+        if reviews is None
+        else [
+            Review(r["rating"], date.fromisoformat(r["date"]), r["verified"], r["text"])
+            for r in reviews
+        ],
+    )
+    return result.model_dump(mode="json")
+
+
 # Engine ids of packages/test-vectors/money (ADR-301). packages/money/src/vectors.test.ts runs the same files.
 ENGINES: dict[str, Callable[[Any, Any], Any]] = {
     "money.new": lambda d, _c: _out(_money(d)),
@@ -50,10 +69,12 @@ ENGINES: dict[str, Callable[[Any, Any], Any]] = {
     "money.divide": lambda d, _c: _money(d).divide(d["divisor"]).amount_minor,
     "money.allocate": lambda d, _c: [m.amount_minor for m in _money(d).allocate(d["ratios"])],
     "fx.convert": _convert,
+    "trust.compute": _trust,
+    "trust.normal_inv_cdf": lambda d, _c: NormalDist().inv_cdf(d["p"]),
 }
 
-_money_cases, _fx_cases = cases("money"), cases("fx")
-VECTORS, ERRORS = _money_cases[0] + _fx_cases[0], _money_cases[1] + _fx_cases[1]
+_all = [cases(folder) for folder in ("money", "fx", "trust")]
+VECTORS, ERRORS = [v for c in _all for v in c[0]], [v for c in _all for v in c[1]]
 
 
 @pytest.mark.parametrize(("file", "vector"), VECTORS)

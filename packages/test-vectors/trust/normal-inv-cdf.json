@@ -1,0 +1,93 @@
+{
+  "engine": "trust.normal_inv_cdf",
+  "description": "Inverse standard normal CDF (Wichura AS241, as CPython statistics.NormalDist.inv_cdf). Gives the Wilson z for seller.wilson_confidence (D3-06).",
+  "source": "CPython statistics.NormalDist().inv_cdf",
+  "tolerance": 1e-12,
+  "vectors": [
+    {
+      "name": "p_0_5",
+      "input": {
+        "p": 0.5
+      },
+      "expected": 0.0
+    },
+    {
+      "name": "p_0_6",
+      "input": {
+        "p": 0.6
+      },
+      "expected": 0.2533471031357998
+    },
+    {
+      "name": "p_0_8",
+      "input": {
+        "p": 0.8
+      },
+      "expected": 0.8416212335729144
+    },
+    {
+      "name": "p_0_9",
+      "input": {
+        "p": 0.9
+      },
+      "expected": 1.2815515655446008
+    },
+    {
+      "name": "p_0_925",
+      "input": {
+        "p": 0.925
+      },
+      "expected": 1.439531470938456
+    },
+    {
+      "name": "p_0_95",
+      "input": {
+        "p": 0.95
+      },
+      "expected": 1.6448536269514715
+    },
+    {
+      "name": "p_0_975",
+      "input": {
+        "p": 0.975
+      },
+      "expected": 1.9599639845400536
+    },
+    {
+      "name": "p_0_995",
+      "input": {
+        "p": 0.995
+      },
+      "expected": 2.5758293035489
+    },
+    {
+      "name": "p_0_9995",
+      "input": {
+        "p": 0.9995
+      },
+      "expected": 3.2905267314919255
+    },
+    {
+      "name": "p_0_05",
+      "input": {
+        "p": 0.05
+      },
+      "expected": -1.6448536269514726
+    },
+    {
+      "name": "p_0_0001",
+      "input": {
+        "p": 0.0001
+      },
+      "expected": -3.71901648545568
+    },
+    {
+      "name": "p_far_tail",
+      "input": {
+        "p": 1e-12
+      },
+      "expected": -7.034483825301132
+    }
+  ],
+  "errors": []
+}
