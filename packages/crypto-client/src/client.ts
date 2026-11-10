@@ -38,6 +38,11 @@ export class SigningClient {
   private keyPair: CryptoKeyPair | null = null
   private keyId: string | null = null
 
+  /** Server id of the loaded or persisted key, or null when none is loaded. */
+  get loadedKeyId(): string | null {
+    return this.keyId
+  }
+
   static async isSupported(): Promise<boolean> {
     try {
       await crypto.subtle.generateKey(ALGORITHM, false, ['sign', 'verify'])

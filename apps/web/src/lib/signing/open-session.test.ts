@@ -12,7 +12,7 @@ function deps(over: Partial<OpenSessionDeps> & { loaded?: string | null; listed?
   const { loaded = null, listed = [], ...rest } = over
   const keys = {
     load: vi.fn(() => Promise.resolve(loaded !== null)),
-    loadedKeyId: vi.fn(() => Promise.resolve(loaded ?? '')),
+    loadedKeyId: loaded,
     generateKey: vi.fn(() => Promise.resolve('PUB')),
     persist: vi.fn(() => Promise.resolve()),
   }

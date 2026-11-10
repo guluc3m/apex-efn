@@ -4,12 +4,13 @@ import { SigningSessionIndicator } from '@apex/ui'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
+import { openSigningSessionFor } from '@/lib/signing/connect'
 import { signingView } from '@/lib/signing/countdown'
 import { installStepUpOn428, startStepUp } from '@/lib/signing/step-up'
 import { useSigningSession } from '@/stores/signing-session'
 
 /** Signer shown is the session user id until D1-05 exposes a display name. */
-export function ConnectedSigningIndicator() {
+export function ConnectedSigningIndicator({ userId }: { userId?: string }) {
   const t = useTranslations('shell')
   const { session, offsetMs } = useSigningSession()
   const [local, setLocal] = useState<number | null>(null)
@@ -28,6 +29,13 @@ export function ConnectedSigningIndicator() {
   const dead = view === 'read_only' && session?.status !== 'active'
   const expiresAt = session ? (dead ? new Date(0).toISOString() : session.expires_at) : undefined
 
+  // Strong authentication first (Keycloak step-up); the window opens with the fresh token. Without a
+  // known user (D1-05 web not merged) only the step-up runs and fails closed.
+  const reauth = async () => {
+    if (!(await startStepUp()) || !userId) return
+    await openSigningSessionFor(userId)
+  }
+
   return (
     <SigningSessionIndicator
       expiresAt={expiresAt}
@@ -37,7 +45,7 @@ export function ConnectedSigningIndicator() {
       signaturesLabel={session ? t('signing.left', { count: session.remaining_decisions }) : undefined}
       action={{ href: '#' }}
       renderLink={({ className, children }) => (
-        <button type="button" className={className} onClick={() => void startStepUp()}>
+        <button type="button" className={className} onClick={() => void reauth().catch(console.error)}>
           {children}
         </button>
       )}

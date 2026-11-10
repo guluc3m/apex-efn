@@ -7,8 +7,7 @@ export interface KeyStore {
   load(userId: string): Promise<boolean>
   generateKey(): Promise<string>
   persist(userId: string, keyId: string): Promise<void>
-  /** Server id of the loaded key. `SigningClient` has no getter yet; wiring reads it from `sign()`. */
-  loadedKeyId(): Promise<string>
+  readonly loadedKeyId: string | null
 }
 
 export interface OpenSessionDeps {
@@ -38,8 +37,8 @@ export async function openSigningSession(userId: string, d: OpenSessionDeps): Pr
   const registered = new Set((await d.listKeys()).items.map((k) => k.id))
   let keyId: string | undefined
   if (await d.keys.load(userId)) {
-    const loaded = await d.keys.loadedKeyId()
-    if (registered.has(loaded)) keyId = loaded
+    const loaded = d.keys.loadedKeyId
+    if (loaded && registered.has(loaded)) keyId = loaded
   }
   if (!keyId) {
     const key = await d.registerKey({ public_key: await d.keys.generateKey(), alg: 'Ed25519' })
