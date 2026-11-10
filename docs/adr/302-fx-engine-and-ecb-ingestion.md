@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (D3-03, needs TL approval). The source (ECB reference rates) was approved in ADR-900 Q6.
+Accepted (D3-03, TL approved on PR #274). The source (ECB reference rates) was approved in ADR-900 Q6.
 
 ## Context
 
