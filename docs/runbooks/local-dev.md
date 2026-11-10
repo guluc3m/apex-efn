@@ -54,10 +54,27 @@ docker compose --profile apps up -d --build
 | Loki                              | `http://localhost:3100`                          | `grafana/loki:3.6.20`                              | no auth. Receives logs via OTLP at `/otlp`.                                                                                                                          |
 | Tempo                             | `http://localhost:3200`                          | `grafana/tempo:2.10.10`                            | no auth. Receives traces from the collector.                                                                                                                         |
 | OTel Collector                    | `localhost:4317` (gRPC), `localhost:4318` (HTTP) | `otel/opentelemetry-collector-contrib:0.165.0`     | apps send OTLP here (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`)                                                                                            |
-| LLM stub (Mockoon)                | `http://localhost:8001/v1`                       | `mockoon/cli:9.10.0`                               | no auth. **Temporary:** replaced by `apps/llm-stub` (D4-02).                                                                                                         |
+| LLM stub (OpenAI-compatible)      | `http://localhost:8001/v1`                       | built from `apps/llm-stub` (`apex/llm-stub:dev`)   | no auth. Scenarios are baked into the image; select one with `X-Stub-Scenario`. See "LLM stub" below.                                                                |
 | Orchestrator (profile `apps`)     | `http://localhost:8000`                          | built from `apps/orchestrator`                     | not buildable until D1-09                                                                                                                                            |
 | Mock marketplace (profile `apps`) | `http://localhost:8002`                          | built from `apps/mock-marketplace`                 | port is provisional. Not buildable until D5-04.                                                                                                                      |
 | Web (profile `apps`)              | no host port                                     | built from `apps/web`                              | run `pnpm dev` on the host, which uses `http://localhost:3000`                                                                                                       |
+
+### LLM stub
+
+The stub is built from source (`apps/llm-stub`, image `apex/llm-stub:dev`); Mockoon and the
+`infra/mocks/openai-stub.json` fixture are gone. It speaks only the OpenAI wire format and needs no network.
+
+- Build or rebuild after changing `src/` or `scenarios/` (both are copied into the image):
+  `docker compose build llm-stub`, then `docker compose up -d llm-stub`.
+- Health: `curl -m 2 http://localhost:8001/health` → `{"status":"ok"}`. `docker compose ps llm-stub`
+  shows the container as healthy.
+- Scenario selection: send `X-Stub-Scenario: <name>` (for example `no-json-schema`, `flaky-5xx`,
+  `always-malformed`). Without the header the stub matches by model/role/prompt hash and falls back to
+  `default`. The names and their behaviour are listed in `apps/llm-stub/README.md`, and the loaded set is
+  visible at `GET http://localhost:8001/_stub/scenarios`.
+- Gateway config: `LLM_GATEWAY_URL=http://localhost:8001/v1` from the host (already in `.env.example`),
+  or `http://llm-stub:8001/v1` from another compose service.
+- The container is non-root (UID 10001) and the same image is what the `llm-stub` CI job tests.
 
 Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on first login):
 
@@ -150,6 +167,13 @@ Verified on the authoring machine (no Docker daemon):
   trace, log and metric sent to the collector arrive in Tempo (trace found by ID), Loki (LogQL query) and the
   collector's Prometheus exporter.
 - Every pinned image tag exists in its registry (anonymous manifest lookup), except the MinIO images (section 6).
+
+Verified separately, on a machine with a Docker daemon, while wiring the LLM stub (D1-03):
+
+- `docker build -t apex/llm-stub:dev apps/llm-stub` succeeds from the lockfile with uv 0.13.7.
+- The container runs as UID/GID 10001, reports `healthy`, answers `GET /health` with
+  `{"status":"ok"}`, and returns scenario content from `POST /v1/chat/completions`.
+- `docker compose up -d --wait llm-stub` (on a remapped host port) starts it and reaches healthy.
 
 **Not verified** (needs a machine with Docker):
 
