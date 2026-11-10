@@ -4,10 +4,14 @@
  * recycling) in one place.
  */
 
+import type { SessionSurface } from './sessions.js'
+
 export interface BrowserPage {
   /** Stable id for logs and metrics. Never a URL, a cookie or a credential. */
   readonly id: string
   close(): Promise<void>
+  /** Present when the driver can save and restore cookies and origin storage (D5-02b). */
+  readonly session?: SessionSurface
 }
 
 export interface BrowserHandle {

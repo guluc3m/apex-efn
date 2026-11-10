@@ -17,6 +17,7 @@ import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 import type { BrowserDriver, BrowserHandle, BrowserPage, LaunchOptions } from './driver.js'
+import type { SessionSurface, StorageItem, StoredCookie } from './sessions.js'
 
 export interface PuppeteerDriverOptions {
   headless?: boolean
@@ -66,6 +67,7 @@ export function createPuppeteerDriver(options: PuppeteerDriverOptions = {}): Bro
         ...(options.timeoutMs === undefined ? {} : { timeout: options.timeoutMs }),
       })
       const browserId = `chrome-${randomUUID()}`
+      const context = browser.defaultBrowserContext()
       let pages = 0
       return {
         id: browserId,
@@ -73,11 +75,55 @@ export function createPuppeteerDriver(options: PuppeteerDriverOptions = {}): Bro
           const page = await browser.newPage()
           pages += 1
           const pageId = `${browserId}:page-${pages}`
+          let cdp: Awaited<ReturnType<typeof page.createCDPSession>> | null = null
+          const devtools = async (): Promise<NonNullable<typeof cdp>> => {
+            cdp ??= await page.createCDPSession()
+            return cdp
+          }
+          const session: SessionSurface = {
+            async cookies(): Promise<StoredCookie[]> {
+              const stored = await context.cookies()
+              return stored.map((cookie) => ({
+                name: cookie.name,
+                value: cookie.value,
+                domain: cookie.domain,
+                path: cookie.path,
+                ...(cookie.expires > 0 ? { expires: cookie.expires } : {}),
+                ...(cookie.httpOnly === undefined ? {} : { httpOnly: cookie.httpOnly }),
+                ...(cookie.secure === undefined ? {} : { secure: cookie.secure }),
+                ...(cookie.sameSite === undefined ? {} : { sameSite: cookie.sameSite }),
+              }))
+            },
+            async setCookies(cookies: StoredCookie[]): Promise<void> {
+              if (cookies.length > 0) {
+                await context.setCookie(...cookies)
+              }
+            },
+            async storage(origin: string): Promise<StorageItem[]> {
+              const client = await devtools()
+              const result = (await client.send('DOMStorage.getDOMStorageItems', {
+                storageId: { securityOrigin: origin, isLocalStorage: true },
+              })) as { entries: [string, string][] }
+              return result.entries.map(([name, value]) => ({ name, value }))
+            },
+            async setStorage(origin: string, items: StorageItem[]): Promise<void> {
+              const client = await devtools()
+              const storageId = { securityOrigin: origin, isLocalStorage: true }
+              for (const item of items) {
+                await client.send('DOMStorage.setDOMStorageItem', {
+                  storageId,
+                  key: item.name,
+                  value: item.value,
+                })
+              }
+            },
+          }
           return {
             id: pageId,
-            async close(): Promise<void> {
+            close: async (): Promise<void> => {
               await page.close()
             },
+            session,
           }
         },
         async close(): Promise<void> {

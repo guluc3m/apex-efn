@@ -9,6 +9,7 @@ import { systemClock } from '../clock.js'
 import type { WorkerConfig } from '../config.js'
 
 import { BrowserPool, type PoolEvent } from './pool.js'
+import { StaticProxyResolver, type ProxyResolver } from './proxies.js'
 import { createPuppeteerDriver } from './puppeteer-driver.js'
 
 export type PoolConfig = Pick<
@@ -24,7 +25,11 @@ export type PoolConfig = Pick<
 
 export function createBrowserPool(
   config: PoolConfig,
-  onEvent?: (event: PoolEvent) => void
+  onEvent?: (event: PoolEvent) => void,
+  proxy: ProxyResolver = new StaticProxyResolver({
+    residentialUrl: config.proxyResidentialUrl,
+    datacenterUrl: config.proxyDatacenterUrl,
+  })
 ): BrowserPool {
   return new BrowserPool({
     maxBrowsers: config.browserPoolSize,
@@ -34,9 +39,7 @@ export function createBrowserPool(
     idleTimeoutMs: config.browserIdleTimeoutMs,
     clock: systemClock,
     driver: createPuppeteerDriver(),
-    // Today every account uses the configured proxy family when one is present. Per-account proxies come from
-    // Vault with D5-02b (sessions), where the account is known before the browser is launched.
-    proxyFor: () => config.proxyResidentialUrl ?? config.proxyDatacenterUrl ?? null,
+    proxyFor: (accountId) => proxy.resolve(accountId),
     ...(onEvent === undefined ? {} : { onEvent }),
   })
 }
