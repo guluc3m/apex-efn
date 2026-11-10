@@ -66,7 +66,7 @@ export async function linkExternalSubject(
     })
     return count
   } catch (error) {
-    const reason = error instanceof Error ? error.message : 'unknown error'
+    const reason = error instanceof Error ? error.name : 'unknown error'
     console.error('[auth] could not link the external subject on sign-in:', reason)
     return 0
   }
