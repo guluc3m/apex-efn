@@ -12,7 +12,9 @@ ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
     HUSKY=0 \
     NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate \
+# Install pnpm globally instead of relying on Corepack's per-HOME cache: the migration Job runs with
+# HOME=/tmp and a read-only root filesystem, where Corepack would try to download pnpm at runtime.
+RUN npm install -g pnpm@9.15.0 \
  && pnpm config set store-dir /pnpm/store
 WORKDIR /app
 
@@ -44,6 +46,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 COPY infra/postgres/bootstrap-app-role.sh /usr/local/bin/bootstrap-app-role.sh
 RUN chmod 0755 /usr/local/bin/bootstrap-app-role.sh
+
+# Prisma fetches its schema engine on first use. Fetch it at build time as root so the non-root Job
+# never writes into node_modules, then hand the Prisma packages to the runtime user.
+RUN pnpm --filter @apex/web exec prisma -v \
+ && chown -R 10001:10001 /app/node_modules/.pnpm/@prisma* /app/node_modules/.pnpm/prisma*
 # The pod runs with a read-only root filesystem and an emptyDir at /tmp, so HOME must live there.
 ENV HOME=/tmp
 WORKDIR /app/apps/web

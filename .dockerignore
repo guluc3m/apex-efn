@@ -37,6 +37,8 @@
 # Docs, infra and media that no image needs
 docs
 infra
+# The migration image (issue #221) runs the application-role bootstrap from the repo.
+!infra/postgres/bootstrap-app-role.sh
 compose.yaml
 *.png
 *.jpg
