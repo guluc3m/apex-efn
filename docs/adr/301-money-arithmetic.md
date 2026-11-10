@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (D3-02, needs TL approval)
+Accepted (D3-02, TL approved on PR #271)
 
 ## Context
 
