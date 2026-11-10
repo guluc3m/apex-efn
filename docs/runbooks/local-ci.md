@@ -14,6 +14,7 @@ full CI: the local run now, and the `CI OK` check on GitHub once Actions is enab
 | `workflow-lint`    | `ci/workflow-lint.sh`    | actionlint on `.github/workflows/*.yml`, shellcheck on `.github/scripts/**/*.sh`                                                                        | never skips                                                                     |
 | `typescript`       | `ci/typescript.sh`       | `turbo run build lint typecheck test` (full), then the coverage ratchet for `money`, `scoring`, `crypto-client`                                         | never skips                                                                     |
 | `python`           | `ci/python.sh`           | `ruff check`, `mypy src/`, unit tests with the 80% coverage gate for every target that exists                                                           | never skips (coverage gate per target)                                          |
+| `llm-stub`         | `ci/llm-stub.sh`         | In `apps/llm-stub` (its own uv project): `uv sync --locked --dev`, `ruff check`, `ruff format --check`, `mypy src`, `pytest`                            | never skips                                                                     |
 | `integration`      | `ci/integration.sh`      | Phase A: real Vault (no Docker), `pytest -m vault_integration` and the browser-worker real-Vault test. Phase B: Testcontainers, `pytest -m integration` | Each phase `SKIP`s until its target exists. Phase B needs Docker once it exists |
 | `secret-scan`      | `ci/secret-scan.sh`      | TruffleHog 3.99.8, verified secrets only, on the commits this branch adds                                                                               | never skips                                                                     |
 | `dependency-audit` | `ci/dependency-audit.sh` | `pnpm audit --audit-level=high` and `pip-audit` on the locked Python environment                                                                        | advisory: findings are printed, the job still passes                            |
@@ -41,6 +42,8 @@ A job that needs Docker and finds the target present but no Docker running **fai
   pnpm install --frozen-lockfile
   (cd apps/orchestrator && uv sync --locked --dev)
   ```
+  The `llm-stub` job syncs its own project (`apps/llm-stub`) with `uv sync --locked --dev` inside the job,
+  so it needs no manual step.
 - Network access for the first run: `git fetch origin` (the runner tries it and continues offline), the pinned
   security tools (downloaded once, see below), `pnpm audit`, and `pip-audit`.
 - Docker: **only** for `migration-drift`, `e2e`, and phase B (Testcontainers) of `integration`, and only once their

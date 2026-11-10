@@ -12,13 +12,14 @@ set -uo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR" || exit 1
 
-JOBS=(workflow-lint typescript python integration secret-scan dependency-audit llm-portability contracts-drift migration-drift e2e)
+JOBS=(workflow-lint typescript python llm-stub integration secret-scan dependency-audit llm-portability contracts-drift migration-drift e2e)
 
 describe() {
   case "$1" in
     workflow-lint) echo "actionlint on workflows, shellcheck on scripts" ;;
     typescript) echo "turbo build/lint/typecheck/test (full), coverage ratchet" ;;
     python) echo "ruff, mypy, pytest with coverage gate" ;;
+    llm-stub) echo "apps/llm-stub: ruff, format, mypy, pytest (own uv project)" ;;
     integration) echo "real Vault (pinned dev server, no Docker) + pytest -m integration (needs Docker once tests exist)" ;;
     secret-scan) echo "TruffleHog, verified secrets, pinned version" ;;
     dependency-audit) echo "pnpm audit + pip-audit (advisory)" ;;
