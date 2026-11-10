@@ -26,6 +26,8 @@
       "stop": "עצירה",
       "hint": "Enter לשליחה · Shift + Enter לשורה חדשה",
       "pending": "טרם חובר: השליחה אינה זמינה.",
+      "error": "לא הצלחתי לפרש את הבקשה. נסו שוב.",
+      "needsCountry": "ציינו את מדינת היעד (קוד בן 2 אותיות) כדי לשלוח.",
       "phrases": {
         "interpreting": "מפרש את הבקשה",
         "spec": "מזהה את המפרט",
@@ -35,6 +37,7 @@
       }
     },
     "review": {
+      "country": "מדינת יעד", "countryHint": "ES", "none": "לא צוין", "empty": "לאחר שהעוזר יפרש את הבקשה, יופיע כאן מה שהבין.",
       "title": "בדקו מה הבנו",
       "product": "מוצר",
       "category": "קטגוריה",
@@ -66,10 +69,20 @@
       "reason": "הפעילו קודם תצלום מצב פיננסי"
     },
     "launch": "הפעלת משימה",
-    "launchHint": "היא מחפשת, מסננת מחירים חריגים ומנהלת משא ומתן. דבר לא נרכש בלי חתימתכם."
+    "launchHint": "היא מחפשת, מסננת מחירים חריגים ומנהלת משא ומתן. דבר לא נרכש בלי חתימתכם.",
+    "clarify": "העוזר צריך עוד פרטים לפני ההפעלה:",
+    "launchNeedsRequest": "תארו מה אתם צריכים כדי להפעיל את המשימה.",
+    "launchNeedsClarification": "ענו על השאלות הפתוחות ופרשו שוב.",
+    "launchError": "לא ניתן היה להפעיל את המשימה. נסו שוב.",
+    "launching": "מפעיל את המשימה…"
   },
   "detail": {
-    "meta": "משימה {id} · הופעלה לפני {minutes} דקות",
+    "loading": "טוען את המשימה…",
+    "heading": "משימה {id}",
+    "meta": "{state} · הופעלה ב-{date}",
+    "failed": "המשימה נכשלה: {detail}",
+    "offersPending": "נמצאו {found} הצעות, {negotiated} במשא ומתן ו-{gate} בשער. מטריצת ההצעות טרם חוברה.",
+    "state": { "created": "נוצרה", "planning": "בתכנון", "sourcing": "בחיפוש", "enriching": "בהעשרה", "evaluating": "בהערכה", "negotiating": "במשא ומתן", "awaiting_decision": "ממתינה להחלטתכם", "completed": "הושלמה", "cancelled": "בוטלה", "failed": "נכשלה" },
     "new": "משימה חדשה",
     "compare": "צפייה בהשוואה",
     "pause": "השהיה",
@@ -79,10 +92,10 @@
     "phases": {
       "label": "שלבי המשימה",
       "state": { "done": "הושלם", "running": "בתהליך", "pending": "ממתין" },
-      "search": { "title": "חיפוש", "done": "{n} הצעות ב-{p} פלטפורמות" },
-      "filter": { "title": "אמון ומחיר", "done": "{pass} עברו · {out} סוננו" },
-      "negotiation": { "title": "משא ומתן", "running": "{n} מתוך {total} בתהליך" },
-      "valuation": { "title": "הערכה", "pending": "מתחילה עם סגירת המשא ומתן" }
+      "search": { "title": "חיפוש", "running": "מחפש · {n} הצעות", "done": "נמצאו {n} הצעות", "pending": "ממתין" },
+      "filter": { "title": "אמינות ומחיר", "running": "בודק אמינות ומחיר", "done": "{n} בשער", "pending": "ממתין" },
+      "negotiation": { "title": "משא ומתן", "running": "{n} נוהלו עד כה", "done": "{n} נוהלו", "pending": "ממתין" },
+      "valuation": { "title": "הערכה", "running": "ממתינה להחלטתכם", "done": "המשימה הושלמה", "pending": "מתחילה עם סגירת המשא ומתן" }
     },
     "funnel": {
       "caption": "משפך המשימה: הצעות שהגיעו לכל שלב",
@@ -92,13 +105,22 @@
     "activity": {
       "title": "פעילות",
       "live": "חי",
-      "review": "בדיקה",
-      "working": "בודק את אמינותם של {n} מוכרים…",
-      "reply": "{seller} משיב עם מדרגת כמות.",
-      "draft": "טיוטה עבור {seller} ממתינה לאישורכם.",
-      "discarded": "{seller} נפסל: מחיר לא סביר, {pct}% מתחת לחציון.",
-      "gate": "{seller} הועבר לשער: אמון נמוך ({score}).",
-      "offers": "{platform}: {n} הצעות."
+      "empty": "אין פעילות עדיין.",
+      "reconnecting": "מתחבר מחדש…",
+      "events": {
+        "state_changed": "מצב המשימה השתנה.",
+        "offer_discovered": "נמצאה הצעה חדשה.",
+        "offer_enriched": "ההצעה הועשרה.",
+        "sanity_checked": "המחיר נבדק.",
+        "trust_scored": "אמינות המוכר חושבה.",
+        "financially_checked": "ההתאמה הפיננסית נבדקה.",
+        "gate_opened": "הצעה עברה לשער.",
+        "negotiation_message": "הודעת משא ומתן.",
+        "negotiation_state_changed": "מצב משא ומתן השתנה.",
+        "recommendation_ready": "ההמלצה מוכנה.",
+        "budget_warning": "התראת תקציב למשימה.",
+        "error": "שגיאה במשימה."
+      }
     },
     "offers": {
       "caption": "הצעות המשימה לפי מוכר",

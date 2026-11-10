@@ -1,18 +1,15 @@
-import { Icon, ShiningText } from '@apex/ui'
+import { Icon } from '@apex/ui'
 import { Activity } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-import { AppLink } from '@/components/app-link'
-
 interface Item {
+  id: string
   time: string
   kind: string
-  values: Record<string, string | number>
-  href?: string
 }
 
-// //todo_#156: eventos en vivo por SSE (GET /v1/missions/{id}/events)
-export function MissionActivity({ items, workingOn }: { items: readonly Item[]; workingOn: number }) {
+/** Live events of the mission (SSE `GET /v1/missions/{id}/events`), newest first. */
+export function MissionActivity({ items, live }: { items: readonly Item[]; live: boolean }) {
   const t = useTranslations('missions.detail.activity')
   return (
     <section aria-labelledby="mission-activity">
@@ -21,20 +18,20 @@ export function MissionActivity({ items, workingOn }: { items: readonly Item[]; 
           <Icon icon={Activity} />
           {t('title')}
         </h2>
-        <span className="text-[13px] text-ink-muted">{t('live')}</span>
+        <span className="text-[13px] text-ink-muted">{live ? t('live') : t('reconnecting')}</span>
       </div>
-      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-        {items.map((it, i) => (
-          <li key={i}>
-            <span className="mr-2 font-mono text-[13px] text-ink-muted">{it.time}</span>
-            {t(it.kind, it.values)}{' '}
-            {it.href && <AppLink href={it.href}>{t('review')}</AppLink>}
-          </li>
-        ))}
-        <li>
-          <ShiningText>{t('working', { n: workingOn })}</ShiningText>
-        </li>
-      </ul>
+      {items.length === 0 ? (
+        <p className="text-ink-muted">{t('empty')}</p>
+      ) : (
+        <ul className="m-0 flex list-none flex-col gap-2.5 p-0" aria-live="polite">
+          {items.map((it) => (
+            <li key={it.id}>
+              <span className="mr-2 font-mono text-[13px] text-ink-muted">{it.time}</span>
+              {t(`events.${it.kind}`)}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }
