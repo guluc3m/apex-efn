@@ -1,5 +1,7 @@
 import type {
   AbortNegotiationResponse,
+  ActivateFinancialSnapshotData,
+  ActivateFinancialSnapshotResponse,
   ApproveNegotiationDraftData,
   ApproveNegotiationDraftResponse,
   CreateMissionData,
@@ -86,6 +88,19 @@ export function createOperations(client: ApiClient) {
         signal,
       })
     },
+
+    /** Creates the activation decision (pending signature). It does not activate anything by itself. */
+    activateFinancialSnapshot: (
+      onboardingId: string,
+      body: ActivateFinancialSnapshotData['body'],
+      signal?: AbortSignal,
+    ) =>
+      client.request<ActivateFinancialSnapshotResponse>('/v1/onboarding/{id}/financial-csv/activate', {
+        method: 'POST',
+        path: { id: onboardingId },
+        body,
+        signal,
+      }),
 
     createSourcingRequest: (body: CreateSourcingRequestData['body'], signal?: AbortSignal) =>
       client.request<CreateSourcingRequestResponse>('/v1/sourcing-requests', {

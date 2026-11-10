@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-// Portada mínima. //todo_#148: portada real (resumen de empresa y accesos)
+// Portada mínima: el contrato no tiene endpoint de resumen de empresa.
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   setRequestLocale(locale)

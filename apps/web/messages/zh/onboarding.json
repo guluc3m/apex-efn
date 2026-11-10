@@ -194,7 +194,8 @@
     "resultTitle": "导入结果",
     "result": "已接受 {ok} 行，拒绝 {rejected} 行。",
     "rejection": "第 {row} 行：{message}",
-    "notActivated": "尚未生效：激活快照需要您的签名。"
+    "notActivated": "尚未生效：激活快照需要您的签名。",
+    "viewReport": "查看完整报告"
   },
   "assistant": {
     "title": "设置助手",
