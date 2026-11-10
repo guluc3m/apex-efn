@@ -12,7 +12,7 @@
 | Owner lane                        | DEV-5 (Browser Automation & Negotiation)                                            |
 | Status                            | approved for test use only                                                          |
 | Approved by (compliance sign-off) | N/A (internal, synthetic). Real platforms remain TBD per Q10 in AGENTS.md section 8 |
-| Last reviewed                     | 2026-11-09                                                                          |
+| Last reviewed                     | 2026-11-10                                                                          |
 
 ## 1. Terms of service review
 
@@ -55,6 +55,10 @@ run against the mock, fixtures and the LLM stub. Real platforms need their own c
 
 All data is **synthetic**: sellers, products, reviews, prices and chat personas are fixtures under
 `apps/mock-marketplace/fixtures`. No real company, person or payment data is present.
+
+Both mock platforms are consumed by adapters (D5-05 `mock-a` over its JSON API, D5-06 `mock-b` over its HTML,
+ADR-505). `mock-b` is read with the polite HTTP client: `robots.txt` is honoured (it only disallows
+`/__control/`), requests are spaced, and the adapter never touches the control endpoints.
 
 | Data item                                                                | Source page / endpoint                                      | Purpose                                                       | Retention                                 |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------- |

@@ -8,6 +8,7 @@ import { Redis } from 'ioredis'
 import { fetchTransport, systemSleep } from './adapters/http.js'
 import { AdapterRegistry, type PlatformAdapter } from './adapters/index.js'
 import { createMockAAdapter } from './adapters/mock-a/index.js'
+import { createMockBAdapter } from './adapters/mock-b/index.js'
 import { FsArtifactStore } from './artifacts.js'
 import { ChatService } from './chats/service.js'
 import { RedisChatStore } from './chats/store.js'
@@ -41,6 +42,22 @@ async function main(): Promise<void> {
     adapters.push(
       createMockAAdapter({
         baseUrl: config.mockABaseUrl,
+        transport: fetchTransport,
+        clock: systemClock,
+        sleep: systemSleep,
+        random: Math.random,
+        userAgent: config.adapterUserAgent,
+        minIntervalMs: config.adapterMinIntervalMs,
+        maxRetries: config.adapterMaxRetries,
+        timeoutMs: config.adapterTimeoutMs,
+        metrics: scrapingMetrics,
+      })
+    )
+  }
+  if (config.mockBBaseUrl !== undefined) {
+    adapters.push(
+      createMockBAdapter({
+        baseUrl: config.mockBBaseUrl,
         transport: fetchTransport,
         clock: systemClock,
         sleep: systemSleep,
