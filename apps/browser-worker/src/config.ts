@@ -1,12 +1,60 @@
-/**
- * Browser worker configuration
- */
+import { z } from 'zod'
 
-export const config = {
-  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
-  scrapingConcurrency: parseInt(process.env.SCRAPING_CONCURRENCY ?? '3', 10),
-  negotiationConcurrency: parseInt(process.env.NEGOTIATION_CONCURRENCY ?? '2', 10),
-  proxyUrl: process.env.PROXY_URL,
-  browserPoolSize: parseInt(process.env.BROWSER_POOL_SIZE ?? '5', 10),
-  maxPagesPerBrowser: parseInt(process.env.MAX_PAGES_PER_BROWSER ?? '50', 10),
+const emptyAsUndefined = (value: unknown): unknown => (value === '' ? undefined : value)
+
+const envSchema = z.object({
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  HOST: z.string().min(1).default('0.0.0.0'),
+  PORT: z.coerce.number().int().min(1).max(65535).default(4010),
+  BROWSER_WORKER_TOKEN: z.string().min(32),
+  SCRAPING_CONCURRENCY: z.coerce.number().int().positive().default(3),
+  JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
+  JOB_BACKOFF_MS: z.coerce.number().int().positive().default(2000),
+  IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().positive().default(86400),
+  BROWSER_POOL_SIZE: z.coerce.number().int().positive().default(5),
+  MAX_PAGES_PER_BROWSER: z.coerce.number().int().positive().default(50),
+  PROXY_RESIDENTIAL_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
+  PROXY_DATACENTER_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
+  ARTIFACT_DIR: z.string().min(1).default('./artifacts'),
+})
+
+export interface WorkerConfig {
+  redisUrl: string
+  host: string
+  port: number
+  token: string
+  scrapingConcurrency: number
+  jobAttempts: number
+  jobBackoffMs: number
+  idempotencyTtlSeconds: number
+  browserPoolSize: number
+  maxPagesPerBrowser: number
+  proxyResidentialUrl: string | undefined
+  proxyDatacenterUrl: string | undefined
+  artifactDir: string
+}
+
+/** Throws with the names of the invalid keys only. Values (the token, proxy credentials) never appear in the message. */
+export function loadConfig(env: NodeJS.ProcessEnv): WorkerConfig {
+  const result = envSchema.safeParse(env)
+  if (!result.success) {
+    const keys = [...new Set(result.error.issues.map((issue) => String(issue.path[0] ?? 'env')))]
+    throw new Error(`invalid browser worker configuration: ${keys.join(', ')}`)
+  }
+  const values = result.data
+  return {
+    redisUrl: values.REDIS_URL,
+    host: values.HOST,
+    port: values.PORT,
+    token: values.BROWSER_WORKER_TOKEN,
+    scrapingConcurrency: values.SCRAPING_CONCURRENCY,
+    jobAttempts: values.JOB_ATTEMPTS,
+    jobBackoffMs: values.JOB_BACKOFF_MS,
+    idempotencyTtlSeconds: values.IDEMPOTENCY_TTL_SECONDS,
+    browserPoolSize: values.BROWSER_POOL_SIZE,
+    maxPagesPerBrowser: values.MAX_PAGES_PER_BROWSER,
+    proxyResidentialUrl: values.PROXY_RESIDENTIAL_URL,
+    proxyDatacenterUrl: values.PROXY_DATACENTER_URL,
+    artifactDir: values.ARTIFACT_DIR,
+  }
 }

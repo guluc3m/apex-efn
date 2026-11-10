@@ -1,0 +1,220 @@
+import type {
+  JobAccepted,
+  JobError,
+  JobRequest,
+  JobResult,
+  JobState,
+  JobStatus,
+} from '@apex/shared-types/contracts/browser-worker'
+import { Queue, UnrecoverableError, Worker, type Job } from 'bullmq'
+import type { Redis } from 'ioredis'
+import type { Logger } from 'pino'
+
+import type { AdapterRegistry } from '../adapters/index.js'
+import { sha256Hex } from '../hash.js'
+import { bodyHash, idempotencyConflict } from '../idempotency.js'
+
+import { jobErrorOf, processJob } from './processor.js'
+import type { JobService } from './service.js'
+
+const RETENTION_SECONDS = 7 * 24 * 60 * 60
+const DEFAULT_PRIORITY = 5
+const DEAD_LETTER_QUEUE = 'dead-letter'
+
+export interface QueuedJob {
+  request: JobRequest
+  bodyHash: string
+  lastError?: JobError
+  deadLettered?: boolean
+}
+
+type ScrapeJob = Job<QueuedJob, JobResult>
+type ScrapeQueue = Queue<QueuedJob, JobResult>
+
+export function scrapeQueueName(platform: string): string {
+  return `scrape-${platform}`
+}
+
+function jobIndexKey(jobId: string): string {
+  return `bw:jobs:${jobId}`
+}
+
+export interface BullJobOptions {
+  jobAttempts: number
+  jobBackoffMs: number
+}
+
+/** Production JobService. The job id is the SHA-256 of the Idempotency-Key, so BullMQ itself deduplicates. */
+export class BullJobService implements JobService {
+  private readonly queues = new Map<string, ScrapeQueue>()
+
+  constructor(
+    private readonly registry: AdapterRegistry,
+    private readonly connection: Redis,
+    private readonly options: BullJobOptions
+  ) {}
+
+  async enqueue(request: JobRequest, idempotencyKey: string): Promise<JobAccepted> {
+    const jobId = sha256Hex(idempotencyKey)
+    const hash = bodyHash(request)
+    const existing = await this.find(jobId)
+    if (existing !== undefined) {
+      if (existing.data.bodyHash !== hash) {
+        throw idempotencyConflict()
+      }
+      return {
+        job_id: jobId,
+        status: statusOf(await existing.getState(), existing.data),
+        deduplicated: true,
+      }
+    }
+    this.registry.require(request.platform)
+    const queue = this.queueNamed(scrapeQueueName(request.platform))
+    const job = await queue.add(
+      request.kind,
+      { request, bodyHash: hash },
+      {
+        jobId,
+        priority: request.priority ?? DEFAULT_PRIORITY,
+        attempts: this.options.jobAttempts,
+        backoff: { type: 'exponential', delay: this.options.jobBackoffMs },
+        removeOnComplete: { age: RETENTION_SECONDS },
+        removeOnFail: { age: RETENTION_SECONDS },
+      }
+    )
+    if (job.data.bodyHash !== hash) {
+      throw idempotencyConflict()
+    }
+    await this.connection.set(jobIndexKey(jobId), queue.name, 'EX', RETENTION_SECONDS)
+    return { job_id: jobId, status: 'queued', deduplicated: false }
+  }
+
+  async get(jobId: string): Promise<JobState | null> {
+    const job = await this.find(jobId)
+    if (job === undefined) {
+      return null
+    }
+    const state = await job.getState()
+    if (state === 'unknown') {
+      return null
+    }
+    return toJobState(jobId, job, state)
+  }
+
+  async close(): Promise<void> {
+    await Promise.all([...this.queues.values()].map((queue) => queue.close()))
+  }
+
+  private async find(jobId: string): Promise<ScrapeJob | undefined> {
+    const queueName = await this.connection.get(jobIndexKey(jobId))
+    if (queueName === null) {
+      return undefined
+    }
+    return this.queueNamed(queueName).getJob(jobId)
+  }
+
+  private queueNamed(name: string): ScrapeQueue {
+    let queue = this.queues.get(name)
+    if (queue === undefined) {
+      queue = new Queue<QueuedJob, JobResult>(name, { connection: this.connection })
+      this.queues.set(name, queue)
+    }
+    return queue
+  }
+}
+
+export interface JobWorkers {
+  close(): Promise<void>
+}
+
+/** One BullMQ worker per platform that is enabled at startup. Retries exhausted → copy to the dead-letter queue. */
+export function startJobWorkers(
+  registry: AdapterRegistry,
+  options: { scrapingConcurrency: number },
+  connection: Redis,
+  logger: Logger
+): JobWorkers {
+  const deadLetter = new Queue<QueuedJob, JobResult>(DEAD_LETTER_QUEUE, { connection })
+  const workers = registry
+    .status()
+    .filter((status) => status.enabled)
+    .map(({ platform }) => {
+      const worker = new Worker<QueuedJob, JobResult>(
+        scrapeQueueName(platform),
+        (job) => runJob(job, registry, deadLetter),
+        { connection, concurrency: options.scrapingConcurrency }
+      )
+      worker.on('failed', (job, error) => {
+        logger.warn(
+          { platform, jobId: job?.id, kind: job?.data.request.kind, errorName: error.name },
+          'scraping job attempt failed'
+        )
+      })
+      worker.on('error', (error) => {
+        logger.error({ platform, errorName: error.name }, 'scraping worker error')
+      })
+      return worker
+    })
+  return {
+    async close() {
+      await Promise.all(workers.map((worker) => worker.close()))
+      await deadLetter.close()
+    },
+  }
+}
+
+async function runJob(
+  job: ScrapeJob,
+  registry: AdapterRegistry,
+  deadLetter: ScrapeQueue
+): Promise<JobResult> {
+  try {
+    return await processJob(job.data.request, registry)
+  } catch (error) {
+    const outcome = jobErrorOf(error)
+    const deadLettered = outcome.retryable && job.attemptsStarted >= (job.opts.attempts ?? 1)
+    const data: QueuedJob = { ...job.data, lastError: outcome, deadLettered }
+    await job.updateData(data)
+    if (deadLettered) {
+      await deadLetter.add(job.name, data, { jobId: job.id })
+    }
+    if (!outcome.retryable) {
+      throw new UnrecoverableError(outcome.message)
+    }
+    throw error
+  }
+}
+
+function statusOf(state: string, data: QueuedJob): JobStatus {
+  switch (state) {
+    case 'active':
+      return 'running'
+    case 'completed':
+      return 'succeeded'
+    case 'failed':
+      return data.deadLettered === true ? 'dead_lettered' : 'failed'
+    default:
+      return 'queued'
+  }
+}
+
+function toJobState(jobId: string, job: ScrapeJob, state: string): JobState {
+  const data = job.data
+  const status = statusOf(state, data)
+  const failed = status === 'failed' || status === 'dead_lettered'
+  return {
+    job_id: jobId,
+    kind: data.request.kind,
+    platform: data.request.platform,
+    mission_id: data.request.mission_id,
+    trace_id: data.request.trace_id,
+    status,
+    attempts: job.attemptsStarted,
+    created_at: new Date(job.timestamp).toISOString(),
+    finished_at: job.finishedOn === undefined ? null : new Date(job.finishedOn).toISOString(),
+    result: status === 'succeeded' ? job.returnvalue : null,
+    error: failed
+      ? (data.lastError ?? { code: 'internal', message: 'job failed', retryable: false })
+      : null,
+  }
+}

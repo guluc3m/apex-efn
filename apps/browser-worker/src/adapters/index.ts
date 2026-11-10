@@ -1,93 +1,104 @@
 /**
- * Platform Adapters
- *
- * Each adapter implements the PlatformAdapter interface for a specific platform.
- * Adding a new platform = new adapter + fixtures + tests + compliance doc.
+ * Platform adapters. Each adapter reads one platform and returns RAW data: listed prices, raw seller signals and
+ * raw chat text. Normalisation, FX, confidence and bands belong to the orchestrator (spec 3.4.1).
  */
 
-import type { RawSellerSignals } from '@apex/shared-types/seller'
+import type {
+  ChatRole,
+  PlatformStatus,
+  RawOffer,
+  RawSeller,
+  RawSellerSignals,
+  SkippedListing,
+} from '@apex/shared-types/contracts/browser-worker'
 
-/**
- * Transport type for the adapter
- */
-export type TransportType = 'http' | 'browser'
+import { WorkerError } from '../errors.js'
+import type { FlagProvider } from '../platform/flags.js'
+import { platformFlagName } from '../platform/flags.js'
 
-/**
- * Search result from a platform
- */
-export interface SearchResult {
-  platformOfferId: string
-  productUrl: string
-  title: string
-  unitPriceMinor: number
-  currency: string
-  moq: number
-  sellerId: string
-  sellerName: string
+export type TransportType = PlatformStatus['transport']
+
+export interface SearchInput {
+  query: string
+  quantity: number | null
+  maxResults: number
 }
 
-/**
- * Product details
- */
-export interface ProductDetails {
-  description: string
-  specifications: Record<string, string>
-  certifications: string[]
-  imageUrls: string[]
-  priceTiers: Array<{
-    minQuantity: number
-    maxQuantity: number | null
-    unitPriceMinor: number
-    currency: string
-  }>
-  shipping: {
-    costMinor: number
-    currency: string
-    minDays: number
-    maxDays: number
-  } | null
-  leadTimeDays: number | null
+export interface SearchOutput {
+  offers: RawOffer[]
+  skipped: SkippedListing[]
+  truncated: boolean
 }
 
-/**
- * Platform adapter interface
- */
+export interface ChatOpenInput {
+  accountId: string
+  platformSellerId: string
+  productId: string
+}
+
+export interface ChatMessageRecord {
+  seq: number
+  role: ChatRole
+  text: string
+  at: Date
+}
+
+export interface ChatAdapter {
+  open(input: ChatOpenInput): Promise<{ platformChatId: string }>
+  send(platformChatId: string, text: string): Promise<{ platformSeq: number; at: Date }>
+  read(platformChatId: string, afterSeq: number): Promise<ChatMessageRecord[]>
+  screenshot(platformChatId: string): Promise<Uint8Array>
+}
+
 export interface PlatformAdapter {
   readonly platform: string
   readonly transport: TransportType
+  search(input: SearchInput): Promise<SearchOutput>
+  getProduct(platformOfferId: string): Promise<RawOffer>
+  getSeller(platformSellerId: string): Promise<RawSeller>
+  getSellerSignals(
+    platformSellerId: string,
+    options: { maxReviews: number }
+  ): Promise<RawSellerSignals>
+  chat?: ChatAdapter
+}
 
-  /**
-   * Search for products matching the query
-   */
-  search(query: string, filters?: Record<string, unknown>): Promise<SearchResult[]>
+/**
+ * Looks up adapters by platform id. A disabled platform (flag `platform.<id>.enabled` off) is never returned,
+ * so its adapter is never called.
+ */
+export class AdapterRegistry {
+  private readonly byPlatform = new Map<string, PlatformAdapter>()
 
-  /**
-   * Get detailed product information
-   */
-  getProduct(productUrl: string): Promise<ProductDetails>
+  constructor(
+    adapters: PlatformAdapter[],
+    private readonly flags: FlagProvider
+  ) {
+    for (const adapter of adapters) {
+      platformFlagName(adapter.platform)
+      if (this.byPlatform.has(adapter.platform)) {
+        throw new Error(`duplicate platform adapter: ${adapter.platform}`)
+      }
+      this.byPlatform.set(adapter.platform, adapter)
+    }
+  }
 
-  /**
-   * Get seller information
-   */
-  getSeller(sellerId: string): Promise<{ name: string; country: string | null }>
+  status(): PlatformStatus[] {
+    return [...this.byPlatform.values()].map((adapter) => ({
+      platform: adapter.platform,
+      enabled: this.flags.isPlatformEnabled(adapter.platform),
+      transport: adapter.transport,
+    }))
+  }
 
-  /**
-   * Get raw seller signals for confidence scoring
-   */
-  getSellerSignals(sellerId: string): Promise<RawSellerSignals>
-
-  /**
-   * Open chat with seller (browser transport only)
-   */
-  openChat?(sellerId: string, productUrl: string): Promise<string>
-
-  /**
-   * Send message in chat (browser transport only)
-   */
-  sendMessage?(chatId: string, message: string): Promise<void>
-
-  /**
-   * Read messages from chat (browser transport only)
-   */
-  readMessages?(chatId: string, since?: string): Promise<Array<{ role: string; content: string; timestamp: string }>>
+  require(platform: string): PlatformAdapter {
+    const adapter = this.byPlatform.get(platform)
+    if (adapter === undefined) {
+      throw new WorkerError('unknown_platform', 404)
+    }
+    if (!this.flags.isPlatformEnabled(platform)) {
+      throw new WorkerError('platform_disabled', 409)
+    }
+    return adapter
+  }
 }
