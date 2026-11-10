@@ -28,8 +28,10 @@ and only `infra/terraform/` is AWS-specific.
 3. **Cache and queues:** ElastiCache for Redis 7.1, TLS in transit, KMS at rest.
 4. **Object storage:** S3 buckets `attachments`, `csv`, `audit`. All private, versioned, SSE-KMS, TLS only,
    BucketOwnerEnforced. The `audit` bucket is created with **Object Lock enabled** and a default
-   **COMPLIANCE** retention. The retention length is a **required Terraform variable with no default**,
-   because it is an open Tech Lead decision (issue #81). It cannot be shortened once objects are written.
+   **COMPLIANCE** retention of **2190 days (6 years)**, the retention period for commercial books and records
+   under Spanish Commercial Code art. 30 (ADR-900, issue #81). The Terraform variable
+   `audit_object_lock_retention_days` defaults to 2190 with a validation that only allows lengthening it; it
+   cannot be shortened once objects are written.
 5. **Keys and secrets:** two KMS keys with rotation (`data`, `audit`). Secrets Manager holds one secret
    per component, created as an empty placeholder by Terraform. Values are set out of band and read by
    External Secrets Operator, so the chart never contains secret values.
@@ -48,9 +50,10 @@ and only `infra/terraform/` is AWS-specific.
 ## Consequences
 
 - Staging is fully described as code, but nothing has been applied. The first apply is blocked until the
-  TL decides the audit retention and the GitHub OIDC role exists.
-- Object Lock COMPLIANCE is irreversible per object. A wrong retention value cannot be fixed by a later
-  apply. This is why the variable has no default.
+  GitHub OIDC role exists and the environment facts (`region`, CIDRs, domains) are known.
+- Object Lock COMPLIANCE is irreversible per object. The retention defaults to 6 years (2190 days, ADR-900
+  #81) and the variable validation only allows lengthening it, so a shorter value can never be applied by
+  accident.
 - Cross-cloud portability is limited to containers and the chart. Moving to GKE means a new Terraform
   root, IRSA-equivalent identity, and the audit anchor in a different WORM service.
 - Browser workers run Chromium in a container. Sandboxing and `/dev/shm` sizing are app-level concerns (see
@@ -60,7 +63,7 @@ and only `infra/terraform/` is AWS-specific.
 
 ## Open decisions (TL)
 
-- Audit Object Lock retention in days (issue #81). Required, no default.
+- ~~Audit Object Lock retention in days (issue #81).~~ Resolved by ADR-900 #81: 2190 days (6 years).
 - AWS region and EU data residency (GDPR). Required, no default.
 - Domain names for the web app and the API (Helm `ingress.*`). Required when the ingress is enabled.
 - Public API endpoint CIDRs for EKS. Required, no default.

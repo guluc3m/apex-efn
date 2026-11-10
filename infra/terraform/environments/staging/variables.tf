@@ -27,15 +27,22 @@ variable "single_nat_gateway" {
   default     = true
 }
 
-# ---- Audit (TL decision, no default on purpose) ---------------------------
+# ---- Audit (ADR-900 #81: 6 years, default 2190) ----------------------------
 
 variable "audit_object_lock_retention_days" {
   description = <<-EOT
     COMPLIANCE-mode Object Lock retention for the signed audit bucket, in days.
-    REQUIRED, no default. Open Tech Lead question (tracked as issue #81). The spec does not define it,
-    and it cannot be shortened once objects are written in COMPLIANCE mode.
+    Default 2190 (6 years), the retention period for commercial books and records under Spanish
+    Commercial Code art. 30 (ADR-900, issue #81). Cannot be shortened once objects are written in
+    COMPLIANCE mode; the validation only allows lengthening it.
   EOT
   type        = number
+  default     = 2190
+
+  validation {
+    condition     = var.audit_object_lock_retention_days >= 365
+    error_message = "audit_object_lock_retention_days must be at least 365 days (1 year). The default is 2190 days (6 years, ADR-900 #81)."
+  }
 }
 
 # ---- EKS -------------------------------------------------------------------

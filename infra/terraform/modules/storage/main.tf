@@ -41,7 +41,7 @@ module "csv" {
 }
 
 # Audit log anchoring. Object Lock in COMPLIANCE mode: nobody, including root, can delete or shorten
-# retention. The retention length is a TL decision (open question) and has no default on purpose.
+# retention. Retention defaults to 2190 days (6 years, ADR-900 #81) and can only be lengthened.
 module "audit" {
   source                     = "../secure_bucket"
   bucket_name                = "${local.suffix}-audit-${data.aws_caller_identity.current.account_id}"

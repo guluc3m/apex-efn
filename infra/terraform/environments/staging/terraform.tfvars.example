@@ -3,10 +3,10 @@
 
 region = "<aws-region>"
 
-# REQUIRED: TL decision, open question (issue #81). Do not guess. Uncomment only with the approved number of days.
-# audit_object_lock_retention_days = <approved-days>
-
-# A mandatory placeholder: the plan stops until the line above is set.
+# OPTIONAL: audit Object Lock retention in COMPLIANCE mode, in days. Defaults to 2190 (6 years), the
+# retention for commercial books and records under Spanish Commercial Code art. 30 (ADR-900 #81).
+# Only raise it, never lower it: COMPLIANCE retention cannot be shortened after the first write.
+# audit_object_lock_retention_days = 2190
 
 # REQUIRED: the CIDRs that may reach the public Kubernetes API (your office / VPN / self-hosted runner egress).
 eks_public_access_cidrs = ["<cidr-you-control>/32"]
