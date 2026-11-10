@@ -76,12 +76,6 @@
   "rules": {
     "title": "Decision rules · version {version}",
     "intro": "Every change is a decision signed with a passkey and creates a new version. Past evaluations keep theirs.",
-    "scope": "Scope",
-    "scopes": {
-      "all": "Whole company",
-      "bearings": "Bearings",
-      "valves": "Valves"
-    },
     "caption": "Effective decision rules",
     "rule": "Rule",
     "value": "Value",
@@ -94,29 +88,6 @@
       "seller": "Seller confidence",
       "signing": "Signing and approval",
       "negotiation": "Negotiation"
-    },
-    "values": {
-      "goGate": "Go to gate",
-      "medium": "medium"
-    },
-    "origins": {
-      "template": "Template",
-      "proposed": "Proposed change",
-      "policy": "Your policy",
-      "category": "Per category",
-      "required": "Required"
-    },
-    "proposalTitle": "Proposed change",
-    "impact": "According to the server, with the open offers: {n} would go from normal to atypical and enter the gate queue.",
-    "reason": "Reason (required)",
-    "sign": "Sign with passkey",
-    "signNote": "Pending connection: signing and rule changes have no backend yet",
-    "pending": "Pending connection",
-    "history": "History",
-    "by": {
-      "finance": "Finance",
-      "owner": "Owner",
-      "template": "Template"
     },
     "names": {
       "sanity_z_ok": "Normal price up to",
@@ -131,8 +102,35 @@
       "neg_max_rounds": "Maximum rounds",
       "neg_max_discount": "Maximum discount · Bearings"
     },
-    "noNewValue": "New value not chosen yet",
-    "changeRule": "Change {rule}"
+    "changeRule": "Change {rule}",
+    "origins": {
+      "global": "Global",
+      "tenant": "Your company",
+      "category": "Per category"
+    },
+    "category": "Category",
+    "categoryHint": "Leave empty for the whole company",
+    "apply": "Apply",
+    "loading": "Loading rules",
+    "error": "Rules could not be loaded.",
+    "retry": "Retry",
+    "empty": "No rules returned for this scope.",
+    "version": "Version {version} · {hash}",
+    "other": "Other",
+    "proposalTitle": "Propose a change",
+    "pick": "Choose a rule with the Change button.",
+    "newValue": "New value",
+    "newValueHint": "Number, text or null to unset",
+    "propose": "Propose change",
+    "proposed": "Decision {id} created and waiting for a signature. Nothing changes until it is signed.",
+    "proposeFailed": "The change could not be proposed.",
+    "stale": "The rules changed meanwhile. Reload and propose again.",
+    "sign": "Sign with passkey",
+    "signDisabled": "Pending connection: signing decisions is not connected yet",
+    "signNote": "A change is a decision signed with immediate passkey reauthentication.",
+    "noPermission": "Only finance, admin or owner can change rules.",
+    "history": "History",
+    "historyPending": "Pending connection: there is no history endpoint yet"
   },
   "audit": {
     "title": "Audit log",

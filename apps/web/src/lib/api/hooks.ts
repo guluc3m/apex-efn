@@ -45,6 +45,10 @@ export function useCreateSourcingRequest() {
   return useMutation({ mutationFn: (body: Parameters<typeof api.createSourcingRequest>[0]) => api.createSourcingRequest(body) })
 }
 
+export function useProposeConfigChange() {
+  return useMutation({ mutationFn: (body: Parameters<typeof api.proposeConfigChange>[0]) => api.proposeConfigChange(body) })
+}
+
 export function useCreateMission() {
   return useMutation({ mutationFn: (body: Parameters<typeof api.createMission>[0]) => api.createMission(body) })
 }
