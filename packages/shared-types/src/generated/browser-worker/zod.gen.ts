@@ -342,10 +342,16 @@ export const zJobError = z.object({
   code: zWorkerErrorCode,
   message: z.string().max(1000),
   retryable: z.boolean(),
+  retry_after_seconds: z.number().int().gte(0).nullish(),
 })
 
 export type jobErrorZodType = z.infer<typeof zJobError>
 
+/**
+ * Always carries every field listed in `required`, including `result` and `error` while the
+ * job is queued or running: those are `null`, not absent. A strict client can validate every poll
+ * against this schema. `error` is authoritative over `status` for the reason a job failed.
+ */
 export const zJobState = z.object({
   job_id: z.string(),
   kind: zJobKind,

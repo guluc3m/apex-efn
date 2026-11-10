@@ -381,9 +381,22 @@ class JobError(BaseModel):
     code: WorkerErrorCode
     message: Annotated[str, Field(max_length=1000)]
     retryable: bool
+    retry_after_seconds: Annotated[
+        int | None,
+        Field(
+            description="When the worker already knows how long to wait (a platform rate limit, a backoff the\nsite asked for), how many seconds before the job makes sense again. Null when the caller should\nuse its own backoff.",
+            ge=0,
+        ),
+    ] = None
 
 
 class JobState(BaseModel):
+    """
+    Always carries every field listed in `required`, including `result` and `error` while the
+    job is queued or running: those are `null`, not absent. A strict client can validate every poll
+    against this schema. `error` is authoritative over `status` for the reason a job failed.
+    """
+
     job_id: str
     kind: JobKind
     platform: str

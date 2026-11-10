@@ -327,8 +327,19 @@ export type JobError = {
   code: WorkerErrorCode
   message: string
   retryable: boolean
+  /**
+   * When the worker already knows how long to wait (a platform rate limit, a backoff the
+   * site asked for), how many seconds before the job makes sense again. Null when the caller should
+   * use its own backoff.
+   */
+  retry_after_seconds?: number | null
 }
 
+/**
+ * Always carries every field listed in `required`, including `result` and `error` while the
+ * job is queued or running: those are `null`, not absent. A strict client can validate every poll
+ * against this schema. `error` is authoritative over `status` for the reason a job failed.
+ */
 export type JobState = {
   job_id: string
   kind: JobKind
