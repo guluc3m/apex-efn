@@ -66,6 +66,9 @@ secrets/*
 *.generated.py
 prisma/generated
 
+# Load tests (k6) write their summaries here
+tests/load/results/
+
 # Temporary
 tmp
 .tmp
