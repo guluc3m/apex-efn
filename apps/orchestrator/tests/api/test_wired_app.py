@@ -431,10 +431,10 @@ def test_a_configured_worker_url_switches_to_the_http_client() -> None:
 
 
 async def test_the_runner_reaches_the_worker_and_stops_at_the_next_unwired_port() -> None:
-    """The worker is wired; FX (D3-03) is not, so the mission fails there — past the scraping step.
+    """The worker and FX are wired; trust (D3-06) is not, so the mission fails there.
 
-    That is the honest state of the chain today, and it proves the worker client is actually called: the
-    failure reason names the port *after* it.
+    That is the honest state of the chain today, and it proves both the worker client and the FX port are
+    actually called: the failure reason names the port *after* them.
     """
     from apex.agents.missions import Mission, MissionStatus
     from apex.agents.sourcing import PlanStep, SourcingPlan
@@ -501,8 +501,9 @@ async def test_the_runner_reaches_the_worker_and_stops_at_the_next_unwired_port(
     result = await services.runner.run(tenant_id=TENANT, mission_id="m-1")
     assert result.mission.status is MissionStatus.FAILED
     assert result.failed_reason is not None
-    assert "D3-03" in result.failed_reason  # FX, the step after scraping
+    assert "D3-06" in result.failed_reason  # trust, the step after FX
     assert "D5-01" not in result.failed_reason  # the worker is wired
+    assert "D3-03" not in result.failed_reason  # FX is wired
 
 
 # ----- the mission reports the tokens the gateway actually committed ------------------------------
