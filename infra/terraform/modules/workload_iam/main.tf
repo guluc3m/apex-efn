@@ -4,6 +4,17 @@
 # The ServiceAccount names are "<helm release name>-<component>". Keep helm_release_name in sync with
 # the release name used by CD (`helm upgrade --install apex ...`).
 
+terraform {
+  required_version = ">= 1.9.0, < 2.0.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.100.0"
+    }
+  }
+}
+
 locals {
   oidc_host = replace(var.oidc_issuer, "https://", "")
   components = {

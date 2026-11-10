@@ -2,6 +2,17 @@
 # Object Lock is switched on only when a retention is given (audit bucket). Enabling it at creation is
 # the only way to use Object Lock, so it cannot be turned on later for an existing bucket.
 
+terraform {
+  required_version = ">= 1.9.0, < 2.0.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.100.0"
+    }
+  }
+}
+
 locals {
   object_lock = var.object_lock_retention_days != null
 }

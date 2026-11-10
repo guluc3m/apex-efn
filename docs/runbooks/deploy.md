@@ -74,9 +74,10 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
 ## 4. How CD works (`.github/workflows/cd.yml`)
 
 - Trigger: push to `main`, or manual `workflow_dispatch`.
-- `images`: builds `orchestrator` (context `apps`, so `apps/llm-stub` is present as the `[tool.uv.sources]`
-  path source), `web` and `browser-worker` (context = repo root) and pushes them to
-  `ghcr.io/guluc3m/apex-efn/<app>` with tags `sha-<7 chars>` and `main`, plus provenance and SBOM.
+- `images`: builds `orchestrator`, `web` and `browser-worker`, all with **context = repo root** (so the
+  orchestrator sees `apps/llm-stub` as the `[tool.uv.sources]` path source and `config/defaults`, and the
+  pnpm images see the whole workspace), and pushes them to `ghcr.io/guluc3m/apex-efn/<app>` with tags
+  `sha-<7 chars>` and `main`, plus provenance and SBOM.
 - `prepare`: checks the nine repository variables. If any is missing, the next job is skipped and a notice says which.
 - `deploy-staging`: OIDC to AWS (no stored keys), `aws eks update-kubeconfig`, then
   `helm upgrade --install --atomic --timeout 10m`. `--atomic` rolls back automatically if the rollout fails.
@@ -96,9 +97,10 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
 
 ## 6. Checks run on this change
 
-- Images built and run locally: `apex/orchestrator:dev` (boots, `GET /health` → 200, prompts present),
-  `apex/web:dev` (builds, but `next start` is **blocked** on DEV-6 `output: 'standalone'` — see section 7),
-  `apex/browser-worker:dev` (starts and stays up against Redis/Vault).
+- Images built and run locally: `apex/orchestrator:dev` (boots, `GET /health` → 200, prompts present,
+  `config/defaults` present at `apex.tenant_config.defaults.DEFAULT_PATH`), `apex/web:dev` (serves the
+  public landing from the standalone output, `GET /` → 200), `apex/browser-worker:dev` (starts and stays
+  up against Redis/Vault).
 - `helm lint`, `helm template` (defaults, staging, GPU workload enabled, ingress + HPA), kubeconform `-strict`
   against Kubernetes 1.31 schemas.
 - `terraform fmt -check`, `terraform init -backend=false` + `validate` in `environments/staging`, `tflint` (AWS
@@ -110,13 +112,9 @@ Nothing was pushed, applied or deployed: there is no AWS account, GHCR package s
 
 ## 7. Not done yet (follow-ups)
 
-- **Web image is blocked on DEV-6 (`output: 'standalone'`).** `next start` fails at startup: `pnpm deploy --prod`
-  strips TypeScript (a devDependency), but Next.js 15 re-loads `apps/web/next.config.ts` (a `.ts` config) at
-  `next start` time. It logs `Failed to load next.config.ts` and tries to auto-install TypeScript via `yarn add`,
-  which then fails on the `@apex/crypto-client` workspace package. The fix is the one-line DEV-6 change
-  `output: 'standalone'` in `apps/web/next.config.ts`, plus a matching Dockerfile change (run
-  `node .next/standalone/server.js` and copy `.next/static` + `public`). Until that lands, the web image does not
-  serve. Not fixed here because `next.config.ts` is DEV-6-owned.
+- **`next.config.ts` needs a DEV-6 review.** `output: 'standalone'` is a one-line DEV-6-owned change made in
+  D1-09 so the web image could serve; DEV-6 owns `apps/web/next.config.ts` and should confirm it (it only
+  affects the production image, not `next dev`).
 - **Chromium sandbox.** The browser worker runs as non-root in a read-only root filesystem. Chromium's own sandbox
   needs user namespaces, which may not be available in this pod. The app (D5-02) must choose between `--no-sandbox` with
   documented risk, or a sandbox-capable setup. This is not decided.
@@ -124,12 +122,6 @@ Nothing was pushed, applied or deployed: there is no AWS account, GHCR package s
 - **Browser worker health.** No HTTP endpoint yet, so no probes. Add probes when the internal API lands (D5-01).
 - **LLM workload.** Disabled by default. The image, resources and read-only root filesystem (with `HOME`, `XDG_CACHE_HOME`,
   `HF_HOME` in `/tmp`) are untested on a GPU node. Validate before enabling. Model choice is a TL/ADR decision.
-- **Orchestrator config defaults.** The image boots and serves `/health`, but the wired routes answer 501 because
-  `config/defaults/tenant-config.v1.json` is not in the image (the orchestrator is built from `apps/`, and the file
-  lives at the repo root; `apex.tenant_config.defaults.DEFAULT_PATH` resolves it relative to the installed package).
-  Prompts **are** included (`/opt/venv/lib/python3.12/prompts`). To serve real requests, either build the
-  orchestrator from the repo root and copy `config/defaults`, or make `DEFAULT_PATH`/`PROMPTS_DIR` env-overridable
-  (DEV-4). This is a follow-up, not part of D1-09.
 - **`llm-stub` and `mock-marketplace` images.** Dev-only services, not part of the staging chart. Their Dockerfiles
   land in D4-02 and D5-04; add Helm Deployments/values later if they are ever run in staging.
 - **Environment protection.** The deploy job uses `environment: staging`. Add required reviewers in GitHub once wanted.
