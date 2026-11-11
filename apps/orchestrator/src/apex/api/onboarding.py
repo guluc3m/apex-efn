@@ -8,10 +8,11 @@ signed decision that activation requires; the snapshot only becomes active once 
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from pydantic import BaseModel
 
 from apex.agents.header_mapping import MappingError
 from apex.agents.onboarding import (
@@ -20,18 +21,24 @@ from apex.agents.onboarding import (
     IntakeMessage,
     OnboardingService,
     OnboardingSession,
+    OnboardingStatus,
     SnapshotNotActivatable,
+    StepProgress,
 )
+from apex.api.config import _to_out, get_config_service
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
 from apex.contracts.generated.models import (
     ActivateFinancialSnapshotRequest,
+    EffectiveConfig,
     SendIntakeMessageRequest,
+    UpdateOnboardingSessionRequest,
 )
 from apex.domain.finance.csv_import import CsvImportError
 from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
 from apex.llm.transport import LLMHTTPError, LLMTransportError
+from apex.tenant_config.service import TenantConfigService
 
 router = APIRouter()
 
@@ -39,41 +46,71 @@ MAX_CSV_BYTES = 5 * 1024 * 1024
 """A financial CSV is a few hundred rows. Anything bigger is a mistake or an attack."""
 
 
+_STATUS = {
+    OnboardingStatus.STARTED: "profiling",
+    OnboardingStatus.PROFILED: "profiling",
+    OnboardingStatus.AWAITING_SNAPSHOT_ACTIVATION: "financials_imported",
+    OnboardingStatus.COMPLETE: "completed",
+}
+"""Internal state machine -> the contract's ``OnboardingStatus``."""
+
+
+def _company_profile(profile: CompanyProfile) -> dict[str, Any]:
+    out = profile.model_dump(mode="json", exclude={"budget_minor"})
+    out["budget"] = (
+        {"amount_minor": profile.budget_minor, "currency": profile.base_currency}
+        if profile.budget_minor is not None and profile.base_currency
+        else None
+    )
+    return out
+
+
 class SessionOut(BaseModel):
     id: str
     tenant_id: str
     status: str
-    profile: dict[str, Any]
     company_profile: dict[str, Any]
-    """Same as ``profile`` under the contract name (``OnboardingSession.company_profile``)."""
     created_at: str
     updated_at: str
-    active_snapshot_id: str | None
+    active_financial_snapshot_id: str | None
     pending_snapshot_id: str | None
+    steps: list[dict[str, Any]] | None = None
+    effective_config: dict[str, Any] | None = None
 
     @classmethod
-    def of(cls, session: OnboardingSession) -> SessionOut:
+    def of(
+        cls,
+        session: OnboardingSession,
+        *,
+        steps: list[StepProgress] | None = None,
+        effective_config: EffectiveConfig | None = None,
+    ) -> SessionOut:
         return cls(
             id=session.id,
             tenant_id=session.tenant_id,
-            status=session.status.value,
-            profile=session.profile.model_dump(mode="json"),
-            company_profile=session.profile.model_dump(mode="json"),
+            status=_STATUS[session.status],
+            company_profile=_company_profile(session.profile),
             created_at=session.created_at.isoformat(),
             updated_at=session.updated_at.isoformat(),
-            active_snapshot_id=session.active_snapshot_id,
+            active_financial_snapshot_id=session.active_snapshot_id,
             pending_snapshot_id=session.pending_snapshot_id,
+            steps=[asdict(x) for x in steps] if steps is not None else None,
+            effective_config=effective_config.model_dump(mode="json") if effective_config else None,
         )
 
 
-class ProfileIn(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    legal_name: str | None = Field(default=None, max_length=200)
-    sector: str | None = Field(default=None, max_length=120)
-    country: str | None = Field(default=None, max_length=2)
-    base_currency: str | None = Field(default=None, pattern="^(EUR|USD|CNY)$")
-    budget_eur_minor: int | None = Field(default=None, ge=0)
+async def _full(
+    session: OnboardingSession,
+    tenant_id: str,
+    service: OnboardingService,
+    config: TenantConfigService,
+) -> SessionOut:
+    """The contract's ``OnboardingSession``: with per-step progress and the effective config."""
+    return SessionOut.of(
+        session,
+        steps=await service.step_progress(session),
+        effective_config=_to_out(await config.effective(tenant_id)),
+    )
 
 
 class SnapshotOut(BaseModel):
@@ -124,15 +161,33 @@ async def create_onboarding_session(
 
 
 @router.get("/sessions", tags=["onboarding"])
-async def list_onboarding_sessions() -> None:
-    """The tenant's sessions (contract route, issue #377). 501 until implemented."""
-    raise not_implemented("listing onboarding sessions is not implemented yet")
+async def list_onboarding_sessions(
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[OnboardingService, Depends(get_onboarding)],
+    config: Annotated[TenantConfigService, Depends(get_config_service)],
+    session_status: Annotated[list[str] | None, Query(alias="status")] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> dict[str, list[SessionOut]]:
+    """The tenant's sessions, newest first. ``status`` filters by the contract status."""
+    sessions = await service.list_sessions(tenant_id=tenant_id)
+    if session_status:
+        sessions = [x for x in sessions if _STATUS[x.status] in session_status]
+    return {"items": [await _full(x, tenant_id, service, config) for x in sessions[:limit]]}
 
 
-@router.get("/sessions/{id}", tags=["onboarding"])
-async def get_onboarding_session(id: str) -> None:
-    """One session with per-step progress (contract route, issue #377). 501 until implemented."""
-    raise not_implemented("reading an onboarding session is not implemented yet")
+@router.get("/sessions/{id}", response_model=SessionOut, tags=["onboarding"])
+async def get_onboarding_session(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[OnboardingService, Depends(get_onboarding)],
+    config: Annotated[TenantConfigService, Depends(get_config_service)],
+) -> SessionOut:
+    """One session with per-step progress, so the wizard restores its draft after a reload."""
+    try:
+        session = await service.get_session(tenant_id=tenant_id, session_id=id)
+    except LookupError as exc:
+        raise Problem(404, "Session not found", detail=str(exc)) from exc
+    return await _full(session, tenant_id, service, config)
 
 
 def _message_out(m: IntakeMessage) -> dict[str, str]:
@@ -192,14 +247,18 @@ async def send_intake_message(
 @router.patch("/sessions/{id}", response_model=SessionOut, tags=["onboarding"])
 async def update_profile(
     id: str,
-    body: ProfileIn,
+    body: UpdateOnboardingSessionRequest,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     service: Annotated[OnboardingService, Depends(get_onboarding)],
 ) -> SessionOut:
-    """Progressive form backend: save whatever the buyer has filled in so far."""
+    """Progressive form backend: save whatever the buyer has filled in so far. Omitted fields keep their value."""
+    fields = body.company_profile.model_dump(mode="json", exclude_unset=True)
+    budget = fields.pop("budget", None)
+    if budget is not None:
+        fields["budget_minor"] = budget["amount_minor"]
     try:
         session = await service.update_profile(
-            tenant_id=tenant_id, session_id=id, profile=CompanyProfile(**body.model_dump())
+            tenant_id=tenant_id, session_id=id, profile=CompanyProfile(**fields)
         )
     except LookupError as exc:
         raise Problem(404, "Session not found", detail=str(exc)) from exc

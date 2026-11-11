@@ -1,37 +1,14 @@
-import type { Drafts, StepId } from '@/components/onboarding/schemas'
-
-// //todo_#377: estado de cada paso, borrador guardado y mensajes del asistente vendrán de /v1/onboarding
-export const stepStatus: Record<StepId, { kind: 'done' | 'warnings' | 'pending' | 'none'; count?: number }> = {
-  empresa: { kind: 'done' },
-  sector: { kind: 'done' },
-  cuentas: { kind: 'warnings', count: 1 },
-  presupuesto: { kind: 'none' },
-  politica: { kind: 'pending', count: 2 },
-  negociacion: { kind: 'pending', count: 4 },
-  finanzas: { kind: 'none' },
-}
+import type { Drafts } from '@/components/onboarding/schemas'
 
 const categorias = [
   { id: 'bearings', label: 'Rodamientos' },
   { id: 'valves', label: 'Válvulas' },
 ]
 
-// //todo_#377: borrador inicial desde el servidor. Importes y porcentajes sin valor por defecto en política y negociación.
+// Empty drafts: the server restores company and sector (GET /v1/onboarding/sessions). Amounts and percentages have no default.
 export const initialDrafts: Drafts = {
-  empresa: {
-    razonSocial: 'Industrias Ejemplo, S.L.',
-    cif: 'B00000000',
-    pais: 'es',
-    aduana: 'eori',
-    direccion: 'Polígono Industrial, nave 4 · 46000 Valencia',
-    facturacionIgual: true,
-  },
-  sector: {
-    cnae: '2829 · Fabricación de maquinaria',
-    frecuencia: 'monthly',
-    compras: 'Rodamientos, válvulas, cable apantallado y sensores para mantenimiento de línea.',
-    estacionalidad: 'Picos en marzo y septiembre (paradas de mantenimiento)',
-  },
+  empresa: { razonSocial: '', cif: '', pais: 'es', aduana: 'eori', direccion: '', facturacionIgual: true },
+  sector: { cnae: '', frecuencia: 'monthly', compras: '', estacionalidad: '' },
   presupuesto: {
     divisa: 'EUR',
     pago: 'd60',

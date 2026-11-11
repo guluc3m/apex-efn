@@ -399,7 +399,7 @@ async def test_a_chat_turn_stores_both_messages_and_applies_only_valid_fields() 
     await service.update_profile(
         tenant_id=TENANT,
         session_id=session.id,
-        profile=CompanyProfile(budget_eur_minor=1_234_500),
+        profile=CompanyProfile(budget_minor=1_234_500),
     )
     messages, updated = await service.send_message(
         tenant_id=TENANT, session_id=session.id, text="Somos ACME de España"
@@ -409,7 +409,7 @@ async def test_a_chat_turn_stores_both_messages_and_applies_only_valid_fields() 
     assert updated.profile.country == "ES"
     assert updated.profile.sector == "Packaging"
     assert updated.profile.base_currency is None  # GBP is not a supported currency: dropped
-    assert updated.profile.budget_eur_minor == 1_234_500  # never touched by the agent
+    assert updated.profile.budget_minor == 1_234_500  # never touched by the agent
     assert "1234500" not in str(
         gateway.calls[0]["messages"]
     )  # financial values stay out of the prompt

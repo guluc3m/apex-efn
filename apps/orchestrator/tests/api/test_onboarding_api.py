@@ -98,8 +98,8 @@ def test_start_a_session(app: FastAPI) -> None:
         response = client.post("/onboarding/sessions", headers=_h())
     assert response.status_code == 201
     body = response.json()
-    assert body["status"] == "started"
-    assert body["profile"]["legal_name"] is None
+    assert body["status"] == "profiling"
+    assert body["company_profile"]["legal_name"] is None
 
 
 def test_update_the_profile(app: FastAPI) -> None:
@@ -107,12 +107,38 @@ def test_update_the_profile(app: FastAPI) -> None:
         session = client.post("/onboarding/sessions", headers=_h()).json()
         response = client.patch(
             f"/onboarding/sessions/{session['id']}",
-            json={"legal_name": "ACME", "base_currency": "EUR"},
+            json={
+                "company_profile": {"legal_name": "ACME", "tax_id": "B1", "base_currency": "EUR"}
+            },
             headers=_h(),
         )
     assert response.status_code == 200
-    assert response.json()["status"] == "profiled"
-    assert response.json()["profile"]["legal_name"] == "ACME"
+    assert response.json()["status"] == "profiling"
+    assert response.json()["company_profile"]["legal_name"] == "ACME"
+
+
+def test_read_a_session_back_with_step_progress(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        sid = client.post("/onboarding/sessions", headers=_h()).json()["id"]
+        for patch in ({"legal_name": "ACME", "country": "ES"}, {"tax_id": "B1"}):
+            client.patch(
+                f"/onboarding/sessions/{sid}", json={"company_profile": patch}, headers=_h()
+            )
+        got = client.get(f"/onboarding/sessions/{sid}", headers=_h())
+        listed = client.get("/onboarding/sessions?status=profiling&limit=1", headers=_h())
+        other = client.get("/onboarding/sessions", headers=_h("tenant-b"))
+        missing = client.get("/onboarding/sessions/nope", headers=_h())
+    body = got.json()
+    assert got.status_code == 200
+    assert body["company_profile"]["legal_name"] == "ACME"  # the second patch kept it
+    assert body["company_profile"]["tax_id"] == "B1"
+    steps = {x["step"]: x for x in body["steps"]}
+    assert steps["company"] == {"step": "company", "done": 3, "warnings": 0, "pending": 1}
+    assert steps["finance"]["pending"] == 1
+    assert "values" in body["effective_config"]
+    assert [x["id"] for x in listed.json()["items"]] == [sid]
+    assert other.json() == {"items": []}
+    assert missing.status_code == 404
 
 
 def test_upload_returns_the_report_and_never_activates(app: FastAPI) -> None:

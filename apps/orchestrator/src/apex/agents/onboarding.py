@@ -47,10 +47,21 @@ class CompanyProfile(_Model):
     """What the buyer told us. Every field is optional: the wizard is progressive."""
 
     legal_name: str | None = None
+    tax_id: str | None = None
     sector: str | None = None
-    country: str | None = None
+    country: str | None = Field(default=None, pattern="^[A-Z]{2}$")
+    shipping_address: str | None = None
+    billing_address: str | None = None
+    customs_regime: str | None = None
+    cnae: str | None = None
+    purchase_categories: list[str] | None = None
+    purchase_frequency: str | None = Field(
+        default=None, pattern="^(one_off|monthly|quarterly|yearly)$"
+    )
+    seasonality: str | None = None
     base_currency: str | None = Field(default=None, pattern="^(EUR|USD|CNY)$")
-    budget_eur_minor: int | None = Field(default=None, ge=0)
+    budget_minor: int | None = Field(default=None, ge=0)
+    """Overall purchasing budget in minor units of ``base_currency``."""
 
 
 class OnboardingSession(_Model):
@@ -62,6 +73,19 @@ class OnboardingSession(_Model):
     updated_at: datetime
     active_snapshot_id: str | None = None
     pending_snapshot_id: str | None = None
+
+
+@dataclass(frozen=True)
+class StepProgress:
+    step: str
+    done: int
+    warnings: int
+    pending: int
+
+
+def _counts(values: list[Any]) -> tuple[int, int, int]:
+    done = sum(1 for v in values if v)
+    return done, 0, len(values) - done
 
 
 class IntakeMessage(_Model):
@@ -137,6 +161,10 @@ class OnboardingStore(Protocol):
 
     async def get_session(self, tenant_id: str, session_id: str) -> OnboardingSession | None: ...
 
+    async def list_sessions(self, tenant_id: str) -> list[OnboardingSession]:
+        """Newest first."""
+        ...
+
     async def add_message(self, message: IntakeMessage) -> IntakeMessage: ...
 
     async def list_messages(self, tenant_id: str, session_id: str) -> list[IntakeMessage]: ...
@@ -173,6 +201,10 @@ class InMemoryOnboardingStore:
 
     async def get_session(self, tenant_id: str, session_id: str) -> OnboardingSession | None:
         return self._sessions.get((tenant_id, session_id))
+
+    async def list_sessions(self, tenant_id: str) -> list[OnboardingSession]:
+        found = [s for (t, _), s in self._sessions.items() if t == tenant_id]
+        return sorted(found, key=lambda s: (s.created_at, s.id), reverse=True)
 
     async def add_snapshot(self, snapshot: FinancialSnapshot) -> FinancialSnapshot:
         self._snapshots[(snapshot.tenant_id, snapshot.id)] = snapshot
@@ -256,12 +288,36 @@ class OnboardingService:
         session = await self._require_session(tenant_id, session_id)
         updated = session.model_copy(
             update={
-                "profile": profile,
+                # A patch: omitted fields keep their value.
+                "profile": session.profile.model_copy(
+                    update=profile.model_dump(exclude_unset=True)
+                ),
                 "status": OnboardingStatus.PROFILED,
                 "updated_at": self._deps.clock.now(),
             }
         )
         return await self._deps.store.save_session(updated)
+
+    async def get_session(self, *, tenant_id: str, session_id: str) -> OnboardingSession:
+        return await self._require_session(tenant_id, session_id)
+
+    async def list_sessions(self, *, tenant_id: str) -> list[OnboardingSession]:
+        return await self._deps.store.list_sessions(tenant_id)
+
+    async def step_progress(self, session: OnboardingSession) -> list[StepProgress]:
+        """Per-step completion from what the server holds. Other steps are tenant config (signed decisions)."""
+        p = session.profile
+        company = [p.legal_name, p.tax_id, p.country, p.shipping_address]
+        sector = [p.cnae, p.purchase_frequency, p.purchase_categories]
+        snapshots = await self._deps.store.list_snapshots(session.tenant_id, session.id)
+        shown = next((s for s in snapshots if s.id == session.pending_snapshot_id), None)
+        warnings = len(shown.report.get("warnings", [])) if shown else 0
+        finished = session.active_snapshot_id is not None
+        return [
+            StepProgress("company", *_counts(company)),
+            StepProgress("sector", *_counts(sector)),
+            StepProgress("finance", int(finished), warnings, int(not finished)),
+        ]
 
     # ------------------------------------------------------------------ intake chat
 
