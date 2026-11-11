@@ -26,7 +26,11 @@
     "strategy": "Estrategia",
     "guardrails": "Límites activados",
     "noGuardrails": "Ninguno por ahora.",
-    "offerPending": "La oferta, la confianza del vendedor y el detalle de precio se mostrarán aquí cuando se conecten los datos de la oferta."
+    "offer": "Oferta",
+    "unitPrice": "Precio unitario",
+    "priceBand": "Banda de precio",
+    "sellerConfidence": "Confianza del vendedor",
+    "offerMissing": "La oferta no está disponible."
   },
   "dialog": {
     "close": "Cerrar",

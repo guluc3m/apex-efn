@@ -26,7 +26,11 @@
     "strategy": "策略",
     "guardrails": "已触发的限制",
     "noGuardrails": "暂无。",
-    "offerPending": "待报价数据接入后，这里将显示报价、卖家可信度和价格详情。"
+    "offer": "报价",
+    "unitPrice": "单价",
+    "priceBand": "价格区间",
+    "sellerConfidence": "卖家可信度",
+    "offerMissing": "暂无该报价。"
   },
   "dialog": {
     "close": "关闭",

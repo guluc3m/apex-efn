@@ -26,7 +26,11 @@
     "strategy": "Strategy",
     "guardrails": "Guardrails triggered",
     "noGuardrails": "None so far.",
-    "offerPending": "Offer, seller confidence and price details are shown here once the offer data is connected."
+    "offer": "Offer",
+    "unitPrice": "Unit price",
+    "priceBand": "Price band",
+    "sellerConfidence": "Seller confidence",
+    "offerMissing": "The offer is not available."
   },
   "dialog": {
     "close": "Close",

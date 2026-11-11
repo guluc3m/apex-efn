@@ -26,7 +26,11 @@
     "strategy": "אסטרטגיה",
     "guardrails": "מגבלות שהופעלו",
     "noGuardrails": "אין עד כה.",
-    "offerPending": "ההצעה, אמינות המוכר ופרטי המחיר יוצגו כאן לאחר חיבור נתוני ההצעה."
+    "offer": "הצעה",
+    "unitPrice": "מחיר ליחידה",
+    "priceBand": "טווח מחיר",
+    "sellerConfidence": "אמינות המוכר",
+    "offerMissing": "ההצעה אינה זמינה."
   },
   "dialog": {
     "close": "סגירה",

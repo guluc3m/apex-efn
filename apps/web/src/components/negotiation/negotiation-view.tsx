@@ -1,14 +1,15 @@
 'use client'
 
 import type { NegotiationMessage } from '@apex/shared-types/contracts'
-import { Badge, Button, Dialog, DialogContent, Icon, cn } from '@apex/ui'
+import { Badge, Button, Dialog, DialogContent, Icon, MoneyDisplay, PriceBandBadge, cn } from '@apex/ui'
 import { ArrowLeft, Bot, Check, CircleStop, Hand, RotateCcw, Send, ShieldAlert, Trash2 } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { AppLink } from '@/components/app-link'
 import { ErrorPanel } from '@/components/error-panel'
-import { ApiError, useNegotiation, useNegotiationAction, useNegotiationMessages } from '@/lib/api'
+import { OfferConfidence } from '@/components/sellers/offer-confidence'
+import { ApiError, useMissionOffers, useNegotiation, useNegotiationAction, useNegotiationMessages } from '@/lib/api'
 
 type DialogKind = 'take' | 'resume' | 'abort' | 'reopen'
 
@@ -22,10 +23,13 @@ const TERMINAL = new Set(['completed', 'aborted'])
 
 export function NegotiationView({ negotiationId, missionId }: { negotiationId: string; missionId: string }) {
   const t = useTranslations('negotiation')
+  const tc = useTranslations('compare')
+  const locale = useLocale()
   const format = useFormatter()
   const neg = useNegotiation(negotiationId)
   const msgs = useNegotiationMessages(negotiationId)
   const act = useNegotiationAction(negotiationId)
+  const offers = useMissionOffers(missionId)
   const [dialog, setDialog] = useState<DialogKind | null>(null)
   const [reason, setReason] = useState('')
   const [text, setText] = useState('')
@@ -40,6 +44,7 @@ export function NegotiationView({ negotiationId, missionId }: { negotiationId: s
   const aborted = n.state === 'aborted'
   const human = n.state === 'human_control'
   const done = TERMINAL.has(n.state)
+  const offer = offers.data?.items.find((o) => o.id === n.offer_id)
   const draft = n.pending_draft ?? null
   const error = act.error
   const errorText = error ? errorMessage(error, (k) => t.has(k) ? t(k) : t('errors.generic')) : null
@@ -201,8 +206,18 @@ export function NegotiationView({ negotiationId, missionId }: { negotiationId: s
               </ul>
             )}
           </div>
-          {/* //todo_#148: oferta actual, confianza del vendedor, banda de precio y escalera de precios; el contrato de negociación no los incluye (vienen de GET /v1/missions/{id}/offers) */}
-          <p className="m-0 text-[13px] text-ink-muted">{t('side.offerPending')}</p>
+          {offer ? (
+            <dl className="m-0 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2">
+              <dt className="text-ink-muted">{t('side.unitPrice')}</dt>
+              <dd className="m-0"><MoneyDisplay amountMinor={offer.unit_price.amount_minor} currency={offer.unit_price.currency} locale={locale} /></dd>
+              <dt className="text-ink-muted">{t('side.priceBand')}</dt>
+              <dd className="m-0">{offer.price_sanity_check ? <PriceBandBadge band={offer.price_sanity_check.band} label={tc(`price.${offer.price_sanity_check.band}`)} /> : '—'}</dd>
+              <dt className="text-ink-muted">{t('side.sellerConfidence')}</dt>
+              <dd className="m-0"><OfferConfidence confidence={offer.seller_confidence} /></dd>
+            </dl>
+          ) : (
+            !offers.isPending && <p className="m-0 text-[13px] text-ink-muted">{t('side.offerMissing')}</p>
+          )}
         </aside>
       </div>
 
