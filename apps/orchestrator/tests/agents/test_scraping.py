@@ -444,3 +444,69 @@ async def test_retries_stop_at_max_attempts() -> None:
         )
     assert worker.attempts == 3
     assert sleeps == [1.0, 2.0]
+
+
+# ----- one unpriceable listing never kills the mission (the mock-b incident) ----------------------
+
+
+class _RefusingFx(_Fx):
+    """Refuses one currency the way DEV-3 does when it has no usable rate."""
+
+    def __init__(self, refused: str) -> None:
+        super().__init__()
+        self.refused = refused
+
+    async def to_eur_unit(
+        self, *, amount_minor: int, currency: str, tenant_id: str
+    ) -> tuple[int, bool]:
+        if currency == self.refused:
+            from apex.agents.fx import FxUnavailable
+
+            raise FxUnavailable("rate_unavailable", f"no rate for {currency}")
+        return await super().to_eur_unit(
+            amount_minor=amount_minor, currency=currency, tenant_id=tenant_id
+        )
+
+
+async def test_a_mock_b_page_quoted_in_cny_is_ingested_in_eur() -> None:
+    """mock-b quotes part of its catalogue in CNY; that is not an error, it is a conversion."""
+    worker = _Worker(
+        {
+            "mock-b": [
+                _raw(platform_id="mock-b", platform_offer_id="b-gloves-01", product_id="b-gloves-01",
+                     currency="CNY", unit_price_minor=3520, moq=1000, quantity_available=1000),
+                _raw(platform_id="mock-b", platform_offer_id="b-gloves-03", product_id="b-gloves-03",
+                     currency="EUR", unit_price_minor=465, moq=300, quantity_available=300),
+            ]
+        }
+    )  # fmt: skip
+    service, offers, _ = _service(worker)
+    result = await service.scrape(
+        tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-b"), quantity=1000
+    )
+    stored = await offers.list_for_mission(TENANT, MISSION)
+    assert result.skipped == []
+    assert [o.unit_price_eur_minor for o in stored] == [352, 465]
+    assert all(o.currency == "EUR" for o in stored)
+
+
+async def test_a_listing_with_no_usable_rate_is_skipped_not_fatal() -> None:
+    """No rate for one currency used to abort the whole run right after the search."""
+    worker = _Worker(
+        {
+            "mock-b": [
+                _raw(platform_id="mock-b", platform_offer_id="b-1", currency="CNY"),
+                _raw(platform_id="mock-b", platform_offer_id="b-2", currency="EUR"),
+            ]
+        }
+    )
+    service, offers, _ = _service(worker, fx=_RefusingFx("CNY"))
+    result = await service.scrape(
+        tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-b"), quantity=500
+    )
+    assert result.collected == 2 and result.kept == 1
+    assert [(s.platform_offer_id, s.reason, s.currency_raw) for s in result.skipped] == [
+        ("b-1", "unsupported_currency", "CNY")
+    ]
+    stored = await offers.list_for_mission(TENANT, MISSION)
+    assert [o.id for o in stored] == ["mock-b:b-2"]

@@ -19,7 +19,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from apex.agents.fx import FxUnavailable
 from apex.agents.missions import MissionEventBus, MissionEventType, apply_event
@@ -126,6 +126,18 @@ class ScrapeResult(_Model):
     fx_provisional: bool
 
 
+class _UnpriceableListing(Exception):
+    """A listing the orchestrator cannot turn into an :class:`Offer`, with the contract's closed reason.
+
+    ``unsupported_currency`` covers both a currency outside the enum and a currency the FX engine has no
+    usable rate for; ``parse_error`` covers a payload that violates the domain's money constraints.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
 async def _no_sleep(_seconds: float) -> None:
     """Default sleep for the retry loop. Tests inject a recorder so nothing waits."""
 
@@ -166,9 +178,10 @@ class ScrapingService:
             platforms.append(result.platform_id)
             raw.extend(result.offers)
             skipped.extend(result.skipped)
-        kept, duplicates, provisional = await self._normalise(
+        kept, duplicates, provisional, unusable = await self._normalise(
             tenant_id=tenant_id, mission_id=mission_id, raw=raw
         )
+        skipped.extend(unusable)
         for offer in kept:
             await self._deps.offers.add(offer)
         outcome = ScrapeResult(
@@ -267,50 +280,35 @@ class ScrapingService:
 
     async def _normalise(
         self, *, tenant_id: str, mission_id: str, raw: Sequence[RawOffer]
-    ) -> tuple[list[Offer], list[DuplicateOffer], bool]:
-        """Convert to EUR, then keep one offer per (seller, product): the cheapest."""
+    ) -> tuple[list[Offer], list[DuplicateOffer], bool, list[SkippedListing]]:
+        """Convert to EUR, then keep one offer per (seller, product): the cheapest.
+
+        A listing this service cannot turn into an :class:`Offer` (a currency the FX engine has no rate
+        for, a payload that does not satisfy the domain's money constraints) is reported as a
+        ``SkippedListing`` with the contract's closed reason. It never aborts the run: one unpriceable
+        listing used to kill the whole mission right after the search, which is exactly what the user saw
+        as "stuck at sourcing".
+        """
         provisional = False
         converted: list[tuple[Offer, RawOffer]] = []
+        skipped: list[SkippedListing] = []
         signals_cache: dict[tuple[str, str], tuple[Mapping[str, Any], bool]] = {}
         for item in raw:
-            unit_eur, fx_provisional = await self._deps.fx.to_eur_unit(
-                amount_minor=item.unit_price_minor, currency=item.currency, tenant_id=tenant_id
-            )
-            provisional = provisional or fx_provisional
-            list_eur: int | None = None
-            if item.list_price_minor is not None:
-                list_eur, list_provisional = await self._deps.fx.to_eur_unit(
-                    amount_minor=item.list_price_minor, currency=item.currency, tenant_id=tenant_id
+            try:
+                offer, listing_provisional = await self._to_offer(
+                    tenant_id=tenant_id, mission_id=mission_id, item=item, cache=signals_cache
                 )
-                provisional = provisional or list_provisional
-            seller_signals, signals_provisional = await self._signals_for(
-                tenant_id=tenant_id,
-                mission_id=mission_id,
-                platform=item.platform_id,
-                seller_id=item.seller_id,
-                cache=signals_cache,
-            )
-            provisional = provisional or signals_provisional
-            offer = Offer(
-                id=f"{item.platform_id}:{item.platform_offer_id}",
-                tenant_id=tenant_id,
-                mission_id=mission_id,
-                platform_id=item.platform_id,
-                seller_id=item.seller_id,
-                product_id=item.product_id,
-                title=item.title,
-                moq=item.moq,
-                unit_price_eur_minor=unit_eur,
-                list_price_eur_minor=list_eur,
-                currency="EUR",
-                quantity=item.quantity_available,
-                seller_name=item.seller_name,
-                collected_at=self._deps.clock.now(),
-                raw_signals={
-                    **dict(item.raw_signals),
-                    **({"seller_signals": dict(seller_signals)} if seller_signals else {}),
-                },
-            )
+            except _UnpriceableListing as exc:
+                skipped.append(
+                    SkippedListing(
+                        platform_id=item.platform_id,
+                        platform_offer_id=item.platform_offer_id,
+                        reason=exc.reason,
+                        currency_raw=item.currency,
+                    )
+                )
+                continue
+            provisional = provisional or listing_provisional
             converted.append((offer, item))
 
         # Cheapest first, then a stable tie-break so the result never depends on arrival order.
@@ -336,7 +334,76 @@ class ScrapingService:
                     kept_platform_offer_id=winner.id.split(":", 1)[1],
                 )
             )
-        return kept, duplicates, provisional
+        return kept, duplicates, provisional, skipped
+
+    async def _to_offer(
+        self,
+        *,
+        tenant_id: str,
+        mission_id: str,
+        item: RawOffer,
+        cache: dict[tuple[str, str], tuple[Mapping[str, Any], bool]],
+    ) -> tuple[Offer, bool]:
+        """One raw listing as a stored :class:`Offer`, or ``_UnpriceableListing``.
+
+        The domain's money constraints (integer minor units, ``moq >= 1``, a positive quantity, the closed
+        currency enum) exist for money safety and are **not** loosened here: a listing that violates them
+        is reported as skipped so the other listings of the same page still reach the gate.
+        """
+        try:
+            unit_eur, provisional = await self._deps.fx.to_eur_unit(
+                amount_minor=item.unit_price_minor, currency=item.currency, tenant_id=tenant_id
+            )
+        except FxUnavailable as exc:
+            # No usable rate for this currency: nothing to compare it against, so it is not an offer. The
+            # contract's closed reasons have no `rate_unavailable`; `unsupported_currency` is the honest
+            # one, and `currency_raw` says which currency could not be priced.
+            raise _UnpriceableListing("unsupported_currency") from exc
+
+        list_eur: int | None = None
+        if item.list_price_minor is not None:
+            try:
+                list_eur, list_provisional = await self._deps.fx.to_eur_unit(
+                    amount_minor=item.list_price_minor, currency=item.currency, tenant_id=tenant_id
+                )
+            except FxUnavailable as exc:
+                raise _UnpriceableListing("unsupported_currency") from exc
+            provisional = provisional or list_provisional
+
+        seller_signals, signals_provisional = await self._signals_for(
+            tenant_id=tenant_id,
+            mission_id=mission_id,
+            platform=item.platform_id,
+            seller_id=item.seller_id,
+            cache=cache,
+        )
+        provisional = provisional or signals_provisional
+        try:
+            offer = Offer(
+                id=f"{item.platform_id}:{item.platform_offer_id}",
+                tenant_id=tenant_id,
+                mission_id=mission_id,
+                platform_id=item.platform_id,
+                seller_id=item.seller_id,
+                product_id=item.product_id,
+                title=item.title,
+                moq=item.moq,
+                unit_price_eur_minor=unit_eur,
+                list_price_eur_minor=list_eur,
+                currency="EUR",
+                quantity=item.quantity_available,
+                seller_name=item.seller_name,
+                collected_at=self._deps.clock.now(),
+                raw_signals={
+                    **dict(item.raw_signals),
+                    **({"seller_signals": dict(seller_signals)} if seller_signals else {}),
+                },
+            )
+        except ValidationError as exc:
+            # An adapter that breaks the domain's money contract is a parsing problem, not a reason to
+            # lose the rest of the page.
+            raise _UnpriceableListing("parse_error") from exc
+        return offer, provisional
 
     async def record_events(self, *, mission: Any, result: ScrapeResult) -> Any:
         """Append the sourcing event to the mission and publish it to the SSE bus."""

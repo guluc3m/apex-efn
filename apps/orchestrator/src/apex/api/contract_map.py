@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from apex.agents.missions import Mission as DomainMission
+from apex.agents.missions import TERMINAL_STATUSES
 from apex.agents.missions import MissionEvent as DomainEvent
 from apex.agents.missions import MissionEventType, MissionStatus
 from apex.agents.offers import Offer, OfferAnalysis
@@ -76,6 +77,27 @@ def mission_state(status: MissionStatus) -> MissionState:
     return _STATUS_TO_STATE[status]
 
 
+def mission_state_from(mission: DomainMission) -> MissionState:
+    """Wire state of a mission, read from what actually happened.
+
+    The domain has one ``RUNNING`` status, but the contract (and the phase tiles in the UI) distinguish
+    sourcing, enriching, evaluating and awaiting a decision. Deriving it from the last event keeps the
+    screen truthful: a mission that already collected and analysed its offers is not still searching.
+    """
+    if mission.status in TERMINAL_STATUSES:
+        return _STATUS_TO_STATE[mission.status]
+    if mission.status is not MissionStatus.RUNNING:
+        return _STATUS_TO_STATE[mission.status]
+    last = mission.events[-1].type if mission.events else None
+    if last is MissionEventType.SOURCING_STARTED:
+        return MissionState.sourcing
+    if last is MissionEventType.OFFERS_COLLECTED:
+        return MissionState.enriching
+    if last is MissionEventType.ANALYSIS_COMPLETED:
+        return MissionState.awaiting_decision
+    return MissionState.sourcing
+
+
 def to_contract_request(
     request: SourcingRequest,
     *,
@@ -128,7 +150,7 @@ def to_contract_mission(
         sourcing_request_id=mission.sourcing_request_id,
         plan_id=None,
         paused=mission.paused,
-        state=mission_state(mission.status),
+        state=mission_state_from(mission),
         offers_discovered=discovered,
         offers_negotiated=_last_count(mission, "offers_negotiated"),
         offers_in_gate=in_gate,
