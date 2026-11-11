@@ -28,6 +28,7 @@ from apex.contracts.generated.models import (
     ActivateFinancialSnapshotRequest,
     SendIntakeMessageRequest,
 )
+from apex.domain.finance.csv_import import CsvImportError
 from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
 from apex.llm.transport import LLMHTTPError, LLMTransportError
@@ -230,6 +231,8 @@ async def upload_financial_csv(
         raise Problem(404, "Session not found", detail=str(exc)) from exc
     except MappingError as exc:
         raise Problem(422, "Invalid column_mapping", detail=str(exc)) from exc
+    except CsvImportError as exc:
+        raise Problem(422, "Unreadable financial CSV", detail=str(exc)) from exc
     except NotImplementedError as exc:
         # The importer or object storage is not wired yet: say so instead of failing with a 500.
         raise not_implemented(str(exc)) from exc

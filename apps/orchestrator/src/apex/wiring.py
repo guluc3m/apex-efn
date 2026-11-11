@@ -30,6 +30,7 @@ import httpx
 
 from apex.agents.analysis import AnalysisDeps, AnalysisNodes
 from apex.agents.browser_worker import HttpBrowserWorker
+from apex.agents.csv_importer import DomainCsvImporter
 from apex.agents.fx import DomainFxPort, InMemoryFxRateReader
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
 from apex.agents.header_mapping import HeaderMapper
@@ -87,15 +88,6 @@ class UnwiredDecisionPort:
     async def sign_service_event(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError(
             "service signing is not wired yet (DEV-2 apex.signing.api pending)"
-        )
-
-
-class UnwiredCsvImporter:
-    """The financial CSV parser is DEV-3's (D3-04). Until it lands, an upload says so instead of guessing."""
-
-    async def parse(self, content: bytes, *, base_currency: str, tenant_id: str, now: Any) -> Any:
-        raise NotImplementedError(
-            "the financial CSV importer is not wired yet (owner: DEV-3, D3-04)"
         )
 
 
@@ -369,7 +361,9 @@ def build_app_services(
     onboarding = OnboardingService(
         OnboardingDeps(
             store=InMemoryOnboardingStore(),
-            importer=UnwiredCsvImporter(),
+            importer=DomainCsvImporter(
+                rates=fx_rates or InMemoryFxRateReader(), config=tenant_config
+            ),
             objects=UnwiredObjectStore(),
             decisions=UnwiredDecisionPort(),
             clock=active_clock,
@@ -437,7 +431,6 @@ __all__ = [
     "AppServices",
     "DefaultRoleConfigProvider",
     "UnwiredBrowserWorker",
-    "UnwiredCsvImporter",
     "UnwiredFx",
     "UnwiredObjectStore",
     "UnwiredDecisionPort",
