@@ -1991,6 +1991,7 @@ class SigningSession(Base):
     )
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True, precision=6))
     ended_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True, precision=6))
+    network_ref: Mapped[str | None] = mapped_column(Text)
 
 
 class SourcingItem(Base):

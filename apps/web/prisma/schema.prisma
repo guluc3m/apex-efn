@@ -1231,6 +1231,8 @@ model SigningSession {
   authAt               DateTime             @map("auth_at") @db.Timestamptz(6)
   expiresAt            DateTime             @map("expires_at") @db.Timestamptz(6)
   deviceFingerprintRef String               @map("device_fingerprint_ref")
+  /// "<country>|<asn>" seen when the window opened (trusted proxy headers). Null when the proxy sent none.
+  networkRef           String?              @map("network_ref")
   decisionsSigned      String[]             @map("decisions_signed")
   maxDecisions         Int                  @map("max_decisions")
   status               SigningSessionStatus

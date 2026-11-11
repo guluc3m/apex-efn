@@ -22,7 +22,7 @@ from apex.api.keys import (
     get_signing_service,
     member_id,
 )
-from apex.api.signing import reauth_problem
+from apex.api.signing import NetworkRef, reauth_problem
 from apex.auth.deps import current_principal
 from apex.auth.models import Principal
 from apex.common.ids import IdGenerator
@@ -100,7 +100,12 @@ async def get_decision(id: str, principal: Reader, sessions: Sessions) -> Decisi
 
 @router.post("/{id}/sign", response_model=Signature, status_code=status.HTTP_201_CREATED)
 async def sign_decision(
-    id: str, body: SignDecisionRequest, principal: Signer, sessions: Sessions, clock: Now
+    id: str,
+    body: SignDecisionRequest,
+    principal: Signer,
+    sessions: Sessions,
+    clock: Now,
+    network_ref: NetworkRef,
 ) -> Signature:
     try:
         async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
@@ -116,6 +121,7 @@ async def sign_decision(
                 device_fingerprint_ref=body.device_fingerprint_ref,
                 client_attestation=body.client_attestation,
                 now=clock.now(),
+                network_ref=network_ref,
             )
             return _signature(row)
     except ReauthRequired as error:
