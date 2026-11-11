@@ -73,6 +73,7 @@ DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
     {
         ("PATCH", "/v1/onboarding/sessions/{id}"),
         ("GET", "/v1/onboarding/{id}/financial-csv/{import_id}"),
+        ("POST", "/v1/onboarding/{id}/financial-csv/mapping"),
         # Read a decision and its canonical payload before signing (D6-151-contract).
         ("GET", "/v1/decisions/{id}"),
         # IntakeAgent chat (D6-04-contract, D4-07b).
