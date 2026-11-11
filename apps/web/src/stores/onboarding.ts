@@ -23,6 +23,8 @@ interface OnboardingStore {
   /** Bumped when the agent changes a draft, so a mounted form remounts with the new values. */
   draftsRevision: number
   applyAgentDraft: <K extends FormStepId>(step: K, values: Drafts[K]) => void
+  /** Adds a budget and negotiation row for a free-text category (ignored when it already exists). */
+  addCategory: (name: string) => void
   save: <K extends FormStepId>(step: K, values: Drafts[K]) => void
   setCsv: (csv: CsvSelection | null) => void
 }
@@ -37,6 +39,21 @@ export const useOnboarding = create<OnboardingStore>((set) => ({
   draftsRevision: 0,
   restore: (values) => set((s) => ({ drafts: { ...s.drafts, ...values }, draftsRevision: s.draftsRevision + 1 })),
   applyAgentDraft: (step, values) => set((s) => ({ drafts: { ...s.drafts, [step]: values }, draftsRevision: s.draftsRevision + 1 })),
+  addCategory: (name) =>
+    set((s) => {
+      const label = name.trim()
+      const exists = s.drafts.presupuesto.categorias.some((c) => c.label.toLowerCase() === label.toLowerCase())
+      if (!label || exists) return s
+      const id = label.toLowerCase()
+      return {
+        drafts: {
+          ...s.drafts,
+          presupuesto: { ...s.drafts.presupuesto, categorias: [...s.drafts.presupuesto.categorias, { id, label, envelope: '', maximo: '' }] },
+          negociacion: { ...s.drafts.negociacion, categorias: [...s.drafts.negociacion.categorias, { id, label, objetivo: '', maximo: '' }] },
+        },
+        draftsRevision: s.draftsRevision + 1,
+      }
+    }),
   save: (step, values) => set((s) => ({ drafts: { ...s.drafts, [step]: values } })),
   setCsv: (csv) => set({ csv }),
 }))

@@ -1,10 +1,5 @@
 import type { Drafts } from '@/components/onboarding/schemas'
 
-const categorias = [
-  { id: 'bearings', label: 'Rodamientos' },
-  { id: 'valves', label: 'Válvulas' },
-]
-
 // Empty drafts: the server restores company and sector (GET /v1/onboarding/sessions). Amounts and percentages have no default.
 export const initialDrafts: Drafts = {
   empresa: { razonSocial: '', cif: '', pais: 'es', aduana: 'eori', direccion: '', facturacionIgual: true },
@@ -13,11 +8,7 @@ export const initialDrafts: Drafts = {
     divisa: 'EUR',
     pago: 'd60',
     colchon: '15',
-    categorias: [
-      { id: 'bearings', label: 'Rodamientos', envelope: '25.000,00 €', maximo: '12.000,00 €' },
-      { id: 'valves', label: 'Válvulas', envelope: '18.000,00 €', maximo: '10.000,00 €' },
-      { id: 'cables', label: 'Cable y sensores', envelope: '9.000,00 €', maximo: '5.000,00 €' },
-    ],
+    categorias: [],
   },
   politica: {
     aprobacion: '',
@@ -29,7 +20,7 @@ export const initialDrafts: Drafts = {
     vetados: '',
   },
   negociacion: {
-    categorias: categorias.map((c) => ({ ...c, objetivo: '', maximo: '' })),
+    categorias: [],
     agresividad: 'balanced',
     tono: 'formal',
     idioma: 'seller',

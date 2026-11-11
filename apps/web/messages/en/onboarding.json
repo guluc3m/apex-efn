@@ -134,6 +134,8 @@
     "envelope": "Monthly envelope",
     "maxPerOrder": "Maximum per order",
     "addCategory": "Add category",
+    "newCategory": "New category",
+    "categoryNameRequired": "Type the category name",
     "approvalFrom": "Human approval from",
     "dualFrom": "Dual signature from",
     "amountRequired": "Amount required",

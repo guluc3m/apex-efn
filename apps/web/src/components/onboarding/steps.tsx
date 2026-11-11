@@ -1,7 +1,7 @@
 'use client'
 
 import type { HeaderMappingSuggestion } from '@apex/shared-types/contracts'
-import { Button, Checkbox, Icon, Select } from '@apex/ui'
+import { Button, Checkbox, Icon, Input, Label, Select } from '@apex/ui'
 import { FileText, FolderOpen, Download, Plus, Upload } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -10,7 +10,7 @@ import type { z } from 'zod'
 
 import { AppLink } from '@/components/app-link'
 import { certifications } from '@/fixtures/onboarding'
-import { useEffectiveConfig } from '@/lib/api'
+import { useCategories, useEffectiveConfig } from '@/lib/api'
 import { api } from '@/lib/api'
 import { toRuleRows } from '@/lib/config-rules'
 import { ensureSession } from '@/lib/onboarding-session'
@@ -93,6 +93,46 @@ export function SectorStep() {
   )
 }
 
+/** Free-text new category. The server's categories are only suggestions: there is no global catalog. */
+function AddCategory() {
+  const t = useTranslations('onboarding.fields')
+  const [name, setName] = useState('')
+  const suggestions = useCategories().data?.items ?? []
+  const add = () => {
+    useOnboarding.getState().addCategory(name)
+    setName('')
+  }
+  return (
+    <div className="flex items-end gap-2">
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="new-category">{t('newCategory')}</Label>
+        <Input
+          id="new-category"
+          list="category-suggestions"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              add()
+            }
+          }}
+          className="w-64"
+        />
+        <datalist id="category-suggestions">
+          {suggestions.map((c) => (
+            <option key={c.id} value={c.id} />
+          ))}
+        </datalist>
+      </div>
+      <Button type="button" variant="sec" onClick={add} disabledReason={name.trim() ? undefined : t('categoryNameRequired')}>
+        <Icon icon={Plus} />
+        {t('addCategory')}
+      </Button>
+    </div>
+  )
+}
+
 export function BudgetStep() {
   const t = useTranslations('onboarding')
   const currency = useOptions('currency', ['EUR', 'USD', 'CNY'])
@@ -127,13 +167,7 @@ export function BudgetStep() {
           ))}
         </tbody>
       </table>
-      {/* //todo_#378: alta de categorías nuevas (necesita el catálogo del servidor) */}
-      <div>
-        <Button variant="sec" disabledReason={t('pending')}>
-          <Icon icon={Plus} />
-          {t('fields.addCategory')}
-        </Button>
-      </div>
+      <AddCategory />
     </>
   )
 }

@@ -107,6 +107,7 @@ const API = '*/api/v1'
 
 export const handlers = [
   http.post(`${API}/onboarding/sessions`, () => HttpResponse.json(onboardingSessionFixture, { status: 201 })),
+  http.get(`${API}/categories`, () => HttpResponse.json({ items: [{ id: 'bearings' }, { id: 'valves' }] })),
   http.get(`${API}/onboarding/sessions`, () => HttpResponse.json({ items: [onboardingSessionFixture] })),
   http.get(`${API}/onboarding/sessions/:id`, ({ params }) =>
     HttpResponse.json({ ...onboardingSessionFixture, id: String(params.id) }),

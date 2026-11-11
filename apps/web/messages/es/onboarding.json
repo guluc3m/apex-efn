@@ -134,6 +134,8 @@
     "envelope": "Envelope mensual",
     "maxPerOrder": "Máximo por operación",
     "addCategory": "Añadir categoría",
+    "newCategory": "Nueva categoría",
+    "categoryNameRequired": "Escribe el nombre de la categoría",
     "approvalFrom": "Aprobación humana a partir de",
     "dualFrom": "Doble firma a partir de",
     "amountRequired": "Importe obligatorio",

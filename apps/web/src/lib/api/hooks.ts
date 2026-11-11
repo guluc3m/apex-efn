@@ -9,6 +9,7 @@ import { ApiError } from './problem'
 export const api = createOperations(createApiClient())
 
 export const queryKeys = {
+  categories: ['categories'] as const,
   onboardingSession: (id: string) => ['onboarding', id] as const,
   currentOnboarding: ['onboarding', 'current'] as const,
   intakeMessages: (id: string) => ['onboarding', id, 'messages'] as const,
@@ -209,6 +210,10 @@ export function useGateAction() {
     mutationFn: (v: { id: string; body: Parameters<typeof api.applyGateQueueAction>[1] }) => api.applyGateQueueAction(v.id, v.body),
     onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ['deals'] }), qc.invalidateQueries({ queryKey: ['gate'] })]),
   })
+}
+
+export function useCategories() {
+  return useQuery({ queryKey: queryKeys.categories, queryFn: ({ signal }) => api.listCategories(signal) })
 }
 
 export function useOnboardingSession(id: string | null) {
