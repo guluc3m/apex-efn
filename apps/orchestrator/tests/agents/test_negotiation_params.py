@@ -199,3 +199,40 @@ async def test_the_discount_is_rounded_down_so_the_guardrail_is_never_looser() -
     params, _, _ = await resolver(_input(), TENANT)
     assert params.target_discount_bp == 850
     assert params.max_discount_bp == 1550
+
+
+# ----- autonomous mode (D5-11) -------------------------------------------------------------------
+
+
+class _Flags:
+    def __init__(self, enabled: bool) -> None:
+        self.enabled = enabled
+        self.calls: list[tuple[str, dict[str, str]]] = []
+
+    def is_enabled(self, name: str, context: dict[str, str] | None = None) -> bool:
+        self.calls.append((name, dict(context or {})))
+        return self.enabled
+
+    def is_platform_enabled(self, platform_id: str) -> bool:
+        return True
+
+
+async def test_phase_1_is_semi_automatic_when_the_flag_is_absent() -> None:
+    """Spec §10: every drafted message waits for a human unless the tenant opts in."""
+    resolver, _ = await _resolver()
+    params, _, _ = await resolver(_input(), TENANT)
+    assert params.semi_automatic is True
+
+
+async def test_the_autonomous_send_flag_turns_off_the_approval_step() -> None:
+    config, port = _service()
+    await _seed_config(config, port, {"neg": {"target_discount": "0.08", "max_discount": "0.15"}})
+    offers = InMemoryOfferStore()
+    await offers.add(_offer())
+    flags = _Flags(enabled=True)
+    resolver = NegotiationParamsResolver(
+        config=config, offers=offers, accounts=_Accounts(), flags=flags
+    )
+    params, _, _ = await resolver(_input(), TENANT)
+    assert params.semi_automatic is False
+    assert flags.calls == [("negotiation.autonomous_send", {"tenant_id": TENANT})]
