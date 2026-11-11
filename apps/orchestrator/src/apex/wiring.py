@@ -57,6 +57,7 @@ from apex.agents.onboarding import (
     InMemoryOnboardingStore,
     ObjectStore,
     OnboardingDeps,
+    OnboardingIncomplete,
     OnboardingService,
 )
 from apex.agents.recommendation import EvaluatorAgent
