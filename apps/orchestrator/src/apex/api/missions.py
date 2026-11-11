@@ -176,6 +176,30 @@ async def stream_mission_events(
     )
 
 
+@router.get("", tags=["missions"])
+async def list_missions() -> None:
+    """Missions of the tenant (contract route, issue #303). 501 until DEV-4 implements it."""
+    raise not_implemented("listing missions is not implemented yet")
+
+
+@router.post("/{id}/pause", tags=["missions"])
+async def pause_mission(id: str) -> None:
+    """Contract route (issue #303)."""
+    raise not_implemented("pausing a mission is not implemented yet")
+
+
+@router.post("/{id}/resume", tags=["missions"])
+async def resume_mission(id: str) -> None:
+    """Contract route (issue #303)."""
+    raise not_implemented("resuming a mission is not implemented yet")
+
+
+@router.post("/{id}/cancel", tags=["missions"])
+async def cancel_mission(id: str) -> None:
+    """Contract route (issue #303)."""
+    raise not_implemented("cancelling a mission is not implemented yet")
+
+
 @router.get("/{id}/offers")
 async def list_mission_offers(id: str) -> None:
     """Offers with SellerConfidence, PriceSanityCheck and FinancialFit (D4-10)."""
