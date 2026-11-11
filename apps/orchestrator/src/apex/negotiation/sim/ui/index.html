@@ -70,18 +70,21 @@
       .buyer { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
       .buyer-head { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--wash); }
       .buyer-head h3 { margin: 0; font-size: 14px; }
-      .buyer-body { display: grid; grid-template-columns: 300px 1fr; gap: 0; }
-      .steps { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; }
+      .buyer-body { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 0; align-items: start; }
+      .steps { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; align-self: stretch; }
       .steps li { list-style: none; margin: 0 0 8px; padding-left: 14px; position: relative; }
       .steps li::before { content: ""; position: absolute; left: 0; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
       .steps li.done::before { background: var(--accent); }
       .steps .kind { font-weight: 600; }
-      .transcript { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow: auto; }
-      .line { max-width: 78%; padding: 7px 10px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
+      .transcript { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: min(60vh, 620px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+      .line { max-width: 80%; padding: 8px 11px; border-radius: 10px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
       .line.buyer { align-self: flex-end; background: #eef4ff; }
       .line.seller { align-self: flex-start; background: var(--wash); border: 1px solid var(--line); }
       .line .who { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
       .empty { color: var(--muted); font-size: 13px; }
+      .legend { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+      .steps li.legend { padding-left: 0; margin-bottom: 10px; }
+      .steps li.legend::before { content: none; }
       footer { margin-top: 34px; color: var(--muted); font-size: 12px; }
       code { background: var(--wash); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
       @media (max-width: 760px) { .buyer-body { grid-template-columns: 1fr; } .steps { border-right: 0; border-bottom: 1px solid var(--line); } }
@@ -238,8 +241,8 @@
                   </span>
                 </div>
                 <div class="buyer-body">
-                  <ul class="steps">${steps}</ul>
-                  <div class="transcript">${lines}</div>
+                  <ul class="steps"><li class="legend">Offer ladder</li>${steps}</ul>
+                  <div class="transcript"><p class="legend">Conversation</p>${lines}</div>
                 </div>
               </div>`;
           })
