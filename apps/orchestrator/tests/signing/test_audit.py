@@ -166,3 +166,27 @@ async def test_anchor_detects_a_rewritten_chain(h: Harness, migrated_db: str) ->
     async with tenant_session(OTHER, sessionmaker=h.factory) as session:
         await anchor.anchor_head(session, broken, OTHER, now=T0, retention=timedelta(days=1))
     assert not broken.objects
+
+
+async def test_scheduled_service_anchors_good_chains_and_reports_broken_ones(
+    h: Harness, migrated_db: str
+) -> None:
+    from apex.audit.service import AuditChainService
+
+    with psycopg.connect(migrated_db, autocommit=True) as admin:
+        admin.execute(
+            "INSERT INTO tenants (id, name, country, base_currency, created_at, updated_at) "
+            "VALUES ('tenant-anchor-c', 'c', 'ES', 'EUR', %s, %s)",
+            [T0, T0],
+        )
+    await _fill(h, "tenant-anchor-c", 2)
+    store = FakeStore()
+
+    async def tenants() -> list[str]:
+        return ["tenant-anchor-c", TENANT]  # TENANT was left broken by the tamper test above
+
+    result = await AuditChainService(
+        h.factory, tenants, store, h.clock, timedelta(days=365)
+    ).verify_chain()
+    assert not result.chain_ok and result.first_broken_seq is not None
+    assert list(store.objects) == [f"anchors/tenant-anchor-c/{2:020d}.json"]  # only the good chain
