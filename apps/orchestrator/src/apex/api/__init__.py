@@ -16,6 +16,7 @@ from apex.api.keys import router as keys_router
 from apex.api.missions import router as missions_router
 from apex.api.negotiations import router as negotiations_router
 from apex.api.onboarding import router as onboarding_router
+from apex.api.profiles import router as profiles_router
 from apex.api.sellers import router as sellers_router
 from apex.api.signing import router as signing_router
 from apex.api.sourcing import router as sourcing_router
@@ -37,3 +38,4 @@ router.include_router(decisions_router, prefix="/decisions", tags=["decisions"])
 router.include_router(keys_router, prefix="/keys", tags=["keys"])
 router.include_router(audit_router, prefix="/audit", tags=["audit"])
 router.include_router(approvals_router, prefix="/approvals", tags=["approvals"])
+router.include_router(profiles_router, prefix="/profiles", tags=["config"])

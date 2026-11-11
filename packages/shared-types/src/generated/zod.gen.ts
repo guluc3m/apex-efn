@@ -370,6 +370,7 @@ export type createMissionRequestZodType = z.infer<typeof zCreateMissionRequest>
 export const zMission = z.object({
   id: z.string(),
   sourcing_request_id: z.string(),
+  profile_id: z.string().nullish(),
   plan_id: z.string().nullish(),
   state: zMissionState,
   offers_discovered: z.number().int().gte(0),
@@ -383,6 +384,32 @@ export const zMission = z.object({
 })
 
 export type missionZodType = z.infer<typeof zMission>
+
+export const zMissionPage = z.object({
+  items: z.array(zMission),
+  next_cursor: z.string().nullable(),
+})
+
+export type missionPageZodType = z.infer<typeof zMissionPage>
+
+export const zConfigVersionSummary = z.object({
+  config_version: z.number().int().gte(1),
+  category: z.string().nullish(),
+  created_at: z.string().datetime(),
+  decision_id: z.string().nullish(),
+  signer_id: z.string().nullish(),
+  reason: z.string().nullish(),
+  summary: z.array(z.string()).optional(),
+})
+
+export type configVersionSummaryZodType = z.infer<typeof zConfigVersionSummary>
+
+export const zConfigVersionPage = z.object({
+  items: z.array(zConfigVersionSummary),
+  next_cursor: z.string().nullable(),
+})
+
+export type configVersionPageZodType = z.infer<typeof zConfigVersionPage>
 
 export const zSeller = z.object({
   id: z.string(),
@@ -928,6 +955,12 @@ export const zUserProfilePreference = z.object({
 })
 
 export type userProfilePreferenceZodType = z.infer<typeof zUserProfilePreference>
+
+export const zProfileList = z.object({
+  items: z.array(zUserProfilePreference),
+})
+
+export type profileListZodType = z.infer<typeof zProfileList>
 
 export const zSellerConfigBand = z.enum(['high', 'medium', 'low'])
 
@@ -1557,6 +1590,8 @@ export const zPriceSanityCheck = z.object({
   dispersion_measure: z.enum(['mad', 'iqr', 'relative']),
   dispersion_value: z.number(),
   sample_size: z.number().int().gte(0),
+  band_lower: zMoney.nullish(),
+  band_upper: zMoney.nullish(),
   index_score: z.number().nullish(),
   relative_deviation: z.number(),
   band: zPriceSanityBand,
@@ -1601,6 +1636,7 @@ export const zOffer = z.object({
 export type offerZodType = z.infer<typeof zOffer>
 
 export const zOfferPage = z.object({
+  total_count: z.number().int().gte(0).nullish(),
   items: z.array(zOffer),
   next_cursor: z.string().nullable(),
 })
@@ -1837,6 +1873,7 @@ export const zConfigChangeRequest = z.object({
   base_config_version: z.number().int().gte(1),
   category: z.string().nullish(),
   patch: z.record(z.unknown()),
+  reason: z.string().max(500).nullish(),
 })
 
 export type configChangeRequestZodType = z.infer<typeof zConfigChangeRequest>
@@ -1968,6 +2005,17 @@ export const zCreateSourcingRequestHeaders = z.object({
  */
 export const zCreateSourcingRequestResponse = zSourcingRequest
 
+export const zListMissionsQuery = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().gte(1).lte(200).optional().default(50),
+  state: zMissionState.optional(),
+})
+
+/**
+ * Page of missions.
+ */
+export const zListMissionsResponse = zMissionPage
+
 export const zCreateMissionBody = zCreateMissionRequest
 
 export const zCreateMissionHeaders = z.object({
@@ -1987,6 +2035,45 @@ export const zGetMissionPath = z.object({
  * Mission.
  */
 export const zGetMissionResponse = zMission
+
+export const zPauseMissionHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zPauseMissionPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Mission after the change.
+ */
+export const zPauseMissionResponse = zMission
+
+export const zResumeMissionHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zResumeMissionPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Mission after the change.
+ */
+export const zResumeMissionResponse = zMission
+
+export const zCancelMissionHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zCancelMissionPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Mission after the change.
+ */
+export const zCancelMissionResponse = zMission
 
 export const zStreamMissionEventsHeaders = z.object({
   'Last-Event-ID': z.string().optional(),
@@ -2144,6 +2231,21 @@ export const zGetEffectiveConfigQuery = z.object({
  * Effective configuration.
  */
 export const zGetEffectiveConfigResponse = zEffectiveConfig
+
+export const zListConfigVersionsQuery = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().gte(1).lte(200).optional().default(50),
+})
+
+/**
+ * Page of versions.
+ */
+export const zListConfigVersionsResponse = zConfigVersionPage
+
+/**
+ * Profiles.
+ */
+export const zListProfilesResponse = zProfileList
 
 export const zProposeConfigChangeBody = zConfigChangeRequest
 

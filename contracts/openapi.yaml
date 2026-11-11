@@ -204,6 +204,25 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '422': {$ref: '#/components/responses/ValidationProblem'}
   /v1/missions:
+    get:
+      tags: [missions]
+      operationId: listMissions
+      summary: Missions of the tenant, newest first.
+      parameters:
+      - {$ref: '#/components/parameters/Cursor'}
+      - {$ref: '#/components/parameters/Limit'}
+      - name: state
+        in: query
+        required: false
+        schema: {$ref: '#/components/schemas/MissionState'}
+      responses:
+        '200':
+          description: Page of missions.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MissionPage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
     post:
       tags: [missions]
       operationId: createMission
@@ -242,6 +261,63 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /v1/missions/{id}/pause:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [missions]
+      operationId: pauseMission
+      summary: Stop scheduling new work for the mission. Running steps finish; nothing is lost.
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '200':
+          description: Mission after the change.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Mission'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /v1/missions/{id}/resume:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [missions]
+      operationId: resumeMission
+      summary: Resume a paused mission.
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '200':
+          description: Mission after the change.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Mission'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /v1/missions/{id}/cancel:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [missions]
+      operationId: cancelMission
+      summary: Cancel the mission for good. Offers already in the gate queue stay there.
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '200':
+          description: Mission after the change.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Mission'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
   /v1/missions/{id}/events:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
@@ -537,6 +613,35 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/EffectiveConfig'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /v1/config/versions:
+    get:
+      tags: [config]
+      operationId: listConfigVersions
+      summary: History of configuration versions, newest first.
+      parameters:
+      - {$ref: '#/components/parameters/Cursor'}
+      - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200':
+          description: Page of versions.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConfigVersionPage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /v1/profiles:
+    get:
+      tags: [config]
+      operationId: listProfiles
+      summary: Ranking profiles the user can pick (weights plus hard constraints).
+      responses:
+        '200':
+          description: Profiles.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProfileList'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
   /v1/config/proposals:
@@ -1707,6 +1812,9 @@ components:
       properties:
         id: {type: string}
         sourcing_request_id: {type: string}
+        profile_id:
+          type: [string, 'null']
+          description: Default ranking profile of the mission (a UserProfilePreference id).
         plan_id:
           type: [string, 'null']
         state: {$ref: '#/components/schemas/MissionState'}
@@ -1723,6 +1831,50 @@ components:
           anyOf:
           - {$ref: '#/components/schemas/Problem'}
           - {type: 'null'}
+    MissionPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/Mission'}
+        next_cursor:
+          type: [string, 'null']
+    ProfileList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/UserProfilePreference'}
+    ConfigVersionSummary:
+      type: object
+      required: [config_version, created_at]
+      properties:
+        config_version: {type: integer, minimum: 1}
+        category:
+          type: [string, 'null']
+        created_at: {type: string, format: date-time}
+        decision_id:
+          type: [string, 'null']
+          description: The signed decision that created this version. Null for the seeded baseline.
+        signer_id:
+          type: [string, 'null']
+        reason:
+          type: [string, 'null']
+        summary:
+          type: array
+          description: Dotted config keys the version changed.
+          items: {type: string}
+    ConfigVersionPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ConfigVersionSummary'}
+        next_cursor:
+          type: [string, 'null']
     MissionEvent:
       type: object
       description: Payload of one SSE message. The SSE `event` field equals `type`.
@@ -1808,6 +1960,10 @@ components:
       type: object
       required: [items, next_cursor]
       properties:
+        total_count:
+          type: [integer, 'null']
+          minimum: 0
+          description: Offers matching the filters across all pages, when known.
         items:
           type: array
           items: {$ref: '#/components/schemas/Offer'}
@@ -1969,9 +2125,20 @@ components:
           enum: [mad, iqr, relative]
         dispersion_value: {type: number}
         sample_size: {type: integer, minimum: 0}
+        band_lower:
+          anyOf:
+          - {$ref: '#/components/schemas/Money'}
+          - {type: 'null'}
+          description: Lower limit of the normal price band, so a chart can draw it. Null when there is no reference.
+        band_upper:
+          anyOf:
+          - {$ref: '#/components/schemas/Money'}
+          - {type: 'null'}
         index_score:
           type: [number, 'null']
-        relative_deviation: {type: number}
+        relative_deviation:
+          type: number
+          description: Ratio against the reference centre, not a percentage. -0.04 is 4% below the median.
         band: {$ref: '#/components/schemas/PriceSanityBand'}
         decision: {$ref: '#/components/schemas/SanityDecision'}
         explanations:
@@ -2887,3 +3054,7 @@ components:
         category:
           type: [string, 'null']
         patch: {type: object, description: Deep-merge patch. Explicit null unsets a key., additionalProperties: true}
+        reason:
+          type: [string, 'null']
+          maxLength: 500
+          description: Why the change is made. Part of the signed payload and shown in the version history.

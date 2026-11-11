@@ -533,6 +533,10 @@ export type CreateMissionRequest = {
 export type Mission = {
   id: string
   sourcing_request_id: string
+  /**
+   * Default ranking profile of the mission (a UserProfilePreference id).
+   */
+  profile_id?: string | null
   plan_id?: string | null
   state: MissionState
   offers_discovered: number
@@ -543,6 +547,36 @@ export type Mission = {
   started_at: string
   completed_at?: string | null
   error?: Problem | null
+}
+
+export type MissionPage = {
+  items: Array<Mission>
+  next_cursor: string | null
+}
+
+export type ProfileList = {
+  items: Array<UserProfilePreference>
+}
+
+export type ConfigVersionSummary = {
+  config_version: number
+  category?: string | null
+  created_at: string
+  /**
+   * The signed decision that created this version. Null for the seeded baseline.
+   */
+  decision_id?: string | null
+  signer_id?: string | null
+  reason?: string | null
+  /**
+   * Dotted config keys the version changed.
+   */
+  summary?: Array<string>
+}
+
+export type ConfigVersionPage = {
+  items: Array<ConfigVersionSummary>
+  next_cursor: string | null
 }
 
 /**
@@ -599,6 +633,10 @@ export type Offer = {
 }
 
 export type OfferPage = {
+  /**
+   * Offers matching the filters across all pages, when known.
+   */
+  total_count?: number | null
   items: Array<Offer>
   next_cursor: string | null
 }
@@ -703,7 +741,15 @@ export type PriceSanityCheck = {
   dispersion_measure: 'mad' | 'iqr' | 'relative'
   dispersion_value: number
   sample_size: number
+  /**
+   * Lower limit of the normal price band, so a chart can draw it. Null when there is no reference.
+   */
+  band_lower?: Money | null
+  band_upper?: Money | null
   index_score?: number | null
+  /**
+   * Ratio against the reference centre, not a percentage. -0.04 is 4% below the median.
+   */
   relative_deviation: number
   band: PriceSanityBand
   decision: SanityDecision
@@ -1604,6 +1650,10 @@ export type ConfigChangeRequest = {
   patch: {
     [key: string]: unknown
   }
+  /**
+   * Why the change is made. Part of the signed payload and shown in the version history.
+   */
+  reason?: string | null
 }
 
 export type PathId = string
@@ -1970,6 +2020,42 @@ export type CreateSourcingRequestResponses = {
 export type CreateSourcingRequestResponse =
   CreateSourcingRequestResponses[keyof CreateSourcingRequestResponses]
 
+export type ListMissionsData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * Opaque cursor returned as `next_cursor` by the previous page.
+     */
+    cursor?: string
+    limit?: number
+    state?: MissionState
+  }
+  url: '/v1/missions'
+}
+
+export type ListMissionsErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListMissionsError = ListMissionsErrors[keyof ListMissionsErrors]
+
+export type ListMissionsResponses = {
+  /**
+   * Page of missions.
+   */
+  200: MissionPage
+}
+
+export type ListMissionsResponse = ListMissionsResponses[keyof ListMissionsResponses]
+
 export type CreateMissionData = {
   body: CreateMissionRequest
   headers: {
@@ -2047,6 +2133,141 @@ export type GetMissionResponses = {
 }
 
 export type GetMissionResponse = GetMissionResponses[keyof GetMissionResponses]
+
+export type PauseMissionData = {
+  body?: never
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/missions/{id}/pause'
+}
+
+export type PauseMissionErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+}
+
+export type PauseMissionError = PauseMissionErrors[keyof PauseMissionErrors]
+
+export type PauseMissionResponses = {
+  /**
+   * Mission after the change.
+   */
+  200: Mission
+}
+
+export type PauseMissionResponse = PauseMissionResponses[keyof PauseMissionResponses]
+
+export type ResumeMissionData = {
+  body?: never
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/missions/{id}/resume'
+}
+
+export type ResumeMissionErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+}
+
+export type ResumeMissionError = ResumeMissionErrors[keyof ResumeMissionErrors]
+
+export type ResumeMissionResponses = {
+  /**
+   * Mission after the change.
+   */
+  200: Mission
+}
+
+export type ResumeMissionResponse = ResumeMissionResponses[keyof ResumeMissionResponses]
+
+export type CancelMissionData = {
+  body?: never
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/missions/{id}/cancel'
+}
+
+export type CancelMissionErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+}
+
+export type CancelMissionError = CancelMissionErrors[keyof CancelMissionErrors]
+
+export type CancelMissionResponses = {
+  /**
+   * Mission after the change.
+   */
+  200: Mission
+}
+
+export type CancelMissionResponse = CancelMissionResponses[keyof CancelMissionResponses]
 
 export type StreamMissionEventsData = {
   body?: never
@@ -2541,6 +2762,71 @@ export type GetEffectiveConfigResponses = {
 
 export type GetEffectiveConfigResponse =
   GetEffectiveConfigResponses[keyof GetEffectiveConfigResponses]
+
+export type ListConfigVersionsData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * Opaque cursor returned as `next_cursor` by the previous page.
+     */
+    cursor?: string
+    limit?: number
+  }
+  url: '/v1/config/versions'
+}
+
+export type ListConfigVersionsErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListConfigVersionsError = ListConfigVersionsErrors[keyof ListConfigVersionsErrors]
+
+export type ListConfigVersionsResponses = {
+  /**
+   * Page of versions.
+   */
+  200: ConfigVersionPage
+}
+
+export type ListConfigVersionsResponse =
+  ListConfigVersionsResponses[keyof ListConfigVersionsResponses]
+
+export type ListProfilesData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/v1/profiles'
+}
+
+export type ListProfilesErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListProfilesError = ListProfilesErrors[keyof ListProfilesErrors]
+
+export type ListProfilesResponses = {
+  /**
+   * Profiles.
+   */
+  200: ProfileList
+}
+
+export type ListProfilesResponse = ListProfilesResponses[keyof ListProfilesResponses]
 
 export type ProposeConfigChangeData = {
   body: ConfigChangeRequest

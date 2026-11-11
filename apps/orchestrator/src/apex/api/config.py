@@ -130,3 +130,9 @@ async def propose_change(
     except NotImplementedError as exc:
         raise not_implemented(str(exc)) from exc
     return DecisionAccepted(decision_id=decision_id, status=DecisionStatus.pending_signature)
+
+
+@router.get("/versions", tags=["config"])
+async def list_config_versions() -> None:
+    """Config version history (contract route, issue #302). 501 until DEV-4 implements it."""
+    raise not_implemented("config version history is not implemented yet")

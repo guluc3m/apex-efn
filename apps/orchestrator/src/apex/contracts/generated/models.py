@@ -347,6 +347,10 @@ class CreateMissionRequest(BaseModel):
 class Mission(BaseModel):
     id: str
     sourcing_request_id: str
+    profile_id: Annotated[
+        str | None,
+        Field(description="Default ranking profile of the mission (a UserProfilePreference id)."),
+    ] = None
     plan_id: str | None = None
     state: MissionState
     offers_discovered: Annotated[int, Field(ge=0)]
@@ -357,6 +361,33 @@ class Mission(BaseModel):
     started_at: AwareDatetime
     completed_at: AwareDatetime | None = None
     error: Problem | None = None
+
+
+class MissionPage(BaseModel):
+    items: list[Mission]
+    next_cursor: str | None
+
+
+class ConfigVersionSummary(BaseModel):
+    config_version: Annotated[int, Field(ge=1)]
+    category: str | None = None
+    created_at: AwareDatetime
+    decision_id: Annotated[
+        str | None,
+        Field(
+            description="The signed decision that created this version. Null for the seeded baseline."
+        ),
+    ] = None
+    signer_id: str | None = None
+    reason: str | None = None
+    summary: Annotated[
+        list[str] | None, Field(description="Dotted config keys the version changed.")
+    ] = None
+
+
+class ConfigVersionPage(BaseModel):
+    items: list[ConfigVersionSummary]
+    next_cursor: str | None
 
 
 class Seller(BaseModel):
@@ -1070,6 +1101,13 @@ class ConfigChangeRequest(BaseModel):
         dict[str, Any],
         Field(description="Deep-merge patch. Explicit null unsets a key."),
     ]
+    reason: Annotated[
+        str | None,
+        Field(
+            description="Why the change is made. Part of the signed payload and shown in the version history.",
+            max_length=500,
+        ),
+    ] = None
 
 
 class BlockReason(BaseModel):
@@ -1310,8 +1348,20 @@ class PriceSanityCheck(BaseModel):
     dispersion_measure: DispersionMeasure
     dispersion_value: float
     sample_size: Annotated[int, Field(ge=0)]
+    band_lower: Annotated[
+        Money | None,
+        Field(
+            description="Lower limit of the normal price band, so a chart can draw it. Null when there is no reference."
+        ),
+    ] = None
+    band_upper: Money | None = None
     index_score: float | None = None
-    relative_deviation: float
+    relative_deviation: Annotated[
+        float,
+        Field(
+            description="Ratio against the reference centre, not a percentage. -0.04 is 4% below the median."
+        ),
+    ]
     band: PriceSanityBand
     decision: SanityDecision
     explanations: list[PriceExplanation]
@@ -1646,6 +1696,10 @@ class SourcingRequest(BaseModel):
     created_at: AwareDatetime
 
 
+class ProfileList(BaseModel):
+    items: list[UserProfilePreference]
+
+
 class LandedCostBreakdown(BaseModel):
     """
     Line by line. The lines add up exactly to `total` in minor units (criterion 4).
@@ -1820,6 +1874,13 @@ class Offer(BaseModel):
 
 
 class OfferPage(BaseModel):
+    total_count: Annotated[
+        int | None,
+        Field(
+            description="Offers matching the filters across all pages, when known.",
+            ge=0,
+        ),
+    ] = None
     items: list[Offer]
     next_cursor: str | None
 
