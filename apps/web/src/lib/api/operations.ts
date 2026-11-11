@@ -40,6 +40,8 @@ import type {
   ListApprovalsData,
   ListApprovalsResponse,
   GetSigningSessionResponse,
+  ListAuditEventsData,
+  ListAuditEventsResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
   OpenSigningSessionResponse,
@@ -57,6 +59,8 @@ import type {
   RevokeSigningKeyResponse,
   SignDecisionData,
   SignDecisionResponse,
+  VerifyAuditChainResponse,
+  VerifyDecisionResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
@@ -206,6 +210,15 @@ export function createOperations(client: ApiClient) {
         body,
         signal,
       }),
+
+    listAuditEvents: (query?: ListAuditEventsData['query'], signal?: AbortSignal) =>
+      client.request<ListAuditEventsResponse>('/v1/audit', { path: undefined, query, signal }),
+
+    verifyAuditChain: (signal?: AbortSignal) =>
+      client.request<VerifyAuditChainResponse>('/v1/audit/verify', { path: undefined, signal }),
+
+    verifyDecision: (id: string, signal?: AbortSignal) =>
+      client.request<VerifyDecisionResponse>('/v1/decisions/{id}/verify', { method: 'POST', path: { id }, signal }),
 
     listMySigningKeys: (signal?: AbortSignal) =>
       client.request<ListMySigningKeysResponse>('/v1/keys/me', { path: undefined, signal }),

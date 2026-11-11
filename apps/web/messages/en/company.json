@@ -132,7 +132,6 @@
   "audit": {
     "title": "Audit log",
     "intro": "Per-company hash chain, anchored in WORM storage.",
-    "pending": "Pending connection",
     "noAccessTitle": "No permission",
     "noAccessBody": "The audit log is only available to the admin and owner roles.",
     "verifyChain": "Verify the whole chain",
@@ -148,16 +147,26 @@
     "hash": "Hash",
     "caption": "Audit events",
     "empty": "No events",
-    "actors": {
-      "negotiator": "Negotiator agent",
-      "sanity": "Sanity service",
-      "human": "Manager",
-      "fx": "FX service"
-    },
     "verifyTitle": "Verify a decision",
     "verifyLabel": "Identifier or hash",
     "verify": "Verify",
-    "verifyPlaceholder": "dec_…"
+    "verifyPlaceholder": "dec_…",
+    "verifying": "Verifying…",
+    "verifyFailed": "Verification failed",
+    "brokenAt": "Chain broken at event {seq}",
+    "noAnchor": "No anchor yet",
+    "subject": "Subject",
+    "loading": "Loading…",
+    "loadFailed": "The audit log could not be loaded.",
+    "verifyNeedsId": "Enter a decision identifier first",
+    "decisionValid": "Valid signatures",
+    "decisionInvalid": "Verification failed",
+    "decisionNotFound": "No decision with that identifier.",
+    "actorTypes": {
+      "human": "Person",
+      "service": "Service",
+      "agent": "Agent"
+    }
   },
   "accounts": {
     "title": "Platform accounts",
