@@ -47,6 +47,12 @@ export interface PersonaReply {
 interface PersonaProfile {
   floorFactor: number
   concessionShare: number
+  /**
+   * ``true`` (default): the first buyer offer at or above the floor is accepted, which is how the other
+   * personas have always behaved. ``false``: the seller only accepts when the buyer meets its current ask, so
+   * the two ladders have to converge. Used by ``tough``, the demo seller that makes a negotiation feel real.
+   */
+  acceptOnFloor?: boolean
   /** Currency the persona insists on quoting in, regardless of the listing. */
   forcedCurrency?: string
 }
@@ -61,6 +67,8 @@ const PROFILES: Readonly<Record<PersonaId, PersonaProfile>> = {
   chinese: { floorFactor: 0.93, concessionShare: 0.5 },
   truncated: { floorFactor: 0.92, concessionShare: 0.5 },
   unsupported_currency: { floorFactor: 0.94, concessionShare: 0.4, forcedCurrency: 'GBP' },
+  /** Demo seller: a reachable floor, but it only moves when the buyer moves. */
+  tough: { floorFactor: 0.9, concessionShare: 0.15, acceptOnFloor: false },
 }
 
 /** Fixed, made-up rates used only so personas can re-quote in another currency. */
@@ -179,7 +187,7 @@ function bargain(
 
   const offer = intent.offer
   if (offer && (offer.currency === null || offer.currency === state.currency)) {
-    if (offer.minor >= state.floorMinor) {
+    if (offer.minor >= (profile.acceptOnFloor === false ? state.askMinor : state.floorMinor)) {
       state.agreed = quote(Math.max(offer.minor, state.floorMinor))
       state.askMinor = state.agreed.minor
       return zh
@@ -262,6 +270,11 @@ export function respond(
   let reply: PersonaReply
   switch (state.persona) {
     case 'cooperative':
+      reply = bargain(state, intent, product, profile)
+      break
+
+    case 'tough':
+      // Same playbook, but `acceptOnFloor: false` makes it hold its ask until the buyer meets it.
       reply = bargain(state, intent, product, profile)
       break
 

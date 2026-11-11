@@ -165,3 +165,24 @@ describe('control surface', () => {
     expect(res.statusCode).toBe(400)
   })
 })
+
+
+describe('tough seller (demo persona)', () => {
+  it('does not accept the first offer above its floor, and meets the buyer at its ask', async () => {
+    const { app, chats } = testServer(9)
+    void app.close()
+    const chat = chats.open('mock-c', 'c-solid-supplier', 'c-gloves-01')
+
+    // 410 is above the 0.9 floor (389) but below the 432 asking price: a real seller counters.
+    await chats.send(chat.id, 'We need 5000 units. Could you do EUR 4.10 per unit?')
+    const afterFirst = chats.snapshot(chat.id)
+    expect(afterFirst.agreed).toBeNull()
+    const ask = afterFirst.lastQuote?.minor ?? 0
+    expect(ask).toBeGreaterThan(410)
+    expect(ask).toBeLessThan(432)
+
+    // Meeting the seller's ask closes it.
+    await chats.send(chat.id, `Would EUR ${(ask / 100).toFixed(2)} per unit work?`)
+    expect(chats.snapshot(chat.id).agreed?.minor).toBe(ask)
+  })
+})
