@@ -75,6 +75,14 @@
     "none": "No price checks yet.",
     "caption": "Unit price per offer. Dashed line: market median {median}.",
     "captionBand": "Unit price per offer. Dashed line: market median {median}. Shaded area: normal band, {lower} to {upper}.",
-    "captionNoMedian": "Unit price per offer. No market median yet: the reference is computed once there is enough of a sample."
+    "captionNoMedian": "Unit price per offer. No market median yet: the reference is computed once there is enough of a sample.",
+    "stats": "Sample: {sample} offers · dispersion: {measure}",
+    "statsSample": "Sample: {sample} offers",
+    "statsDispersion": "Dispersion: {measure}",
+    "dispersion": {
+      "mad": "MAD (median absolute deviation)",
+      "iqr": "IQR (interquartile range)",
+      "relative": "Relative deviation"
+    }
   }
 }

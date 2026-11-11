@@ -85,7 +85,17 @@
     "deviation": "Desviación sobre la referencia",
     "noSanity": "Aún sin control de precio.",
     "noLanded": "Aún sin landed cost.",
-    "linesPending": "El desglose por línea aún no lo envía la API; solo está disponible el total."
+    "linesPending": "Esta oferta no trae desglose por línea; solo el total.",
+    "priceBand": "Banda de precio",
+    "bandRange": "Banda normal",
+    "dispersion": "Dispersión",
+    "unitLanded": "Coste unitario en destino",
+    "signals": "Señales normalizadas",
+    "penalties": "Penalizaciones",
+    "flags": "Anomalías en reseñas",
+    "model": "Modelo {version}",
+    "noSignals": "Sin desglose de señales: no hay datos suficientes.",
+    "noReference": "No hay ofertas comparables suficientes para calcular una referencia; la oferta pasa a una persona."
   },
   "stale": {
     "body": "El snapshot financiero activo ha caducado. Las compras directas quedan bloqueadas hasta reimportar el CSV.",
@@ -109,8 +119,48 @@
     "fx_conversion": "Conversión FX",
     "fx_risk": "Riesgo FX"
   },
+  "dispersion": {
+    "mad": "MAD (desviación absoluta mediana)",
+    "iqr": "IQR (rango intercuartílico)",
+    "relative": "Desviación relativa"
+  },
+  "signal": {
+    "account_age_days": "Antigüedad de la cuenta",
+    "first_sale_date": "Primera venta",
+    "months_active_last_12": "Meses activo (12 m)",
+    "lifetime_transactions": "Transacciones totales",
+    "transactions_12m": "Transacciones (12 m)",
+    "gmv_12m": "GMV (12 m)",
+    "repeat_buyer_share": "Compradores recurrentes",
+    "published_products_count": "Productos publicados",
+    "catalog_churn_30d": "Rotación de catálogo (30 d)",
+    "spec_completeness_avg": "Completitud de ficha",
+    "reviews_total": "Reseñas totales",
+    "reviews_12m": "Reseñas (12 m)",
+    "rating_adjusted": "Valoración ajustada",
+    "positive_share_wilson": "Positivas (Wilson)",
+    "verified_review_share": "Reseñas verificadas",
+    "response_rate": "Tasa de respuesta",
+    "identity_verified": "Identidad verificada",
+    "trade_assurance": "Protección comercial",
+    "escrow_available": "Depósito en garantía"
+  },
+  "penalty": {
+    "reviews_unavailable": "Sin datos de reseñas",
+    "dispute_rate_above_max": "Tasa de disputas por encima del máximo",
+    "refund_rate_above_max": "Tasa de reembolsos por encima del máximo"
+  },
   "risk": {
-    "none": "Sin banderas"
+    "none": "Sin banderas",
+    "burst_velocity": "Pico de reseñas",
+    "five_star_anomaly": "Exceso de 5 estrellas",
+    "low_verified_share": "Pocas reseñas verificadas",
+    "duplicate_text": "Texto de reseña duplicado",
+    "creation_correlation": "Reseñas concentradas al crear la cuenta"
+  },
+  "severity": {
+    "warning": "Aviso",
+    "critical": "Crítico"
   },
   "discardReason": {
     "price_too_high": "Precio demasiado alto",

@@ -75,6 +75,14 @@
     "none": "尚无价格核查。",
     "caption": "各报价单价。虚线：市场中位数 {median}。",
     "captionBand": "各报价的单价。虚线：市场中位数 {median}。阴影区：正常区间，{lower} 至 {upper}。",
-    "captionNoMedian": "每个报价的单价。尚无市场中位数：样本足够后才会计算参考价。"
+    "captionNoMedian": "每个报价的单价。尚无市场中位数：样本足够后才会计算参考价。",
+    "stats": "样本：{sample} 个报价 · 离散度：{measure}",
+    "statsSample": "样本：{sample} 个报价",
+    "statsDispersion": "离散度：{measure}",
+    "dispersion": {
+      "mad": "MAD（中位绝对偏差）",
+      "iqr": "IQR（四分位距）",
+      "relative": "相对偏差"
+    }
   }
 }
