@@ -31,6 +31,7 @@ import httpx
 from apex.agents.analysis import AnalysisDeps, AnalysisNodes
 from apex.agents.browser_worker import HttpBrowserWorker
 from apex.agents.csv_importer import DomainCsvImporter
+from apex.agents.dashboard import Dashboard
 from apex.agents.finance_port import DomainFinancePort
 from apex.agents.fx import DomainFxPort, InMemoryFxRateReader
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
@@ -254,6 +255,9 @@ class AppServices:
     config_repository: InMemoryConfigRepository
     request_store: InMemorySourcingRequestStore
     onboarding: OnboardingService
+    nodes: AnalysisNodes
+    gate: GateAgent
+    dashboard: Dashboard
     runner: MissionRunner
     """Ready to advance a planned mission. Only invoked automatically when ``mission_autorun`` is on."""
 
@@ -324,6 +328,28 @@ def build_app_services(
     )
     gate_store = InMemoryGateStore()
     rules = _gate_rules()
+    nodes = AnalysisNodes(
+        AnalysisDeps(
+            trust=DomainTrustPort(config=tenant_config, clock=active_clock),
+            sanity=DomainSanityPort(config=tenant_config, offers=offer_store, clock=active_clock),
+            finance=DomainFinancePort(
+                config=tenant_config, onboarding=onboarding, clock=active_clock
+            ),
+            offers=offer_store,
+            confidence=InMemorySellerConfidenceStore(),
+            audit=UnwiredAudit(),
+            config=_AnalysisConfig(_default_config_version()),
+            clock=active_clock,
+        )
+    )
+    gate = GateAgent(
+        GateDeps(
+            store=gate_store,
+            decisions=UnwiredDecisionPort(),
+            clock=active_clock,
+            ids=IdGenerator(active_clock),
+        )
+    )
     runner = MissionRunner(
         MissionRunnerDeps(
             scraping=ScrapingService(
@@ -335,36 +361,21 @@ def build_app_services(
                     clock=active_clock,
                 )
             ),
-            nodes=AnalysisNodes(
-                AnalysisDeps(
-                    trust=DomainTrustPort(config=tenant_config, clock=active_clock),
-                    sanity=DomainSanityPort(
-                        config=tenant_config, offers=offer_store, clock=active_clock
-                    ),
-                    finance=DomainFinancePort(
-                        config=tenant_config, onboarding=onboarding, clock=active_clock
-                    ),
-                    offers=offer_store,
-                    confidence=InMemorySellerConfidenceStore(),
-                    audit=UnwiredAudit(),
-                    config=_AnalysisConfig(_default_config_version()),
-                    clock=active_clock,
-                )
-            ),
-            gate=GateAgent(
-                GateDeps(
-                    store=gate_store,
-                    decisions=UnwiredDecisionPort(),
-                    clock=active_clock,
-                    ids=IdGenerator(active_clock),
-                )
-            ),
+            nodes=nodes,
+            gate=gate,
             store=mission_store,
             bus=mission_bus,
             clock=active_clock,
             rules_for=lambda tenant_id: rules,
             mission_cost_minor=gateway.mission_cost_minor,
         )
+    )
+    dashboard = Dashboard(
+        offers=offer_store,
+        missions=mission_store,
+        gate_store=gate_store,
+        gate=gate,
+        rules_for=lambda tenant_id: rules,
     )
     return AppServices(
         settings=cfg,
@@ -378,6 +389,9 @@ def build_app_services(
         config_repository=config_repository,
         request_store=request_store,
         onboarding=onboarding,
+        nodes=nodes,
+        gate=gate,
+        dashboard=dashboard,
         runner=runner,
     )
 

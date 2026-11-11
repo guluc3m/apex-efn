@@ -9,8 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from apex.api import config as config_api
+from apex.api import dashboard as dashboard_api
+from apex.api import gate as gate_api
 from apex.api import onboarding as onboarding_api
 from apex.api import router
+from apex.api import sellers as sellers_api
 from apex.api import sourcing as sourcing_api
 from apex.auth.deps import current_principal
 from apex.common.errors import install_problem_handlers
@@ -119,6 +122,9 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     )
     application.dependency_overrides[config_api.get_config_service] = lambda: services.tenant_config
     application.dependency_overrides[onboarding_api.get_onboarding] = lambda: services.onboarding
+    application.dependency_overrides[dashboard_api.get_dashboard] = lambda: services.dashboard
+    application.dependency_overrides[gate_api.get_gate_agent] = lambda: services.gate
+    application.dependency_overrides[sellers_api.get_analysis_nodes] = lambda: services.nodes
     application.state.settings = services.settings
     application.state.anchor_store = build_anchor_store(services.settings)
 
