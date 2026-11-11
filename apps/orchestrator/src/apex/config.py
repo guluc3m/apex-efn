@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     s3_access_key: str = Field(default="minioadmin")
     s3_secret_key: str = Field(default="minioadmin")
     s3_bucket_audit: str = Field(default="apex-audit")
+    # Object Lock COMPLIANCE retention of audit anchors (ADR-211): 6 years. It cannot be shortened once written.
+    audit_anchor_retention_days: int = Field(default=2192, ge=1)
 
     # LLM Gateway (OpenAI-compatible)
     llm_gateway_url: str = Field(default="http://localhost:8001/v1")
