@@ -10,27 +10,15 @@
     "cols": {
       "mission": "משימה",
       "state": "סטטוס",
-      "phase": "שלב",
       "offers": "הצעות",
-      "finalists": "מועמדים סופיים",
+      "inGate": "בתור",
       "launched": "הופעלה"
-    },
-    "state": {
-      "running": "בתהליך",
-      "valuation": "בהערכה",
-      "closed": "סגורה",
-      "cancelled": "בוטלה"
-    },
-    "phase": {
-      "search": "חיפוש",
-      "filter": "אמון ומחיר",
-      "negotiation": "משא ומתן",
-      "valuation": "הערכה"
     },
     "filters": {
       "state": "סטטוס",
       "all": "הכול"
-    }
+    },
+    "loading": "טוען משימות…"
   },
   "request": {
     "title": "משימת רכש חדשה",

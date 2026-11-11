@@ -1,4 +1,4 @@
-// //todo_#148: muestra ilustrativa de la «Cola de decisión» del lienzo (no son datos reales); sustituir por GET /v1/gate/queue.
+// Muestra ilustrativa de la «Cola de decisión» del lienzo de acceso (no son datos reales: esta pantalla no tiene sesión).
 export interface LoginSampleDeal {
   id: 'ready' | 'lowBand'
   product: string

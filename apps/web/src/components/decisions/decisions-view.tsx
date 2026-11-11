@@ -2,12 +2,14 @@
 
 import type { Deal } from '@apex/shared-types/contracts'
 import { Button, Icon, MoneyDisplay, Select, Tabs, TabsList, TabsTrigger } from '@apex/ui'
+import { useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, Handshake, ListTodo, ScrollText } from 'lucide-react'
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { useEffect } from 'react'
 
 import { AppLink } from '@/components/app-link'
-import { useDeals, useGateQueue, useNegotiationMessages } from '@/lib/api'
+import { queryKeys, subscribeMissionEvents, useDeals, useGateQueue, useNegotiationMessages } from '@/lib/api'
 import { remaining } from '@/lib/decisions'
 
 import { DealBadges } from './deal-badges'
@@ -177,7 +179,19 @@ export function DecisionsView({ role }: { role: string }) {
 
 function Transcript({ deal, backHref }: { deal: Deal; backHref: string }) {
   const t = useTranslations('decisions')
-  const messages = useNegotiationMessages(deal.negotiation?.id ?? '')
+  const negotiationId = deal.negotiation?.id
+  const messages = useNegotiationMessages(negotiationId ?? '')
+  const client = useQueryClient()
+  // Live: a negotiation_message event of the mission of this deal makes the transcript read again.
+  useEffect(() => {
+    if (!negotiationId) return
+    const handle = subscribeMissionEvents(deal.mission_id, {
+      onEvent: (e) => {
+        if (e.type === 'negotiation_message') void client.invalidateQueries({ queryKey: queryKeys.negotiationMessages(negotiationId) })
+      },
+    })
+    return handle.close
+  }, [deal.mission_id, negotiationId, client])
   return (
     <div className="px-gutter-panel py-4">
       <Button asChild>
@@ -199,7 +213,6 @@ function Transcript({ deal, backHref }: { deal: Deal; backHref: string }) {
           {m.content}
         </div>
       ))}
-      {/* //todo_#148: transcripción en vivo (SSE de la negociación) */}
     </div>
   )
 }

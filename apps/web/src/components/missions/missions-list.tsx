@@ -1,27 +1,35 @@
 'use client'
 
+import type { Mission, MissionState } from '@apex/shared-types/contracts'
 import { Button, EmptyState, Icon, Select, StatusBadge, Table, type StatusTone, type TableColumn } from '@apex/ui'
-import { CircleCheck, CircleX, Inbox, LoaderCircle, Plus, Scale, type LucideIcon } from 'lucide-react'
+import { CircleCheck, CircleX, Inbox, LoaderCircle, Pause, Plus, TriangleAlert, type LucideIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 
 import { AppLink, renderLink } from '@/components/app-link'
-import type { MissionRow, MissionState } from '@/fixtures/missions'
+import { ErrorPanel } from '@/components/error-panel'
+import { useMissions } from '@/lib/api'
 
 import { useUrlTable } from './use-url-table'
 
-const STATE: Record<MissionState, { tone: StatusTone; icon: LucideIcon }> = {
-  running: { tone: 'neutro', icon: LoaderCircle },
-  valuation: { tone: 'neutro', icon: Scale },
-  closed: { tone: 'ok', icon: CircleCheck },
+const ICON: Partial<Record<MissionState, { tone: StatusTone; icon: LucideIcon }>> = {
+  completed: { tone: 'ok', icon: CircleCheck },
   cancelled: { tone: 'plano', icon: CircleX },
+  failed: { tone: 'plano', icon: TriangleAlert },
 }
-const STATES = Object.keys(STATE) as MissionState[]
+const RUNNING = { tone: 'neutro', icon: LoaderCircle } as const
+const STATES: MissionState[] = ['created', 'planning', 'sourcing', 'enriching', 'evaluating', 'negotiating', 'awaiting_decision', 'completed', 'cancelled', 'failed']
 
-export function MissionsList({ missions }: { missions: MissionRow[] }) {
+export function MissionsList() {
   const t = useTranslations('missions.list')
+  const td = useTranslations('missions.detail.state')
+  const { data, error, isPending, refetch } = useMissions()
   const locale = useLocale()
   const url = useUrlTable(['state'])
   const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Madrid' })
+
+  if (isPending) return <p className="text-ink-muted" role="status">{t('loading')}</p>
+  if (error) return <ErrorPanel kind="error" onRetry={() => void refetch()} />
+  const missions = data.items
 
   if (missions.length === 0) {
     return (
@@ -41,32 +49,24 @@ export function MissionsList({ missions }: { missions: MissionRow[] }) {
     )
   }
 
-  const columns: TableColumn<MissionRow>[] = [
-    {
-      id: 'title',
-      header: t('cols.mission'),
-      sortValue: (m) => m.title,
-      cell: (m) => (
-        <span className="inline-flex flex-wrap items-baseline gap-2">
-          {m.title}
-          <span className="text-[13px] font-normal text-ink-muted">{m.id}</span>
-        </span>
-      ),
-    },
+  const columns: TableColumn<Mission>[] = [
+    { id: 'id', header: t('cols.mission'), sortValue: (m) => m.id, cell: (m) => m.id },
     {
       id: 'state',
       header: t('cols.state'),
       sortValue: (m) => m.state,
-      cell: (m) => <StatusBadge tone={STATE[m.state].tone} icon={STATE[m.state].icon} label={t(`state.${m.state}`)} />,
+      cell: (m) => {
+        const { tone, icon } = m.paused ? { tone: 'plano' as const, icon: Pause } : (ICON[m.state] ?? RUNNING)
+        return <StatusBadge tone={tone} icon={icon} label={td(m.state)} />
+      },
     },
-    { id: 'phase', header: t('cols.phase'), sortValue: (m) => m.phase, cell: (m) => t(`phase.${m.phase}`) },
-    { id: 'offers', header: t('cols.offers'), num: true, sortValue: (m) => m.offers, cell: (m) => m.offers },
-    { id: 'finalists', header: t('cols.finalists'), num: true, sortValue: (m) => m.finalists, cell: (m) => m.finalists },
+    { id: 'offers', header: t('cols.offers'), num: true, sortValue: (m) => m.offers_discovered, cell: (m) => m.offers_discovered },
+    { id: 'inGate', header: t('cols.inGate'), num: true, sortValue: (m) => m.offers_in_gate, cell: (m) => m.offers_in_gate },
     {
       id: 'launched',
       header: t('cols.launched'),
-      sortValue: (m) => m.launchedAt,
-      cell: (m) => <span className="text-ink-muted">{date.format(new Date(m.launchedAt))}</span>,
+      sortValue: (m) => m.started_at,
+      cell: (m) => <span className="text-ink-muted">{date.format(new Date(m.started_at))}</span>,
     },
   ]
 
@@ -77,7 +77,7 @@ export function MissionsList({ missions }: { missions: MissionRow[] }) {
         label={t('filters.state')}
         value={url.value('state')}
         onValueChange={(v) => url.setFilter('state', v)}
-        options={[{ value: 'all', label: t('filters.all') }, ...STATES.map((s) => ({ value: s, label: t(`state.${s}`) }))]}
+        options={[{ value: 'all', label: t('filters.all') }, ...STATES.map((s) => ({ value: s, label: td(s) }))]}
       />
       <Table
         caption={t('caption')}

@@ -82,6 +82,7 @@ export function OnboardingWizard({ step }: { step: StepId }) {
   const next = STEP_IDS[index + 1]
   const [saveError, setSaveError] = useState(false)
   const revision = useOnboarding((s) => s.draftsRevision)
+  const financialImport = useOnboarding((s) => s.financialImport)
   const go = () => next && router.push(`/${locale}/onboarding/${next}` as never)
   // empresa and sector persist to the session; a failed save keeps the user on the step.
   const goNext = async (): Promise<void> => {
@@ -167,11 +168,19 @@ export function OnboardingWizard({ step }: { step: StepId }) {
                 </Button>
               )}
               {step === 'finanzas' ? (
-                // //todo_#152: crear la importación (subida del CSV) y enlazar a /onboarding/finanzas/[importId]
-                <Button variant="pri" disabledReason={t('pending')}>
-                  <Icon icon={ArrowRight} />
-                  {t('nav.toImport')}
-                </Button>
+                financialImport ? (
+                  <Button asChild variant="pri">
+                    <AppLink href={`/onboarding/finanzas/${financialImport.id}`}>
+                      <Icon icon={ArrowRight} />
+                      {t('nav.toImport')}
+                    </AppLink>
+                  </Button>
+                ) : (
+                  <Button variant="pri" disabledReason={t('nav.noImport')}>
+                    <Icon icon={ArrowRight} />
+                    {t('nav.toImport')}
+                  </Button>
+                )
               ) : isForm(step) ? (
                 <Button type="submit" form={FORM_ID} variant="pri">
                   {t('nav.next')}

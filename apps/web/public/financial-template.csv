@@ -1,0 +1,15 @@
+period,metric,value_minor,value_bp,currency,notes
+2026-01,cash_balance,0,,EUR,Importe en unidades menores (céntimos)
+2026-01,credit_line_available,0,,EUR,
+2026-01,credit_line_limit,0,,EUR,
+2026-01,accounts_receivable,0,,EUR,
+2026-01,accounts_payable,0,,EUR,
+2026-01,revenue,0,,EUR,
+2026-01,cogs,0,,EUR,
+2026-01,fixed_costs,0,,EUR,
+2026-01,payroll,0,,EUR,
+2026-01,debt_service,0,,EUR,
+2026-01,capex,0,,EUR,
+2026-01,tax_reserve,0,,EUR,
+2026-01,safety_buffer_pct,,1500,,Puntos básicos: 1500 = 15 %
+2026-01,payment_term_days,60,,,Días

@@ -52,7 +52,8 @@
     "prev": "הקודם",
     "next": "הבא",
     "firstStep": "אתם כבר בשלב הראשון",
-    "toImport": "מעבר לייבוא"
+    "toImport": "מעבר לייבוא",
+    "noImport": "העלו קובץ CSV כדי לראות את הדוח"
   },
   "pending": "טרם חובר",
   "errors": {
@@ -143,6 +144,7 @@
     "none": "אין",
     "effective": "ספים בתוקף (לקריאה בלבד)",
     "unset": "לא הוגדר: החברה שלכם מחליטה",
+    "unavailable": "לא זמין",
     "thresholds": {
       "referenceWeights": "משקלות מחיר הייחוס",
       "approval": "אישור אנושי",

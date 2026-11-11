@@ -101,13 +101,14 @@ function Comparison({ rec, offers }: { rec: Recommendation; offers: readonly Off
           <p className="m-0 text-[13px] text-ink-muted">{t('versions', { config: rec.config_version, model: rec.model_version })}</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* //todo_#164: exportar la comparativa cuando exista el endpoint */}
+          {/* //todo_#379: exportar la comparativa cuando exista el endpoint */}
           <Button variant="sec" disabledReason={t('pending')}>
             <Icon icon={Download} label="" /> {t('export')}
           </Button>
-          {/* //todo_#164: decidir (decisión firmada) cuando exista el backend */}
-          <Button variant="pri" disabledReason={t('pending')}>
-            <Icon icon={Scale} label="" /> {t('decide', { name: first.offer.seller_name })}
+          <Button variant="pri" asChild>
+            <AppLink href={`/decisiones/${first.offer.id}`}>
+              <Icon icon={Scale} label="" /> {t('decide', { name: first.offer.seller_name })}
+            </AppLink>
           </Button>
         </div>
       </section>

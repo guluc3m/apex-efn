@@ -52,7 +52,8 @@
     "prev": "Previous",
     "next": "Next",
     "firstStep": "You are already on the first step",
-    "toImport": "Go to the import"
+    "toImport": "Go to the import",
+    "noImport": "Upload a CSV to see its report"
   },
   "pending": "Not connected yet",
   "errors": {
@@ -143,6 +144,7 @@
     "none": "None",
     "effective": "Effective thresholds (read-only)",
     "unset": "Not set: your company decides",
+    "unavailable": "Unavailable",
     "thresholds": {
       "referenceWeights": "Price reference weights",
       "approval": "Human approval",

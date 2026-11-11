@@ -28,7 +28,7 @@ export default async function OnboardingLayout({
         <AppLink href="/decisiones" aria-label={t('home')} className="inline-flex items-center no-underline">
           <Logo size="sm" />
         </AppLink>
-        {/* //todo_#152: estado de guardado real (guardado automático en servidor) */}
+        {/* //todo_#377: estado de guardado real (guardado automático en servidor) */}
         <span className="ml-auto text-[13px] text-ink-muted">{t('draft')}</span>
       </header>
       {children}

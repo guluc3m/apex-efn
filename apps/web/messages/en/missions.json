@@ -10,27 +10,15 @@
     "cols": {
       "mission": "Mission",
       "state": "Status",
-      "phase": "Phase",
       "offers": "Offers",
-      "finalists": "Finalists",
+      "inGate": "In the queue",
       "launched": "Launched"
-    },
-    "state": {
-      "running": "In progress",
-      "valuation": "Under evaluation",
-      "closed": "Closed",
-      "cancelled": "Cancelled"
-    },
-    "phase": {
-      "search": "Search",
-      "filter": "Trust and price",
-      "negotiation": "Negotiation",
-      "valuation": "Evaluation"
     },
     "filters": {
       "state": "Status",
       "all": "All"
-    }
+    },
+    "loading": "Loading missions…"
   },
   "request": {
     "title": "New purchasing mission",

@@ -10,27 +10,15 @@
     "cols": {
       "mission": "任务",
       "state": "状态",
-      "phase": "阶段",
       "offers": "报价",
-      "finalists": "入围",
+      "inGate": "待决策",
       "launched": "启动时间"
-    },
-    "state": {
-      "running": "进行中",
-      "valuation": "评估中",
-      "closed": "已关闭",
-      "cancelled": "已取消"
-    },
-    "phase": {
-      "search": "搜索",
-      "filter": "信任与价格",
-      "negotiation": "谈判",
-      "valuation": "评估"
     },
     "filters": {
       "state": "状态",
       "all": "全部"
-    }
+    },
+    "loading": "正在加载任务…"
   },
   "request": {
     "title": "新建采购任务",

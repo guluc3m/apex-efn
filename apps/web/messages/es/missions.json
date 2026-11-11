@@ -10,27 +10,15 @@
     "cols": {
       "mission": "Misión",
       "state": "Estado",
-      "phase": "Fase",
       "offers": "Ofertas",
-      "finalists": "Finalistas",
+      "inGate": "En la cola",
       "launched": "Lanzada"
-    },
-    "state": {
-      "running": "En curso",
-      "valuation": "En valoración",
-      "closed": "Cerrada",
-      "cancelled": "Cancelada"
-    },
-    "phase": {
-      "search": "Búsqueda",
-      "filter": "Confianza y precio",
-      "negotiation": "Negociación",
-      "valuation": "Valoración"
     },
     "filters": {
       "state": "Estado",
       "all": "Todas"
-    }
+    },
+    "loading": "Cargando las misiones…"
   },
   "request": {
     "title": "Nueva misión de compra",

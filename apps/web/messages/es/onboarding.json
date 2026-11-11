@@ -52,7 +52,8 @@
     "prev": "Anterior",
     "next": "Siguiente",
     "firstStep": "Ya estás en el primer paso",
-    "toImport": "Ir a la importación"
+    "toImport": "Ir a la importación",
+    "noImport": "Sube un CSV para ver su informe"
   },
   "pending": "Pendiente de conectar",
   "errors": {
@@ -143,6 +144,7 @@
     "none": "Ninguno",
     "effective": "Umbrales efectivos (solo lectura)",
     "unset": "Sin definir: lo decide tu empresa",
+    "unavailable": "No disponible",
     "thresholds": {
       "referenceWeights": "Pesos de la referencia de precio",
       "approval": "Aprobación humana",
