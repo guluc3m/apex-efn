@@ -348,7 +348,7 @@ jobs:
         run: bash .github/scripts/ci/migration-drift.sh
 
   # =============================================================================
-  # Playwright E2E (D6-08). Skips until apps/web has e2e specs.
+  # Playwright E2E (D6-08). Runs the request-based specs against the web app's `webServer`; no Docker.
   # =============================================================================
   e2e:
     name: E2E (Playwright)
@@ -369,7 +369,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Start the stack, run E2E, stop the stack
+      - name: Run Playwright E2E (webServer, no stack)
         run: bash .github/scripts/ci/e2e.sh
 
       - name: Upload Playwright report
