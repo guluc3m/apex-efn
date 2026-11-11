@@ -23,9 +23,13 @@ from apex.agents.offers import OfferStore
 from apex.negotiation.guardrails import Counterpart, fraction_to_bp
 from apex.negotiation.models import NegotiationContext, NegotiationParams
 from apex.negotiation.node import OfferInput
+from apex.platform.flags import FlagProvider
 from apex.tenant_config.service import TenantConfigService
 
 ParamsResolver = Callable[[OfferInput, str], Awaitable[tuple[NegotiationParams, str, str]]]
+
+AUTONOMOUS_SEND_FLAG = "negotiation.autonomous_send"
+"""D5-11: when on, the engine sends its drafts without waiting for a human. Off in Phase 1."""
 
 
 class AccountResolver(Protocol):
@@ -58,6 +62,15 @@ class NegotiationParamsResolver:
     config: TenantConfigService
     offers: OfferStore
     accounts: AccountResolver
+    flags: FlagProvider | None = None
+    """Feature flags. ``negotiation.autonomous_send`` turns off the human approval step (D5-11). Phase 1
+    keeps it off: every drafted message waits for a person (spec §3.6 step 5)."""
+
+    def _autonomous_send_enabled(self, tenant_id: str) -> bool:
+        """The flag is per tenant and defaults to off; without it every draft waits for a human."""
+        if self.flags is None:
+            return False
+        return bool(self.flags.is_enabled(AUTONOMOUS_SEND_FLAG, {"tenant_id": tenant_id}))
 
     async def __call__(
         self, offer: OfferInput, tenant_id: str
@@ -99,6 +112,7 @@ class NegotiationParamsResolver:
             max_message_chars=neg.max_message_chars,
             allowed_counterparts=frozenset(Counterpart(c.value) for c in neg.allowed_counterparts),
             supported_currencies=frozenset(typed.money.supported_currencies),
+            semi_automatic=not self._autonomous_send_enabled(tenant_id),
             context=NegotiationContext(
                 product_title=str(offer_row.raw_signals.get("title") or offer_row.product_id),
                 destination=offer_row.raw_signals.get("destination_country"),
