@@ -257,6 +257,23 @@ class FinancialCsvUpload(BaseModel):
         bytes,
         Field(description="UTF-8 CSV, long format (spec 3.1.1). Separator is autodetected."),
     ]
+    column_mapping: Annotated[
+        str | None,
+        Field(
+            description="Optional JSON object {source_header: canonical_column} the buyer confirmed. Applied to the header row before parsing."
+        ),
+    ] = None
+
+
+class Mapping(BaseModel):
+    source: str
+    target: Annotated[str | None, Field(description="A canonical column")]
+    reason: str
+
+
+class HeaderMappingSuggestion(BaseModel):
+    canonical_columns: list[str]
+    mappings: list[Mapping]
 
 
 class ActivateFinancialSnapshotRequest(BaseModel):

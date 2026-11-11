@@ -7,11 +7,13 @@ signed decision that activation requires; the snapshot only becomes active once 
 
 from __future__ import annotations
 
+import json
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from apex.agents.header_mapping import MappingError
 from apex.agents.onboarding import (
     CompanyProfile,
     FinancialSnapshot,
@@ -203,13 +205,18 @@ async def upload_financial_csv(
     service: Annotated[OnboardingService, Depends(get_onboarding)],
     file: Annotated[UploadFile, File(description="Financial CSV (long format, UTF-8)")],
     base_currency: Annotated[str, Form(pattern="^(EUR|USD|CNY)$")] = "EUR",
+    column_mapping: Annotated[str | None, Form()] = None,
 ) -> SnapshotOut:
     """Store the original, import it and return the report. Nothing is activated here."""
-    content = await file.read(MAX_CSV_BYTES + 1)
-    if len(content) > MAX_CSV_BYTES:
-        raise Problem(
-            413, "File too large", detail=f"the CSV must be at most {MAX_CSV_BYTES} bytes"
-        )
+    content = await _read_csv(file)
+    try:
+        mapping = json.loads(column_mapping) if column_mapping else None
+        if mapping is not None and not (
+            isinstance(mapping, dict) and all(isinstance(v, str) for v in mapping.values())
+        ):
+            raise ValueError("column_mapping must be a JSON object of strings")
+    except ValueError as exc:
+        raise Problem(422, "Invalid column_mapping", detail=str(exc)) from exc
     try:
         snapshot = await service.upload_financial_csv(
             tenant_id=tenant_id,
@@ -217,19 +224,74 @@ async def upload_financial_csv(
             content=content,
             filename=file.filename or "financial.csv",
             base_currency=base_currency,
+            column_mapping=mapping,
         )
     except LookupError as exc:
         raise Problem(404, "Session not found", detail=str(exc)) from exc
+    except MappingError as exc:
+        raise Problem(422, "Invalid column_mapping", detail=str(exc)) from exc
     except NotImplementedError as exc:
         # The importer or object storage is not wired yet: say so instead of failing with a 500.
         raise not_implemented(str(exc)) from exc
     return SnapshotOut.of(snapshot)
 
 
-@router.get("/{id}/financial-csv/{import_id}", tags=["onboarding"])
-async def get_financial_import(id: str, import_id: str) -> None:
-    """Contract route (#341, issue #299). DEV-4 implements it; until then it answers 501."""
-    raise not_implemented("reading a financial import is not implemented yet")
+async def _read_csv(file: UploadFile) -> bytes:
+    content = await file.read(MAX_CSV_BYTES + 1)
+    if len(content) > MAX_CSV_BYTES:
+        raise Problem(
+            413, "File too large", detail=f"the CSV must be at most {MAX_CSV_BYTES} bytes"
+        )
+    return content
+
+
+@router.post("/{id}/financial-csv/mapping", tags=["onboarding"])
+async def suggest_financial_csv_mapping(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[OnboardingService, Depends(get_onboarding)],
+    file: Annotated[UploadFile, File(description="Financial CSV; only its header row is read")],
+) -> dict[str, Any]:
+    """Suggest header -> canonical column. The buyer confirms it as ``column_mapping`` on the upload."""
+    content = await _read_csv(file)
+    try:
+        return await service.suggest_header_mapping(
+            tenant_id=tenant_id, session_id=id, content=content
+        )
+    except LookupError as exc:
+        raise Problem(404, "Session not found", detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        raise not_implemented("the header mapper needs an LLM gateway; wire it in the app") from exc
+    except StructuredOutputError as exc:
+        raise Problem(
+            502,
+            "Model output unusable",
+            detail="the extractor model did not return a valid mapping",
+            reason="structured_output_failed",
+        ) from exc
+    except (AllEndpointsUnavailableError, LLMTransportError, LLMHTTPError) as exc:
+        raise Problem(
+            502,
+            "Model endpoint unavailable",
+            detail="the extractor endpoint could not be reached",
+            reason="llm_unavailable",
+        ) from exc
+
+
+@router.get("/{id}/financial-csv/{import_id}", response_model=SnapshotOut, tags=["onboarding"])
+async def get_financial_import(
+    id: str,
+    import_id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[OnboardingService, Depends(get_onboarding)],
+) -> SnapshotOut:
+    """One import with its report (the report page is addressed by import id)."""
+    try:
+        return SnapshotOut.of(
+            await service.get_import(tenant_id=tenant_id, session_id=id, import_id=import_id)
+        )
+    except LookupError as exc:
+        raise Problem(404, "Import not found", detail=str(exc)) from exc
 
 
 @router.post(

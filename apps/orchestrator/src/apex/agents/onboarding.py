@@ -22,6 +22,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from apex.agents.header_mapping import apply_mapping
 from apex.agents.ports import DecisionPort, DecisionRef
 
 
@@ -79,6 +80,14 @@ class IntakeReplier(Protocol):
     async def reply(
         self, *, tenant_id: str, session: OnboardingSession, history: list[IntakeMessage], text: str
     ) -> tuple[str, CompanyProfile]: ...
+
+
+class HeaderSuggester(Protocol):
+    """``apex.agents.header_mapping.HeaderMapper``: suggests header -> canonical column, never reads values."""
+
+    async def suggest(
+        self, *, tenant_id: str, session_id: str, content: bytes
+    ) -> dict[str, Any]: ...
 
 
 class FinancialSnapshot(_Model):
@@ -205,6 +214,8 @@ class OnboardingDeps:
     """``tenant_id -> config_version``, supplied by the tenant config service (D4-03)."""
     intake: IntakeReplier | None = None
     """The IntakeAgent. ``None`` means the chat is not wired and answers 501."""
+    mapper: HeaderSuggester | None = None
+    """Header mapping suggestions. ``None`` means not wired and answers 501."""
 
 
 class OnboardingIncomplete(Exception):
@@ -304,6 +315,24 @@ class OnboardingService:
 
     # ------------------------------------------------------------------ financial CSV
 
+    async def suggest_header_mapping(
+        self, *, tenant_id: str, session_id: str, content: bytes
+    ) -> dict[str, Any]:
+        if self._deps.mapper is None:
+            raise NotImplementedError("the header mapper is not wired")
+        await self._require_session(tenant_id, session_id)
+        return await self._deps.mapper.suggest(
+            tenant_id=tenant_id, session_id=session_id, content=content
+        )
+
+    async def get_import(
+        self, *, tenant_id: str, session_id: str, import_id: str
+    ) -> FinancialSnapshot:
+        snapshot = await self._deps.store.get_snapshot(tenant_id, import_id)
+        if snapshot is None or snapshot.session_id != session_id:
+            raise LookupError(f"financial import {import_id} not found")
+        return snapshot
+
     async def upload_financial_csv(
         self,
         *,
@@ -312,13 +341,19 @@ class OnboardingService:
         content: bytes,
         filename: str,
         base_currency: str,
+        column_mapping: dict[str, str] | None = None,
     ) -> FinancialSnapshot:
-        """Store the original and import it. **Never activates anything** (spec §3.1.1)."""
+        """Store the original and import it. **Never activates anything** (spec §3.1.1).
+
+        A confirmed ``column_mapping`` only rewrites the header row of the copy that is parsed.
+        """
         session = await self._require_session(tenant_id, session_id)
         now = self._deps.clock.now()
         snapshot_id = self._deps.ids.new_id()
         key = f"financial-csv/{tenant_id}/{session_id}/{snapshot_id}/{filename}"
         stored = await self._deps.objects.put(key, content, content_type="text/csv")
+        if column_mapping:
+            content = apply_mapping(content, column_mapping)
         result = await self._deps.importer.parse(
             content, base_currency=base_currency, tenant_id=tenant_id, now=now
         )

@@ -281,9 +281,23 @@ export type sendIntakeMessageRequestZodType = z.infer<typeof zSendIntakeMessageR
 
 export const zFinancialCsvUpload = z.object({
   file: z.string(),
+  column_mapping: z.string().optional(),
 })
 
 export type financialCsvUploadZodType = z.infer<typeof zFinancialCsvUpload>
+
+export const zHeaderMappingSuggestion = z.object({
+  canonical_columns: z.array(z.string()),
+  mappings: z.array(
+    z.object({
+      source: z.string(),
+      target: z.string().nullable(),
+      reason: z.string(),
+    })
+  ),
+})
+
+export type headerMappingSuggestionZodType = z.infer<typeof zHeaderMappingSuggestion>
 
 export const zActivateFinancialSnapshotRequest = z.object({
   import_id: z.string(),
@@ -1996,6 +2010,17 @@ export const zUploadFinancialCsvPath = z.object({
  * Import parsed. Status is draft until explicitly activated.
  */
 export const zUploadFinancialCsvResponse = zFinancialImport
+
+export const zSuggestFinancialCsvMappingBody = zFinancialCsvUpload
+
+export const zSuggestFinancialCsvMappingPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * One suggestion per header that is not already a canonical column.
+ */
+export const zSuggestFinancialCsvMappingResponse = zHeaderMappingSuggestion
 
 export const zGetFinancialImportPath = z.object({
   id: z.string().min(1),
