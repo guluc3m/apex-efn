@@ -42,6 +42,7 @@ import type {
   RegisterMySigningKeyData,
   RegisterMySigningKeyResponse,
   RejectNegotiationDraftResponse,
+  ReopenNegotiationResponse,
   ResumeNegotiationResponse,
   SendHumanNegotiationMessageData,
   SendHumanNegotiationMessageResponse,
@@ -252,6 +253,13 @@ export function createOperations(client: ApiClient) {
         path: { id },
         body: reason ? { reason } : undefined,
       }),
+    reopenNegotiation: (id: string, reason?: string) =>
+      client.request<ReopenNegotiationResponse>('/v1/negotiations/{id}/reopen', {
+        method: 'POST',
+        path: { id },
+        body: reason ? { reason } : undefined,
+      }),
+
     getSigningSession: (id: string, signal?: AbortSignal) =>
       client.request<GetSigningSessionResponse>('/v1/signing-sessions/{id}', { path: { id }, signal }),
 

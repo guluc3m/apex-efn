@@ -37,12 +37,13 @@
     "resumeText": "The agent goes back to drafting in semi-automatic mode: every message waits for your approval.",
     "abortTitle": "Abort negotiation",
     "abortText": "The agent stops writing. The transcript is saved and you can reopen it later.",
-    "reason": "Reason"
+    "reason": "Reason",
+    "reopenTitle": "Reopen this negotiation",
+    "reopenText": "The agent resumes where it stopped. The transcript and the rounds already used are kept: reopening buys no extra concessions."
   },
   "titleNoMax": "Negotiation · round {round}",
   "loading": "Loading negotiation…",
   "empty": "No messages yet.",
-  "reopenUnavailable": "Reopening is not available yet.",
   "states": {
     "queued": "Queued",
     "running": "Agent working",
@@ -80,6 +81,8 @@
     "draft_superseded": "The seller replied in the meantime. Review the new draft before approving.",
     "draft_not_pending": "That draft is no longer pending.",
     "human_in_control": "A human holds the chat. Hand it back to the agent first.",
-    "not_in_human_control": "Take control of the chat before writing to the seller."
+    "not_in_human_control": "Take control of the chat before writing to the seller.",
+    "seller_busy": "That seller is in another negotiation now.",
+    "not_aborted": "Only an aborted negotiation can be reopened."
   }
 }

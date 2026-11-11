@@ -10,7 +10,7 @@ import { AppLink } from '@/components/app-link'
 import { ErrorPanel } from '@/components/error-panel'
 import { ApiError, useNegotiation, useNegotiationAction, useNegotiationMessages } from '@/lib/api'
 
-type DialogKind = 'take' | 'resume' | 'abort'
+type DialogKind = 'take' | 'resume' | 'abort' | 'reopen'
 
 const BUBBLE = {
   agent: 'self-end border-accent-line bg-accent-subtle',
@@ -54,9 +54,10 @@ export function NegotiationView({ negotiationId, missionId }: { negotiationId: s
     </li>
   )
 
-  const dialogs: Record<DialogKind, { title: string; text: string; confirm: string; danger?: boolean; icon: typeof Hand; action: 'takeover' | 'resume' | 'abort' }> = {
+  const dialogs: Record<DialogKind, { title: string; text: string; confirm: string; danger?: boolean; icon: typeof Hand; action: 'takeover' | 'resume' | 'abort' | 'reopen' }> = {
     take: { title: t('dialog.takeTitle'), text: t('dialog.takeText'), confirm: t('take'), icon: Hand, action: 'takeover' },
     resume: { title: t('dialog.resumeTitle'), text: t('dialog.resumeText'), confirm: t('resume'), icon: Bot, action: 'resume' },
+    reopen: { title: t('dialog.reopenTitle'), text: t('dialog.reopenText'), confirm: t('reopen'), icon: RotateCcw, action: 'reopen' },
     abort: { title: t('dialog.abortTitle'), text: t('dialog.abortText'), confirm: t('abort'), danger: true, icon: CircleStop, action: 'abort' },
   }
   const d = dialog ? dialogs[dialog] : null
@@ -105,13 +106,7 @@ export function NegotiationView({ negotiationId, missionId }: { negotiationId: s
           {!done && !human && open('take', t('take'), Hand, 'sec')}
           {human && open('resume', t('resume'), Bot, 'sec')}
           {!done && open('abort', t('abort'), CircleStop, 'ghost')}
-          {/* //todo_#160: reabrir con motivo; el contrato aún no tiene endpoint de reapertura. */}
-          {aborted && (
-            <Button variant="sec" disabledReason={t('reopenUnavailable')}>
-              <Icon icon={RotateCcw} />
-              {t('reopen')}
-            </Button>
-          )}
+          {aborted && open('reopen', t('reopen'), RotateCcw, 'sec')}
         </div>
       </div>
 

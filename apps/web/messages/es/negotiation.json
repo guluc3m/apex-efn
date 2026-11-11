@@ -37,12 +37,13 @@
     "resumeText": "El agente vuelve a redactar en modo semiautomático: cada mensaje espera tu aprobación.",
     "abortTitle": "Abortar negociación",
     "abortText": "El agente deja de escribir. La transcripción queda guardada y puedes reabrirla después.",
-    "reason": "Motivo"
+    "reason": "Motivo",
+    "reopenTitle": "Reabrir esta negociación",
+    "reopenText": "El agente continúa donde lo dejó. Se conservan la transcripción y las rondas ya usadas: reabrir no da concesiones extra."
   },
   "titleNoMax": "Negociación · ronda {round}",
   "loading": "Cargando negociación…",
   "empty": "Aún no hay mensajes.",
-  "reopenUnavailable": "La reapertura aún no está disponible.",
   "states": {
     "queued": "En cola",
     "running": "Agente trabajando",
@@ -80,6 +81,8 @@
     "draft_superseded": "El vendedor ha respondido entretanto. Revisa el nuevo borrador antes de aprobar.",
     "draft_not_pending": "Ese borrador ya no está pendiente.",
     "human_in_control": "Una persona tiene el chat. Devuélvelo antes al agente.",
-    "not_in_human_control": "Toma el control del chat antes de escribir al vendedor."
+    "not_in_human_control": "Toma el control del chat antes de escribir al vendedor.",
+    "seller_busy": "Ese vendedor está ahora en otra negociación.",
+    "not_aborted": "Solo se puede reabrir una negociación abortada."
   }
 }
