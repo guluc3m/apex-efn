@@ -1,7 +1,7 @@
 'use client'
 
 import type { ActionAvailability, Deal, DealAction, Money } from '@apex/shared-types/contracts'
-import { Button, Dialog, DialogContent, Icon, Input, Label, MoneyDisplay, Select } from '@apex/ui'
+import { Button, Dialog, DialogContent, Icon, Input, Label, MoneyDisplay, PriceBandBadge, Select } from '@apex/ui'
 import {
   ArrowDown, ChartBarStacked, Flag, Gauge, Hand, MessagesSquare, Package, Pause, PenLine, Receipt, Shield, Trash2, Upload,
   type LucideIcon,
@@ -50,6 +50,7 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
   const t = useTranslations('decisions')
   const tc = useTranslations('compare.chart')
   const pct = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 })
+  const nf = new Intl.NumberFormat(locale)
   const [action, setAction] = useState<DealAction | null>(null)
   const [form, setForm] = useState(emptyActionForm)
   const mutation = useDealAction()
@@ -86,14 +87,57 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
   }
   const body = action ? dealActionBody(action, form) : null
 
-  const confBreakdown = conf && (
-    <div className="text-[13px]">
-      {Object.entries(conf.signals_normalized ?? {}).map(([k, v]) => (
-        <Row key={k} k={known('signal', k)}>{(v * 100).toFixed(0)} %</Row>
-      ))}
-      {(conf.penalties ?? []).map((p) => (
-        <Row key={p} k={t('detail.penalty')}>{known('signal', p)}</Row>
-      ))}
+  const signals = Object.entries(conf?.signals_normalized ?? {}).filter(
+    (e): e is [string, number] => typeof e[1] === 'number' && Number.isFinite(e[1]),
+  )
+  const penalties = conf?.penalties ?? []
+  const anomalies = conf?.flags ?? []
+  // `seller_confidence` is the engine's own object: only render what it sends, never a zero stand-in.
+  const confBreakdown = conf && (signals.length > 0 || penalties.length > 0 || anomalies.length > 0) && (
+    <div className="flex flex-col gap-2 text-[13px]">
+      {signals.length > 0 && (
+        <div>
+          <div className="font-semibold">{t('detail.signals')}</div>
+          {signals.map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between gap-3 py-0.5">
+              <span className="text-ink-muted">{known('signal', k)}</span>
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-1 w-16 bg-line" aria-hidden="true">
+                  <span
+                    className="block h-full bg-accent"
+                    style={{ width: `${Math.round(Math.min(1, Math.max(0, v)) * 100)}%` }}
+                  />
+                </span>
+                <span className="w-11 text-right tabular-nums">{pct.format(v)}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {penalties.length > 0 && (
+        <div>
+          <div className="font-semibold">{t('detail.penalties')}</div>
+          <ul className="m-0 list-none p-0 text-ink-muted">
+            {penalties.map((p) => (
+              <li key={p}>{known('penalty', p)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {anomalies.length > 0 && (
+        <div>
+          <div className="font-semibold">{t('detail.flags')}</div>
+          <ul className="m-0 list-none p-0">
+            {anomalies.map((f, i) => (
+              <li key={`${f.type}-${i}`} className="flex justify-between gap-2">
+                <span className="text-ink-muted">{known('risk', f.type)}</span>
+                <span className="text-[11px] tracking-wide uppercase">{known('severity', f.severity)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="text-[11px] text-ink-muted">{t('detail.model', { version: conf.model_version })}</div>
     </div>
   )
   const staleFit = fit?.financials_stale
@@ -198,18 +242,37 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           <p className="text-[13px] text-ink-muted">{t('detail.noNegotiation')}</p>
         )}
         <Section icon={Shield} title={t('detail.whyConfidence')} open>
-          {confBreakdown ?? <p className="text-[13px] text-ink-muted">{t('detail.noConfidence')}</p>}
+          {confBreakdown || (
+            <p className="text-[13px] text-ink-muted">{conf ? t('detail.noSignals') : t('detail.noConfidence')}</p>
+          )}
         </Section>
         <Section icon={Gauge} title={t('detail.sanity')}>
           {sanity ? (
             <>
-              {/* La API puede omitir los números de referencia mientras no haya muestra suficiente. */}
-              <Row k={t('detail.reference')}>{money(sanity.reference_price_eur)}</Row>
-              <Row k={t('detail.median')}>{money(sanity.median)}</Row>
-              <Row k={t('detail.sample')}>{sanity.sample_size ?? '—'}</Row>
-              <Row k={t('detail.deviation')}>
-                {typeof sanity.relative_deviation === 'number' ? `${(sanity.relative_deviation * 100).toFixed(1)} %` : '—'}
+              <Row k={t('detail.priceBand')}>
+                <PriceBandBadge band={sanity.band} label={t(`band.${sanity.band}`)} />
               </Row>
+              {/* An insufficient reference echoes the offer price as median with a zero deviation: show no fake numbers. */}
+              {sanity.band === 'insufficient_reference' ? (
+                <p className="my-1 text-[13px] text-ink-muted">{t('detail.noReference')}</p>
+              ) : (
+                <>
+                  <Row k={t('detail.reference')}>{money(sanity.reference_price_eur)}</Row>
+                  <Row k={t('detail.median')}>{money(sanity.median)}</Row>
+                  {sanity.band_lower && sanity.band_upper && (
+                    <Row k={t('detail.bandRange')}>
+                      {money(sanity.band_lower)} – {money(sanity.band_upper)}
+                    </Row>
+                  )}
+                  <Row k={t('detail.dispersion')}>
+                    {sanity.dispersion_measure ? known('dispersion', sanity.dispersion_measure) : '—'}
+                  </Row>
+                  <Row k={t('detail.deviation')}>
+                    {typeof sanity.relative_deviation === 'number' ? `${(sanity.relative_deviation * 100).toFixed(1)} %` : '—'}
+                  </Row>
+                </>
+              )}
+              <Row k={t('detail.sample')}>{sanity.sample_size != null ? nf.format(sanity.sample_size) : '—'}</Row>
               {(sanity.explanations ?? []).map((e) => (
                 <div key={e.code} className="py-0.5 text-[13px]">{known('explanation', e.code)}</div>
               ))}
@@ -228,12 +291,17 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
         <Section icon={Receipt} title={t('detail.landedBreakdown')}>
           {fit ? (
             <>
+              <p className="my-1 text-[13px] text-ink-muted">
+                {t('detail.priceQty')}: {money(fit.landed_cost.unit_price)} ×{' '}
+                <span className="tabular-nums">{nf.format(fit.landed_cost.quantity)}</span>
+              </p>
               {(fit.landed_cost.lines ?? []).map((l) => (
-                <Row key={l.code} k={t(`line.${l.code}`)}>{money(l.amount)}</Row>
+                <Row key={l.code} k={known('line', l.code)}>{money(l.amount)}</Row>
               ))}
               {(fit.landed_cost.lines ?? []).length === 0 && (
                 <p className="my-1 text-[13px] text-ink-muted">{t('detail.linesPending')}</p>
               )}
+              <Row k={t('detail.unitLanded')}>{money(fit.landed_cost.unit_landed_cost)}</Row>
               <div className="flex justify-between border-t border-line pt-1.5">
                 <strong>{t('detail.total')}</strong>
                 <strong>{money(fit.landed_cost.total)}</strong>
@@ -264,10 +332,10 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           )}
         </Section>
         <Section icon={Flag} title={t('detail.risks')}>
-          {deal.flags?.length || conf?.flags.length ? (
+          {deal.flags?.length || conf?.flags?.length ? (
             <>
               {deal.flags?.map((r) => <div key={r}>{known('risk', r)}</div>)}
-              {conf?.flags.map((f, i) => <div key={i}>{known('risk', f.type)}</div>)}
+              {conf?.flags?.map((f, i) => <div key={i}>{known('risk', f.type)}</div>)}
             </>
           ) : (
             <div>{t('risk.none')}</div>

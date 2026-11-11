@@ -85,7 +85,17 @@
     "deviation": "相对参考价的偏差",
     "noSanity": "尚无价格检查。",
     "noLanded": "尚无到岸成本。",
-    "linesPending": "接口尚未返回逐行明细，目前只有总额。"
+    "linesPending": "该报价没有逐行明细，只有合计。",
+    "priceBand": "价格区间",
+    "bandRange": "正常区间",
+    "dispersion": "离散度",
+    "unitLanded": "到岸单价",
+    "signals": "归一化信号",
+    "penalties": "扣分项",
+    "flags": "评论异常",
+    "model": "模型 {version}",
+    "noSignals": "没有信号明细：数据不足。",
+    "noReference": "可比报价不足，无法计算参考价；该报价转人工处理。"
   },
   "stale": {
     "body": "当前财务快照已过期。重新导入CSV前，直接采购将被阻止。",
@@ -109,8 +119,48 @@
     "fx_conversion": "汇率转换",
     "fx_risk": "汇率风险"
   },
+  "dispersion": {
+    "mad": "MAD（中位绝对偏差）",
+    "iqr": "IQR（四分位距）",
+    "relative": "相对偏差"
+  },
+  "signal": {
+    "account_age_days": "账号年龄",
+    "first_sale_date": "首单时间",
+    "months_active_last_12": "近12个月活跃月数",
+    "lifetime_transactions": "累计交易量",
+    "transactions_12m": "近12个月交易量",
+    "gmv_12m": "近12个月成交额",
+    "repeat_buyer_share": "复购买家占比",
+    "published_products_count": "在售商品数",
+    "catalog_churn_30d": "30天目录变动",
+    "spec_completeness_avg": "规格完整度",
+    "reviews_total": "评论总数",
+    "reviews_12m": "近12个月评论",
+    "rating_adjusted": "校正评分",
+    "positive_share_wilson": "Wilson 好评率",
+    "verified_review_share": "已验证评论占比",
+    "response_rate": "回复率",
+    "identity_verified": "身份已验证",
+    "trade_assurance": "交易保障",
+    "escrow_available": "托管"
+  },
+  "penalty": {
+    "reviews_unavailable": "无评论数据",
+    "dispute_rate_above_max": "纠纷率超过上限",
+    "refund_rate_above_max": "退款率超过上限"
+  },
   "risk": {
-    "none": "无标记"
+    "none": "无标记",
+    "burst_velocity": "评论突增",
+    "five_star_anomaly": "五星占比异常",
+    "low_verified_share": "已验证评论占比过低",
+    "duplicate_text": "评论内容重复",
+    "creation_correlation": "评论集中在账号创建初期"
+  },
+  "severity": {
+    "warning": "警告",
+    "critical": "严重"
   },
   "discardReason": {
     "price_too_high": "价格过高",

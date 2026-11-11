@@ -19,16 +19,32 @@ export function PriceDistribution({ offers }: { offers: readonly Offer[] }) {
   const checked = offers.filter((o) => o.price_sanity_check)
   if (checked.length === 0) return <p className="m-0 text-[13px] text-ink-muted">{t('none')}</p>
 
+  // An `insufficient_reference` check echoes the offer's own price back as median and zero deviation:
+  // it is not a market reference, so the chart must not draw it. Prefer the first offer with a real one.
+  const first = (checked.find((o) => o.price_sanity_check!.band !== 'insufficient_reference') ?? checked[0]!).price_sanity_check!
+  const hasReference = first.band !== 'insufficient_reference'
   const currency = checked[0]!.unit_price.currency
   // Chart axis only: minor units to major for formatting, never for any business result.
   const money = new Intl.NumberFormat(locale, { style: 'currency', currency })
+  const nf = new Intl.NumberFormat(locale)
   const toMajor = (minor: number) => minor / 100
   // The sanity check may omit the reference numbers until there is enough of a sample (provisional API).
-  const median = checked[0]!.price_sanity_check!.median?.amount_minor
+  const median = hasReference ? first.median?.amount_minor : undefined
   // Normal band as the server computed it; absent when there was no reference to compute it from.
-  const lower = checked[0]!.price_sanity_check!.band_lower?.amount_minor
-  const upper = checked[0]!.price_sanity_check!.band_upper?.amount_minor
+  const lower = hasReference ? first.band_lower?.amount_minor : undefined
+  const upper = hasReference ? first.band_upper?.amount_minor : undefined
   const hasBand = lower != null && upper != null
+  // Sample size and dispersion measure name the reference the band came from; omit what the API omits.
+  const sample = first.sample_size
+  const measure = hasReference && first.dispersion_measure ? t(`dispersion.${first.dispersion_measure}`) : null
+  const stats =
+    sample != null && measure
+      ? t('stats', { sample: nf.format(sample), measure })
+      : sample != null
+        ? t('statsSample', { sample: nf.format(sample) })
+        : measure
+          ? t('statsDispersion', { measure })
+          : null
   const data = [...checked]
     .sort((a, b) => a.unit_price.amount_minor - b.unit_price.amount_minor)
     .map((o) => ({ id: o.id, name: o.seller_name, price: o.unit_price.amount_minor, band: o.price_sanity_check!.band }))
@@ -41,6 +57,7 @@ export function PriceDistribution({ offers }: { offers: readonly Offer[] }) {
           : hasBand
             ? t('captionBand', { median: money.format(toMajor(median)), lower: money.format(toMajor(lower)), upper: money.format(toMajor(upper)) })
             : t('caption', { median: money.format(toMajor(median)) })}
+        {stats && <span className="block tabular-nums">{stats}</span>}
       </figcaption>
       <div aria-hidden="true">
         <ResponsiveContainer width="100%" height={220}>

@@ -10,6 +10,8 @@ mission's state.
 
 from __future__ import annotations
 
+import structlog
+
 import asyncio
 import json
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -50,6 +52,8 @@ from apex.llm.budget import TokenBudgetExceeded
 from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
 from apex.llm.transport import LLMHTTPError, LLMTransportError
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter()
 
@@ -166,7 +170,29 @@ async def _maybe_autorun(
     task = asyncio.create_task(runner.run(tenant_id=tenant_id, mission_id=mission.id))
     _RUNS.add(task)
     task.add_done_callback(_RUNS.discard)
+    # A background task that raises used to die silently: no event, no error, and the screen sat at
+    # "sourcing" forever. The exception is now logged and the mission is failed with its reason, so the UI
+    # always leaves the phase it was in.
+    task.add_done_callback(lambda done: _report_crash(done, runner, tenant_id, mission.id))
     return mission
+
+
+def _report_crash(task: "asyncio.Task[Any]", runner: Any, tenant_id: str, mission_id: str) -> None:
+    """Never let a crashed run look like a run in progress."""
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is None:
+        return
+    logger.exception("mission run crashed", mission_id=mission_id, error=repr(exc))
+    asyncio.create_task(_fail_mission(runner, tenant_id=tenant_id, mission_id=mission_id, reason=exc))
+
+
+async def _fail_mission(runner: Any, *, tenant_id: str, mission_id: str, reason: BaseException) -> None:
+    try:
+        await runner.fail(tenant_id=tenant_id, mission_id=mission_id, reason=f"runner_crashed: {reason}")
+    except Exception:  # noqa: BLE001 - reporting the crash must never crash
+        logger.exception("could not mark the crashed mission as failed", mission_id=mission_id)
 
 
 @router.get("/{id}", response_model=Mission, tags=["missions"])

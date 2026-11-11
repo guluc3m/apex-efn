@@ -85,7 +85,17 @@
     "deviation": "סטייה ממחיר הייחוס",
     "noSanity": "עדיין אין בדיקת מחיר.",
     "noLanded": "עדיין אין עלות נחיתה.",
-    "linesPending": "ה-API עדיין לא שולח את הפירוט לפי שורות; זמין רק הסכום הכולל."
+    "linesPending": "להצעה הזו אין פירוט לפי שורות; זמין רק הסכום הכולל.",
+    "priceBand": "רצועת מחיר",
+    "bandRange": "רצועה תקינה",
+    "dispersion": "פיזור",
+    "unitLanded": "עלות יחידה כוללת",
+    "signals": "אותות מנורמלים",
+    "penalties": "קנסות",
+    "flags": "חריגות בביקורות",
+    "model": "מודל {version}",
+    "noSignals": "אין פירוט אותות: אין מספיק נתונים.",
+    "noReference": "אין מספיק הצעות דומות לחישוב ייחוס; ההצעה עוברת לבדיקה אנושית."
   },
   "stale": {
     "body": "תצלום המצב הפיננסי הפעיל פג תוקף. רכישות ישירות חסומות עד לייבוא מחדש של ה-CSV.",
@@ -109,8 +119,48 @@
     "fx_conversion": "המרת מטבע",
     "fx_risk": "סיכון מטבע"
   },
+  "dispersion": {
+    "mad": "MAD (סטייה מוחלטת חציונית)",
+    "iqr": "IQR (טווח בין־רבעוני)",
+    "relative": "סטייה יחסית"
+  },
+  "signal": {
+    "account_age_days": "גיל החשבון",
+    "first_sale_date": "מכירה ראשונה",
+    "months_active_last_12": "חודשי פעילות (12 ח׳)",
+    "lifetime_transactions": "עסקאות מצטברות",
+    "transactions_12m": "עסקאות (12 ח׳)",
+    "gmv_12m": "GMV (12 ח׳)",
+    "repeat_buyer_share": "קונים חוזרים",
+    "published_products_count": "מוצרים מפורסמים",
+    "catalog_churn_30d": "תחלופת קטלוג (30 י׳)",
+    "spec_completeness_avg": "שלמות המפרט",
+    "reviews_total": "סה״כ ביקורות",
+    "reviews_12m": "ביקורות (12 ח׳)",
+    "rating_adjusted": "דירוג מתוקן",
+    "positive_share_wilson": "שיעור חיובי (Wilson)",
+    "verified_review_share": "ביקורות מאומתות",
+    "response_rate": "שיעור מענה",
+    "identity_verified": "זהות מאומתת",
+    "trade_assurance": "הגנת עסקה",
+    "escrow_available": "נאמנות"
+  },
+  "penalty": {
+    "reviews_unavailable": "אין נתוני ביקורות",
+    "dispute_rate_above_max": "שיעור מחלוקות מעל המקסימום",
+    "refund_rate_above_max": "שיעור החזרים מעל המקסימום"
+  },
   "risk": {
-    "none": "ללא דגלים"
+    "none": "ללא דגלים",
+    "burst_velocity": "הצפת ביקורות",
+    "five_star_anomaly": "חריגה בשיעור 5 כוכבים",
+    "low_verified_share": "שיעור מאומתים נמוך",
+    "duplicate_text": "טקסט ביקורת כפול",
+    "creation_correlation": "ביקורות מרוכזות סביב פתיחת החשבון"
+  },
+  "severity": {
+    "warning": "אזהרה",
+    "critical": "קריטי"
   },
   "discardReason": {
     "price_too_high": "מחיר גבוה מדי",

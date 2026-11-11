@@ -75,6 +75,14 @@
     "none": "Aún no hay verificaciones de precio.",
     "caption": "Precio/ud de cada oferta. Línea discontinua: mediana de mercado {median}.",
     "captionBand": "Precio unitario por oferta. Línea discontinua: mediana de mercado {median}. Zona sombreada: banda normal, de {lower} a {upper}.",
-    "captionNoMedian": "Precio unitario por oferta. Todavía sin mediana de mercado: la referencia se calcula cuando hay muestra suficiente."
+    "captionNoMedian": "Precio unitario por oferta. Todavía sin mediana de mercado: la referencia se calcula cuando hay muestra suficiente.",
+    "stats": "Muestra: {sample} ofertas · dispersión: {measure}",
+    "statsSample": "Muestra: {sample} ofertas",
+    "statsDispersion": "Dispersión: {measure}",
+    "dispersion": {
+      "mad": "MAD (desviación absoluta mediana)",
+      "iqr": "IQR (rango intercuartílico)",
+      "relative": "Desviación relativa"
+    }
   }
 }

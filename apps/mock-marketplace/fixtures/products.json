@@ -1020,6 +1020,96 @@
       "incoterm": "FOB",
       "leadTimeDays": 9,
       "tags": []
+    },
+    {
+      "id": "b-esp32-01",
+      "platform": "mock-b",
+      "sellerId": "b-solid-factory",
+      "productKey": "esp32-s3-devkit-n8r8",
+      "title": "ESP32-S3 DevKit N8R8, WiFi + BLE 5.0, 8MB Flash",
+      "description": "ESP32-S3 development board, N8R8, USB-C, official pinout. Synthetic fixture data.",
+      "specifications": {
+        "chip": "ESP32-S3",
+        "flash": "8MB",
+        "psram": "8MB",
+        "usb": "USB-C",
+        "wireless": "WiFi 2.4GHz + BLE 5.0"
+      },
+      "certifications": [
+        "CE",
+        "FCC",
+        "RoHS"
+      ],
+      "imageUrls": [
+        "/static/img/b-esp32-01.png"
+      ],
+      "unitPriceMinor": 1850,
+      "currency": "CNY",
+      "moq": 1000,
+      "priceTiers": [
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 1850
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 1720
+        }
+      ],
+      "shipping": {
+        "costMinor": 3500,
+        "minDays": 12,
+        "maxDays": 22
+      },
+      "incoterm": "FOB",
+      "leadTimeDays": 20,
+      "tags": []
+    },
+    {
+      "id": "a-esp32-01",
+      "platform": "mock-a",
+      "sellerId": "a-solid-veteran",
+      "productKey": "esp32-s3-devkit-n8r8",
+      "title": "ESP32-S3 DevKit N8R8 Development Board, 8MB Flash",
+      "description": "ESP32-S3 development board with 8MB flash and PSRAM, USB-C. Synthetic fixture data.",
+      "specifications": {
+        "chip": "ESP32-S3",
+        "flash": "8MB",
+        "psram": "8MB",
+        "usb": "USB-C"
+      },
+      "certifications": [
+        "CE",
+        "FCC"
+      ],
+      "imageUrls": [
+        "/static/img/a-esp32-01.png"
+      ],
+      "unitPriceMinor": 2940,
+      "currency": "EUR",
+      "moq": 500,
+      "priceTiers": [
+        {
+          "minQuantity": 500,
+          "maxQuantity": 1999,
+          "unitPriceMinor": 2940
+        },
+        {
+          "minQuantity": 2000,
+          "maxQuantity": null,
+          "unitPriceMinor": 2790
+        }
+      ],
+      "shipping": {
+        "costMinor": 1800,
+        "minDays": 6,
+        "maxDays": 10
+      },
+      "incoterm": "DAP",
+      "leadTimeDays": 10,
+      "tags": []
     }
   ]
 }

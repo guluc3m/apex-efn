@@ -15,14 +15,20 @@ Two rules from that contract are enforced by construction:
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from apex.agents.scraping import RawOffer, SkippedListing, WorkerError, WorkerSearchResult
+from apex.agents.scraping import (
+    SUPPORTED_CURRENCIES,
+    RawOffer,
+    SkippedListing,
+    WorkerError,
+    WorkerSearchResult,
+)
 from apex.agents.sourcing import PlanStep
 
 JOBS_PATH = "/internal/v1/jobs"
@@ -68,7 +74,8 @@ class _SkippedListing(_Model):
 
 class _SearchJobResult(_Model):
     kind: str
-    offers: list[_RawOffer]
+    offers: list[Mapping[str, Any]]
+    """Validated one listing at a time: a single malformed offer must not discard the rest of the page."""
     skipped: list[_SkippedListing] = Field(default_factory=list)
     truncated: bool = False
 
@@ -231,9 +238,10 @@ class HttpBrowserWorker:
             result = _SearchJobResult.model_validate(state.result)
         except ValidationError as exc:
             raise BrowserWorkerError("invalid_result", str(exc)) from exc
+        offers, unreadable = _map_offers(platform_id, result.offers)
         return WorkerSearchResult(
             platform_id=platform_id,
-            offers=[_to_raw_offer(offer) for offer in result.offers],
+            offers=offers,
             skipped=[
                 SkippedListing(
                     platform_id=platform_id,
@@ -242,9 +250,60 @@ class HttpBrowserWorker:
                     currency_raw=skipped.currency_raw,
                 )
                 for skipped in result.skipped
-            ],
+            ]
+            + unreadable,
             truncated=result.truncated,
         )
+
+
+SKIP_REASONS = frozenset({"unsupported_currency", "missing_price", "parse_error"})
+"""The contract's closed ``SkipReason`` enum (internal browser-worker spec)."""
+
+
+def _map_offers(
+    platform_id: str, raw_offers: Sequence[Mapping[str, Any]]
+) -> tuple[list[RawOffer], list[SkippedListing]]:
+    """Map each listing on its own, so one the orchestrator cannot use is skipped, not fatal.
+
+    A listing is unreadable when its currency is outside the closed enum (the adapter should have skipped
+    it, but the orchestrator cannot trust that) or when it breaks the contract's own constraints. Losing
+    the whole page for one bad listing is what left a mission sitting at ``sourcing`` with no event.
+    """
+    offers: list[RawOffer] = []
+    skipped: list[SkippedListing] = []
+    for index, raw in enumerate(raw_offers):
+        try:
+            offers.append(_to_raw_offer(_RawOffer.model_validate(raw)))
+        except ValidationError:
+            skipped.append(
+                SkippedListing(
+                    platform_id=platform_id,
+                    platform_offer_id=_offer_id(raw, index),
+                    reason=_skip_reason(raw),
+                    currency_raw=_currency_of(raw),
+                )
+            )
+    return offers, skipped
+
+
+def _offer_id(raw: Mapping[str, Any], index: int) -> str:
+    value = raw.get("platform_offer_id")
+    return value if isinstance(value, str) and value else f"listing-{index + 1}"
+
+
+def _skip_reason(raw: Mapping[str, Any]) -> str:
+    currency = _currency_of(raw)
+    if currency is not None and currency not in SUPPORTED_CURRENCIES:
+        return "unsupported_currency"
+    return "parse_error"
+
+
+def _currency_of(raw: Mapping[str, Any]) -> str | None:
+    unit_price = raw.get("unit_price")
+    if not isinstance(unit_price, Mapping):
+        return None
+    currency = unit_price.get("currency")
+    return currency if isinstance(currency, str) else None
 
 
 def _to_raw_offer(offer: _RawOffer) -> RawOffer:

@@ -41,6 +41,26 @@ RAW_OFFER: dict[str, Any] = {
 }
 
 
+MOCK_B_OFFER: dict[str, Any] = {
+    # Copied from ``apps/browser-worker/src/adapters/mock-b/fixtures/search.html`` through the adapter's
+    # own ``searchResults``: no ``quantity_available``, ``list_price`` null, CNY, MOQ from the card.
+    "platform": "mock-b",
+    "platform_offer_id": "b-gloves-01",
+    "product_id": "b-gloves-01",
+    "platform_seller_id": "b-solid-factory",
+    "seller_name": "Hangzhou Lotus Packaging Factory (mock)",
+    "title": "Nitrile Gloves Size M, Box of 100 Factory Direct",
+    "product_url": "http://127.0.0.1:8002/mock-b/item/b-gloves-01",
+    "unit_price": {"amount_minor": 3380, "currency": "CNY"},
+    "list_price": None,
+    "price_tiers": [],
+    "moq": 5000,
+    "specifications": {},
+    "certifications": [],
+    "captured_at": "2026-11-11T22:19:00.000Z",
+}
+
+
 class _Worker:
     """A fake worker: records requests and answers a scripted sequence of job states."""
 
@@ -259,3 +279,51 @@ async def test_a_result_that_does_not_match_the_contract_fails_loudly(sleeps: li
             tenant_id="tenant-a", mission_id="m-1", step=_step(), quantity=500
         )
     assert caught.value.code == "invalid_result"
+
+
+# ----- one unreadable listing must not discard the page (the mock-b incident) ---------------------
+
+
+def _search_state(offers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "job_id": "j-1",
+            "status": "succeeded",
+            "error": None,
+            "result": {"kind": "search", "offers": offers, "skipped": [], "truncated": False},
+        }
+    ]
+
+
+async def test_a_real_mock_b_search_page_is_mapped(sleeps: list[float]) -> None:
+    """The exact shape the mock-b adapter returns; used to be the shape that killed the mission."""
+    worker = _Worker(states=_search_state([MOCK_B_OFFER]))
+    result = await _worker(worker, sleeps).search(
+        tenant_id="tenant-a", mission_id="m-1", step=_step(), quantity=500
+    )
+    assert result.skipped == []
+    offer = result.offers[0]
+    assert offer.platform_id == "mock-b"
+    assert offer.seller_id == "b-solid-factory"
+    assert offer.currency == "CNY"
+    assert offer.moq == 5000
+    assert offer.quantity_available == 5000  # no stock shown: the MOQ is the floor
+    assert offer.list_price_minor is None
+
+
+async def test_one_unreadable_listing_is_skipped_instead_of_failing_the_page(
+    sleeps: list[float],
+) -> None:
+    """A listing outside the closed currency enum, and one that breaks the contract, are reported."""
+    unsupported = {**MOCK_B_OFFER, "platform_offer_id": "b-gbp-1"}
+    unsupported["unit_price"] = {"amount_minor": 100, "currency": "GBP"}
+    broken = {**MOCK_B_OFFER, "platform_offer_id": "b-broken-1", "moq": 0}
+    worker = _Worker(states=_search_state([MOCK_B_OFFER, unsupported, broken]))
+    result = await _worker(worker, sleeps).search(
+        tenant_id="tenant-a", mission_id="m-1", step=_step(), quantity=500
+    )
+    assert [o.platform_offer_id for o in result.offers] == ["b-gloves-01"]
+    assert [(s.platform_offer_id, s.reason, s.currency_raw) for s in result.skipped] == [
+        ("b-gbp-1", "unsupported_currency", "GBP"),
+        ("b-broken-1", "parse_error", "CNY"),
+    ]

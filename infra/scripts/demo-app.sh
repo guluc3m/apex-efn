@@ -600,7 +600,7 @@ print_banner() {
  demo: salta la firma que exigen los criterios 17/21.
 
  Logs ................... $DEMO_DIR/*.log
- Parar los procesos ..... pnpm demo:app:stop
+ Parar .................. Ctrl-C (o pnpm demo:app:stop si quedó algo)
  Parar también Docker ... pnpm dev:down
 ────────────────────────────────────────────────────────────────────────────
 EOF

@@ -85,7 +85,17 @@
     "deviation": "Deviation from reference",
     "noSanity": "No price check yet.",
     "noLanded": "No landed cost yet.",
-    "linesPending": "The API does not send the line breakdown yet; only the total is available."
+    "linesPending": "This offer has no line-by-line breakdown; only the total.",
+    "priceBand": "Price band",
+    "bandRange": "Normal band",
+    "dispersion": "Dispersion",
+    "unitLanded": "Landed unit cost",
+    "signals": "Normalized signals",
+    "penalties": "Penalties",
+    "flags": "Review anomalies",
+    "model": "Model {version}",
+    "noSignals": "No signal breakdown: not enough data.",
+    "noReference": "Not enough comparable offers to compute a reference; the offer goes to a human."
   },
   "stale": {
     "body": "The active financial snapshot has expired. Direct purchases are blocked until the CSV is re-imported.",
@@ -109,8 +119,48 @@
     "fx_conversion": "FX conversion",
     "fx_risk": "FX risk"
   },
+  "dispersion": {
+    "mad": "MAD (median absolute deviation)",
+    "iqr": "IQR (interquartile range)",
+    "relative": "Relative deviation"
+  },
+  "signal": {
+    "account_age_days": "Account age",
+    "first_sale_date": "First sale",
+    "months_active_last_12": "Active months (12 m)",
+    "lifetime_transactions": "Lifetime transactions",
+    "transactions_12m": "Transactions (12 m)",
+    "gmv_12m": "GMV (12 m)",
+    "repeat_buyer_share": "Repeat buyers",
+    "published_products_count": "Published products",
+    "catalog_churn_30d": "Catalog churn (30 d)",
+    "spec_completeness_avg": "Spec completeness",
+    "reviews_total": "Reviews total",
+    "reviews_12m": "Reviews (12 m)",
+    "rating_adjusted": "Adjusted rating",
+    "positive_share_wilson": "Wilson positive share",
+    "verified_review_share": "Verified reviews",
+    "response_rate": "Response rate",
+    "identity_verified": "Identity verified",
+    "trade_assurance": "Trade assurance",
+    "escrow_available": "Escrow"
+  },
+  "penalty": {
+    "reviews_unavailable": "No review data",
+    "dispute_rate_above_max": "Dispute rate above the maximum",
+    "refund_rate_above_max": "Refund rate above the maximum"
+  },
   "risk": {
-    "none": "No flags"
+    "none": "No flags",
+    "burst_velocity": "Review burst",
+    "five_star_anomaly": "Abnormal 5-star share",
+    "low_verified_share": "Low verified share",
+    "duplicate_text": "Duplicate review text",
+    "creation_correlation": "Reviews concentrated at account creation"
+  },
+  "severity": {
+    "warning": "Warning",
+    "critical": "Critical"
   },
   "discardReason": {
     "price_too_high": "Price too high",
