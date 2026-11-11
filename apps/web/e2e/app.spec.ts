@@ -22,8 +22,7 @@ for (const { path, heading } of screens) {
   })
 }
 
-// Issue #335: no middleware sets the request locale, so /en renders Spanish.
-test.fixme('English routes render English messages', async ({ page }) => {
+test('English routes render English messages', async ({ page }) => {
   await page.goto('/en/misiones')
   await expect(page.getByRole('heading', { name: 'Missions' }).first()).toBeVisible()
 })
