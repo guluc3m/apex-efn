@@ -85,15 +85,18 @@ def deterministic_embedding(text: str, dim: int) -> list[float]:
     return [round(v / norm, 8) for v in out]
 
 
-_MONEY_RE = re.compile(r"\b(EUR|USD|CNY|GBP)\s?(\d+(?:[.,]\d{2})?)")
+_MONEY_RE = re.compile(
+    r"\b(EUR|USD|CNY|GBP)\s?(\d+(?:[.,]\d{2})?)|(\d+(?:[.,]\d{2})?)\s?(EUR|USD|CNY|GBP)\b"
+)
 
 
 def extract_money(text: str) -> str | None:
-    """The first ``CUR amount`` pair in ``text``, normalised to ``CUR 4.10``."""
+    """The first ``CUR amount`` or ``amount CUR`` pair in ``text``, normalised to ``CUR 4.10``."""
     match = _MONEY_RE.search(text)
     if match is None:
         return None
-    currency, amount = match.group(1), match.group(2).replace(",", ".")
+    currency = match.group(1) or match.group(4)
+    amount = (match.group(2) or match.group(3)).replace(",", ".")
     return f"{currency} {amount}"
 
 

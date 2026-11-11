@@ -14,6 +14,7 @@ def test_extracts_the_first_price_in_the_prompt() -> None:
     assert extract_money("Could you do EUR 4.10 for 5000 units?") == "EUR 4.10"
     assert extract_money("EUR 4,10 per unit") == "EUR 4.10"
     assert extract_money("no price mentioned") is None
+    assert extract_money("价格 4.20 EUR") == "EUR 4.20"
 
 
 def test_echoes_the_pinned_price() -> None:

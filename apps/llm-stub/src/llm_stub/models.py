@@ -55,6 +55,8 @@ class Response(BaseModel):
     usage: dict[str, int] | None = None
     # Optional prompt/completion token override
     finish_reason: str | None = None
+    # echo_price only: wrap the sentence as a JSON object {json_field: sentence} (structured callers).
+    json_field: str | None = None
 
     @model_validator(mode="after")
     def _check_payload(self) -> Response:

@@ -139,6 +139,8 @@ def _build_completion(
         text = echo_price_text(
             req.messages, role="buyer" if req.model == "negotiator" else "seller"
         )
+        if scripted.json_field:
+            text = json.dumps({scripted.json_field: text}, ensure_ascii=False)
         message["content"] = text
         completion_text = text
         finish = scripted.finish_reason or "stop"

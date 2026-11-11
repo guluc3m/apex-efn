@@ -1,0 +1,15 @@
+# Seller-message translation (narrator role, MessageTranslation). Matched by schema so it does not get the
+# recommendation narrative of role-narrator. The "translation" restates the price found in the seller
+# message, so the demo shows the seller's own number instead of a fixed sentence.
+scenarios:
+  - name: narrator-translate-message
+    description: "MessageTranslation: echoes the seller's price as a JSON object with key text."
+    role: narrator
+    schema: MessageTranslation
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+    response:
+      kind: echo_price
+      json_field: text
