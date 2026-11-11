@@ -375,6 +375,8 @@ services:
       S3_ENDPOINT: http://rustfs:9000
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-apex-dev}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-apex-dev-secret}
+      BROWSER_WORKER_URL: http://browser-worker:4010
+      BROWSER_WORKER_TOKEN: ${BROWSER_WORKER_TOKEN:-apex-dev-browser-worker-token-0123456789}
       AUTH_ISSUER_URL: http://localhost:8080/realms/apex
       # D1-05: the issuer is the browser-facing URL that appears in the token's `iss`; the JWKS is
       # fetched over the compose network, where Keycloak is `keycloak` and not `localhost`.
@@ -392,6 +394,8 @@ services:
         condition: service_healthy
       rustfs-init:
         condition: service_completed_successfully
+      browser-worker:
+        condition: service_started
 
   web:
     profiles: ['apps']
@@ -421,6 +425,9 @@ services:
       dockerfile: apps/browser-worker/Dockerfile
     container_name: apex-browser-worker
     environment:
+      PORT: '4010'
+      # DEV ONLY default (the worker requires at least 32 characters). Set it in .env for anything shared.
+      BROWSER_WORKER_TOKEN: ${BROWSER_WORKER_TOKEN:-apex-dev-browser-worker-token-0123456789}
       REDIS_URL: redis://redis:6379
       VAULT_ADDR: http://vault:8200
       # DEV ONLY root token, the same value the vault service is started with (D1-06).
@@ -434,6 +441,7 @@ services:
         condition: service_healthy
       vault:
         condition: service_healthy
+    expose: ['4010']
 
   # Built from source (D1-03). The context is the repo root because the app uses
   # the workspace tsconfig; see apps/mock-marketplace/Dockerfile.
