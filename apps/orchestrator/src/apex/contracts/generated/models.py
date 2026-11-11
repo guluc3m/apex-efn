@@ -252,6 +252,26 @@ class SendIntakeMessageRequest(BaseModel):
     text: Annotated[str, Field(max_length=4000, min_length=1)]
 
 
+class OnboardingStep(StrEnum):
+    company = "company"
+    sector = "sector"
+    accounts = "accounts"
+    budget = "budget"
+    policy = "policy"
+    negotiation = "negotiation"
+    finance = "finance"
+
+
+class OnboardingStepProgress(BaseModel):
+    step: OnboardingStep
+    done: Annotated[int, Field(description="Required items already filled in.", ge=0)]
+    warnings: Annotated[
+        int,
+        Field(description="Items that need a look (for example import warnings).", ge=0),
+    ]
+    pending: Annotated[int, Field(description="Required items still missing.", ge=0)]
+
+
 class FinancialCsvUpload(BaseModel):
     file: Annotated[
         bytes,
@@ -1701,8 +1721,18 @@ class OnboardingSession(BaseModel):
     company_profile: CompanyProfile
     active_financial_snapshot_id: str | None = None
     effective_config: EffectiveConfig
+    steps: Annotated[
+        list[OnboardingStepProgress] | None,
+        Field(
+            description="Per-step completion computed by the server from what it holds. Steps the server cannot evaluate (their data is tenant configuration, saved through signed decisions) are absent."
+        ),
+    ] = None
     created_at: AwareDatetime
     updated_at: AwareDatetime
+
+
+class OnboardingSessionList(BaseModel):
+    items: list[OnboardingSession]
 
 
 class ImportReport(BaseModel):
