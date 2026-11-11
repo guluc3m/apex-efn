@@ -39,6 +39,31 @@ DEMO_VALUES: dict[str, object] = {
         "dual_control_above": {"amount_minor": 2_000_000, "currency": "EUR"},
     },
     "signing": {"high_value_reauth_above": {"amount_minor": 1_000_000, "currency": "EUR"}},
+    # Issue #379: demo ranking profiles after the dominant weights of spec §2. Real tenants set their own.
+    "scoring": {
+        "profiles": {
+            "founder": {
+                "name": "Founder",
+                "weights": {
+                    "landed_cost": "0.5",
+                    "seller_confidence": "0.3",
+                    "financial_fit": "0.2",
+                },
+            },
+            "buyer": {
+                "name": "Operational buyer",
+                "weights": {"lead_time": "0.4", "seller_confidence": "0.4", "landed_cost": "0.2"},
+            },
+            "cfo": {
+                "name": "CFO",
+                "weights": {
+                    "financial_fit": "0.5",
+                    "landed_cost": "0.3",
+                    "seller_confidence": "0.2",
+                },
+            },
+        }
+    },
 }
 """ADR-900 Q7: demo values for the two demo tenants. They live in the *seed*, never in
 ``/config/defaults``, so a real tenant starts with these keys unset and must set them in onboarding.

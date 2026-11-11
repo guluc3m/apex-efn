@@ -66,6 +66,7 @@ ADR900_ADDED: frozenset[str] = frozenset(
         "neg.allowed_counterparts",  # issue #96, Q15
         "supervisor.stuck_after_minutes",  # issue #99
         "supervisor.degrade_on_budget_exhausted",  # issue #99
+        "scoring.profiles",  # issue #379, D4-12 (TL-authorized)
     }
 )
 # ADR-900 Q7 option B: ``llm.roles`` ships a global default (every role on the LLM stub) instead of unset.
@@ -74,7 +75,7 @@ ADR900_NO_LONGER_UNSET: frozenset[str] = frozenset(
 )  # seller.weights: ADR-304
 # Structured leaves: a value that is an object inside one leaf, not many keys.
 STRUCTURED_LEAVES: frozenset[str] = frozenset(
-    {"llm.roles", "sanity.reference_weights", "seller.weights", "seller.x_sat"}
+    {"llm.roles", "sanity.reference_weights", "seller.weights", "seller.x_sat", "scoring.profiles"}
 )
 
 
@@ -113,6 +114,7 @@ def test_unset_keys_match_sin_definir_in_spec() -> None:
         "landed.duty_rate",
         "landed.import_vat_rate",
         "finance.cost_of_capital_rate",
+        "scoring.profiles",
     }
     actual_null = {k for k, v in flat.items() if v is None}
     assert actual_null == expected_null, (

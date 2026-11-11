@@ -1,308 +1,168 @@
-"""EvaluatorAgent (D4-12): the MCDA engine ranks, code computes savings, the LLM only narrates."""
+"""EvaluatorAgent (D4-12): DEV-3's MCDA ranks with the tenant's profile, the LLM only narrates.
+
+Invariants: an out_of_budget offer is never #1 (criterion 15), a low seller is never #1 (criterion 11), and a
+profile switch reorders deterministically (criterion 27). Narration failure never loses the numbers.
+"""
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 
-from apex.agents.offers import Offer, OfferAnalysis
+from apex.agents.offers import InMemoryOfferStore, Offer, OfferAnalysis
 from apex.agents.ports import ConfidenceBand, FitOutcome, PriceBand, SanityOutcome, TrustOutcome
-from apex.agents.recommendation import (
-    Candidate,
-    EvaluatorAgent,
-    EvaluatorDeps,
-    NarrativeUngrounded,
-    NoCandidates,
-    RankedCandidate,
-    RankedRecommendation,
-)
+from apex.agents.recommendation import EvaluatorAgent, UnknownProfile
 from apex.agents.schemas import RecommendationNarrative
 from apex.common.clock import FixedClock
-from apex.llm.config import LLMRole
 from apex.llm.prompts import PromptRegistry
+from apex.tenant_config.load_defaults import seed
+from apex.tenant_config.repository import InMemoryConfigRepository
+from apex.tenant_config.service import TenantConfigService
 
 NOW = datetime(2026, 11, 9, 12, 0, tzinfo=UTC)
 TENANT = "tenant-a"
+MISSION = "m-1"
 
 
-class _Mcda:
-    """Deterministic fake: ranks by unit price ascending and records what it was given."""
-
-    def __init__(self, order: list[str] | None = None) -> None:
-        self.order = order
-        self.calls: list[dict[str, Any]] = []
-
-    async def rank(
-        self,
-        candidates: list[Candidate],
-        *,
-        profile: str,
-        tenant_id: str,
-        config_version: str,
-    ) -> RankedRecommendation:
-        self.calls.append(
-            {"candidates": list(candidates), "profile": profile, "config_version": config_version}
-        )
-        ids = self.order or [
-            c.offer_id for c in sorted(candidates, key=lambda c: c.unit_price_eur_minor)
-        ]
-        return RankedRecommendation(
-            ranked=[
-                RankedCandidate(
-                    offer_id=offer_id,
-                    rank=index + 1,
-                    score=f"0.{90 - index * 10}",
-                    contributions={"price": "0.5", "confidence": "0.3", "fit": "0.2"},
-                )
-                for index, offer_id in enumerate(ids)
-            ],
-            profile=profile,
-            config_version=config_version,
-        )
+class _Missions:
+    async def get(self, tenant_id: str, mission_id: str) -> Any:
+        return object() if mission_id == MISSION else None
 
 
 class _Gateway:
-    def __init__(self, draft: Any) -> None:
-        self.draft = draft
-        self.calls: list[dict[str, Any]] = []
+    def __init__(self, result: Any) -> None:
+        self.result = result
+        self.calls = 0
 
-    async def chat_structured(
-        self,
-        role: LLMRole,
-        messages: list[dict[str, Any]],
-        schema: type[Any],
-        *,
-        mission_id: str,
-        tenant_id: str,
-        prompt_version: str,
-        **_: Any,
-    ) -> Any:
-        self.calls.append(
-            {
-                "role": role,
-                "schema": schema.__name__,
-                "messages": messages,
-                "prompt_version": prompt_version,
-            }
-        )
-        return self.draft
+    async def chat_structured(self, *args: Any, **kwargs: Any) -> Any:
+        self.calls += 1
+        if isinstance(self.result, Exception):
+            raise self.result
+        return self.result
 
 
-def _offer(offer_id: str, price: int, *, list_price: int | None = None) -> Offer:
-    return Offer(
-        id=offer_id,
+async def _agent(rows: list[tuple[Offer, OfferAnalysis]], narrative: Any = None) -> EvaluatorAgent:
+    store = InMemoryOfferStore()
+    for offer, analysis in rows:
+        await store.add(offer)
+        await store.set_analysis(TENANT, analysis)
+    repo = InMemoryConfigRepository()
+    await seed([TENANT], repo, demo_values=True)
+    config = TenantConfigService(repo, None, FixedClock(NOW))  # type: ignore[arg-type]
+    gateway = _Gateway(
+        narrative
+        or RecommendationNarrative(top_offer_id="x", narrative="The top offer.", trade_offs=[])
+    )
+    return EvaluatorAgent(
+        offers=store,
+        missions=_Missions(),  # type: ignore[arg-type]
+        config=config,
+        gateway=gateway,  # type: ignore[arg-type]
+        prompts=PromptRegistry(),
+        clock=FixedClock(NOW),
+    )
+
+
+def _row(
+    offer_id: str,
+    price: int,
+    *,
+    band: ConfidenceBand = ConfidenceBand.HIGH,
+    score: int = 80,
+    verdict: str = "within_budget",
+    price_band: PriceBand = PriceBand.NORMAL,
+) -> tuple[Offer, OfferAnalysis]:
+    offer = Offer(
+        id=f"mock-a:{offer_id}",
         tenant_id=TENANT,
-        mission_id="m-1",
+        mission_id=MISSION,
         platform_id="mock-a",
         seller_id=f"s-{offer_id}",
         product_id="p-1",
         unit_price_eur_minor=price,
-        list_price_eur_minor=list_price,
+        list_price_eur_minor=price + 500,
         currency="EUR",
         quantity=100,
         collected_at=NOW,
-        raw_signals={},
     )
-
-
-def _analysis(offer_id: str, band: ConfidenceBand = ConfidenceBand.HIGH) -> OfferAnalysis:
-    return OfferAnalysis(
-        offer_id=offer_id,
-        confidence=TrustOutcome(band=band, score=80, model_version="trust-v3"),
-        sanity=SanityOutcome(band=PriceBand.NORMAL, config_version="cfg-7"),
-        fit=FitOutcome(verdict="within_budget"),
+    analysis = OfferAnalysis(
+        offer_id=offer.id,
+        confidence=TrustOutcome(band=band, score=score, model_version="trust-v1"),
+        sanity=SanityOutcome(band=price_band, config_version="c1"),
+        fit=FitOutcome(verdict=verdict),  # type: ignore[arg-type]
         analysed_at=NOW,
     )
+    return offer, analysis
 
 
-def _agent(draft: Any = None, mcda: Any = None) -> tuple[EvaluatorAgent, _Gateway, _Mcda]:
-    # Default draft carries no numbers, so it is grounded for any price a test happens to use.
-    gateway = _Gateway(
-        draft
-        or RecommendationNarrative(
-            top_offer_id="ignored-by-code",
-            narrative="Offer o-1 ranks first on price and seller confidence.",
-            trade_offs=["o-2 ranks second."],
-        )
+async def _rank(agent: EvaluatorAgent, profile: str = "founder") -> list[str]:
+    rec = await agent.recommendation(tenant_id=TENANT, mission_id=MISSION, profile_id=profile)
+    return [r.offer_id for r in rec.ranking]
+
+
+async def test_out_of_budget_is_never_first() -> None:
+    agent = await _agent(
+        [_row("cheap", 100, verdict="out_of_budget", score=99), _row("ok", 900, score=60)]
     )
-    engine = mcda or _Mcda()
-    return (
-        EvaluatorAgent(
-            EvaluatorDeps(
-                gateway=gateway,  # type: ignore[arg-type]
-                prompts=PromptRegistry(),
-                mcda=engine,
-                clock=FixedClock(NOW),
-            )
-        ),
-        gateway,
-        engine,
+    rec = await agent.recommendation(tenant_id=TENANT, mission_id=MISSION, profile_id="founder")
+    assert [r.offer_id for r in rec.ranking] == ["mock-a:ok"]
+    assert rec.excluded[0].offer_id == "mock-a:cheap"
+
+
+async def test_low_seller_is_never_first() -> None:
+    agent = await _agent(
+        [_row("cheap", 100, band=ConfidenceBand.LOW, score=30), _row("ok", 900, score=60)]
     )
+    assert await _rank(agent) == ["mock-a:ok"]
 
 
-async def _recommend(
-    agent: EvaluatorAgent, offers: list[tuple[Offer, OfferAnalysis]], **kwargs: Any
-) -> Any:
-    return await agent.recommend(
-        tenant_id=TENANT,
-        mission_id="m-1",
-        profile=kwargs.get("profile", "balanced"),
-        config_version="cfg-7",
-        offers=offers,
-        language=kwargs.get("language", "en"),
-    )
+async def test_out_of_range_price_is_excluded_with_a_reason() -> None:
+    agent = await _agent([_row("weird", 10, price_band=PriceBand.ATYPICAL), _row("ok", 900)])
+    rec = await agent.recommendation(tenant_id=TENANT, mission_id=MISSION, profile_id="founder")
+    assert [r.offer_id for r in rec.ranking] == ["mock-a:ok"]
+    assert rec.excluded[0].reasons == ["price band atypical"]
 
 
-# ----- the engine decides the order ---------------------------------------------------------------
+async def test_a_profile_switch_reorders_deterministically() -> None:
+    # cheap: low price, stretch budget. safe: dearer, within budget. founder weighs landed cost, cfo weighs fit.
+    rows = [
+        _row("cheap", 100, verdict="stretch", score=70),
+        _row("safe", 400, verdict="within_budget", score=70),
+    ]
+    agent = await _agent(rows)
+    assert await _rank(agent, "founder") == ["mock-a:cheap", "mock-a:safe"]
+    assert await _rank(agent, "cfo") == ["mock-a:safe", "mock-a:cheap"]
+    assert await _rank(agent, "founder") == ["mock-a:cheap", "mock-a:safe"]
 
 
-async def test_the_engine_order_is_returned_unchanged() -> None:
-    agent, _, engine = _agent(mcda=_Mcda(order=["o-2", "o-1"]))
-    recommendation = await _recommend(
-        agent, [(_offer("o-1", 412), _analysis("o-1")), (_offer("o-2", 900), _analysis("o-2"))]
-    )
-    assert [i.offer_id for i in recommendation.items] == ["o-2", "o-1"]
-    assert [i.rank for i in recommendation.items] == [1, 2]
-    assert engine.calls[0]["profile"] == "balanced"
-
-
-async def test_the_model_top_offer_is_ignored_when_it_disagrees_with_the_engine() -> None:
-    agent, _, _ = _agent(
-        draft=RecommendationNarrative(
-            top_offer_id="o-2",  # the model prefers the second
-            narrative="Offer o-1 is cheapest at 412.",
-            trade_offs=[],
-        ),
-        mcda=_Mcda(order=["o-1", "o-2"]),
-    )
-    recommendation = await _recommend(
-        agent, [(_offer("o-1", 412), _analysis("o-1")), (_offer("o-2", 900), _analysis("o-2"))]
-    )
-    assert recommendation.items[0].offer_id == "o-1"
-
-
-async def test_candidates_carry_the_analysis_verdicts_not_raw_signals() -> None:
-    agent, _, engine = _agent()
-    await _recommend(agent, [(_offer("o-1", 412), _analysis("o-1", ConfidenceBand.LOW))])
-    candidate = engine.calls[0]["candidates"][0]
-    assert candidate.seller_confidence_band == "low"
-    assert candidate.price_band == "normal"
-    assert candidate.financial_verdict == "within_budget"
-    assert not hasattr(candidate, "raw_signals")
-
-
-# ----- savings are arithmetic ----------------------------------------------------------------------
-
-
-async def test_savings_against_list_price_and_market_median() -> None:
-    agent, _, _ = _agent(mcda=_Mcda(order=["o-1", "o-2", "o-3"]))
-    recommendation = await _recommend(
-        agent,
-        [
-            (_offer("o-1", 400, list_price=500), _analysis("o-1")),
-            (_offer("o-2", 600), _analysis("o-2")),
-            (_offer("o-3", 800), _analysis("o-3")),
-        ],
-    )
-    first = recommendation.items[0]
-    assert first.savings.vs_list_price_eur_minor == 100
-    assert first.savings.market_median_eur_minor == 600  # lower middle of 400/600/800
-    assert first.savings.vs_market_median_eur_minor == 200
-
-
-async def test_savings_are_null_when_the_reference_does_not_exist() -> None:
-    agent, _, _ = _agent()
-    recommendation = await _recommend(agent, [(_offer("o-1", 400), _analysis("o-1"))])
-    assert recommendation.items[0].savings.vs_list_price_eur_minor is None
-    assert recommendation.items[0].savings.vs_market_median_eur_minor == 0
-
-
-# ----- the narrator -------------------------------------------------------------------------------
-
-
-async def test_the_narrator_receives_the_ranking_and_its_prompt_version() -> None:
-    agent, gateway, _ = _agent()
-    await _recommend(agent, [(_offer("o-1", 412), _analysis("o-1"))], language="es")
-    call = gateway.calls[0]
-    assert call["role"] is LLMRole.NARRATOR
-    assert call["schema"] == "RecommendationNarrative"
-    assert call["prompt_version"].startswith("narrator_recommendation@v")
-    assert "es" in call["messages"][0]["content"]
-    body = call["messages"][1]["content"].split("Ranking (JSON, best first):")[1]
-    payload, _ = json.JSONDecoder().raw_decode(body.strip())
-    assert payload[0]["offer_id"] == "o-1"
-    assert payload[0]["seller_confidence_band"] == "high"
-    assert payload[0]["unit_price_eur_minor"] == 412
-
-
-def test_offer_ids_and_scores_do_not_count_as_invented_numbers() -> None:
-    from apex.agents.recommendation import _require_grounded
-
-    source = json.dumps([{"offer_id": "o-2", "unit_price_eur_minor": 412, "score": "0.9"}])
-    _require_grounded("Offer o-2 costs 412, score 0.9.", source)  # no raise
-    with pytest.raises(NarrativeUngrounded):
-        _require_grounded("Offer o-2 costs 413.", source)
+async def test_narrative_is_attached_to_the_top_offer_only() -> None:
+    agent = await _agent([_row("a", 100), _row("b", 400)])
+    rec = await agent.recommendation(tenant_id=TENANT, mission_id=MISSION, profile_id="founder")
+    assert rec.ranking[0].narrative == "The top offer."
+    assert rec.ranking[1].narrative is None
+    assert rec.alternatives and rec.alternatives[0].versus_offer_id == rec.ranking[0].offer_id
+    assert rec.savings.vs_list_price.root is not None
 
 
 @pytest.mark.parametrize(
     "narrative",
     [
-        "Offer o-1 costs 999 per unit.",  # 999 is not in the ranking
-        "That is 12% cheaper.",  # 12 is not in the ranking
-        "Confidence 95.",  # 95 is not in the ranking
+        RuntimeError("llm down"),
+        RecommendationNarrative(top_offer_id="x", narrative="Costs 12345 EUR.", trade_offs=[]),
     ],
 )
-async def test_a_narrative_that_invents_a_number_is_rejected(narrative: str) -> None:
-    agent, _, _ = _agent(
-        draft=RecommendationNarrative(top_offer_id="o-1", narrative=narrative, trade_offs=[])
-    )
-    with pytest.raises(NarrativeUngrounded):
-        await _recommend(agent, [(_offer("o-1", 412), _analysis("o-1"))])
+async def test_narration_failure_keeps_the_numbers(narrative: Any) -> None:
+    agent = await _agent([_row("a", 100), _row("b", 400)], narrative)
+    rec = await agent.recommendation(tenant_id=TENANT, mission_id=MISSION, profile_id="founder")
+    assert [r.narrative for r in rec.ranking] == [None, None]
+    assert len(rec.ranking) == 2
 
 
-async def test_a_trade_off_that_invents_a_number_is_rejected() -> None:
-    agent, _, _ = _agent(
-        draft=RecommendationNarrative(
-            top_offer_id="o-1",
-            narrative="Offer o-1 is cheapest at 412.",
-            trade_offs=["o-2 costs 777 more."],
-        )
-    )
-    with pytest.raises(NarrativeUngrounded):
-        await _recommend(
-            agent, [(_offer("o-1", 412), _analysis("o-1")), (_offer("o-2", 500), _analysis("o-2"))]
-        )
-
-
-async def test_a_grounded_narrative_is_returned_as_written() -> None:
-    agent, _, _ = _agent(
-        draft=RecommendationNarrative(
-            top_offer_id="o-1",
-            narrative="Offer o-1 is cheapest at 412 minor units per unit.",
-            trade_offs=["o-2 costs 500 minor units per unit."],
-        )
-    )
-    recommendation = await _recommend(
-        agent, [(_offer("o-1", 412), _analysis("o-1")), (_offer("o-2", 500), _analysis("o-2"))]
-    )
-    assert "412" in recommendation.narrative
-    assert recommendation.trade_offs == ["o-2 costs 500 minor units per unit."]
-
-
-async def test_no_offers_is_a_loud_error() -> None:
-    agent, _, _ = _agent()
-    with pytest.raises(NoCandidates):
-        await _recommend(agent, [])
-
-
-async def test_the_recommendation_records_the_profile_and_config_version() -> None:
-    agent, _, _ = _agent()
-    recommendation = await _recommend(
-        agent, [(_offer("o-1", 412), _analysis("o-1"))], profile="cheapest"
-    )
-    assert recommendation.profile == "cheapest"
-    assert recommendation.config_version == "cfg-7"
-    assert recommendation.generated_at == NOW
+async def test_unknown_mission_and_profile_are_lookup_errors() -> None:
+    agent = await _agent([_row("a", 100)])
+    with pytest.raises(LookupError):
+        await agent.recommendation(tenant_id=TENANT, mission_id="nope", profile_id="founder")
+    with pytest.raises(UnknownProfile):
+        await agent.recommendation(tenant_id=TENANT, mission_id=MISSION, profile_id="nope")

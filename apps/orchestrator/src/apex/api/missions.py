@@ -27,7 +27,12 @@ from apex.agents.recommendation_export import (
 )
 from apex.agents.request_store import SourcingRequestStore
 from apex.agents.sourcing_service import MissionMissing, SourcingService
-from apex.api.contract_map import mission_state, to_contract_event, to_contract_mission
+from apex.api.contract_map import (
+    mission_state,
+    to_contract_event,
+    to_contract_mission,
+    to_contract_offer,
+)
 from apex.api.sourcing import get_request_store, get_sourcing_service
 from apex.common.errors import Problem, not_implemented
 from apex.common.pagination import Cursor, parse_limit
@@ -37,6 +42,8 @@ from apex.contracts.generated.models import (
     Mission,
     MissionEvent,
     MissionPage,
+    OfferPage,
+    Recommendation,
 )
 from apex.llm.budget import TokenBudgetExceeded
 from apex.llm.resilience import AllEndpointsUnavailableError
@@ -275,21 +282,71 @@ async def cancel_mission(
     return await _change(service.cancel, id, http_request, tenant_id, token_budget)
 
 
-@router.get("/{id}/offers")
-async def list_mission_offers(id: str) -> None:
-    """Offers with SellerConfidence, PriceSanityCheck and FinancialFit (D4-10)."""
-    raise not_implemented("offers per mission arrive with D4-10")
+def get_offer_reader() -> Any:
+    """Overridable dependency: ``analysed_offers(tenant_id, mission_id)`` (the app wires the EvaluatorAgent)."""
+    raise not_implemented("offers per mission are not wired into the app")
 
 
-@router.get("/{id}/recommendation")
-async def get_mission_recommendation(id: str) -> None:
-    """Explainable ranking (MCDA, D4-12)."""
-    raise not_implemented("recommendation arrives with D4-12")
+@router.get("/{id}/offers", response_model=OfferPage, tags=["missions"])
+async def list_mission_offers(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    reader: Annotated[Any, Depends(get_offer_reader)],
+    cursor: str | None = None,
+    limit: int = 25,
+    platform: str | None = None,
+    price_band: str | None = None,
+    confidence_band: str | None = None,
+) -> OfferPage:
+    """The mission's offers with their seller confidence. Filters apply to the stored verdicts."""
+    limit = parse_limit(limit, default=25, maximum=100)
+    try:
+        rows = await reader.analysed_offers(tenant_id, id)
+    except LookupError as exc:
+        raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
+    rows = [
+        (o, a)
+        for o, a in rows
+        if (platform is None or o.platform_id == platform)
+        and (price_band is None or (a is not None and a.sanity.band.value == price_band))
+        and (
+            confidence_band is None
+            or (a is not None and a.confidence.band.value == confidence_band)
+        )
+    ]
+    start = int(Cursor.decode(cursor).get("i", 0)) if cursor else 0
+    page = rows[start : start + limit]
+    nxt = Cursor.encode({"i": start + limit}) if start + limit < len(rows) else None
+    return OfferPage(
+        items=[to_contract_offer(o, a) for o, a in page], next_cursor=nxt, total_count=len(rows)
+    )
 
 
 def get_recommendation_provider() -> RecommendationProvider:
-    """Overridable dependency. The default refuses: the evaluator and the MCDA port are not wired to the app yet."""
-    raise not_implemented("the recommendation is not wired into the app yet (D4-12)")
+    """Overridable dependency. The app wires the EvaluatorAgent; a bare router refuses."""
+    raise not_implemented("the recommendation is not wired into the app")
+
+
+async def _recommendation(
+    provider: RecommendationProvider, tenant_id: str, mission_id: str, profile: str
+) -> Recommendation:
+    try:
+        return await provider.recommendation(
+            tenant_id=tenant_id, mission_id=mission_id, profile_id=profile
+        )
+    except LookupError as exc:
+        raise Problem(404, "Not found", detail=str(exc)) from exc
+
+
+@router.get("/{id}/recommendation", response_model=Recommendation, tags=["missions"])
+async def get_mission_recommendation(
+    id: str,
+    profile: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    provider: Annotated[RecommendationProvider, Depends(get_recommendation_provider)],
+) -> Recommendation:
+    """Explainable ranking (MCDA) for a profile. The LLM narrates; it never ranks."""
+    return await _recommendation(provider, tenant_id, id, profile)
 
 
 @router.get("/{id}/recommendation/export")
@@ -301,10 +358,7 @@ async def export_mission_recommendation(
     provider: Annotated[RecommendationProvider, Depends(get_recommendation_provider)],
 ) -> Response:
     """Download the recommendation as pdf, csv or json, built from the ranking numbers only."""
-    try:
-        rec = await provider.recommendation(tenant_id=tenant_id, mission_id=id, profile_id=profile)
-    except LookupError as exc:
-        raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
+    rec = await _recommendation(provider, tenant_id, id, profile)
     return Response(
         render(rec, format),
         media_type=MEDIA_TYPES[format],
@@ -358,4 +412,10 @@ def _llm_detail(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
-__all__ = ["get_event_bus", "get_token_budget", "router"]
+__all__ = [
+    "get_event_bus",
+    "get_offer_reader",
+    "get_recommendation_provider",
+    "get_token_budget",
+    "router",
+]

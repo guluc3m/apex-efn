@@ -25,6 +25,8 @@ from pydantic import (
     model_validator,
 )
 
+from apex.contracts.generated.models import ScoreCriterion
+
 SUPPORTED_CURRENCIES: Final[tuple[str, ...]] = ("EUR", "USD", "CNY")
 """Closed enum (ADR-400 §5). Not configurable. Mirrors DB enum ``Currency`` (D2-03)."""
 
@@ -241,6 +243,26 @@ class ConstraintsSection(_Section):
     """Q14: an optional hard constraint, off by default."""
 
 
+class ScoringProfile(_Section):
+    """One MCDA ranking profile (spec 2): a name and a weight per criterion. Hard rules stay in code."""
+
+    name: str = Field(min_length=1)
+    weights: dict[ScoreCriterion, Rate]
+
+    @model_validator(mode="after")
+    def _weights(self) -> ScoringProfile:
+        if not self.weights or any(not (0 <= w <= 1) for w in self.weights.values()):
+            raise ValueError("scoring profile weights must be within 0..1 and not empty")
+        if sum(self.weights.values()) <= 0:
+            raise ValueError("scoring profile weights must not all be 0")
+        return self
+
+
+class ScoringSection(_Section):
+    profiles: dict[str, ScoringProfile] | None = None
+    """Unset by default: weights are business values the tenant supplies (issue #379)."""
+
+
 class Counterpart(StrEnum):
     HIGHER_VOLUME = "higher_volume"
     PREPAYMENT = "prepayment"
@@ -345,6 +367,7 @@ class TenantConfig(_Section):
     finance: FinanceSection
     landed: LandedSection
     constraints: ConstraintsSection
+    scoring: ScoringSection = ScoringSection()
     neg: NegSection
     gate: GateSection
     approval: ApprovalSection
@@ -362,6 +385,7 @@ UNSET_LEAF_PATHS: Final[frozenset[str]] = frozenset(
         "sanity.floor_per_unit",
         "sanity.ceiling_per_unit",
         "seller.weights",
+        "scoring.profiles",
         "neg.target_discount",
         "neg.max_discount",
         "finance.cost_of_capital_rate",

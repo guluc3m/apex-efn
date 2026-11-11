@@ -530,3 +530,69 @@ def test_dashboard_summary_and_missing_deal(app: FastAPI) -> None:
         summary = client.get("/v1/dashboard/summary", headers=_h()).json()
         assert summary["pending_count"] == 0 and summary["nearest_sla_due_at"] is None
         assert client.get("/v1/dashboard/deals/nope", headers=_h()).status_code == 404
+
+
+def test_recommendation_offers_and_export_against_the_wired_app(app: FastAPI) -> None:
+    """Issue #379 end to end: stored offers -> DEV-3 MCDA with the tenant profile -> JSON, offers, export."""
+    import asyncio
+
+    from apex.agents.offers import Offer, OfferAnalysis
+    from apex.agents.ports import (
+        ConfidenceBand,
+        FitOutcome,
+        PriceBand,
+        SanityOutcome,
+        TrustOutcome,
+    )
+
+    services = app.state.app_services
+    with TestClient(app) as client:
+        mission = _new_mission(client)
+        store = services.evaluator._offers
+
+        async def _add(oid: str, price: int, band: ConfidenceBand) -> None:
+            offer = Offer(
+                id=f"mock-a:{oid}",
+                tenant_id=TENANT,
+                mission_id=mission["id"],
+                platform_id="mock-a",
+                seller_id=f"s-{oid}",
+                product_id="glove",
+                title="Nitrile gloves",
+                unit_price_eur_minor=price,
+                currency="EUR",
+                quantity=1000,
+                collected_at=NOW,
+            )
+            await store.add(offer)
+            await store.set_analysis(
+                TENANT,
+                OfferAnalysis(
+                    offer_id=offer.id,
+                    confidence=TrustOutcome(band=band, score=70, model_version="t1"),
+                    sanity=SanityOutcome(band=PriceBand.NORMAL, config_version="c1"),
+                    fit=FitOutcome(verdict="within_budget"),
+                    analysed_at=NOW,
+                ),
+            )
+
+        asyncio.run(_add("a", 120, ConfidenceBand.HIGH))
+        asyncio.run(_add("b", 100, ConfidenceBand.LOW))
+        base = f"/v1/missions/{mission['id']}"
+
+        rec = client.get(f"{base}/recommendation?profile=founder", headers=_h())
+        assert rec.status_code == 200, rec.text
+        assert [r["offer_id"] for r in rec.json()["ranking"]] == ["mock-a:a"]
+        assert rec.json()["excluded"][0]["offer_id"] == "mock-a:b"
+
+        offers = client.get(f"{base}/offers?confidence_band=high", headers=_h()).json()
+        assert [o["id"] for o in offers["items"]] == ["mock-a:a"]
+        assert offers["items"][0]["seller_confidence"]["band"] == "high"
+
+        csv = client.get(f"{base}/recommendation/export?profile=founder&format=csv", headers=_h())
+        assert csv.status_code == 200 and "mock-a:a" in csv.text
+        pdf = client.get(f"{base}/recommendation/export?profile=founder&format=pdf", headers=_h())
+        assert pdf.content.startswith(b"%PDF")
+
+        assert client.get(f"{base}/recommendation?profile=nope", headers=_h()).status_code == 404
+        assert client.get("/v1/missions/nope/offers", headers=_h()).status_code == 404

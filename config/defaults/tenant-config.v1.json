@@ -307,6 +307,14 @@
         "scope": "tenant"
       }
     },
+    "scoring": {
+      "profiles": {
+        "value": null,
+        "scope": "tenant",
+        "status": "unset",
+        "note": "MCDA ranking profiles (spec 2, 3.7): {profile_id: {name, weights: {criterion: 0..1}}}. Business weights: the tenant sets them (issue #379)."
+      }
+    },
     "supervisor": {
       "stuck_after_minutes": {
         "value": 30,

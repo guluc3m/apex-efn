@@ -1,265 +1,215 @@
-"""EvaluatorAgent: explainable ranking of a mission's offers (D4-12).
+"""EvaluatorAgent: explainable ranking of a mission's offers (D4-12, spec 3.7).
 
-Division of labour, and the reason this module exists:
+Division of labour:
 
-* **The MCDA engine ranks.** ``McdaPort.rank`` is DEV-3's deterministic scoring (D3-09). The order, the
-  scores and the per-criterion contributions come from it and are returned unchanged.
-* **Code computes the savings.** List price and market median are arithmetic over the mission's offers, done
-  here with integers, never by the model.
-* **The LLM only narrates.** It receives the ranking as JSON and writes prose. Its ``top_offer_id`` is
-  ignored: the first offer of the ranking is the top offer, full stop. Its text is rejected if it contains a
-  number that is not in the input, so the prose cannot invent a price or a score.
+* **DEV-3's MCDA engine ranks** (``apex.domain.mcda``). Order, scores, contributions, exclusions and
+  trade-offs come from it unchanged.
+* **The profile comes from tenant config** (``scoring.profiles``). An unknown profile is a 404, never a
+  default set of weights.
+* **The LLM only narrates.** It receives the ranking as JSON and writes prose for the top offer. Its text is
+  dropped if it contains a number that is not in the input. If narration fails for any reason the
+  recommendation is returned without it: the numbers never depend on the model.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
-
-from apex.agents.offers import Offer, OfferAnalysis
+from apex.agents.missions import MissionStore
+from apex.agents.offers import Offer, OfferAnalysis, OfferStore
+from apex.agents.ports import PriceBand
 from apex.agents.schemas import RecommendationNarrative
 from apex.common.clock import Clock
+from apex.contracts.generated.models import (
+    Currency,
+    ExcludedOffer,
+    FinancialVerdict,
+    Money,
+    NullableMoney,
+    Recommendation,
+    SellerConfidenceBand,
+)
+from apex.domain import mcda
 from apex.llm.config import LLMRole
 from apex.llm.gateway import LLMGateway
 from apex.llm.prompts import PromptRegistry
+from apex.tenant_config.service import TenantConfigService
+
+log = logging.getLogger(__name__)
 
 # A standalone number: not part of an identifier such as an offer id ("o-2") or a word ("v3").
 _NUMBER = re.compile(r"(?<![\w.\-])\d+(?:[.,]\d+)?(?![\w\-])")
 
+MIN_RECOMMENDED_BAND = SellerConfidenceBand.medium
+"""Criterion 11: a ``low`` (or worse) seller cannot go to purchase without a signed unblock, so it is never
+recommended. A spec rule, not a tunable."""
 
-class _Model(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-
-class Candidate(_Model):
-    """One offer as the MCDA engine sees it: the numbers plus the analysis verdicts."""
-
-    offer_id: str
-    platform_id: str
-    seller_id: str
-    unit_price_eur_minor: int = Field(ge=0)
-    list_price_eur_minor: int | None
-    quantity: int = Field(gt=0)
-    seller_confidence_score: int | None
-    seller_confidence_band: str
-    price_band: str
-    financial_verdict: str
+EXCLUDED_PRICE_BANDS = frozenset({PriceBand.ATYPICAL, PriceBand.IMPLAUSIBLE})
+"""Spec 3.7: the price band is a hard constraint. Out-of-range prices are excluded with a visible reason."""
 
 
-class RankedCandidate(_Model):
-    """What the MCDA engine returns for one candidate. ``contributions`` is the explanation."""
-
-    offer_id: str
-    rank: int = Field(ge=1)
-    score: str
-    """Decimal string: scores are exact, never floats."""
-    contributions: dict[str, str] = Field(default_factory=dict)
-    excluded_reason: str | None = None
-
-
-class RankedRecommendation(_Model):
-    ranked: list[RankedCandidate]
-    profile: str
-    config_version: str
-
-
-class McdaPort(Protocol):
-    """DEV-3's ``apex.domain.mcda.rank`` (D3-09). Deterministic; the only thing that decides order."""
-
-    async def rank(
-        self,
-        candidates: Sequence[Candidate],
-        *,
-        profile: str,
-        tenant_id: str,
-        config_version: str,
-    ) -> RankedRecommendation: ...
-
-
-class Savings(_Model):
-    """Integer minor units per unit. ``None`` when the reference does not exist for this offer."""
-
-    vs_list_price_eur_minor: int | None
-    vs_market_median_eur_minor: int | None
-    market_median_eur_minor: int | None
-
-
-class RecommendationItem(_Model):
-    rank: int
-    offer_id: str
-    platform_id: str
-    seller_id: str
-    unit_price_eur_minor: int
-    seller_confidence_band: str
-    seller_confidence_score: int | None
-    score: str
-    contributions: dict[str, str]
-    savings: Savings
-    excluded_reason: str | None
-
-
-class Recommendation(_Model):
-    mission_id: str
-    profile: str
-    config_version: str
-    items: list[RecommendationItem]
-    narrative: str
-    trade_offs: list[str]
-    generated_at: datetime
+class UnknownProfile(LookupError):
+    pass
 
 
 class NarrativeUngrounded(Exception):
-    """The narrator used a number that is not in the ranking. A loud failure, never a silent rewrite."""
+    """The narrator used a number that is not in the ranking."""
 
     def __init__(self, numbers: set[str]) -> None:
         super().__init__(f"narrative contains numbers absent from the ranking: {sorted(numbers)}")
         self.numbers = numbers
 
 
-@dataclass(frozen=True)
-class EvaluatorDeps:
-    gateway: LLMGateway
-    prompts: PromptRegistry
-    mcda: McdaPort
-    clock: Clock
-
-
 class EvaluatorAgent:
-    def __init__(self, deps: EvaluatorDeps) -> None:
-        self._deps = deps
+    """``RecommendationProvider`` over the stored offers and their analysis."""
 
-    async def recommend(
+    def __init__(
         self,
         *,
-        tenant_id: str,
-        mission_id: str,
-        profile: str,
-        config_version: str,
-        offers: Sequence[tuple[Offer, OfferAnalysis]],
-        language: str,
-    ) -> Recommendation:
-        candidates = [_candidate(offer, analysis) for offer, analysis in offers]
-        if not candidates:
-            raise NoCandidates(mission_id)
-        ranking = await self._deps.mcda.rank(
-            candidates, profile=profile, tenant_id=tenant_id, config_version=config_version
-        )
-        by_id = {c.offer_id: c for c in candidates}
-        median = _median([c.unit_price_eur_minor for c in candidates])
-        items = [
-            _item(ranked, by_id[ranked.offer_id], median)
-            for ranked in sorted(ranking.ranked, key=lambda r: r.rank)
-            if ranked.offer_id in by_id
+        offers: OfferStore,
+        missions: MissionStore,
+        config: TenantConfigService,
+        gateway: LLMGateway,
+        prompts: PromptRegistry,
+        clock: Clock,
+        language: str = "en",
+    ) -> None:
+        self._offers, self._missions, self._config = offers, missions, config
+        self._gateway, self._prompts, self._clock = gateway, prompts, clock
+        self._language = language
+
+    async def analysed_offers(
+        self, tenant_id: str, mission_id: str
+    ) -> list[tuple[Offer, OfferAnalysis | None]]:
+        """The mission's offers with their analysis (``None`` when not analysed yet)."""
+        if await self._missions.get(tenant_id, mission_id) is None:
+            raise LookupError(f"mission {mission_id} not found")
+        return [
+            (o, await self._offers.get_analysis(tenant_id, o.id))
+            for o in await self._offers.list_for_mission(tenant_id, mission_id)
         ]
-        narrative, trade_offs = await self._narrate(
-            tenant_id=tenant_id,
-            mission_id=mission_id,
-            language=language,
-            items=items,
+
+    async def recommendation(
+        self, *, tenant_id: str, mission_id: str, profile_id: str
+    ) -> Recommendation:
+        rows = await self.analysed_offers(tenant_id, mission_id)
+        effective = await self._config.effective(tenant_id)
+        profiles = effective.typed.scoring.profiles or {}
+        if profile_id not in profiles:
+            raise UnknownProfile(f"profile {profile_id} is not configured for this tenant")
+        profile = mcda.Profile(
+            profile_id=profile_id,
+            weights={c: float(w) for c, w in profiles[profile_id].weights.items()},
         )
-        return Recommendation(
+        config_version = f"v{effective.config_version}:{effective.content_hash[:12]}"
+
+        analysed = [(o, a) for o, a in rows if a is not None]
+        candidates = [_candidate(o, a) for o, a in analysed]
+        price_excluded = [
+            ExcludedOffer(offer_id=o.id, reasons=[f"price band {a.sanity.band.value}"])
+            for o, a in analysed
+            if a.sanity.band in EXCLUDED_PRICE_BANDS
+        ]
+        dropped = {e.offer_id for e in price_excluded}
+        competing = [c for c in candidates if c.offer_id not in dropped]
+        ranked, excluded = mcda.rank(
+            competing, profile, mcda.Constraints(min_accepted_seller_band=MIN_RECOMMENDED_BAND)
+        )
+        rec = mcda.recommendation(
             mission_id=mission_id,
-            profile=profile,
+            profile_id=profile_id,
+            ranked=ranked,
+            excluded=[*price_excluded, *excluded],
+            candidates=candidates,
             config_version=config_version,
-            items=items,
-            narrative=narrative,
-            trade_offs=trade_offs,
-            generated_at=self._deps.clock.now(),
+            now=self._clock.now(),
         )
+        rec = rec.model_copy(
+            update={
+                "alternatives": mcda.trade_offs(ranked, candidates),
+                "savings": rec.savings.model_copy(
+                    update={"vs_market_median": _vs_median(ranked, candidates)}
+                ),
+            }
+        )
+        if rec.ranking:
+            narrative = await self._narrate(tenant_id, mission_id, rec, candidates)
+            if narrative is not None:
+                top = rec.ranking[0].model_copy(update={"narrative": narrative})
+                rec = rec.model_copy(update={"ranking": [top, *rec.ranking[1:]]})
+        return rec
 
     async def _narrate(
-        self, *, tenant_id: str, mission_id: str, language: str, items: list[RecommendationItem]
-    ) -> tuple[str, list[str]]:
+        self,
+        tenant_id: str,
+        mission_id: str,
+        rec: Recommendation,
+        candidates: Sequence[mcda.Candidate],
+    ) -> str | None:
+        by_id = {c.offer_id: c for c in candidates}
         ranking_json = json.dumps(
             [
                 {
-                    "rank": i.rank,
-                    "offer_id": i.offer_id,
-                    "unit_price_eur_minor": i.unit_price_eur_minor,
-                    "seller_confidence_band": i.seller_confidence_band,
-                    "seller_confidence_score": i.seller_confidence_score,
-                    "score": i.score,
+                    "rank": r.rank,
+                    "offer_id": r.offer_id,
+                    "score": r.score,
+                    "unit_price_eur_minor": by_id[r.offer_id].landed_unit_cost_minor,
+                    "seller_confidence_band": by_id[r.offer_id].seller_band.value,
+                    "seller_confidence_score": by_id[r.offer_id].seller_confidence_score,
                 }
-                for i in items
+                for r in rec.ranking
             ],
             ensure_ascii=False,
         )
-        rendered = self._deps.prompts.render(
-            "narrator_recommendation", language=language, ranking_json=ranking_json
-        )
-        draft = await self._deps.gateway.chat_structured(
-            LLMRole.NARRATOR,
-            rendered.messages,
-            RecommendationNarrative,
-            mission_id=mission_id,
-            tenant_id=tenant_id,
-            prompt_version=rendered.prompt_version,
-        )
-        _require_grounded(draft.narrative, ranking_json)
-        for text in draft.trade_offs:
-            _require_grounded(text, ranking_json)
-        return draft.narrative, list(draft.trade_offs)
+        try:
+            rendered = self._prompts.render(
+                "narrator_recommendation", language=self._language, ranking_json=ranking_json
+            )
+            draft = await self._gateway.chat_structured(
+                LLMRole.NARRATOR,
+                rendered.messages,
+                RecommendationNarrative,
+                mission_id=mission_id,
+                tenant_id=tenant_id,
+                prompt_version=rendered.prompt_version,
+            )
+            _require_grounded(draft.narrative, ranking_json)
+            return draft.narrative
+        except Exception as exc:  # noqa: BLE001 - the ranking never depends on the narrator
+            log.warning("recommendation narration skipped: %s", type(exc).__name__)
+            return None
 
 
-class NoCandidates(Exception):
-    def __init__(self, mission_id: str) -> None:
-        super().__init__(f"mission {mission_id} has no offers to rank")
-        self.mission_id = mission_id
-
-
-def _candidate(offer: Offer, analysis: OfferAnalysis) -> Candidate:
-    return Candidate(
+def _candidate(offer: Offer, analysis: OfferAnalysis) -> mcda.Candidate:
+    return mcda.Candidate(
         offer_id=offer.id,
-        platform_id=offer.platform_id,
-        seller_id=offer.seller_id,
-        unit_price_eur_minor=offer.unit_price_eur_minor,
-        list_price_eur_minor=offer.list_price_eur_minor,
-        quantity=offer.quantity,
+        # ponytail: the stored analysis keeps the verdict, not the landed breakdown, so the unit price in EUR
+        # stands in for landed cost. Store LandedCostBreakdown.total per unit to rank on the real figure.
+        landed_unit_cost_minor=offer.unit_price_eur_minor,
         seller_confidence_score=analysis.confidence.score,
-        seller_confidence_band=analysis.confidence.band.value,
-        price_band=analysis.sanity.band.value,
-        financial_verdict=analysis.fit.verdict,
+        seller_band=SellerConfidenceBand(analysis.confidence.band.value),
+        financial_verdict=FinancialVerdict(analysis.fit.verdict),
+        platform=offer.platform_id,
+        list_price_minor=offer.list_price_eur_minor,
     )
 
 
-def _item(ranked: RankedCandidate, candidate: Candidate, median: int | None) -> RecommendationItem:
-    return RecommendationItem(
-        rank=ranked.rank,
-        offer_id=candidate.offer_id,
-        platform_id=candidate.platform_id,
-        seller_id=candidate.seller_id,
-        unit_price_eur_minor=candidate.unit_price_eur_minor,
-        seller_confidence_band=candidate.seller_confidence_band,
-        seller_confidence_score=candidate.seller_confidence_score,
-        score=ranked.score,
-        contributions=dict(ranked.contributions),
-        savings=Savings(
-            vs_list_price_eur_minor=(
-                candidate.list_price_eur_minor - candidate.unit_price_eur_minor
-                if candidate.list_price_eur_minor is not None
-                else None
-            ),
-            vs_market_median_eur_minor=(
-                median - candidate.unit_price_eur_minor if median is not None else None
-            ),
-            market_median_eur_minor=median,
-        ),
-        excluded_reason=ranked.excluded_reason,
-    )
-
-
-def _median(values: list[int]) -> int | None:
-    """Integer median of integer values. Even counts take the lower middle value: exact, no rounding."""
-    if not values:
-        return None
-    ordered = sorted(values)
-    return ordered[(len(ordered) - 1) // 2]
+def _vs_median(
+    ranked: Sequence[mcda.Ranked], candidates: Sequence[mcda.Candidate]
+) -> NullableMoney:
+    """Winner's saving against the median unit price of every analysed offer. Lower middle: exact."""
+    if not ranked:
+        return NullableMoney(None)
+    prices = sorted(c.landed_unit_cost_minor for c in candidates)
+    median = prices[(len(prices) - 1) // 2]
+    winner = next(c for c in candidates if c.offer_id == ranked[0].offer_id)
+    saving = median - winner.landed_unit_cost_minor
+    if saving <= 0:
+        return NullableMoney(None)
+    return NullableMoney(Money(amount_minor=saving, currency=Currency.EUR))
 
 
 def _numbers(text: str) -> set[str]:
@@ -273,16 +223,4 @@ def _require_grounded(text: str, source: str) -> None:
         raise NarrativeUngrounded(invented)
 
 
-__all__ = [
-    "Candidate",
-    "EvaluatorAgent",
-    "EvaluatorDeps",
-    "McdaPort",
-    "NarrativeUngrounded",
-    "NoCandidates",
-    "RankedCandidate",
-    "RankedRecommendation",
-    "Recommendation",
-    "RecommendationItem",
-    "Savings",
-]
+__all__ = ["EvaluatorAgent", "NarrativeUngrounded", "UnknownProfile"]
