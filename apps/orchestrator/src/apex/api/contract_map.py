@@ -56,6 +56,8 @@ _EVENT_TO_CONTRACT: dict[MissionEventType, ContractEventType] = {
     MissionEventType.ANALYSIS_COMPLETED: ContractEventType.sanity_checked,
     MissionEventType.MISSION_FAILED: ContractEventType.error,
     MissionEventType.MISSION_CANCELLED: ContractEventType.state_changed,
+    MissionEventType.MISSION_PAUSED: ContractEventType.state_changed,
+    MissionEventType.MISSION_RESUMED: ContractEventType.state_changed,
 }
 
 
@@ -114,6 +116,7 @@ def to_contract_mission(
         id=mission.id,
         sourcing_request_id=mission.sourcing_request_id,
         plan_id=None,
+        paused=mission.paused,
         state=mission_state(mission.status),
         offers_discovered=discovered,
         offers_negotiated=0,

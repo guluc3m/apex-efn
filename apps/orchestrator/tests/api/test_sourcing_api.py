@@ -247,6 +247,39 @@ def test_get_mission_is_tenant_scoped(app: FastAPI) -> None:
     assert other.headers["content-type"].startswith("application/problem+json")
 
 
+# ----- list / pause / resume / cancel (issue #303) -----------------------------------------------
+
+
+def _mission(client: TestClient) -> dict[str, Any]:
+    created = _create_request(client)
+    return client.post(
+        "/missions", json={"sourcing_request_id": created["id"]}, headers=_h()
+    ).json()
+
+
+def test_list_missions_is_tenant_scoped_and_paginated(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        _mission(client)
+        page = client.get("/missions", headers=_h()).json()
+        assert len(page["items"]) == 1 and page["next_cursor"] is None
+        assert client.get("/missions", headers=_h("tenant-b")).json()["items"] == []
+        assert client.get("/missions?state=failed", headers=_h()).json()["items"] == []
+        assert client.get("/missions?cursor=%25%25", headers=_h()).status_code == 400
+
+
+def test_pause_resume_cancel(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        mid = _mission(client)["id"]
+        assert client.post(f"/missions/{mid}/pause", headers=_h()).json()["paused"] is True
+        assert client.post(f"/missions/{mid}/pause", headers=_h()).status_code == 409
+        assert client.post(f"/missions/{mid}/resume", headers=_h()).json()["paused"] is False
+        cancelled = client.post(f"/missions/{mid}/cancel", headers=_h()).json()
+        assert cancelled["state"] == "cancelled"
+        assert client.post(f"/missions/{mid}/cancel", headers=_h()).status_code == 409
+        assert client.post(f"/missions/{mid}/pause", headers=_h()).status_code == 409
+        assert client.post("/missions/nope/pause", headers=_h()).status_code == 404
+
+
 # ----- GET /missions/{id}/events (SSE) ------------------------------------------------------------
 
 

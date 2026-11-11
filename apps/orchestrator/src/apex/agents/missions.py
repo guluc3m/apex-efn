@@ -79,6 +79,8 @@ class MissionEventType(StrEnum):
     ANALYSIS_COMPLETED = "analysis_completed"
     MISSION_FAILED = "mission_failed"
     MISSION_CANCELLED = "mission_cancelled"
+    MISSION_PAUSED = "mission_paused"
+    MISSION_RESUMED = "mission_resumed"
 
 
 class MissionEvent(BaseModel):
@@ -106,6 +108,8 @@ class Mission(BaseModel):
     updated_at: datetime
     plan: SourcingPlan | None = None
     failure_reason: str | None = None
+    paused: bool = False
+    """Orthogonal to ``status``: stops new scheduling, running steps finish (issue #303)."""
     events: list[MissionEvent] = Field(default_factory=list)
 
     @property
@@ -127,6 +131,8 @@ class MissionStore(Protocol):
     async def get(self, tenant_id: str, mission_id: str) -> Mission | None: ...
 
     async def save(self, mission: Mission) -> Mission: ...
+
+    async def list_for_tenant(self, tenant_id: str) -> list[Mission]: ...
 
 
 class InMemoryMissionStore:
@@ -153,6 +159,11 @@ class InMemoryMissionStore:
         async with self._lock:
             self._missions[(mission.tenant_id, mission.id)] = mission
             return mission
+
+    async def list_for_tenant(self, tenant_id: str) -> list[Mission]:
+        """Newest first (``created_at``, then id as tiebreak)."""
+        rows = [m for (t, _), m in self._missions.items() if t == tenant_id]
+        return sorted(rows, key=lambda m: (m.created_at, m.id), reverse=True)
 
 
 class MissionEventBus:

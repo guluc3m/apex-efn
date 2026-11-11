@@ -11,21 +11,27 @@ mission's state.
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, Request, status
 from fastapi.responses import StreamingResponse
 
+from apex.agents.missions import InvalidMissionTransition, MissionStatus
 from apex.agents.missions import Mission as DomainMission
-from apex.agents.missions import MissionStatus
 from apex.agents.request_store import SourcingRequestStore
 from apex.agents.sourcing_service import MissionMissing, SourcingService
-from apex.api.contract_map import to_contract_event, to_contract_mission
+from apex.api.contract_map import mission_state, to_contract_event, to_contract_mission
 from apex.api.sourcing import get_request_store, get_sourcing_service
 from apex.common.errors import Problem, not_implemented
+from apex.common.pagination import Cursor, parse_limit
 from apex.common.tenant import get_tenant_id
-from apex.contracts.generated.models import CreateMissionRequest, Mission, MissionEvent
+from apex.contracts.generated.models import (
+    CreateMissionRequest,
+    Mission,
+    MissionEvent,
+    MissionPage,
+)
 from apex.llm.budget import TokenBudgetExceeded
 from apex.llm.resilience import AllEndpointsUnavailableError
 from apex.llm.structured import StructuredOutputError
@@ -176,28 +182,91 @@ async def stream_mission_events(
     )
 
 
-@router.get("", tags=["missions"])
-async def list_missions() -> None:
-    """Missions of the tenant (contract route, issue #303). 501 until DEV-4 implements it."""
-    raise not_implemented("listing missions is not implemented yet")
+@router.get("", response_model=MissionPage, tags=["missions"])
+async def list_missions(
+    http_request: Request,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    token_budget: Annotated[int, Depends(get_token_budget)],
+    cursor: str | None = None,
+    limit: int = 25,
+    state: str | None = None,
+) -> MissionPage:
+    """Missions of the tenant, newest first. Keyset cursor over ``(created_at, id)``."""
+    limit = parse_limit(limit, default=25, maximum=100)
+    rows = await service.list_missions(tenant_id=tenant_id)
+    if state is not None:
+        rows = [m for m in rows if mission_state(m.status).value == state]
+    if cursor is not None:
+        pos = Cursor.decode(cursor)
+        key = (pos.get("at"), pos.get("id"))
+        rows = [m for m in rows if (m.created_at.isoformat(), m.id) < key]
+    page = rows[:limit]
+    nxt = None
+    if len(rows) > limit:
+        nxt = Cursor.encode({"at": page[-1].created_at.isoformat(), "id": page[-1].id})
+    return MissionPage(
+        items=[
+            to_contract_mission(
+                m, token_budget=token_budget, tokens_used=_tokens_used(http_request, m.id)
+            )
+            for m in page
+        ],
+        next_cursor=nxt,
+    )
 
 
-@router.post("/{id}/pause", tags=["missions"])
-async def pause_mission(id: str) -> None:
-    """Contract route (issue #303)."""
-    raise not_implemented("pausing a mission is not implemented yet")
+async def _change(
+    action: Callable[..., Awaitable[DomainMission]],
+    id: str,
+    http_request: Request,
+    tenant_id: str,
+    token_budget: int,
+) -> Mission:
+    try:
+        mission = await action(tenant_id=tenant_id, mission_id=id)
+    except MissionMissing as exc:
+        raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
+    except InvalidMissionTransition as exc:
+        raise Problem(409, "Mission cannot change", detail=str(exc)) from exc
+    return to_contract_mission(
+        mission, token_budget=token_budget, tokens_used=_tokens_used(http_request, mission.id)
+    )
 
 
-@router.post("/{id}/resume", tags=["missions"])
-async def resume_mission(id: str) -> None:
-    """Contract route (issue #303)."""
-    raise not_implemented("resuming a mission is not implemented yet")
+@router.post("/{id}/pause", response_model=Mission, tags=["missions"])
+async def pause_mission(
+    id: str,
+    http_request: Request,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    token_budget: Annotated[int, Depends(get_token_budget)],
+) -> Mission:
+    """Stop scheduling new work; running steps finish."""
+    return await _change(service.pause, id, http_request, tenant_id, token_budget)
 
 
-@router.post("/{id}/cancel", tags=["missions"])
-async def cancel_mission(id: str) -> None:
-    """Contract route (issue #303)."""
-    raise not_implemented("cancelling a mission is not implemented yet")
+@router.post("/{id}/resume", response_model=Mission, tags=["missions"])
+async def resume_mission(
+    id: str,
+    http_request: Request,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    token_budget: Annotated[int, Depends(get_token_budget)],
+) -> Mission:
+    return await _change(service.resume, id, http_request, tenant_id, token_budget)
+
+
+@router.post("/{id}/cancel", response_model=Mission, tags=["missions"])
+async def cancel_mission(
+    id: str,
+    http_request: Request,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[SourcingService, Depends(get_sourcing_service)],
+    token_budget: Annotated[int, Depends(get_token_budget)],
+) -> Mission:
+    """Cancel for good. Offers already in the gate stay there."""
+    return await _change(service.cancel, id, http_request, tenant_id, token_budget)
 
 
 @router.get("/{id}/offers")

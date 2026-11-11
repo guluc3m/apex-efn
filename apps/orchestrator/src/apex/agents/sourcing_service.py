@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from datetime import date
 
 from apex.agents.missions import (
+    TERMINAL_STATUSES,
+    InvalidMissionTransition,
     Mission,
     MissionEventBus,
     MissionEventType,
@@ -197,6 +199,37 @@ class SourcingService:
         mission = await self._deps.store.get(tenant_id, mission_id)
         if mission is None:
             raise MissionMissing(mission_id)
+        return mission
+
+    async def list_missions(self, *, tenant_id: str) -> list[Mission]:
+        return await self._deps.store.list_for_tenant(tenant_id)
+
+    async def pause(self, *, tenant_id: str, mission_id: str) -> Mission:
+        return await self._set_paused(tenant_id, mission_id, paused=True)
+
+    async def resume(self, *, tenant_id: str, mission_id: str) -> Mission:
+        return await self._set_paused(tenant_id, mission_id, paused=False)
+
+    async def cancel(self, *, tenant_id: str, mission_id: str) -> Mission:
+        """Terminal. Offers already in the gate queue are untouched (they live in their own store)."""
+        mission = await self.get_mission(tenant_id=tenant_id, mission_id=mission_id)
+        at = self._deps.clock.now()
+        mission = transition(mission, MissionStatus.CANCELLED, at=at)
+        mission = apply_event(mission, MissionEventType.MISSION_CANCELLED, at=at)
+        await self._deps.store.save(mission)
+        self._deps.bus.publish(mission.id, mission.events[-1])
+        return mission
+
+    async def _set_paused(self, tenant_id: str, mission_id: str, *, paused: bool) -> Mission:
+        mission = await self.get_mission(tenant_id=tenant_id, mission_id=mission_id)
+        if mission.status in TERMINAL_STATUSES or mission.paused == paused:
+            raise InvalidMissionTransition(mission.status, mission.status)
+        at = self._deps.clock.now()
+        mission = mission.model_copy(update={"paused": paused})
+        event = MissionEventType.MISSION_PAUSED if paused else MissionEventType.MISSION_RESUMED
+        mission = apply_event(mission, event, at=at)
+        await self._deps.store.save(mission)
+        self._deps.bus.publish(mission.id, mission.events[-1])
         return mission
 
 
