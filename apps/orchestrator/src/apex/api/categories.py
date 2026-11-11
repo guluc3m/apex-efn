@@ -1,12 +1,20 @@
-"""Category suggestions (contract route, issue #378). DEV-4 implements it; until then it answers 501."""
+"""Category suggestions (issue #378): the categories already present in the tenant's config overrides."""
 
-from fastapi import APIRouter
+from typing import Annotated
 
-from apex.common.errors import not_implemented
+from fastapi import APIRouter, Depends
+
+from apex.api.config import get_config_service
+from apex.contracts.generated.models import CategoryList, Item
+from apex.tenant_config.deps import get_tenant_id
+from apex.tenant_config.service import TenantConfigService
 
 router = APIRouter()
 
 
-@router.get("", tags=["config"])
-async def list_categories() -> None:
-    raise not_implemented("listing categories is not implemented yet")
+@router.get("", response_model=CategoryList, tags=["config"])
+async def list_categories(
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[TenantConfigService, Depends(get_config_service)],
+) -> CategoryList:
+    return CategoryList(items=[Item(id=c) for c in await service.categories(tenant_id)])
