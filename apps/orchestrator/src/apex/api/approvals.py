@@ -3,7 +3,8 @@
 An approval is a signed decision (``approve_purchase``, or a ``deal_action`` that follows or approves).
 ``required_signers`` and the signatures come from the decision itself, so dual control is whatever D2-09
 decided. The second signature is ``POST /v1/decisions/{id}/sign``, not a route here. No documents exist
-until D2-11, so each kind is listed as unavailable.
+until the decision is fully signed, so each kind is listed as unavailable before that; after, the PDF is rendered on
+demand by ``GET /{id}/documents/{kind}`` (D2-11) and ``POST /{id}/notify-finance`` records an audit event (issue 302).
 """
 
 from __future__ import annotations
@@ -12,26 +13,33 @@ import json
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from apex.agents.post_decision import DocumentKind, DocumentRequest
 from apex.api.keys import Sessions
+from apex.audit.api import AuditEventInput
+from apex.audit.api import append as audit_append
 from apex.auth.deps import current_principal
 from apex.auth.models import Principal
+from apex.common.clock import Clock, get_clock
 from apex.common.errors import Problem
 from apex.common.pagination import Cursor
 from apex.contracts.generated.models import (
     ApprovalDocument,
     ApprovalDocumentKind,
+    ApprovalFinanceNotice,
     ApprovalInboxStatus,
     ApprovalView,
     ApprovalViewPage,
     Signature,
 )
 from apex.db import models
-from apex.db.models import DecisionStatus, DecisionType
+from apex.db.models import ActorType, DecisionStatus, DecisionType
 from apex.db.session import tenant_session
+from apex.documents.render import DocumentError
+from apex.documents.service import PdfDocumentService
 
 router = APIRouter()
 Reader = Annotated[Principal, Depends(current_principal)]
@@ -69,7 +77,8 @@ def _view(row: models.Decision, sigs: list[models.Signature]) -> ApprovalView:
             "required_signers": row.required_signers,
             "signatures": [Signature.model_validate(s, from_attributes=True) for s in sigs],
             "documents": [
-                ApprovalDocument(kind=k, sha256=None, available=False) for k in ApprovalDocumentKind
+                ApprovalDocument(kind=k, sha256=None, available=row.status == DecisionStatus.SIGNED)
+                for k in ApprovalDocumentKind
             ],
             "tracking": [],
             "created_at": row.created_at,
@@ -138,3 +147,99 @@ async def get_approval(id: str, principal: Reader, sessions: Sessions) -> Approv
         if row is None:
             raise Problem(404, "Approval not found", detail=f"No approval {id}.")
         return _view(row, (await _signatures(session, [id]))[id])
+
+
+_KINDS = {
+    ApprovalDocumentKind.rfq: DocumentKind.RFQ,
+    ApprovalDocumentKind.po: DocumentKind.PURCHASE_ORDER,
+    ApprovalDocumentKind.certificate: DocumentKind.VERIFICATION_CERTIFICATE,
+}
+
+
+class _CaptureStore:
+    """Keeps the rendered bytes for the response; the PDF is derived from the decision, so it is not stored."""
+
+    def __init__(self) -> None:
+        self.body = b""
+
+    def put(self, key: str, body: bytes, content_type: str) -> None:
+        self.body = body
+
+
+@router.get(
+    "/{id}/documents/{kind}",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+async def download_approval_document(
+    id: str,
+    kind: ApprovalDocumentKind,
+    principal: Reader,
+    sessions: Sessions,
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> Response:
+    """Render the PDF from the signed decision. Unsigned approvals answer 409 ``not_signed``."""
+    async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
+        row = await session.scalar(
+            select(models.Decision).where(models.Decision.id == id, _is_approval())
+        )
+        if row is None:
+            raise Problem(404, "Approval not found", detail=f"No approval {id}.")
+        subject = row.subject_ref
+    store = _CaptureStore()
+    try:
+        await PdfDocumentService(sessions, store).generate(
+            DocumentRequest(
+                kind=_KINDS[kind],
+                tenant_id=principal.tenant_id,
+                mission_id="",
+                offer_id=subject,
+                decision_id=id,
+                requested_at=clock.now(),
+            )
+        )
+    except DocumentError as exc:
+        raise Problem(
+            409, "Conflict", detail="The approval is not fully signed yet.", reason="not_signed"
+        ) from exc
+    return Response(
+        store.body,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{kind.value}-{id}.pdf"'},
+    )
+
+
+@router.post("/{id}/notify-finance", response_model=ApprovalFinanceNotice, status_code=202)
+async def notify_finance(
+    id: str,
+    principal: Reader,
+    sessions: Sessions,
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> ApprovalFinanceNotice:
+    """Ask Finance for the missing signature. The audit event is the notification (no delivery channel yet)."""
+    async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
+        row = await session.scalar(
+            select(models.Decision).where(models.Decision.id == id, _is_approval())
+        )
+        if row is None:
+            raise Problem(404, "Approval not found", detail=f"No approval {id}.")
+        if row.status != DecisionStatus.PENDING_SIGNATURE:
+            raise Problem(
+                409,
+                "Conflict",
+                detail="The approval is not waiting for signatures.",
+                reason="not_pending",
+            )
+        await audit_append(
+            session,
+            AuditEventInput(
+                tenant_id=principal.tenant_id,
+                actor_type=ActorType.HUMAN,
+                actor_id=principal.user_id,
+                event_type="approval.finance_notified",
+                subject_ref=f"decision:{id}",
+                payload={"decision_id": id, "required_signers": row.required_signers},
+            ),
+            clock=clock,
+        )
+    return ApprovalFinanceNotice(approval_id=id, notified_at=clock.now())

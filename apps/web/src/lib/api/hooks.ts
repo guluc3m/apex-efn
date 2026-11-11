@@ -195,6 +195,11 @@ export function useApprovals(query?: Parameters<typeof api.listApprovals>[0]) {
   return useQuery({ queryKey: queryKeys.approvals(query), queryFn: ({ signal }) => api.listApprovals(query, signal) })
 }
 
+/** Records the request for Finance on the server (audit event); there is no other delivery channel yet. */
+export function useNotifyFinance(id: string) {
+  return useMutation({ mutationFn: () => api.notifyFinanceOfApproval(id) })
+}
+
 export function useApproval(id: string) {
   return useQuery({ queryKey: queryKeys.approval(id), queryFn: ({ signal }) => api.getApproval(id, signal) })
 }

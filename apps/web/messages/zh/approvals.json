@@ -1,10 +1,14 @@
 {
   "title": "审批",
   "tabsLabel": "审批状态",
-  "tabs": { "sign": "待签名", "progress": "进行中", "closed": "已关闭" },
+  "tabs": {
+    "sign": "待签名",
+    "progress": "进行中",
+    "closed": "已关闭"
+  },
   "empty": "暂无已关闭的采购。",
   "signaturesOf": "{done}/{needed} 个签名",
-  "docUnavailable": "文档生成尚未接入",
+  "docUnavailable": "所有签名完成后可用",
   "back": "返回审批",
   "kind": "跟进并购买 · 双重控制",
   "pending": "尚未连接",
@@ -27,7 +31,11 @@
   "colDetail": "详情",
   "colAction": "操作",
   "download": "下载 PDF",
-  "docs": { "rfq": "询价单 (RFQ)", "po": "采购订单", "certificate": "验证证书" },
+  "docs": {
+    "rfq": "询价单 (RFQ)",
+    "po": "采购订单",
+    "certificate": "验证证书"
+  },
   "trackHeading": "采购跟踪",
   "trackCaption": "采购可追溯记录",
   "colEvent": "事件",
@@ -36,5 +44,8 @@
     "po_sent": "采购订单已发送给卖家",
     "confirmed": "卖家已书面确认",
     "transit": "运输中"
-  }
+  },
+  "notified": "已记录通知:财务可在审计日志中看到该请求。",
+  "notifyFailed": "无法记录通知。",
+  "downloadFailed": "无法下载该文档。"
 }

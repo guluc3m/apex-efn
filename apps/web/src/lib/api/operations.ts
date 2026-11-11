@@ -36,6 +36,7 @@ import type {
   ListMissionOffersResponse,
   GetNegotiationResponse,
   ListNegotiationMessagesResponse,
+  NotifyFinanceOfApprovalResponse,
   ListDealsData,
   ListDealsResponse,
   ListGateQueueData,
@@ -199,6 +200,13 @@ export function createOperations(client: ApiClient) {
     /** The server builds the document (ranking, contributions, trade-offs, versions); the UI never does. */
     exportMissionRecommendation: (id: string, profile: string, format: 'pdf' | 'csv' | 'json', signal?: AbortSignal) =>
       client.blob('/v1/missions/{id}/recommendation/export', { path: { id }, query: { profile, format }, signal }),
+
+    /** The server renders the PDF from the signed decision; 409 `not_signed` until every signature is in. */
+    downloadApprovalDocument: (id: string, kind: 'rfq' | 'po' | 'certificate', signal?: AbortSignal) =>
+      client.blob('/v1/approvals/{id}/documents/{kind}', { path: { id, kind }, signal }),
+
+    notifyFinanceOfApproval: (id: string) =>
+      client.request<NotifyFinanceOfApprovalResponse>('/v1/approvals/{id}/notify-finance', { method: 'POST', path: { id } }),
 
     listMissions: (query?: ListMissionsData['query'], signal?: AbortSignal) =>
       client.request<ListMissionsResponse>('/v1/missions', { path: undefined, query, signal }),

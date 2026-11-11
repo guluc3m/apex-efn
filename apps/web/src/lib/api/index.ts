@@ -22,6 +22,7 @@ export {
   useNegotiation,
   useNegotiationAction,
   useNegotiationMessages,
+  useNotifyFinance,
   useProfiles,
   useProposeConfigChange,
   useSellerConfidence,

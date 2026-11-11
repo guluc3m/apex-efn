@@ -732,6 +732,47 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /v1/approvals/{id}/documents/{kind}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    - {name: kind, in: path, required: true, schema: {$ref: '#/components/schemas/ApprovalDocumentKind'}}
+    get:
+      tags: [approvals]
+      operationId: downloadApprovalDocument
+      summary: Download one purchase document as a PDF (issue 302).
+      description: 'Rendered from the signed decision, re-verifying its signatures first (D2-11). 409 with reason
+        `not_signed` until the approval has all its required signatures.'
+      responses:
+        '200':
+          description: The PDF.
+          content:
+            application/pdf:
+              schema: {type: string, format: binary}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /v1/approvals/{id}/notify-finance:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [approvals]
+      operationId: notifyFinanceOfApproval
+      summary: Ask Finance for the missing signature (issue 302).
+      description: 'Records an `approval.finance_notified` audit event; there is no delivery channel yet, so the
+        event is the notification. Only approvals still waiting for signatures can be notified (409 `not_pending`).'
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '202':
+          description: Recorded.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ApprovalFinanceNotice'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
   /v1/config/effective:
     get:
       tags: [config]
@@ -2796,6 +2837,12 @@ components:
     ApprovalDocumentKind:
       type: string
       enum: [rfq, po, certificate]
+    ApprovalFinanceNotice:
+      type: object
+      required: [approval_id, notified_at]
+      properties:
+        approval_id: {type: string}
+        notified_at: {type: string, format: date-time}
     ApprovalDocument:
       type: object
       required: [kind, available]

@@ -96,6 +96,8 @@ DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
         # Approvals inbox over decisions (D6-165-contract).
         ("GET", "/v1/approvals"),
         ("GET", "/v1/approvals/{id}"),
+        ("GET", "/v1/approvals/{id}/documents/{kind}"),
+        ("POST", "/v1/approvals/{id}/notify-finance"),
         # Missions list/lifecycle, config history and ranking profiles (issues #302, #303, #306).
         ("GET", "/v1/missions"),
         ("POST", "/v1/missions/{id}/pause"),

@@ -30,3 +30,30 @@ async def test_inbox_follows_dual_control_and_ignores_other_decisions(desk: Desk
     assert [i["id"] for i in progress] == [created["id"]]
     assert (await desk.h.client.get("/v1/approvals?status=closed")).json()["items"] == []
     assert (await desk.h.client.get("/v1/approvals/nope")).status_code == 404
+
+
+async def test_documents_download_only_when_signed_and_finance_notice_is_audited(
+    desk: Desk,
+) -> None:
+    desk.h.clock.set(T0 + timedelta(minutes=1))
+    created = (await desk.create("carol", "deal_action", gate(2_500_000))).json()
+    url = f"/v1/approvals/{created['id']}"
+
+    blocked = await desk.h.client.get(f"{url}/documents/po")
+    assert (blocked.status_code, blocked.json()["reason"]) == (409, "not_signed")
+
+    notice = await desk.h.client.post(f"{url}/notify-finance")
+    assert notice.status_code == 202 and notice.json()["approval_id"] == created["id"]
+    desk.h.as_user("root", roles=("admin",))
+    events = (await desk.h.client.get("/v1/audit?event_type=approval.finance_notified")).json()
+    assert [e["event_type"] for e in events["items"]] == ["approval.finance_notified"]
+
+    await desk.sign("carol", created, await desk.window("carol", T0 + timedelta(minutes=2)))
+    await desk.sign("erin", created, await desk.window("erin", T0 + timedelta(minutes=3)))
+    desk.h.as_user("carol")
+    pdf = await desk.h.client.get(f"{url}/documents/certificate")
+    assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
+    assert pdf.content.startswith(b"%PDF")
+    done = await desk.h.client.post(f"{url}/notify-finance")
+    assert (done.status_code, done.json()["reason"]) == (409, "not_pending")
+    assert (await desk.h.client.get("/v1/approvals/nope/documents/po")).status_code == 404
