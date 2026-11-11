@@ -9,7 +9,6 @@ export function generateStaticParams() {
   return locales.flatMap((locale) => STEP_IDS.map((paso) => ({ locale, paso })))
 }
 
-// //todo_#377: redirección a /decisiones si el onboarding está completo (necesita leer la sesión)
 export default async function OnboardingStepPage({ params }: { params: Promise<{ locale: string; paso: string }> }) {
   const { locale, paso } = await params
   setRequestLocale(locale)

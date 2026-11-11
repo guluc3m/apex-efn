@@ -2,7 +2,8 @@
   "header": {
     "home": "APEX, ir a Decisiones",
     "title": "Configurar empresa · paso {n} de {total}",
-    "draft": "Borrador local · aún sin guardar en el servidor"
+    "draft": "Borrador local · aún sin guardar en el servidor",
+    "saved": "Guardado en el servidor · {time}"
   },
   "stepsLabel": "Pasos del alta",
   "steps": {

@@ -204,15 +204,15 @@ def test_an_onboarding_session_can_be_started_and_profiled(app: FastAPI) -> None
         created = client.post("/v1/onboarding/sessions", headers=_h())
         assert created.status_code == 201, created.text
         session = created.json()
-        assert session["status"] == "started"
+        assert session["status"] == "profiling"
         updated = client.patch(
             f"/v1/onboarding/sessions/{session['id']}",
-            json={"legal_name": "ACME", "base_currency": "EUR"},
+            json={"company_profile": {"legal_name": "ACME", "base_currency": "EUR"}},
             headers=_h(),
         )
     assert updated.status_code == 200
-    assert updated.json()["status"] == "profiled"
-    assert updated.json()["profile"]["legal_name"] == "ACME"
+    assert updated.json()["status"] == "profiling"
+    assert updated.json()["company_profile"]["legal_name"] == "ACME"
 
 
 def test_a_csv_upload_says_the_importer_is_not_wired(app: FastAPI) -> None:

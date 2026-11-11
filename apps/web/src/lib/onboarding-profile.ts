@@ -45,3 +45,41 @@ export function fromProfile(profile: Profile, current: Drafts['empresa']): Draft
   }
   return next.razonSocial === current.razonSocial && next.pais === current.pais ? null : next
 }
+
+type Full = Drafts
+type SavedProfile = {
+  legal_name?: string | null
+  tax_id?: string | null
+  country?: string | null
+  customs_regime?: string | null
+  shipping_address?: string | null
+  cnae?: string | null
+  purchase_frequency?: string | null
+  purchase_categories?: readonly string[] | null
+  seasonality?: string | null
+}
+
+const FREQUENCY_BACK: Record<string, string> = { monthly: 'monthly', quarterly: 'quarterly', one_off: 'occasional' }
+
+/** Inverse of `toProfilePatch` for a saved session: only what the server holds replaces the draft. */
+export function restoreDrafts(profile: SavedProfile, current: Full): Pick<Full, 'empresa' | 'sector'> {
+  const e = current.empresa
+  const s = current.sector
+  return {
+    empresa: {
+      ...e,
+      razonSocial: profile.legal_name ?? e.razonSocial,
+      cif: profile.tax_id ?? e.cif,
+      pais: profile.country ? profile.country.toLowerCase() : e.pais,
+      aduana: profile.customs_regime ?? e.aduana,
+      direccion: profile.shipping_address ?? e.direccion,
+    },
+    sector: {
+      ...s,
+      cnae: profile.cnae ?? s.cnae,
+      frecuencia: (profile.purchase_frequency && FREQUENCY_BACK[profile.purchase_frequency]) || s.frecuencia,
+      compras: profile.purchase_categories?.length ? profile.purchase_categories.join(', ') : s.compras,
+      estacionalidad: profile.seasonality ?? s.estacionalidad,
+    },
+  }
+}

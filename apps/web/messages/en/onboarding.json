@@ -2,7 +2,8 @@
   "header": {
     "home": "APEX, go to Decisions",
     "title": "Set up company · step {n} of {total}",
-    "draft": "Local draft · not yet saved to the server"
+    "draft": "Local draft · not yet saved to the server",
+    "saved": "Saved on the server · {time}"
   },
   "stepsLabel": "Setup steps",
   "steps": {

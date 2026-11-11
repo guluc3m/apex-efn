@@ -9,6 +9,8 @@ import { ApiError } from './problem'
 export const api = createOperations(createApiClient())
 
 export const queryKeys = {
+  onboardingSession: (id: string) => ['onboarding', id] as const,
+  currentOnboarding: ['onboarding', 'current'] as const,
   intakeMessages: (id: string) => ['onboarding', id, 'messages'] as const,
   missions: ['missions'] as const,
   mission: (id: string) => ['mission', id] as const,
@@ -206,6 +208,22 @@ export function useGateAction() {
   return useMutation({
     mutationFn: (v: { id: string; body: Parameters<typeof api.applyGateQueueAction>[1] }) => api.applyGateQueueAction(v.id, v.body),
     onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ['deals'] }), qc.invalidateQueries({ queryKey: ['gate'] })]),
+  })
+}
+
+export function useOnboardingSession(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.onboardingSession(id ?? ''),
+    queryFn: ({ signal }) => api.getOnboardingSession(id!, signal),
+    enabled: !!id,
+  })
+}
+
+/** The tenant's newest onboarding session, or none yet. */
+export function useCurrentOnboarding() {
+  return useQuery({
+    queryKey: queryKeys.currentOnboarding,
+    queryFn: ({ signal }) => api.listOnboardingSessions({ limit: 1 }, signal).then((p) => p.items[0] ?? null),
   })
 }
 

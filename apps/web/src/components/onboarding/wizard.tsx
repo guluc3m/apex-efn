@@ -1,15 +1,16 @@
 'use client'
 
 import { Button, Chat, Icon, type ChatMessage } from '@apex/ui'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Bot, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { platforms, stepStatus } from '@/fixtures/onboarding'
+import { platforms } from '@/fixtures/onboarding'
 import { api } from '@/lib/api'
-import { useIntakeMessages, useSendIntakeMessage } from '@/lib/api/hooks'
-import { fromProfile, toProfilePatch } from '@/lib/onboarding-profile'
+import { queryKeys, useCurrentOnboarding, useIntakeMessages, useOnboardingSession, useSendIntakeMessage } from '@/lib/api/hooks'
+import { fromProfile, restoreDrafts, toProfilePatch } from '@/lib/onboarding-profile'
 import { ensureSession } from '@/lib/onboarding-session'
 import { useOnboarding } from '@/stores/onboarding'
 
@@ -20,6 +21,38 @@ import { STEP_IDS, schemas, type FormStepId, type StepId } from './schemas'
 import { BudgetStep, CompanyStep, FORM_ID, FinanceStep, NegotiationStep, PolicyStep, SectorStep, StepForm } from './steps'
 
 const FORMS = { empresa: CompanyStep, sector: SectorStep, presupuesto: BudgetStep, politica: PolicyStep, negociacion: NegotiationStep }
+
+type StepState = { kind: 'done' | 'warnings' | 'pending' | 'none'; count?: number }
+
+// Server step names (contract) -> wizard steps. The others are tenant config, which the session does not track.
+const SERVER_STEP: Partial<Record<StepId, string>> = { empresa: 'company', sector: 'sector', finanzas: 'finance' }
+
+function stateOf(p?: { done: number; warnings: number; pending: number }): StepState {
+  if (!p) return { kind: 'none' }
+  if (p.pending > 0) return { kind: 'pending', count: p.pending }
+  if (p.warnings > 0) return { kind: 'warnings', count: p.warnings }
+  return { kind: 'done' }
+}
+
+/** Finds the tenant's current session after a reload and restores its saved draft. Completed onboarding leaves the wizard. */
+function useSavedSession() {
+  const router = useRouter()
+  const locale = useLocale()
+  const current = useCurrentOnboarding()
+  const sessionId = useOnboarding((s) => s.sessionId)
+  const session = useOnboardingSession(sessionId)
+  useEffect(() => {
+    const found = current.data
+    const { sessionId: id, setSessionId, restore, drafts } = useOnboarding.getState()
+    if (!found || id) return
+    setSessionId(found.id)
+    restore(restoreDrafts(found.company_profile, drafts))
+  }, [current.data])
+  useEffect(() => {
+    if (session.data?.status === 'completed' && session.data.active_financial_snapshot_id) router.replace(`/${locale}/decisiones` as never)
+  }, [session.data, router, locale])
+  return session.data
+}
 
 function isForm(id: StepId): id is FormStepId {
   return id in schemas
@@ -81,6 +114,8 @@ export function OnboardingWizard({ step }: { step: StepId }) {
   const prev = STEP_IDS[index - 1]
   const next = STEP_IDS[index + 1]
   const [saveError, setSaveError] = useState(false)
+  const qc = useQueryClient()
+  const saved = useSavedSession()
   const revision = useOnboarding((s) => s.draftsRevision)
   const financialImport = useOnboarding((s) => s.financialImport)
   const go = () => next && router.push(`/${locale}/onboarding/${next}` as never)
@@ -93,6 +128,7 @@ export function OnboardingWizard({ step }: { step: StepId }) {
     try {
       const id = await ensureSession()
       await api.updateOnboardingSession(id, { company_profile: toProfilePatch(step, useOnboarding.getState().drafts) })
+      void qc.invalidateQueries({ queryKey: queryKeys.onboardingSession(id) })
       setSaveError(false)
       go()
     } catch {
@@ -122,7 +158,8 @@ export function OnboardingWizard({ step }: { step: StepId }) {
           <p className="m-0 px-4 pb-2 text-[13px] text-ink-muted">{t('header.title', { n: index + 1, total: STEP_IDS.length })}</p>
           <ol className="m-0 list-none p-0">
             {STEP_IDS.map((id, i) => {
-              const s = stepStatus[id]
+              const server = SERVER_STEP[id]
+              const s = stateOf(server ? saved?.steps?.find((x) => x.step === server) : undefined)
               return (
                 <li key={id}>
                   <AppLink

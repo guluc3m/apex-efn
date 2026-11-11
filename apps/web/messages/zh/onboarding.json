@@ -2,7 +2,8 @@
   "header": {
     "home": "APEX，前往决策",
     "title": "设置公司 · 第 {n} 步，共 {total} 步",
-    "draft": "本地草稿 · 尚未保存到服务器"
+    "draft": "本地草稿 · 尚未保存到服务器",
+    "saved": "已保存到服务器 · {time}"
   },
   "stepsLabel": "设置步骤",
   "steps": {

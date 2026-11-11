@@ -28,7 +28,7 @@ class IntakeChatAgent:
     async def reply(
         self, *, tenant_id: str, session: OnboardingSession, history: list[IntakeMessage], text: str
     ) -> tuple[str, CompanyProfile]:
-        known = session.profile.model_dump(exclude={"budget_eur_minor"})
+        known = session.profile.model_dump(exclude={"budget_minor"})
         rendered = self._prompts.render(
             "intake_onboarding_chat",
             profile_json=json.dumps(known, ensure_ascii=False),

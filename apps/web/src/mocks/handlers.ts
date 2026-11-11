@@ -62,6 +62,11 @@ export const onboardingSessionFixture: OnboardingSession = {
   // Placeholder identity for a mock only; the wizard collects the real one.
   company_profile: { legal_name: 'Mock Company S.L.', tax_id: 'MOCK0000', country: 'ES', base_currency: 'EUR' },
   effective_config: effectiveConfigFixture,
+  steps: [
+    { step: 'company', done: 4, warnings: 0, pending: 0 },
+    { step: 'sector', done: 1, warnings: 0, pending: 2 },
+    { step: 'finance', done: 0, warnings: 0, pending: 1 },
+  ],
   created_at: NOW,
   updated_at: NOW,
 }
@@ -102,6 +107,10 @@ const API = '*/api/v1'
 
 export const handlers = [
   http.post(`${API}/onboarding/sessions`, () => HttpResponse.json(onboardingSessionFixture, { status: 201 })),
+  http.get(`${API}/onboarding/sessions`, () => HttpResponse.json({ items: [onboardingSessionFixture] })),
+  http.get(`${API}/onboarding/sessions/:id`, ({ params }) =>
+    HttpResponse.json({ ...onboardingSessionFixture, id: String(params.id) }),
+  ),
   http.post(`${API}/sourcing-requests`, () => HttpResponse.json(sourcingRequestFixture, { status: 201 })),
   http.post(`${API}/missions`, () => HttpResponse.json(missionFixture, { status: 201 })),
   http.get(`${API}/missions/:id`, ({ params }) =>

@@ -27,7 +27,9 @@ import type {
   GetMissionResponse,
   GetSellerConfidenceData,
   GetSellerConfidenceResponse,
+  GetOnboardingSessionResponse,
   ListMissionsData,
+  ListOnboardingSessionsResponse,
   ListMissionsResponse,
   ListMissionOffersData,
   ListMissionOffersResponse,
@@ -93,6 +95,14 @@ export function createOperations(client: ApiClient) {
         body,
         signal,
       }),
+
+    /** The wizard's saved draft: the session with its per-step progress. */
+    getOnboardingSession: (id: string, signal?: AbortSignal) =>
+      client.request<GetOnboardingSessionResponse>('/v1/onboarding/sessions/{id}', { path: { id }, signal }),
+
+    /** Newest first. `limit: 1` finds the tenant's current session. */
+    listOnboardingSessions: (query?: { limit?: number }, signal?: AbortSignal) =>
+      client.request<ListOnboardingSessionsResponse>('/v1/onboarding/sessions', { path: undefined, query, signal }),
 
     updateOnboardingSession: (
       id: UpdateOnboardingSessionData['path']['id'],
