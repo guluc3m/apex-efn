@@ -101,8 +101,16 @@ GATE_OUTCOMES = frozenset(
 REJECT_OUTCOMES = frozenset({NegotiationOutcomeKind.NO_AGREEMENT, NegotiationOutcomeKind.ABORTED})
 
 
+GATE_QUOTE_REASON = "best_quote_above_target"
+"""#241: the seller holds above the target; the engine escalates and reports the best quote."""
+
+
 class NegotiationResult(_Frozen):
-    """Result of one ``negotiate`` call. ``price_minor`` is the **unit** price, set only for ``agreed``."""
+    """Result of one ``negotiate`` call. ``price_minor`` is the **unit** price.
+
+    It is set for ``agreed`` and for the one escalation that shows the gate a number (#241:
+    ``escalated`` with reason ``best_quote_above_target``). Every other outcome carries no price.
+    """
 
     outcome: NegotiationOutcomeKind
     negotiation_id: str
@@ -118,8 +126,14 @@ class NegotiationResult(_Frozen):
         complete = None not in (self.price_minor, self.currency, self.quantity)
         if agreed and not complete:
             raise ValueError("an agreed negotiation needs price_minor, currency and quantity")
-        if not agreed and self.price_minor is not None:
-            raise ValueError("price_minor is only set when the outcome is agreed")
+        gate_quote = (
+            NegotiationOutcomeKind(self.outcome) is NegotiationOutcomeKind.ESCALATED
+            and self.reason == GATE_QUOTE_REASON
+        )
+        if not agreed and not gate_quote and self.price_minor is not None:
+            raise ValueError("price_minor is only set when the outcome is agreed or the gate quote")
+        if gate_quote and not complete:
+            raise ValueError("the gate quote needs price_minor, currency and quantity")
         return self
 
 
