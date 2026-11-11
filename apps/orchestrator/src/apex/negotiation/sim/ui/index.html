@@ -77,7 +77,8 @@
       .steps li.done::before { background: var(--accent); }
       .steps .kind { font-weight: 600; }
       .transcript { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: min(60vh, 620px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-      .line { max-width: 80%; padding: 8px 11px; border-radius: 10px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .line { max-width: 80%; padding: 8px 11px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+      .line .text { display: block; overflow-wrap: anywhere; white-space: pre-wrap; }
       .line.buyer { align-self: flex-end; background: #eef4ff; }
       .line.seller { align-self: flex-start; background: var(--wash); border: 1px solid var(--line); }
       .line .who { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
@@ -214,14 +215,13 @@
         $("run-buyers").innerHTML = (report.buyers || [])
           .map((buyer) => {
             const outcome = buyer.outcome || "error";
-            const lines = (buyer.transcript || [])
-              .map(
-                (line) => `
-                <div class="line ${line.role === "buyer" ? "buyer" : "seller"}">
-                  <span class="who">${line.role === "buyer" ? "AI buyer" : "AI seller"}</span>${esc(line.text)}
-                </div>`
-              )
-              .join("") || '<p class="empty">No messages exchanged.</p>';
+            const lines =
+              (buyer.transcript || [])
+                .map(
+                  (line) =>
+                    `<div class="line ${line.role === "buyer" ? "buyer" : "seller"}"><span class="who">${line.role === "buyer" ? "AI buyer" : "AI seller"}</span><span class="text">${esc(line.text)}</span></div>`
+                )
+                .join("") || '<p class="empty">No messages exchanged.</p>';
             const steps = (buyer.steps || [])
               .map(
                 (step) => `
