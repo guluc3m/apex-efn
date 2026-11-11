@@ -252,6 +252,19 @@ class SendIntakeMessageRequest(BaseModel):
     text: Annotated[str, Field(max_length=4000, min_length=1)]
 
 
+class Item(BaseModel):
+    id: Annotated[
+        str,
+        Field(
+            description="The category as the tenant wrote it. No translated label: there is no catalog to translate from."
+        ),
+    ]
+
+
+class CategoryList(BaseModel):
+    items: list[Item]
+
+
 class OnboardingStep(StrEnum):
     company = "company"
     sector = "sector"

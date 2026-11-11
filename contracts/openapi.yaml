@@ -26,6 +26,19 @@ tags:
 - {name: webhooks}
 - {name: config}
 paths:
+  /v1/categories:
+    get:
+      tags: [config]
+      operationId: listCategories
+      summary: Categories already present in the tenant's data (config category overrides and the purchase categories of its onboarding profile). There is no global catalog; empty when the tenant has none.
+      responses:
+        '200':
+          description: Distinct category ids, sorted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryList'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
   /v1/onboarding/sessions:
     get:
       tags: [onboarding]
@@ -452,6 +465,39 @@ paths:
         '200':
           description: Ranking with per-criterion contributions.
           content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recommendation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /v1/missions/{id}/recommendation/export:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [missions]
+      operationId: exportMissionRecommendation
+      summary: Download the recommendation (ranking, per-criterion contributions, trade-offs, versions) built by the server. The client never builds the document.
+      parameters:
+      - name: profile
+        in: query
+        required: true
+        description: UserProfilePreference id, as in `getMissionRecommendation`.
+        schema: {type: string}
+      - name: format
+        in: query
+        required: true
+        schema: {type: string, enum: [pdf, csv, json]}
+      responses:
+        '200':
+          description: The document. `json` is the same `Recommendation` that `getMissionRecommendation` returns.
+          headers:
+            Content-Disposition:
+              schema: {type: string}
+          content:
+            application/pdf:
+              schema: {type: string, format: binary}
+            text/csv:
+              schema: {type: string}
             application/json:
               schema: {$ref: '#/components/schemas/Recommendation'}
         '401': {$ref: '#/components/responses/Unauthorized'}
@@ -1584,6 +1630,17 @@ components:
           items: {$ref: '#/components/schemas/OnboardingStepProgress'}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+    CategoryList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [id]
+            properties:
+              id: {type: string, description: 'The category as the tenant wrote it. No translated label: there is no catalog to translate from.'}
     OnboardingStep:
       type: string
       enum: [company, sector, accounts, budget, policy, negotiation, finance]

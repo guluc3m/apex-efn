@@ -270,6 +270,15 @@ export type OnboardingSession = {
   updated_at: string
 }
 
+export type CategoryList = {
+  items: Array<{
+    /**
+     * The category as the tenant wrote it. No translated label: there is no catalog to translate from.
+     */
+    id: string
+  }>
+}
+
 export type OnboardingStep =
   'company' | 'sector' | 'accounts' | 'budget' | 'policy' | 'negotiation' | 'finance'
 
@@ -1764,6 +1773,35 @@ export type IdempotencyKey = string
 
 export type NegotiationControl = NegotiationControlRequest
 
+export type ListCategoriesData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/v1/categories'
+}
+
+export type ListCategoriesErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListCategoriesError = ListCategoriesErrors[keyof ListCategoriesErrors]
+
+export type ListCategoriesResponses = {
+  /**
+   * Distinct category ids, sorted.
+   */
+  200: CategoryList
+}
+
+export type ListCategoriesResponse = ListCategoriesResponses[keyof ListCategoriesResponses]
+
 export type ListOnboardingSessionsData = {
   body?: never
   path?: never
@@ -2603,6 +2641,49 @@ export type GetMissionRecommendationResponses = {
 
 export type GetMissionRecommendationResponse =
   GetMissionRecommendationResponses[keyof GetMissionRecommendationResponses]
+
+export type ExportMissionRecommendationData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query: {
+    /**
+     * UserProfilePreference id, as in `getMissionRecommendation`.
+     */
+    profile: string
+    format: 'pdf' | 'csv' | 'json'
+  }
+  url: '/v1/missions/{id}/recommendation/export'
+}
+
+export type ExportMissionRecommendationErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type ExportMissionRecommendationError =
+  ExportMissionRecommendationErrors[keyof ExportMissionRecommendationErrors]
+
+export type ExportMissionRecommendationResponses = {
+  /**
+   * The document. `json` is the same `Recommendation` that `getMissionRecommendation` returns.
+   */
+  200: Recommendation
+}
+
+export type ExportMissionRecommendationResponse =
+  ExportMissionRecommendationResponses[keyof ExportMissionRecommendationResponses]
 
 export type GetSellerConfidenceData = {
   body?: never
