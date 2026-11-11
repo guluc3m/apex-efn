@@ -77,6 +77,7 @@ class MissionEventType(StrEnum):
     SOURCING_STARTED = "sourcing_started"
     OFFERS_COLLECTED = "offers_collected"
     ANALYSIS_COMPLETED = "analysis_completed"
+    NEGOTIATIONS_STARTED = "negotiations_started"
     MISSION_FAILED = "mission_failed"
     MISSION_CANCELLED = "mission_cancelled"
     MISSION_PAUSED = "mission_paused"

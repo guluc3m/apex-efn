@@ -14,6 +14,7 @@ from apex.api import config as config_api
 from apex.api import dashboard as dashboard_api
 from apex.api import gate as gate_api
 from apex.api import missions as missions_api
+from apex.api import negotiations as negotiations_api
 from apex.api import onboarding as onboarding_api
 from apex.api import router
 from apex.api import sellers as sellers_api
@@ -134,6 +135,9 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     application.dependency_overrides[onboarding_api.get_onboarding] = lambda: services.onboarding
     application.dependency_overrides[dashboard_api.get_dashboard] = lambda: services.dashboard
     application.dependency_overrides[gate_api.get_gate_agent] = lambda: services.gate
+    application.dependency_overrides[negotiations_api.get_negotiation_control] = lambda: (
+        services.negotiation.control
+    )
     application.dependency_overrides[missions_api.get_recommendation_provider] = lambda: (
         services.evaluator
     )

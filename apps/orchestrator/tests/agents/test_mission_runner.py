@@ -323,3 +323,60 @@ async def test_the_sourcing_event_reports_how_many_listings_were_skipped() -> No
     result = await runner.run(tenant_id=TENANT, mission_id="m-1")
     sourced = next(e for e in result.mission.events if e.type is MissionEventType.OFFERS_COLLECTED)
     assert sourced.payload["skipped"] == 0
+
+
+# ----- negotiation of cleared offers (criterion 12) ------------------------------------------------
+
+
+def _with_negotiation(runner: MissionRunner, negotiate: Any) -> MissionRunner:
+    from dataclasses import replace
+
+    return MissionRunner(replace(runner._deps, negotiate=negotiate))  # noqa: SLF001
+
+
+class _Started:
+    def __init__(self, negotiation_id: str) -> None:
+        self.negotiation_id = negotiation_id
+
+
+async def test_a_cleared_offer_is_negotiated_and_the_mission_says_so() -> None:
+    base, store, _, _, _ = _runner()
+    seen: list[str] = []
+
+    async def negotiate(offer: Any) -> _Started:
+        seen.append(offer.id)
+        return _Started(f"n-{offer.id}")
+
+    runner = _with_negotiation(base, negotiate)
+    await _seed(store)
+    result = await runner.run(tenant_id=TENANT, mission_id="m-1")
+    assert len(seen) == 1
+    last = result.mission.events[-1]
+    assert last.type is MissionEventType.NEGOTIATIONS_STARTED
+    assert last.payload["offers_negotiated"] == 1
+
+
+async def test_an_offer_in_the_gate_is_never_negotiated() -> None:
+    base, store, _, _, _ = _runner(sanity=PriceBand.ATYPICAL)
+    seen: list[str] = []
+
+    async def negotiate(offer: Any) -> _Started:
+        seen.append(offer.id)
+        return _Started("n")
+
+    await _seed(store)
+    result = await _with_negotiation(base, negotiate).run(tenant_id=TENANT, mission_id="m-1")
+    assert seen == []
+    assert result.mission.events[-1].type is MissionEventType.ANALYSIS_COMPLETED
+
+
+async def test_a_chat_that_cannot_open_does_not_fail_the_mission() -> None:
+    base, store, _, _, _ = _runner()
+
+    async def negotiate(offer: Any) -> _Started:
+        raise RuntimeError("worker down")
+
+    await _seed(store)
+    result = await _with_negotiation(base, negotiate).run(tenant_id=TENANT, mission_id="m-1")
+    assert result.mission.status is MissionStatus.RUNNING
+    assert result.failed_reason is None

@@ -16,7 +16,7 @@ the mission with a reason that names the owning lane, instead of leaving it sile
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -33,6 +33,7 @@ from apex.agents.missions import (
     apply_event,
     transition,
 )
+from apex.agents.offers import Offer
 from apex.agents.sanity_port import SanityUnavailable
 from apex.agents.scraping import ScrapingService
 from apex.agents.sourcing import SourcingPlan
@@ -63,6 +64,9 @@ class MissionRunnerDeps:
     mission_cost_minor: Callable[[str], int | None] = lambda _mission_id: None
     """``mission_id -> cost in minor units``, or ``None`` when nothing is priced. Injected: the runner must
     not know about the gateway."""
+    negotiate: Callable[[Offer], Awaitable[Any]] | None = None
+    """Opens the negotiation of an offer that needs no human (no gate item). Returns ``None`` when the
+    offer's platform has no chat. ``None`` here means negotiation is not wired: offers stay as deals."""
 
 
 logger = logging.getLogger(__name__)
@@ -135,6 +139,7 @@ class MissionRunner:
         rules = self._deps.rules_for(mission.tenant_id)
         analysed = 0
         gate_items = 0
+        cleared: list[Offer] = []
         for offer, _ in await self._deps.nodes.mission_offers(
             tenant_id=mission.tenant_id, mission_id=mission.id
         ):
@@ -147,16 +152,44 @@ class MissionRunner:
             )
             if item is not None:
                 gate_items += 1
+            else:
+                cleared.append(offer)
         mission = await self._publish(
             mission,
             MissionEventType.ANALYSIS_COMPLETED,
             payload={"offers_analysed": analysed, "gate_items": gate_items},
         )
+        mission = await self._negotiate(mission, cleared)
         return MissionRunResult(
             mission=mission,
             offers_collected=scrape.collected,
             offers_analysed=analysed,
             gate_items=gate_items,
+        )
+
+    async def _negotiate(self, mission: Mission, offers: list[Offer]) -> Mission:
+        """Open a negotiation for every cleared offer (criterion 12: only offers no gate holds).
+
+        A negotiation that cannot open is logged and skipped: the offer stays a deal a human can act on,
+        and the mission does not fail for one seller's chat.
+        """
+        if self._deps.negotiate is None or not offers:
+            return mission
+        started: list[str] = []
+        for offer in offers:
+            try:
+                result = await self._deps.negotiate(offer)
+            except Exception:
+                logger.exception("negotiation did not open", extra={"offer_id": offer.id})
+                continue
+            if result is not None:
+                started.append(result.negotiation_id)
+        if not started:
+            return mission
+        return await self._publish(
+            mission,
+            MissionEventType.NEGOTIATIONS_STARTED,
+            payload={"offers_negotiated": len(started), "negotiation_ids": started},
         )
 
     def _record_cost(self, mission_id: str) -> None:

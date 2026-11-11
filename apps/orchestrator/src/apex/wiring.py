@@ -40,6 +40,16 @@ from apex.agents.header_mapping import HeaderMapper
 from apex.agents.intake_chat import IntakeChatAgent
 from apex.agents.mission_runner import MissionRunner, MissionRunnerDeps
 from apex.agents.missions import InMemoryMissionStore, MissionEventBus
+from apex.agents.negotiation_params import (
+    DbAccountResolver,
+    DevPlatformAccountResolver,
+    NegotiationParamsResolver,
+)
+from apex.agents.negotiation_wiring import (
+    NegotiationServices,
+    WorkerChatTransport,
+    build_negotiation,
+)
 from apex.agents.offers import InMemoryOfferStore, InMemorySellerConfidenceStore
 from apex.agents.onboarding import (
     InMemoryOnboardingStore,
@@ -235,6 +245,44 @@ class UnwiredBrowserWorker:
         raise NotImplementedError("browser worker is not wired yet (owner: DEV-5, D5-01)")
 
 
+class UnwiredChatTransport:
+    """No browser worker configured: a negotiation cannot open a chat, and says who owns the worker."""
+
+    async def open(self, *args: Any, **kwargs: Any) -> str:
+        raise NotImplementedError("chat needs the browser worker (owner: DEV-5, D5-01)")
+
+    async def send(self, *args: Any, **kwargs: Any) -> None:
+        raise NotImplementedError("chat needs the browser worker (owner: DEV-5, D5-01)")
+
+    async def read(self, *args: Any, **kwargs: Any) -> Any:
+        raise NotImplementedError("chat needs the browser worker (owner: DEV-5, D5-01)")
+
+
+NEGOTIABLE_PLATFORMS: frozenset[str] = frozenset({"mock-a"})
+"""Platforms whose chat the worker drives without a real browser. ``mock-b`` chats through Playwright
+(ADR-500), off in dev, so its offers stay as deals without a negotiation."""
+
+
+def _chat_transport(
+    cfg: Settings, http_client_factory: Callable[[RoleEndpointConfig], httpx.AsyncClient] | None
+) -> Any:
+    if not cfg.browser_worker_url:
+        return UnwiredChatTransport()
+    if http_client_factory is not None:
+        factory = lambda: http_client_factory(  # noqa: E731
+            RoleEndpointConfig(
+                endpoint_id="browser-worker", base_url=cfg.browser_worker_url, model="worker"
+            )
+        )
+    else:
+        factory = lambda: httpx.AsyncClient(timeout=30.0)  # noqa: E731
+    return WorkerChatTransport(
+        base_url=cfg.browser_worker_url,
+        service_token=cfg.browser_worker_token,
+        client_factory=factory,
+    )
+
+
 class UnwiredFx:
     async def to_eur_unit(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("FX is not wired yet (owner: DEV-3, D3-03)")
@@ -388,6 +436,8 @@ class AppServices:
     """Recommendation (D4-12) and the mission's offers, over the same offer store the runner fills."""
     runner: MissionRunner
     """Ready to advance a planned mission. Only invoked automatically when ``mission_autorun`` is on."""
+    negotiation: NegotiationServices
+    """The shared negotiation engine: the runner starts negotiations, the HTTP routes control them."""
 
 
 def build_app_services(
@@ -461,10 +511,11 @@ def build_app_services(
     )
     gate_store = InMemoryGateStore()
     rules = _gate_rules()
+    sanity_port = DomainSanityPort(config=tenant_config, offers=offer_store, clock=active_clock)
     nodes = AnalysisNodes(
         AnalysisDeps(
             trust=DomainTrustPort(config=tenant_config, clock=active_clock),
-            sanity=DomainSanityPort(config=tenant_config, offers=offer_store, clock=active_clock),
+            sanity=sanity_port,
             finance=DomainFinancePort(
                 config=tenant_config, onboarding=onboarding, clock=active_clock
             ),
@@ -482,6 +533,24 @@ def build_app_services(
             clock=active_clock,
             ids=IdGenerator(active_clock),
         )
+    )
+    negotiation = build_negotiation(
+        transport=_chat_transport(cfg, http_client_factory),
+        gateway=gateway,
+        sanity=sanity_port,
+        resolve=NegotiationParamsResolver(
+            config=tenant_config,
+            offers=offer_store,
+            accounts=DevPlatformAccountResolver(
+                NEGOTIABLE_PLATFORMS,
+                DbAccountResolver(
+                    lambda tid: tenant_session(tid, sessionmaker=default_sessionmaker())
+                ),
+            ),
+            flags=active_flags,
+        ),
+        clock=active_clock,
+        platforms=NEGOTIABLE_PLATFORMS,
     )
     runner = MissionRunner(
         MissionRunnerDeps(
@@ -501,6 +570,7 @@ def build_app_services(
             clock=active_clock,
             rules_for=lambda tenant_id: rules,
             mission_cost_minor=gateway.mission_cost_minor,
+            negotiate=negotiation.starter.start,
         )
     )
     dashboard = Dashboard(
@@ -509,6 +579,7 @@ def build_app_services(
         gate_store=gate_store,
         gate=gate,
         rules_for=lambda tenant_id: rules,
+        negotiation_for=negotiation.contract_for,
     )
     return AppServices(
         settings=cfg,
@@ -534,6 +605,7 @@ def build_app_services(
             clock=active_clock,
         ),
         runner=runner,
+        negotiation=negotiation,
     )
 
 
