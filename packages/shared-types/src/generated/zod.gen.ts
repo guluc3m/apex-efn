@@ -385,6 +385,7 @@ export const zMission = z.object({
   id: z.string(),
   sourcing_request_id: z.string(),
   profile_id: z.string().nullish(),
+  paused: z.boolean().optional(),
   plan_id: z.string().nullish(),
   state: zMissionState,
   offers_discovered: z.number().int().gte(0),

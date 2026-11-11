@@ -368,6 +368,12 @@ class Mission(BaseModel):
         str | None,
         Field(description="Default ranking profile of the mission (a UserProfilePreference id)."),
     ] = None
+    paused: Annotated[
+        bool | None,
+        Field(
+            description="True after POST /pause until POST /resume. Orthogonal to `state`, which keeps the graph step."
+        ),
+    ] = None
     plan_id: str | None = None
     state: MissionState
     offers_discovered: Annotated[int, Field(ge=0)]

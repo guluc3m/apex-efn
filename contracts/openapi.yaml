@@ -1889,6 +1889,9 @@ components:
         profile_id:
           type: [string, 'null']
           description: Default ranking profile of the mission (a UserProfilePreference id).
+        paused:
+          type: boolean
+          description: True after POST /pause until POST /resume. Orthogonal to `state`, which keeps the graph step.
         plan_id:
           type: [string, 'null']
         state: {$ref: '#/components/schemas/MissionState'}
