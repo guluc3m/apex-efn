@@ -25,8 +25,8 @@ class Settings(BaseSettings):
 
     # S3
     s3_endpoint: str = Field(default="http://localhost:9000")
-    s3_access_key: str = Field(default="minioadmin")
-    s3_secret_key: str = Field(default="minioadmin")
+    s3_access_key: str = Field(default="apex-dev")
+    s3_secret_key: str = Field(default="apex-dev-secret")
     s3_bucket_audit: str = Field(default="apex-audit")
     # Object Lock COMPLIANCE retention of audit anchors (ADR-211): 6 years. It cannot be shortened once written.
     audit_anchor_retention_days: int = Field(default=2192, ge=1)
