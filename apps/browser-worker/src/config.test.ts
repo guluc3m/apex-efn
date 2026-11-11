@@ -115,3 +115,50 @@ describe('loadConfig', () => {
     )
   })
 })
+
+describe('loadConfig: the User-Agent must not identify anyone', () => {
+  it('rejects an email or a URL with personal data in it', () => {
+    expect(() =>
+      loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, ADAPTER_USER_AGENT: 'apex-bot/1.0 (ana@example.com)' })
+    ).toThrow(/ADAPTER_USER_AGENT/)
+  })
+
+  it('rejects tenant, account or credential identifiers', () => {
+    for (const value of [
+      'apex-bot/1.0 tenant=acme',
+      'apex-bot/1.0 account-42',
+      'apex-bot/1.0 token=abc',
+      'apex-bot/1.0 apikey123',
+    ]) {
+      expect(() => loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, ADAPTER_USER_AGENT: value })).toThrow(
+        /ADAPTER_USER_AGENT/
+      )
+    }
+  })
+
+  it('accepts an anonymous product token, with or without an organisational URL', () => {
+    for (const value of [
+      'APEX-EFN-bot/0.1 (+https://apex-efn.example/bot)',
+      'custom-bot/1.0',
+      'APEX-EFN-bot/2.1 (+https://example.invalid/bot)',
+    ]) {
+      expect(
+        loadConfig({ BROWSER_WORKER_TOKEN: TOKEN, ADAPTER_USER_AGENT: value }).adapterUserAgent
+      ).toBe(value)
+    }
+  })
+
+  it('never echoes the rejected value in the error', () => {
+    try {
+      loadConfig({
+        BROWSER_WORKER_TOKEN: TOKEN,
+        ADAPTER_USER_AGENT: 'apex-bot/1.0 (secret.person@example.com)',
+      })
+      throw new Error('expected a failure')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      expect(message).toContain('ADAPTER_USER_AGENT')
+      expect(message).not.toContain('secret.person')
+    }
+  })
+})
