@@ -26,7 +26,7 @@ describe() {
     llm-portability) echo "criterion 25 deny-list (self-test and scan)" ;;
     contracts-drift) echo "root script contracts:check (activates with D2-01)" ;;
     migration-drift) echo "prisma migrate diff (activates with D2-03, needs Docker)" ;;
-    e2e) echo "Playwright E2E on the compose stack (activates with D6-08, needs Docker)" ;;
+    e2e) echo "Playwright E2E (request specs against the webServer, no Docker)" ;;
     *) return 1 ;;
   esac
 }
