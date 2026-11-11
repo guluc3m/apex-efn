@@ -60,7 +60,22 @@ class RecommendationNarrative(_Draft):
     trade_offs: list[str]
 
 
+class IntakeProfileDraft(_Draft):
+    """Company profile fields the buyer stated in chat. Never money: budget is not here on purpose."""
+
+    legal_name: str | None = Field(default=None, max_length=200)
+    sector: str | None = Field(default=None, max_length=120)
+    country: str | None = Field(default=None, max_length=64)
+    base_currency: str | None = Field(default=None, max_length=16)
+
+
+class IntakeTurnDraft(_Draft):
+    reply: str = Field(min_length=1, max_length=2000)
+    profile: IntakeProfileDraft
+
+
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "IntakeTurnDraft": IntakeTurnDraft,
     "SourcingRequestDraft": SourcingRequestDraft,
     "SourcingPlanDraft": SourcingPlanDraft,
     "HeaderMappingSuggestion": HeaderMappingSuggestion,
@@ -73,6 +88,8 @@ __all__ = [
     "HeaderMappingItem",
     "HeaderMappingSuggestion",
     "ImportWarnings",
+    "IntakeProfileDraft",
+    "IntakeTurnDraft",
     "PlanStepDraft",
     "RecommendationNarrative",
     "SourcingPlanDraft",

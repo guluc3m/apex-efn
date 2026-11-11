@@ -63,6 +63,24 @@ class OnboardingSession(_Model):
     pending_snapshot_id: str | None = None
 
 
+class IntakeMessage(_Model):
+    id: str
+    session_id: str
+    tenant_id: str
+    role: str
+    """``user`` or ``agent``."""
+    text: str
+    created_at: datetime
+
+
+class IntakeReplier(Protocol):
+    """The IntakeAgent turn (``apex.agents.intake_chat``): reply text plus profile fields it proposes."""
+
+    async def reply(
+        self, *, tenant_id: str, session: OnboardingSession, history: list[IntakeMessage], text: str
+    ) -> tuple[str, CompanyProfile]: ...
+
+
 class FinancialSnapshot(_Model):
     """An imported financial file. ``report`` is DEV-3's ``ImportReport`` verbatim, never re-derived here."""
 
@@ -110,6 +128,10 @@ class OnboardingStore(Protocol):
 
     async def get_session(self, tenant_id: str, session_id: str) -> OnboardingSession | None: ...
 
+    async def add_message(self, message: IntakeMessage) -> IntakeMessage: ...
+
+    async def list_messages(self, tenant_id: str, session_id: str) -> list[IntakeMessage]: ...
+
     async def add_snapshot(self, snapshot: FinancialSnapshot) -> FinancialSnapshot: ...
 
     async def get_snapshot(self, tenant_id: str, snapshot_id: str) -> FinancialSnapshot | None: ...
@@ -125,6 +147,16 @@ class InMemoryOnboardingStore:
     def __init__(self) -> None:
         self._sessions: dict[tuple[str, str], OnboardingSession] = {}
         self._snapshots: dict[tuple[str, str], FinancialSnapshot] = {}
+        self._messages: list[IntakeMessage] = []
+
+    async def add_message(self, message: IntakeMessage) -> IntakeMessage:
+        self._messages.append(message)
+        return message
+
+    async def list_messages(self, tenant_id: str, session_id: str) -> list[IntakeMessage]:
+        return [
+            m for m in self._messages if m.tenant_id == tenant_id and m.session_id == session_id
+        ]
 
     async def save_session(self, session: OnboardingSession) -> OnboardingSession:
         self._sessions[(session.tenant_id, session.id)] = session
@@ -171,6 +203,8 @@ class OnboardingDeps:
     """``finance.stale_after_days`` from tenant config. Required: no default."""
     config_version: Callable[[str], str]
     """``tenant_id -> config_version``, supplied by the tenant config service (D4-03)."""
+    intake: IntakeReplier | None = None
+    """The IntakeAgent. ``None`` means the chat is not wired and answers 501."""
 
 
 class OnboardingIncomplete(Exception):
@@ -217,6 +251,56 @@ class OnboardingService:
             }
         )
         return await self._deps.store.save_session(updated)
+
+    # ------------------------------------------------------------------ intake chat
+
+    async def list_messages(self, *, tenant_id: str, session_id: str) -> list[IntakeMessage]:
+        await self._require_session(tenant_id, session_id)
+        return await self._deps.store.list_messages(tenant_id, session_id)
+
+    async def send_message(
+        self, *, tenant_id: str, session_id: str, text: str
+    ) -> tuple[list[IntakeMessage], OnboardingSession]:
+        """One chat turn. The agent only *proposes* profile fields; code validates and applies them.
+
+        Nothing is stored if the model call fails, so a retry never leaves a dangling user message.
+        """
+        if self._deps.intake is None:
+            raise NotImplementedError("the IntakeAgent is not wired")
+        session = await self._require_session(tenant_id, session_id)
+        history = await self._deps.store.list_messages(tenant_id, session_id)
+        reply, proposed = await self._deps.intake.reply(
+            tenant_id=tenant_id, session=session, history=history, text=text
+        )
+        now = self._deps.clock.now()
+        messages = [
+            IntakeMessage(
+                id=self._deps.ids.new_id(),
+                session_id=session_id,
+                tenant_id=tenant_id,
+                role=role,
+                text=body,
+                created_at=now,
+            )
+            for role, body in (("user", text), ("agent", reply))
+        ]
+        for message in messages:
+            await self._deps.store.add_message(message)
+        fields = proposed.model_dump(exclude_none=True)
+        if fields:
+            session = session.model_copy(
+                update={
+                    "profile": session.profile.model_copy(update=fields),
+                    "status": (
+                        OnboardingStatus.PROFILED
+                        if session.status is OnboardingStatus.STARTED
+                        else session.status
+                    ),
+                    "updated_at": now,
+                }
+            )
+            session = await self._deps.store.save_session(session)
+        return messages, session
 
     # ------------------------------------------------------------------ financial CSV
 
@@ -365,6 +449,8 @@ __all__ = [
     "CsvImporter",
     "FinancialSnapshot",
     "InMemoryOnboardingStore",
+    "IntakeMessage",
+    "IntakeReplier",
     "ObjectStore",
     "OnboardingDeps",
     "OnboardingIncomplete",

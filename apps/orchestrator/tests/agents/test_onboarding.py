@@ -349,3 +349,89 @@ async def test_financials_become_stale_after_the_configured_window() -> None:
 async def test_no_active_snapshot_counts_as_stale() -> None:
     service, _, _, _ = _service()
     assert await service.is_financials_stale(tenant_id=TENANT) is True
+
+
+# ----- IntakeAgent chat (D4-07b) -----------------------------------------------------------------
+
+
+class _Gateway:
+    def __init__(self, draft: Any) -> None:
+        self.draft = draft
+        self.calls: list[dict[str, Any]] = []
+
+    async def chat_structured(self, role: Any, messages: Any, schema: Any, **kw: Any) -> Any:
+        self.calls.append({"role": role, "messages": messages, **kw})
+        return self.draft
+
+
+def _chat_service(draft: Any) -> tuple[OnboardingService, _Gateway]:
+    from apex.agents.intake_chat import IntakeChatAgent
+    from apex.llm.prompts import PromptRegistry
+
+    gateway = _Gateway(draft)
+    service = OnboardingService(
+        OnboardingDeps(
+            store=InMemoryOnboardingStore(),
+            importer=_Importer(),
+            objects=_Objects(),
+            decisions=_Decisions(),
+            clock=FixedClock(NOW),
+            ids=_Ids(),
+            stale_after_days=45,
+            config_version=lambda tenant_id: "cfg-7",
+            intake=IntakeChatAgent(gateway, PromptRegistry()),  # type: ignore[arg-type]
+        )
+    )
+    return service, gateway
+
+
+def _draft(**profile: Any) -> Any:
+    from apex.agents.schemas import IntakeProfileDraft, IntakeTurnDraft
+
+    return IntakeTurnDraft(reply="Gracias.", profile=IntakeProfileDraft(**profile))
+
+
+async def test_a_chat_turn_stores_both_messages_and_applies_only_valid_fields() -> None:
+    service, gateway = _chat_service(
+        _draft(legal_name=" ACME ", country="es", base_currency="GBP", sector="Packaging")
+    )
+    session = await service.start_session(tenant_id=TENANT)
+    await service.update_profile(
+        tenant_id=TENANT,
+        session_id=session.id,
+        profile=CompanyProfile(budget_eur_minor=1_234_500),
+    )
+    messages, updated = await service.send_message(
+        tenant_id=TENANT, session_id=session.id, text="Somos ACME de España"
+    )
+    assert [m.role for m in messages] == ["user", "agent"]
+    assert updated.profile.legal_name == "ACME"
+    assert updated.profile.country == "ES"
+    assert updated.profile.sector == "Packaging"
+    assert updated.profile.base_currency is None  # GBP is not a supported currency: dropped
+    assert updated.profile.budget_eur_minor == 1_234_500  # never touched by the agent
+    assert "1234500" not in str(
+        gateway.calls[0]["messages"]
+    )  # financial values stay out of the prompt
+    stored = await service.list_messages(tenant_id=TENANT, session_id=session.id)
+    assert [m.text for m in stored] == ["Somos ACME de España", "Gracias."]
+
+
+async def test_a_failed_model_call_stores_nothing() -> None:
+    service, gateway = _chat_service(None)
+
+    async def boom(*a: Any, **k: Any) -> Any:
+        raise RuntimeError("down")
+
+    gateway.chat_structured = boom  # type: ignore[method-assign]
+    session = await service.start_session(tenant_id=TENANT)
+    with pytest.raises(RuntimeError):
+        await service.send_message(tenant_id=TENANT, session_id=session.id, text="hola")
+    assert await service.list_messages(tenant_id=TENANT, session_id=session.id) == []
+
+
+async def test_chat_is_tenant_scoped() -> None:
+    service, _ = _chat_service(_draft())
+    session = await service.start_session(tenant_id=TENANT)
+    with pytest.raises(LookupError):
+        await service.send_message(tenant_id="tenant-b", session_id=session.id, text="hola")

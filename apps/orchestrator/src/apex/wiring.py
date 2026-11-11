@@ -32,6 +32,7 @@ from apex.agents.analysis import AnalysisDeps, AnalysisNodes
 from apex.agents.browser_worker import HttpBrowserWorker
 from apex.agents.fx import DomainFxPort, InMemoryFxRateReader
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
+from apex.agents.intake_chat import IntakeChatAgent
 from apex.agents.mission_runner import MissionRunner, MissionRunnerDeps
 from apex.agents.missions import InMemoryMissionStore, MissionEventBus
 from apex.agents.offers import InMemoryOfferStore, InMemorySellerConfidenceStore
@@ -373,6 +374,7 @@ def build_app_services(
             ids=IdGenerator(active_clock),
             stale_after_days=_finance_stale_after_days(),
             config_version=_default_config_version(),
+            intake=IntakeChatAgent(gateway, prompts),
         )
     )
     return AppServices(

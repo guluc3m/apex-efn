@@ -15,13 +15,20 @@ from pydantic import BaseModel, ConfigDict, Field
 from apex.agents.onboarding import (
     CompanyProfile,
     FinancialSnapshot,
+    IntakeMessage,
     OnboardingService,
     OnboardingSession,
     SnapshotNotActivatable,
 )
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_tenant_id
-from apex.contracts.generated.models import ActivateFinancialSnapshotRequest
+from apex.contracts.generated.models import (
+    ActivateFinancialSnapshotRequest,
+    SendIntakeMessageRequest,
+)
+from apex.llm.resilience import AllEndpointsUnavailableError
+from apex.llm.structured import StructuredOutputError
+from apex.llm.transport import LLMHTTPError, LLMTransportError
 
 router = APIRouter()
 
@@ -34,6 +41,8 @@ class SessionOut(BaseModel):
     tenant_id: str
     status: str
     profile: dict[str, Any]
+    company_profile: dict[str, Any]
+    """Same as ``profile`` under the contract name (``OnboardingSession.company_profile``)."""
     created_at: str
     updated_at: str
     active_snapshot_id: str | None
@@ -46,6 +55,7 @@ class SessionOut(BaseModel):
             tenant_id=session.tenant_id,
             status=session.status.value,
             profile=session.profile.model_dump(mode="json"),
+            company_profile=session.profile.model_dump(mode="json"),
             created_at=session.created_at.isoformat(),
             updated_at=session.updated_at.isoformat(),
             active_snapshot_id=session.active_snapshot_id,
@@ -110,16 +120,58 @@ async def create_onboarding_session(
     return SessionOut.of(await service.start_session(tenant_id=tenant_id))
 
 
+def _message_out(m: IntakeMessage) -> dict[str, str]:
+    return {"id": m.id, "role": m.role, "text": m.text, "created_at": m.created_at.isoformat()}
+
+
 @router.get("/sessions/{id}/messages", tags=["onboarding"])
-async def list_intake_messages(id: str) -> None:
-    """IntakeAgent conversation history. Contract first (D6-04-contract); the agent turn is not wired yet."""
-    raise not_implemented("the IntakeAgent chat is not wired yet")
+async def list_intake_messages(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[OnboardingService, Depends(get_onboarding)],
+) -> dict[str, list[dict[str, str]]]:
+    """IntakeAgent conversation history, oldest first."""
+    try:
+        messages = await service.list_messages(tenant_id=tenant_id, session_id=id)
+    except LookupError as exc:
+        raise Problem(404, "Session not found", detail=str(exc)) from exc
+    return {"items": [_message_out(m) for m in messages]}
 
 
 @router.post("/sessions/{id}/messages", tags=["onboarding"])
-async def send_intake_message(id: str) -> None:
-    """Send a message to the IntakeAgent. Contract first (D6-04-contract); not wired yet."""
-    raise not_implemented("the IntakeAgent chat is not wired yet")
+async def send_intake_message(
+    id: str,
+    body: SendIntakeMessageRequest,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[OnboardingService, Depends(get_onboarding)],
+) -> dict[str, Any]:
+    """One chat turn: the user message, the agent reply and the session with any profile fields filled in."""
+    try:
+        messages, session = await service.send_message(
+            tenant_id=tenant_id, session_id=id, text=body.text
+        )
+    except LookupError as exc:
+        raise Problem(404, "Session not found", detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        raise not_implemented("the IntakeAgent needs an LLM gateway; wire it in the app") from exc
+    except StructuredOutputError as exc:
+        raise Problem(
+            502,
+            "Model output unusable",
+            detail="the intake model did not return a valid reply",
+            reason="structured_output_failed",
+        ) from exc
+    except (AllEndpointsUnavailableError, LLMTransportError, LLMHTTPError) as exc:
+        raise Problem(
+            502,
+            "Model endpoint unavailable",
+            detail="the extractor endpoint could not be reached",
+            reason="llm_unavailable",
+        ) from exc
+    return {
+        "messages": [_message_out(m) for m in messages],
+        "session": SessionOut.of(session).model_dump(),
+    }
 
 
 @router.patch("/sessions/{id}", response_model=SessionOut, tags=["onboarding"])
