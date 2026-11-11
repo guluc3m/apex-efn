@@ -39,16 +39,22 @@ function normaliseCode(code: string): string {
 }
 
 /**
- * Finds the last price in a chat message. Only amounts next to a currency code or symbol count, so
- * quantities such as "5000 units" are never mistaken for a price.
+ * Every price in a chat message, in order of appearance. Only amounts next to a currency code or symbol
+ * count, so quantities such as "5000 units" are never mistaken for a price.
  */
-export function parseLastPrice(text: string): ParsedPrice | null {
-  let found: ParsedPrice | null = null
+export function parsePrices(text: string): ParsedPrice[] {
+  const found: ParsedPrice[] = []
   for (const m of text.matchAll(PRICE_RE)) {
     const code = m[1] ?? m[4]
     const amount = m[2] ?? m[3]
     if (!code || !amount) continue
-    found = { minor: toMinor(amount), currency: normaliseCode(code) }
+    found.push({ minor: toMinor(amount), currency: normaliseCode(code) })
   }
   return found
+}
+
+/** The last price in a chat message, or null when it states none. */
+export function parseLastPrice(text: string): ParsedPrice | null {
+  const found = parsePrices(text)
+  return found.length === 0 ? null : (found[found.length - 1] ?? null)
 }

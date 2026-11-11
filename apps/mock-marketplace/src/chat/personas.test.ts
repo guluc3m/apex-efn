@@ -18,7 +18,7 @@ function play(persona: PersonaId, seed = 7) {
   void app.close()
   const chat = chats.open('mock-b', 'b-standard-coop', 'b-gloves-03')
   chats.setChatPersona(chat.id, persona)
-  for (const line of SCRIPT) chats.send(chat.id, line)
+  for (const line of SCRIPT) void chats.send(chat.id, line)
   return chats.snapshot(chat.id)
 }
 
@@ -53,7 +53,7 @@ describe('personas', () => {
     void app.close()
     const chat = chats.open('mock-b', 'b-standard-coop', 'b-gloves-03')
     chats.setChatPersona(chat.id, 'cooperative')
-    for (const p of ['1.00', '2.00', '3.00', '3.50']) chats.send(chat.id, `EUR ${p}`)
+    for (const p of ['1.00', '2.00', '3.00', '3.50']) void chats.send(chat.id, `EUR ${p}`)
     const s = chats.snapshot(chat.id)
     expect(s.agreed).toBeNull()
     expect(s.lastQuote?.minor).toBeGreaterThanOrEqual(s.floor.minor)
@@ -112,10 +112,10 @@ describe('personas', () => {
     void app.close()
     const chat = chats.open('mock-b', 'b-standard-coop', 'b-gloves-03')
     chats.setChatPersona(chat.id, 'unsupported_currency')
-    chats.send(chat.id, 'Hello, price for 1000 units?')
+    void chats.send(chat.id, 'Hello, price for 1000 units?')
     expect(chats.snapshot(chat.id).lastQuote?.currency).toBe('GBP')
     expect(chats.snapshot(chat.id).flags).toContain('unsupported_currency')
-    chats.send(chat.id, 'Could you please quote in EUR?')
+    void chats.send(chat.id, 'Could you please quote in EUR?')
     expect(chats.snapshot(chat.id).lastQuote?.currency).toBe('EUR')
   })
 })
@@ -163,5 +163,26 @@ describe('control surface', () => {
       payload: { persona: 'pirate' },
     })
     expect(res.statusCode).toBe(400)
+  })
+})
+
+
+describe('tough seller (demo persona)', () => {
+  it('does not accept the first offer above its floor, and meets the buyer at its ask', async () => {
+    const { app, chats } = testServer(9)
+    void app.close()
+    const chat = chats.open('mock-c', 'c-solid-supplier', 'c-gloves-01')
+
+    // 410 is above the 0.9 floor (389) but below the 432 asking price: a real seller counters.
+    await chats.send(chat.id, 'We need 5000 units. Could you do EUR 4.10 per unit?')
+    const afterFirst = chats.snapshot(chat.id)
+    expect(afterFirst.agreed).toBeNull()
+    const ask = afterFirst.lastQuote?.minor ?? 0
+    expect(ask).toBeGreaterThan(410)
+    expect(ask).toBeLessThan(432)
+
+    // Meeting the seller's ask closes it.
+    await chats.send(chat.id, `Would EUR ${(ask / 100).toFixed(2)} per unit work?`)
+    expect(chats.snapshot(chat.id).agreed?.minor).toBe(ask)
   })
 })

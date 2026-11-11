@@ -301,6 +301,9 @@ async def test_every_persona_is_covered(mock_marketplace: MockMarketplace) -> No
         "chinese",
         "truncated",
         "unsupported_currency",
+        # Demo persona (D5-11): a seller that only moves when the buyer does. Covered by the
+        # marketplace's own persona test and exercised by the simulation.
+        "tough",
     }
     assert personas == tested
 

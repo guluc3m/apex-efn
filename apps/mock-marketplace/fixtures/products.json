@@ -14,16 +14,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/a-gloves-01.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/a-gloves-01.png"
+      ],
       "unitPriceMinor": 445,
       "currency": "EUR",
       "moq": 500,
       "priceTiers": [
-        { "minQuantity": 500, "maxQuantity": 1999, "unitPriceMinor": 445 },
-        { "minQuantity": 2000, "maxQuantity": null, "unitPriceMinor": 415 }
+        {
+          "minQuantity": 500,
+          "maxQuantity": 1999,
+          "unitPriceMinor": 445
+        },
+        {
+          "minQuantity": 2000,
+          "maxQuantity": null,
+          "unitPriceMinor": 415
+        }
       ],
-      "shipping": { "costMinor": 1200, "minDays": 5, "maxDays": 10 },
+      "shipping": {
+        "costMinor": 1200,
+        "minDays": 5,
+        "maxDays": 10
+      },
       "incoterm": "DAP",
       "leadTimeDays": 10,
       "tags": []
@@ -42,16 +59,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/a-gloves-02.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/a-gloves-02.png"
+      ],
       "unitPriceMinor": 489,
       "currency": "USD",
       "moq": 1000,
       "priceTiers": [
-        { "minQuantity": 1000, "maxQuantity": 2999, "unitPriceMinor": 489 },
-        { "minQuantity": 3000, "maxQuantity": null, "unitPriceMinor": 459 }
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 2999,
+          "unitPriceMinor": 489
+        },
+        {
+          "minQuantity": 3000,
+          "maxQuantity": null,
+          "unitPriceMinor": 459
+        }
       ],
-      "shipping": { "costMinor": 1500, "minDays": 7, "maxDays": 14 },
+      "shipping": {
+        "costMinor": 1500,
+        "minDays": 7,
+        "maxDays": 14
+      },
       "incoterm": "FOB",
       "leadTimeDays": 14,
       "tags": []
@@ -70,16 +104,32 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["CE"],
-      "imageUrls": ["/static/img/a-gloves-03.png"],
+      "certifications": [
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/a-gloves-03.png"
+      ],
       "unitPriceMinor": 430,
       "currency": "EUR",
       "moq": 200,
       "priceTiers": [
-        { "minQuantity": 200, "maxQuantity": 999, "unitPriceMinor": 430 },
-        { "minQuantity": 1000, "maxQuantity": null, "unitPriceMinor": 405 }
+        {
+          "minQuantity": 200,
+          "maxQuantity": 999,
+          "unitPriceMinor": 430
+        },
+        {
+          "minQuantity": 1000,
+          "maxQuantity": null,
+          "unitPriceMinor": 405
+        }
       ],
-      "shipping": { "costMinor": 1000, "minDays": 6, "maxDays": 12 },
+      "shipping": {
+        "costMinor": 1000,
+        "minDays": 6,
+        "maxDays": 12
+      },
       "incoterm": "DAP",
       "leadTimeDays": 12,
       "tags": []
@@ -99,15 +149,29 @@
         "pieces_per_box": "100"
       },
       "certifications": [],
-      "imageUrls": ["/static/img/a-gloves-04.png"],
+      "imageUrls": [
+        "/static/img/a-gloves-04.png"
+      ],
       "unitPriceMinor": 45,
       "currency": "EUR",
       "moq": 1000,
-      "priceTiers": [{ "minQuantity": 1000, "maxQuantity": null, "unitPriceMinor": 45 }],
-      "shipping": { "costMinor": 900, "minDays": 5, "maxDays": 10 },
+      "priceTiers": [
+        {
+          "minQuantity": 1000,
+          "maxQuantity": null,
+          "unitPriceMinor": 45
+        }
+      ],
+      "shipping": {
+        "costMinor": 900,
+        "minDays": 5,
+        "maxDays": 10
+      },
       "incoterm": "EXW",
       "leadTimeDays": 7,
-      "tags": ["outlier_low"]
+      "tags": [
+        "outlier_low"
+      ]
     },
     {
       "id": "a-gloves-05",
@@ -124,15 +188,29 @@
         "pieces_per_box": "100"
       },
       "certifications": [],
-      "imageUrls": ["/static/img/a-gloves-05.png"],
+      "imageUrls": [
+        "/static/img/a-gloves-05.png"
+      ],
       "unitPriceMinor": 470,
       "currency": "EUR",
       "moq": 100,
       "priceTiers": [
-        { "minQuantity": 100, "maxQuantity": 499, "unitPriceMinor": 470 },
-        { "minQuantity": 500, "maxQuantity": null, "unitPriceMinor": 440 }
+        {
+          "minQuantity": 100,
+          "maxQuantity": 499,
+          "unitPriceMinor": 470
+        },
+        {
+          "minQuantity": 500,
+          "maxQuantity": null,
+          "unitPriceMinor": 440
+        }
       ],
-      "shipping": { "costMinor": 800, "minDays": 3, "maxDays": 7 },
+      "shipping": {
+        "costMinor": 800,
+        "minDays": 3,
+        "maxDays": 7
+      },
       "incoterm": null,
       "leadTimeDays": null,
       "tags": []
@@ -151,14 +229,27 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/a-gloves-06.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/a-gloves-06.png"
+      ],
       "unitPriceMinor": 3450,
       "currency": "CNY",
       "moq": 2000,
       "priceTiers": [
-        { "minQuantity": 2000, "maxQuantity": 4999, "unitPriceMinor": 3450 },
-        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 3300 }
+        {
+          "minQuantity": 2000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 3450
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 3300
+        }
       ],
       "shipping": null,
       "incoterm": "FOB",
@@ -179,19 +270,38 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/a-gloves-07.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/a-gloves-07.png"
+      ],
       "unitPriceMinor": 390,
       "currency": "GBP",
       "moq": 500,
       "priceTiers": [
-        { "minQuantity": 500, "maxQuantity": 1999, "unitPriceMinor": 390 },
-        { "minQuantity": 2000, "maxQuantity": null, "unitPriceMinor": 365 }
+        {
+          "minQuantity": 500,
+          "maxQuantity": 1999,
+          "unitPriceMinor": 390
+        },
+        {
+          "minQuantity": 2000,
+          "maxQuantity": null,
+          "unitPriceMinor": 365
+        }
       ],
-      "shipping": { "costMinor": 1100, "minDays": 5, "maxDays": 9 },
+      "shipping": {
+        "costMinor": 1100,
+        "minDays": 5,
+        "maxDays": 9
+      },
       "incoterm": "DAP",
       "leadTimeDays": 9,
-      "tags": ["unsupported_currency"]
+      "tags": [
+        "unsupported_currency"
+      ]
     },
     {
       "id": "a-gloves-08",
@@ -208,15 +318,29 @@
         "pieces_per_box": "100"
       },
       "certifications": [],
-      "imageUrls": ["/static/img/a-gloves-08.png"],
+      "imageUrls": [
+        "/static/img/a-gloves-08.png"
+      ],
       "unitPriceMinor": 1350,
       "currency": "EUR",
       "moq": 100,
-      "priceTiers": [{ "minQuantity": 100, "maxQuantity": null, "unitPriceMinor": 1350 }],
-      "shipping": { "costMinor": 1000, "minDays": 5, "maxDays": 10 },
+      "priceTiers": [
+        {
+          "minQuantity": 100,
+          "maxQuantity": null,
+          "unitPriceMinor": 1350
+        }
+      ],
+      "shipping": {
+        "costMinor": 1000,
+        "minDays": 5,
+        "maxDays": 10
+      },
       "incoterm": "EXW",
       "leadTimeDays": 10,
-      "tags": ["outlier_high"]
+      "tags": [
+        "outlier_high"
+      ]
     },
     {
       "id": "b-gloves-01",
@@ -232,16 +356,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/b-gloves-01.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-01.png"
+      ],
       "unitPriceMinor": 3380,
       "currency": "CNY",
       "moq": 5000,
       "priceTiers": [
-        { "minQuantity": 5000, "maxQuantity": 19999, "unitPriceMinor": 3380 },
-        { "minQuantity": 20000, "maxQuantity": null, "unitPriceMinor": 3150 }
+        {
+          "minQuantity": 5000,
+          "maxQuantity": 19999,
+          "unitPriceMinor": 3380
+        },
+        {
+          "minQuantity": 20000,
+          "maxQuantity": null,
+          "unitPriceMinor": 3150
+        }
       ],
-      "shipping": { "costMinor": 4000, "minDays": 15, "maxDays": 25 },
+      "shipping": {
+        "costMinor": 4000,
+        "minDays": 15,
+        "maxDays": 25
+      },
       "incoterm": "FOB",
       "leadTimeDays": 25,
       "tags": []
@@ -260,16 +401,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/b-gloves-02.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-02.png"
+      ],
       "unitPriceMinor": 3520,
       "currency": "CNY",
       "moq": 1000,
       "priceTiers": [
-        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 3520 },
-        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 3380 }
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 3520
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 3380
+        }
       ],
-      "shipping": { "costMinor": 3000, "minDays": 15, "maxDays": 25 },
+      "shipping": {
+        "costMinor": 3000,
+        "minDays": 15,
+        "maxDays": 25
+      },
       "incoterm": "FOB",
       "leadTimeDays": 20,
       "tags": []
@@ -288,16 +446,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/b-gloves-03.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-03.png"
+      ],
       "unitPriceMinor": 465,
       "currency": "EUR",
       "moq": 300,
       "priceTiers": [
-        { "minQuantity": 300, "maxQuantity": 999, "unitPriceMinor": 465 },
-        { "minQuantity": 1000, "maxQuantity": null, "unitPriceMinor": 440 }
+        {
+          "minQuantity": 300,
+          "maxQuantity": 999,
+          "unitPriceMinor": 465
+        },
+        {
+          "minQuantity": 1000,
+          "maxQuantity": null,
+          "unitPriceMinor": 440
+        }
       ],
-      "shipping": { "costMinor": 1000, "minDays": 4, "maxDays": 8 },
+      "shipping": {
+        "costMinor": 1000,
+        "minDays": 4,
+        "maxDays": 8
+      },
       "incoterm": "DAP",
       "leadTimeDays": 8,
       "tags": []
@@ -316,16 +491,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/b-gloves-04.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-04.png"
+      ],
       "unitPriceMinor": 455,
       "currency": "EUR",
       "moq": 1000,
       "priceTiers": [
-        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 455 },
-        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 430 }
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 455
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 430
+        }
       ],
-      "shipping": { "costMinor": 900, "minDays": 5, "maxDays": 9 },
+      "shipping": {
+        "costMinor": 900,
+        "minDays": 5,
+        "maxDays": 9
+      },
       "incoterm": "DDP",
       "leadTimeDays": 12,
       "tags": []
@@ -344,16 +536,32 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["CE"],
-      "imageUrls": ["/static/img/b-gloves-05.png"],
+      "certifications": [
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-05.png"
+      ],
       "unitPriceMinor": 410,
       "currency": "EUR",
       "moq": 1000,
       "priceTiers": [
-        { "minQuantity": 1000, "maxQuantity": 2999, "unitPriceMinor": 410 },
-        { "minQuantity": 3000, "maxQuantity": null, "unitPriceMinor": 395 }
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 2999,
+          "unitPriceMinor": 410
+        },
+        {
+          "minQuantity": 3000,
+          "maxQuantity": null,
+          "unitPriceMinor": 395
+        }
       ],
-      "shipping": { "costMinor": 1000, "minDays": 7, "maxDays": 14 },
+      "shipping": {
+        "costMinor": 1000,
+        "minDays": 7,
+        "maxDays": 14
+      },
       "incoterm": "CIF",
       "leadTimeDays": 14,
       "tags": []
@@ -372,16 +580,33 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/b-gloves-06.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-06.png"
+      ],
       "unitPriceMinor": 495,
       "currency": "USD",
       "moq": 500,
       "priceTiers": [
-        { "minQuantity": 500, "maxQuantity": 1999, "unitPriceMinor": 495 },
-        { "minQuantity": 2000, "maxQuantity": null, "unitPriceMinor": 470 }
+        {
+          "minQuantity": 500,
+          "maxQuantity": 1999,
+          "unitPriceMinor": 495
+        },
+        {
+          "minQuantity": 2000,
+          "maxQuantity": null,
+          "unitPriceMinor": 470
+        }
       ],
-      "shipping": { "costMinor": 1400, "minDays": 7, "maxDays": 12 },
+      "shipping": {
+        "costMinor": 1400,
+        "minDays": 7,
+        "maxDays": 12
+      },
       "incoterm": "FOB",
       "leadTimeDays": 12,
       "tags": []
@@ -400,14 +625,27 @@
         "powder": "powder-free",
         "pieces_per_box": "100"
       },
-      "certifications": ["EN 455", "CE"],
-      "imageUrls": ["/static/img/b-gloves-07.png"],
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/b-gloves-07.png"
+      ],
       "unitPriceMinor": 460,
       "currency": "EUR",
       "moq": 1000,
       "priceTiers": [
-        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 460 },
-        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 438 }
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 460
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 438
+        }
       ],
       "shipping": null,
       "incoterm": "EXW",
@@ -427,16 +665,32 @@
         "wall": "single",
         "units_per_bundle": "25"
       },
-      "certifications": ["FSC"],
-      "imageUrls": ["/static/img/a-kraft-01.png"],
+      "certifications": [
+        "FSC"
+      ],
+      "imageUrls": [
+        "/static/img/a-kraft-01.png"
+      ],
       "unitPriceMinor": 37,
       "currency": "EUR",
       "moq": 2000,
       "priceTiers": [
-        { "minQuantity": 2000, "maxQuantity": 9999, "unitPriceMinor": 37 },
-        { "minQuantity": 10000, "maxQuantity": null, "unitPriceMinor": 34 }
+        {
+          "minQuantity": 2000,
+          "maxQuantity": 9999,
+          "unitPriceMinor": 37
+        },
+        {
+          "minQuantity": 10000,
+          "maxQuantity": null,
+          "unitPriceMinor": 34
+        }
       ],
-      "shipping": { "costMinor": 1500, "minDays": 5, "maxDays": 9 },
+      "shipping": {
+        "costMinor": 1500,
+        "minDays": 5,
+        "maxDays": 9
+      },
       "incoterm": "DAP",
       "leadTimeDays": 9,
       "tags": []
@@ -455,13 +709,23 @@
         "units_per_bundle": "20"
       },
       "certifications": [],
-      "imageUrls": ["/static/img/a-kraft-02.png"],
+      "imageUrls": [
+        "/static/img/a-kraft-02.png"
+      ],
       "unitPriceMinor": 290,
       "currency": "CNY",
       "moq": 5000,
       "priceTiers": [
-        { "minQuantity": 5000, "maxQuantity": 19999, "unitPriceMinor": 290 },
-        { "minQuantity": 20000, "maxQuantity": null, "unitPriceMinor": 265 }
+        {
+          "minQuantity": 5000,
+          "maxQuantity": 19999,
+          "unitPriceMinor": 290
+        },
+        {
+          "minQuantity": 20000,
+          "maxQuantity": null,
+          "unitPriceMinor": 265
+        }
       ],
       "shipping": null,
       "incoterm": "FOB",
@@ -481,16 +745,32 @@
         "wall": "single",
         "units_per_bundle": "25"
       },
-      "certifications": ["FSC"],
-      "imageUrls": ["/static/img/b-kraft-01.png"],
+      "certifications": [
+        "FSC"
+      ],
+      "imageUrls": [
+        "/static/img/b-kraft-01.png"
+      ],
       "unitPriceMinor": 275,
       "currency": "CNY",
       "moq": 10000,
       "priceTiers": [
-        { "minQuantity": 10000, "maxQuantity": 49999, "unitPriceMinor": 275 },
-        { "minQuantity": 50000, "maxQuantity": null, "unitPriceMinor": 250 }
+        {
+          "minQuantity": 10000,
+          "maxQuantity": 49999,
+          "unitPriceMinor": 275
+        },
+        {
+          "minQuantity": 50000,
+          "maxQuantity": null,
+          "unitPriceMinor": 250
+        }
       ],
-      "shipping": { "costMinor": 2500, "minDays": 15, "maxDays": 25 },
+      "shipping": {
+        "costMinor": 2500,
+        "minDays": 15,
+        "maxDays": 25
+      },
       "incoterm": "FOB",
       "leadTimeDays": 25,
       "tags": []
@@ -509,15 +789,29 @@
         "units_per_bundle": "20"
       },
       "certifications": [],
-      "imageUrls": ["/static/img/b-kraft-02.png"],
+      "imageUrls": [
+        "/static/img/b-kraft-02.png"
+      ],
       "unitPriceMinor": 40,
       "currency": "EUR",
       "moq": 1000,
       "priceTiers": [
-        { "minQuantity": 1000, "maxQuantity": 4999, "unitPriceMinor": 40 },
-        { "minQuantity": 5000, "maxQuantity": null, "unitPriceMinor": 36 }
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 40
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 36
+        }
       ],
-      "shipping": { "costMinor": 900, "minDays": 6, "maxDays": 12 },
+      "shipping": {
+        "costMinor": 900,
+        "minDays": 6,
+        "maxDays": 12
+      },
       "incoterm": "DAP",
       "leadTimeDays": 10,
       "tags": []
@@ -670,14 +964,14 @@
       },
       "certifications": [],
       "imageUrls": [],
-      "unitPriceMinor": 410,
+      "unitPriceMinor": 455,
       "currency": "EUR",
       "moq": 200,
       "priceTiers": [
         {
           "minQuantity": 200,
           "maxQuantity": null,
-          "unitPriceMinor": 410
+          "unitPriceMinor": 455
         }
       ],
       "shipping": null,

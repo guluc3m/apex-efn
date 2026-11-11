@@ -29,6 +29,7 @@ from llm_stub.models import (
 from llm_stub.render import (
     approx_tokens,
     deterministic_embedding,
+    echo_price_text,
     prompt_tokens,
     render_content,
     usage_block,
@@ -133,6 +134,13 @@ def _build_completion(
         ]
         completion_text = args
         finish = scripted.finish_reason or "tool_calls"
+    elif scripted.kind == "echo_price":
+        text = echo_price_text(
+            req.messages, role="buyer" if req.model == "negotiator" else "seller"
+        )
+        message["content"] = text
+        completion_text = text
+        finish = scripted.finish_reason or "stop"
     else:
         text = render_content(scripted.content)
         message["content"] = text

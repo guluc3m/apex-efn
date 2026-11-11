@@ -22,6 +22,7 @@ export const PERSONA_IDS = [
   'chinese',
   'truncated',
   'unsupported_currency',
+  'tough',
 ] as const
 export const PersonaIdSchema = z.enum(PERSONA_IDS)
 export type PersonaId = z.infer<typeof PersonaIdSchema>

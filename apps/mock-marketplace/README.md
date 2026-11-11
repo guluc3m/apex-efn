@@ -8,7 +8,22 @@ pnpm --filter @apex/mock-marketplace dev     # http://localhost:8002
 pnpm --filter @apex/mock-marketplace test
 ```
 
-Environment: `PORT` (default `8002`), `HOST` (default `0.0.0.0`), `MOCK_MARKETPLACE_SEED` (default `0`).
+Environment: `PORT` (default `8002`), `HOST` (default `0.0.0.0`), `MOCK_MARKETPLACE_SEED` (default `0`),
+`SIM_LLM_URL` (optional).
+
+## Optional LLM rephrasing (`SIM_LLM_URL`)
+
+When `SIM_LLM_URL` points at an OpenAI-compatible stub (for example `http://localhost:8003`, D4-02), each
+scripted seller reply is rephrased into one short message in the seller's language before it is stored:
+
+- Only the **wording** comes from the model. Personas still decide the round, the concession and the price,
+  and the quote state is untouched.
+- The rephrased text is accepted only if it states the same price (currency + amount, formatted as
+  `EUR 4.32`, `€4.32` or `4,32 EUR`) and adds no other price. Otherwise, on error, or after 600 ms, the
+  scripted text is used.
+- Unset or blank means exactly the old deterministic behaviour: scripted text, no HTTP call.
+
+Never point it at a real model endpoint, and keep it out of production: this app is a test double.
 
 ## Platforms
 

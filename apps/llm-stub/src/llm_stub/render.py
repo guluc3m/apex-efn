@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import struct
 from typing import Any
 
@@ -82,3 +83,37 @@ def deterministic_embedding(text: str, dim: int) -> list[float]:
         counter += 1
     norm = math.sqrt(sum(v * v for v in out)) or 1.0
     return [round(v / norm, 8) for v in out]
+
+
+_MONEY_RE = re.compile(r"\b(EUR|USD|CNY|GBP)\s?(\d+(?:[.,]\d{2})?)")
+
+
+def extract_money(text: str) -> str | None:
+    """The first ``CUR amount`` pair in ``text``, normalised to ``CUR 4.10``."""
+    match = _MONEY_RE.search(text)
+    if match is None:
+        return None
+    currency, amount = match.group(1), match.group(2).replace(",", ".")
+    return f"{currency} {amount}"
+
+
+def echo_price_text(
+    messages: list[ChatMessage],
+    *,
+    role: str = "seller",
+    fallback: str | None = None,
+) -> str:
+    """A sentence in the requested voice that repeats the price the prompt states, if any."""
+    if fallback is None:
+        fallback = (
+            "Hello, could you share your volume tiers and best unit price for this order?"
+            if role == "buyer"
+            else "Thanks for the message, let me check with the factory and come back to you."
+        )
+    for message in reversed(messages):
+        money = extract_money(content_to_text(message.content))
+        if money is not None:
+            if role == "buyer":
+                return f"We can offer {money} per unit for that volume. Would that work for you?"
+            return f"Understood. We can do {money} per unit for that volume."
+    return fallback
