@@ -132,7 +132,6 @@
   "audit": {
     "title": "审计日志",
     "intro": "按公司划分的哈希链,锚定在 WORM 存储中。",
-    "pending": "待连接",
     "noAccessTitle": "无权限",
     "noAccessBody": "审计日志仅对 admin 和 owner 角色开放。",
     "verifyChain": "验证完整链",
@@ -148,16 +147,26 @@
     "hash": "哈希",
     "caption": "审计事件",
     "empty": "暂无事件",
-    "actors": {
-      "negotiator": "谈判代理",
-      "sanity": "合理性服务",
-      "human": "负责人",
-      "fx": "汇率服务"
-    },
     "verifyTitle": "验证决策",
     "verifyLabel": "标识符或哈希",
     "verify": "验证",
-    "verifyPlaceholder": "dec_…"
+    "verifyPlaceholder": "dec_…",
+    "verifying": "正在验证…",
+    "verifyFailed": "验证失败",
+    "brokenAt": "链在事件 {seq} 处断裂",
+    "noAnchor": "尚无锚点",
+    "subject": "对象",
+    "loading": "加载中…",
+    "loadFailed": "无法加载审计日志。",
+    "verifyNeedsId": "请先输入决定标识",
+    "decisionValid": "签名有效",
+    "decisionInvalid": "验证失败",
+    "decisionNotFound": "没有该标识的决定。",
+    "actorTypes": {
+      "human": "人员",
+      "service": "服务",
+      "agent": "代理"
+    }
   },
   "accounts": {
     "title": "平台账户",

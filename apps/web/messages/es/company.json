@@ -132,7 +132,6 @@
   "audit": {
     "title": "Registro de auditoría",
     "intro": "Cadena de hashes por empresa, anclada en almacenamiento WORM.",
-    "pending": "Pendiente de conectar",
     "noAccessTitle": "Sin permiso",
     "noAccessBody": "El registro de auditoría solo está disponible para los roles admin y owner.",
     "verifyChain": "Verificar la cadena completa",
@@ -148,16 +147,26 @@
     "hash": "Hash",
     "caption": "Eventos de auditoría",
     "empty": "Sin eventos",
-    "actors": {
-      "negotiator": "Agente negociador",
-      "sanity": "Servicio de cordura",
-      "human": "Responsable",
-      "fx": "Servicio FX"
-    },
     "verifyTitle": "Verificar una decisión",
     "verifyLabel": "Identificador o hash",
     "verify": "Verificar",
-    "verifyPlaceholder": "dec_…"
+    "verifyPlaceholder": "dec_…",
+    "verifying": "Verificando…",
+    "verifyFailed": "La verificación ha fallado",
+    "brokenAt": "Cadena rota en el evento {seq}",
+    "noAnchor": "Sin ancla todavía",
+    "subject": "Sujeto",
+    "loading": "Cargando…",
+    "loadFailed": "No se pudo cargar el registro de auditoría.",
+    "verifyNeedsId": "Escribe antes el identificador de una decisión",
+    "decisionValid": "Firmas válidas",
+    "decisionInvalid": "La verificación ha fallado",
+    "decisionNotFound": "No existe una decisión con ese identificador.",
+    "actorTypes": {
+      "human": "Persona",
+      "service": "Servicio",
+      "agent": "Agente"
+    }
   },
   "accounts": {
     "title": "Cuentas de plataformas",

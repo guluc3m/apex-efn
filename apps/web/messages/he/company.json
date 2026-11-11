@@ -132,7 +132,6 @@
   "audit": {
     "title": "יומן ביקורת",
     "intro": "שרשרת גיבובים לכל חברה, מעוגנת באחסון WORM.",
-    "pending": "ממתין לחיבור",
     "noAccessTitle": "אין הרשאה",
     "noAccessBody": "יומן הביקורת זמין רק לתפקידי מנהל מערכת ובעלים.",
     "verifyChain": "אימות כל השרשרת",
@@ -148,16 +147,26 @@
     "hash": "גיבוב",
     "caption": "אירועי ביקורת",
     "empty": "אין אירועים",
-    "actors": {
-      "negotiator": "סוכן המשא ומתן",
-      "sanity": "שירות תקינות",
-      "human": "מנהל",
-      "fx": "שירות מט\"ח"
-    },
     "verifyTitle": "אימות החלטה",
     "verifyLabel": "מזהה או גיבוב",
     "verify": "אימות",
-    "verifyPlaceholder": "dec_…"
+    "verifyPlaceholder": "dec_…",
+    "verifying": "מאמת…",
+    "verifyFailed": "האימות נכשל",
+    "brokenAt": "השרשרת נשברה באירוע {seq}",
+    "noAnchor": "עדיין אין עוגן",
+    "subject": "נושא",
+    "loading": "טוען…",
+    "loadFailed": "לא ניתן לטעון את יומן הביקורת.",
+    "verifyNeedsId": "הזינו תחילה מזהה החלטה",
+    "decisionValid": "חתימות תקינות",
+    "decisionInvalid": "האימות נכשל",
+    "decisionNotFound": "אין החלטה עם המזהה הזה.",
+    "actorTypes": {
+      "human": "אדם",
+      "service": "שירות",
+      "agent": "סוכן"
+    }
   },
   "accounts": {
     "title": "חשבונות פלטפורמה",

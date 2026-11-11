@@ -190,3 +190,17 @@ export function useSendIntakeMessage() {
     },
   })
 }
+
+/** Read-only audit views. Both are admin/owner on the server; a 403 reaches the screen as an ApiError. */
+export function useAuditEvents() {
+  return useQuery({ queryKey: ['audit', 'events'], queryFn: ({ signal }) => api.listAuditEvents({ limit: 50 }, signal) })
+}
+
+/** Full re-verification of the chain. Never cached: the point of the button is to look again. */
+export function useAuditVerification() {
+  return useQuery({ queryKey: ['audit', 'verify'], queryFn: ({ signal }) => api.verifyAuditChain(signal), staleTime: 0, gcTime: 0 })
+}
+
+export function useVerifyDecision() {
+  return useMutation({ mutationFn: (id: string) => api.verifyDecision(id) })
+}
