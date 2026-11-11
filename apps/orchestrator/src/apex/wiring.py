@@ -47,6 +47,7 @@ from apex.agents.request_store import InMemorySourcingRequestStore
 from apex.agents.scraping import ScrapingDeps, ScrapingService
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
+from apex.agents.trust_port import DomainTrustPort
 from apex.common.clock import Clock, SystemClock
 from apex.common.ids import IdGenerator
 from apex.config import Settings
@@ -108,11 +109,6 @@ class UnwiredBrowserWorker:
 class UnwiredFx:
     async def to_eur_unit(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("FX is not wired yet (owner: DEV-3, D3-03)")
-
-
-class UnwiredTrust:
-    async def score(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("trust engine is not wired yet (owner: DEV-3, D3-06)")
 
 
 class UnwiredSanity:
@@ -333,7 +329,7 @@ def build_app_services(
             ),
             nodes=AnalysisNodes(
                 AnalysisDeps(
-                    trust=UnwiredTrust(),
+                    trust=DomainTrustPort(config=tenant_config, clock=active_clock),
                     sanity=UnwiredSanity(),
                     finance=UnwiredFinance(),
                     offers=offer_store,

@@ -267,6 +267,24 @@
         "weights": {
           "$ref": "#/$defs/entry"
         },
+        "x_sat": {
+          "$ref": "#/$defs/entry"
+        },
+        "category_rating_mean": {
+          "$ref": "#/$defs/entry"
+        },
+        "category_five_star_share": {
+          "$ref": "#/$defs/entry"
+        },
+        "wilson_confidence": {
+          "$ref": "#/$defs/entry"
+        },
+        "min_verified_share": {
+          "$ref": "#/$defs/entry"
+        },
+        "max_duplicate_text_share": {
+          "$ref": "#/$defs/entry"
+        },
         "rating_prior_weight": {
           "$ref": "#/$defs/entry"
         },

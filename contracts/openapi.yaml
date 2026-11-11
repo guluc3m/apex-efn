@@ -1794,6 +1794,29 @@ components:
           type: [integer, 'null']
         escalate_cheap_low_confidence:
           type: [boolean, 'null']
+        weights:
+          type: [object, 'null']
+          description: Signal-group weights as decimal strings summing to 1 (ADR-304).
+          additionalProperties: {type: string, pattern: '^[0-9]+(\.[0-9]+)?$'}
+        x_sat:
+          type: [object, 'null']
+          description: Saturation point per countable signal, decimal strings (ADR-304).
+          additionalProperties: {type: string, pattern: '^[0-9]+(\.[0-9]+)?$'}
+        category_rating_mean:
+          type: [string, 'null']
+          pattern: '^[0-9]+(\.[0-9]+)?$'
+        category_five_star_share:
+          type: [string, 'null']
+          pattern: '^[0-9]+(\.[0-9]+)?$'
+        wilson_confidence:
+          type: [string, 'null']
+          pattern: '^[0-9]+(\.[0-9]+)?$'
+        min_verified_share:
+          type: [string, 'null']
+          pattern: '^[0-9]+(\.[0-9]+)?$'
+        max_duplicate_text_share:
+          type: [string, 'null']
+          pattern: '^[0-9]+(\.[0-9]+)?$'
     CreateSourcingRequest:
       type: object
       required: [natural_language, delivery_country]

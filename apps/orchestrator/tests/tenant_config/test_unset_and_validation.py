@@ -24,7 +24,6 @@ from apex.tenant_config.service import TenantConfigService
         "approval.threshold",
         "approval.dual_control_above",
         "signing.high_value_reauth_above",
-        "seller.weights",
     ],
 )
 async def test_unset_keys_are_marked_unset_and_raise_loudly(
@@ -138,6 +137,5 @@ def test_the_real_global_layer_accepts_null_only_on_leaves() -> None:
 
     _, base = load_global_layer()
     _require_shape_consistent(base, {"sanity": {"floor_per_unit": None}})
-    _require_shape_consistent(base, {"seller": {"weights": None}})  # unset leaf, may stay unset
     with pytest.raises(ConfigValidationError):
         _require_shape_consistent(base, {"seller": None})

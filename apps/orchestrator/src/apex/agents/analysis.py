@@ -11,7 +11,7 @@ recomputed before it is used, so a decision never rests on stale signals (spec Â
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Protocol
 
 from apex.agents.offers import (
@@ -87,7 +87,13 @@ class AnalysisNodes:
     # ------------------------------------------------------------------ trust
 
     async def score_seller(
-        self, *, tenant_id: str, seller_id: str, signals: Mapping[str, Any], force: bool = False
+        self,
+        *,
+        tenant_id: str,
+        seller_id: str,
+        signals: Mapping[str, Any],
+        captured_at: datetime | None = None,
+        force: bool = False,
     ) -> SellerConfidenceRecord:
         """Recompute seller confidence unless a fresh snapshot exists, and append it to the history.
 
@@ -100,7 +106,12 @@ class AnalysisNodes:
         if latest is not None and now - latest.computed_at < max_age:
             return latest
         outcome: TrustOutcome = await self._deps.trust.score(
-            {"seller_id": seller_id, "raw_signals": dict(signals)}, tenant_id=tenant_id
+            {
+                "seller_id": seller_id,
+                "raw_signals": dict(signals),
+                "collected_at": captured_at or now,
+            },
+            tenant_id=tenant_id,
         )
         record = SellerConfidenceRecord(
             seller_id=seller_id,
@@ -139,6 +150,7 @@ class AnalysisNodes:
             tenant_id=tenant_id,
             seller_id=offer.seller_id,
             signals={**offer.raw_signals, "platform_id": offer.platform_id},
+            captured_at=offer.collected_at,
         )
         sanity: SanityOutcome = await self._deps.sanity.check(
             payload, tenant_id=tenant_id, price_minor=offer.unit_price_eur_minor
