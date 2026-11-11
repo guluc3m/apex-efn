@@ -1,7 +1,12 @@
 import { Logo } from '@apex/ui'
+import { redirect } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { AppLink } from '@/components/app-link'
+import { getSession } from '@/server/auth/session'
+
+/** Roles that may set up the company (docs/security/rbac.md). */
+const ONBOARDING_ROLES = ['owner', 'admin', 'finance']
 
 /** Cabecera reducida del alta: sin navegación de la app, solo salida y estado del borrador. */
 export default async function OnboardingLayout({
@@ -11,7 +16,11 @@ export default async function OnboardingLayout({
   children: React.ReactNode
   params: Promise<{ locale: string }>
 }) {
-  setRequestLocale((await params).locale)
+  const { locale } = await params
+  setRequestLocale(locale)
+  // The API stays authoritative; this only keeps other roles out of a flow they cannot finish.
+  const session = await getSession()
+  if (session && !session.user.roles.some((r) => ONBOARDING_ROLES.includes(r))) redirect(`/${locale}/decisiones`)
   const t = await getTranslations('onboarding.header')
   return (
     <>
