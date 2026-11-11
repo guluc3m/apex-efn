@@ -1,0 +1,8 @@
+name: apex_analytics
+version: '1.0.0'
+profile: apex_analytics
+model-paths: [models]
+models:
+  apex_analytics:
+    marts:
+      +materialized: table

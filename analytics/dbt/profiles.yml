@@ -1,0 +1,10 @@
+apex_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      host: "{{ env_var('CLICKHOUSE_HOST', 'localhost') }}"
+      port: "{{ env_var('CLICKHOUSE_PORT', '8123') | as_number }}"
+      user: "{{ env_var('CLICKHOUSE_USER', 'apex') }}"
+      password: "{{ env_var('CLICKHOUSE_PASSWORD', 'apex') }}"
+      schema: analytics
