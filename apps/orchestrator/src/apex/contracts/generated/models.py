@@ -1302,6 +1302,19 @@ class SellerConfig(BaseModel):
     max_dispute_rate: float | None
     snapshot_max_age_days: int | None
     escalate_cheap_low_confidence: bool | None
+    weights: Annotated[
+        dict[str, Any] | None,
+        Field(description="Signal-group weights as decimal strings summing to 1 (ADR-304)."),
+    ] = None
+    x_sat: Annotated[
+        dict[str, Any] | None,
+        Field(description="Saturation point per countable signal, decimal strings (ADR-304)."),
+    ] = None
+    category_rating_mean: Annotated[str | None, Field(pattern="^[0-9]+(\\.[0-9]+)?$")] = None
+    category_five_star_share: Annotated[str | None, Field(pattern="^[0-9]+(\\.[0-9]+)?$")] = None
+    wilson_confidence: Annotated[str | None, Field(pattern="^[0-9]+(\\.[0-9]+)?$")] = None
+    min_verified_share: Annotated[str | None, Field(pattern="^[0-9]+(\\.[0-9]+)?$")] = None
+    max_duplicate_text_share: Annotated[str | None, Field(pattern="^[0-9]+(\\.[0-9]+)?$")] = None
 
 
 class QuantityTier(BaseModel):
