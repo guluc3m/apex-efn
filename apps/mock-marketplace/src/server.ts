@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify'
 
 import { ChatEngine } from './chat/engine.js'
+import type { ChatPhraser } from './chat/phraser.js'
 import { systemClock, type Clock } from './clock.js'
 import { registerControl } from './control.js'
 import { loadCatalog } from './fixtures/load.js'
@@ -14,6 +15,8 @@ export interface BuildOptions {
   clock?: Clock
   seed?: number
   logger?: boolean
+  /** Optional wording-only rephraser; tests inject a fake, `index.ts` builds the stub client. */
+  phraser?: ChatPhraser
 }
 
 export interface MockMarketplace {
@@ -29,7 +32,12 @@ Allow: /
 
 export function buildServer(options: BuildOptions = {}): MockMarketplace {
   const catalog = options.catalog ?? loadCatalog()
-  const chats = new ChatEngine(catalog, options.clock ?? systemClock, options.seed ?? 0)
+  const chats = new ChatEngine(
+    catalog,
+    options.clock ?? systemClock,
+    options.seed ?? 0,
+    options.phraser
+  )
   const app = Fastify({ logger: options.logger ?? false })
 
   // HTML forms on mock-b post urlencoded bodies; no extra plugin needed for flat fields.

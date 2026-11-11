@@ -6,9 +6,11 @@ import {
   initialState,
   respond,
   type PersonaFlag,
+  type PersonaReply,
   type PersonaState,
   type Quote,
 } from './personas.js'
+import { noopPhraser, pinsPrice, type ChatPhraser } from './phraser.js'
 
 export type MessageRole = 'buyer' | 'seller'
 
@@ -65,7 +67,9 @@ export class ChatEngine {
   constructor(
     private readonly catalog: Catalog,
     private readonly clock: Clock,
-    private seed: number
+    private seed: number,
+    /** Optional wording-only rephraser (`SIM_LLM_URL`). Absent or unset: scripted text, as before. */
+    private readonly phraser?: ChatPhraser
   ) {}
 
   reset(seed?: number): void {
@@ -125,15 +129,36 @@ export class ChatEngine {
     return chat
   }
 
-  /** Appends the buyer message and the seller reply. Returns both messages. */
-  send(chatId: string, text: string): ChatMessage[] {
+  /**
+   * Appends the buyer message and the seller reply. Returns both messages.
+   *
+   * Without a phraser (unset, or the no-op phraser `SIM_LLM_URL` unset builds) the whole call still runs
+   * synchronously, so the appended order, `seq` and `at` are exactly as before. With a real phraser, only
+   * the seller's wording is awaited — state and numbers are already decided by `respond`.
+   */
+  async send(chatId: string, text: string): Promise<ChatMessage[]> {
     const chat = this.get(chatId)
     const clean = text.trim()
     if (clean.length === 0) throw new ChatError('empty_message', 'message is empty')
     const buyer = this.append(chat, 'buyer', clean)
     const reply = respond(chat.state, clean, this.product(chat.productId), chat.rng)
-    const seller = this.append(chat, 'seller', reply.text)
+    const sellerText =
+      this.phraser === undefined || this.phraser === noopPhraser
+        ? reply.text
+        : await this.rephrase(reply)
+    const seller = this.append(chat, 'seller', sellerText)
     return [buyer, seller]
+  }
+
+  /** Rephrasing is cosmetic: anything unexpected (error, timeout, price drift) keeps the scripted text. */
+  private async rephrase(reply: PersonaReply): Promise<string> {
+    if (this.phraser === undefined) return reply.text
+    try {
+      const candidate = await this.phraser.phrased(reply.text, reply.quote)
+      return pinsPrice(reply.text, candidate, reply.quote) ? candidate.trim() : reply.text
+    } catch {
+      return reply.text
+    }
   }
 
   read(chatId: string, afterSeq = 0): ChatMessage[] {

@@ -220,7 +220,7 @@ export function registerMockC(app: FastifyInstance, catalog: Catalog, chats: Cha
     const parsed = SendMessage.safeParse(req.body)
     if (!parsed.success) return error(reply, 'invalid_message', 400)
     try {
-      const produced = chats.send(thread.chatId, parsed.data.body)
+      const produced = await chats.send(thread.chatId, parsed.data.body)
       const [sent] = produced
       const received = produced.slice(1)
       return reply.code(201).send({

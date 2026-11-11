@@ -72,7 +72,7 @@ export function registerMockB(app: FastifyInstance, catalog: Catalog, chats: Cha
     if (!parsed.success) return html(reply, notFoundPage('Message'), 400)
     try {
       if (chats.get(req.params.id).platform !== P) return html(reply, notFoundPage('Chat'), 404)
-      chats.send(req.params.id, parsed.data.text)
+      await chats.send(req.params.id, parsed.data.text)
       return reply.redirect(`/mock-b/chat/${req.params.id}`, 303)
     } catch (e) {
       if (e instanceof ChatError) {

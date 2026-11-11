@@ -194,7 +194,7 @@ export function registerMockA(app: FastifyInstance, catalog: Catalog, chats: Cha
       try {
         if (chats.get(req.params.id).platform !== P)
           return reply.code(404).send({ error: 'unknown_chat' })
-        const [sent] = chats.send(req.params.id, parsed.data.body)
+        const [sent] = await chats.send(req.params.id, parsed.data.body)
         return reply.code(201).send({ message: sent ? message(sent) : null })
       } catch (e) {
         const { status, body } = chatError(e)
