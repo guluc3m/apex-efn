@@ -40,7 +40,7 @@ export function CompareView({ missionId }: { missionId: string }) {
             className="w-56"
             value={profile}
             options={choices.map((p) => ({ value: p.id, label: p.name }))}
-            onValueChange={(id) => router.replace(`${pathname}?profile=${encodeURIComponent(id)}`)}
+            onValueChange={(id) => router.replace(`${pathname}?profile=${encodeURIComponent(id)}` as never)}
           />
         ) : (
           /* Plain GET form: the profile lives in the URL, so the comparison can be shared and re-ranks in place.
