@@ -1755,6 +1755,7 @@ export const zOffer = z.object({
   payment_terms_days: z.number().int().gte(0).nullish(),
   signature_status: zSignatureStatus.optional(),
   state: zOfferState,
+  negotiation_id: z.string().nullish(),
   seller_confidence: zSellerConfidence.nullish(),
   price_sanity_check: zPriceSanityCheck.nullish(),
   financial_fit: zFinancialFit.nullish(),

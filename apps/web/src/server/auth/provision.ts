@@ -28,6 +28,15 @@ export interface ExternalSubjectLink {
   email: string | null | undefined
 }
 
+/**
+ * Registry shared across server bundles. Next compiles the instrumentation hook and the route
+ * handlers separately, so a module-level variable set by instrumentation is `null` here; the
+ * global slot is the same in both bundles of the Node server process.
+ */
+const registry = globalThis as typeof globalThis & {
+  __apexExternalSubjectClient?: ExternalSubjectClient | null
+}
+
 let defaultClient: ExternalSubjectClient | null = null
 
 /**
@@ -38,6 +47,7 @@ let defaultClient: ExternalSubjectClient | null = null
  */
 export function setDefaultExternalSubjectClient(client: ExternalSubjectClient | null): void {
   defaultClient = client
+  registry.__apexExternalSubjectClient = client
 }
 
 /**
@@ -53,7 +63,7 @@ export async function linkExternalSubject(
   client?: ExternalSubjectClient
 ): Promise<number> {
   if (!sub || !email) return 0
-  const prisma = client ?? defaultClient
+  const prisma = client ?? defaultClient ?? registry.__apexExternalSubjectClient ?? null
   if (!prisma) {
     // No client registered (instrumentation did not run or no DATABASE_URL). The login continues.
     console.warn('[auth] no database client registered; skipping the external subject link')

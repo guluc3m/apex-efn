@@ -160,7 +160,14 @@ export function createQueueDepthReader(
   }
 }
 
-/** One BullMQ worker per platform that is enabled at startup. Retries exhausted → copy to the dead-letter queue. */
+/**
+ * One BullMQ worker per registered platform. Retries exhausted → copy to the dead-letter queue.
+ *
+ * Workers are started for platforms whose flag is currently off as well: the flag is a per-call gate in
+ * ``AdapterRegistry.require`` and ``BullJobService`` never enqueues for a disabled platform, so an idle
+ * worker consumes nothing. Filtering here instead made a flag turned on *after* boot a silent lie — the
+ * job was accepted and then polled until the orchestrator gave up, with no consumer on the queue.
+ */
 export function startJobWorkers(
   registry: AdapterRegistry,
   options: { scrapingConcurrency: number },
@@ -171,7 +178,6 @@ export function startJobWorkers(
   const deadLetter = new Queue<QueuedJob, JobResult>(DEAD_LETTER_QUEUE, { connection })
   const workers = registry
     .status()
-    .filter((status) => status.enabled)
     .map(({ platform }) => {
       const worker = new Worker<QueuedJob, JobResult>(
         scrapeQueueName(platform),

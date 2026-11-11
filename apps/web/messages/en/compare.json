@@ -74,6 +74,7 @@
   "distribution": {
     "none": "No price checks yet.",
     "caption": "Unit price per offer. Dashed line: market median {median}.",
-    "captionBand": "Unit price per offer. Dashed line: market median {median}. Shaded area: normal band, {lower} to {upper}."
+    "captionBand": "Unit price per offer. Dashed line: market median {median}. Shaded area: normal band, {lower} to {upper}.",
+    "captionNoMedian": "Unit price per offer. No market median yet: the reference is computed once there is enough of a sample."
   }
 }

@@ -84,7 +84,8 @@
     "sample": "Tamaño de muestra",
     "deviation": "Desviación sobre la referencia",
     "noSanity": "Aún sin control de precio.",
-    "noLanded": "Aún sin landed cost."
+    "noLanded": "Aún sin landed cost.",
+    "linesPending": "El desglose por línea aún no lo envía la API; solo está disponible el total."
   },
   "stale": {
     "body": "El snapshot financiero activo ha caducado. Las compras directas quedan bloqueadas hasta reimportar el CSV.",

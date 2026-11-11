@@ -82,7 +82,13 @@ class DomainFinancePort:
             ),
             now=self.clock.now(),
         )
-        return FitOutcome(verdict=fit.verdict.value, financials_stale=stale, fx_provisional=False)
+        return FitOutcome(
+            verdict=fit.verdict.value,
+            financials_stale=stale,
+            fx_provisional=False,
+            landed_cost_total_minor=breakdown.total.amount_minor,
+            landed_cost=breakdown,
+        )
 
 
 __all__ = ["DomainFinancePort", "FinanceUnavailable"]

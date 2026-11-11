@@ -47,6 +47,7 @@ class _RawOffer(_Model):
     platform_offer_id: str
     product_id: str
     platform_seller_id: str
+    seller_name: str = ""
     title: str = ""
     unit_price: _Money
     list_price: _Money | None = None
@@ -146,6 +147,36 @@ class HttpBrowserWorker:
             state = await self._wait(client, accepted.job_id)
         return self._to_search_result(step.platform_id, state)
 
+    async def seller_signals(
+        self, *, tenant_id: str, mission_id: str, platform: str, seller_id: str
+    ) -> Mapping[str, Any]:
+        """Enqueue a ``seller_signals`` job and return the raw signals the platform publishes.
+
+        The trust engine needs these (age, transactions, catalogue, reviews); without them every seller is
+        ``insufficient_data`` and every offer lands in the gate, so this is the enrichment step of D4-09.
+        """
+        body = {
+            "kind": "seller_signals",
+            "tenant_id": tenant_id,
+            "mission_id": mission_id,
+            "trace_id": self.trace_id_for(mission_id),
+            "platform": platform,
+            "platform_seller_id": seller_id,
+        }
+        async with self.client_factory() as client:
+            accepted = await self._post(
+                client, body, idempotency_key=f"{mission_id}:{platform}:signals:{seller_id}"
+            )
+            state = await self._wait(client, accepted.job_id)
+        if state.result is None:
+            raise BrowserWorkerError(
+                "missing_result", f"job {state.job_id} succeeded without a result"
+            )
+        signals = state.result.get("signals")
+        if not isinstance(signals, Mapping):
+            raise BrowserWorkerError("invalid_result", "seller_signals returned no signals object")
+        return dict(signals)
+
     async def _post(
         self, client: httpx.AsyncClient, body: Mapping[str, Any], *, idempotency_key: str
     ) -> _JobAccepted:
@@ -223,6 +254,7 @@ def _to_raw_offer(offer: _RawOffer) -> RawOffer:
         platform_offer_id=offer.platform_offer_id,
         seller_id=offer.platform_seller_id,
         product_id=offer.product_id,
+        seller_name=offer.seller_name,
         title=offer.title,
         unit_price_minor=offer.unit_price.amount_minor,
         list_price_minor=offer.list_price.amount_minor if offer.list_price else None,

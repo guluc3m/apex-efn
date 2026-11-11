@@ -69,6 +69,7 @@ class DomainTrustPort:
             band=ConfidenceBand(confidence.band.value),
             score=confidence.score,
             model_version=confidence.model_version,
+            detail=confidence,
         )
 
 
@@ -103,20 +104,38 @@ def _snapshot(offer: Mapping[str, Any]) -> SellerSignalSnapshot:
 
 
 def _reviews(offer: Mapping[str, Any]) -> Sequence[Review] | None:
+    """The reviews the engine's structural checks need, from either shape the pipeline produces.
+
+    ``raw_signals["reviews"]`` is the orchestrator's own shape. A real worker hands the platform's listing
+    under ``seller_signals.recent_reviews`` with the contract's field names (``created_at``,
+    ``verified_purchase``), so both are read here. A review without a rating or a date is not a review and is
+    dropped instead of being defaulted.
+    """
     raw = offer.get("raw_signals") or {}
     items = raw.get("reviews") if isinstance(raw, Mapping) else None
+    if not items:
+        signals = raw.get("seller_signals") if isinstance(raw, Mapping) else None
+        items = signals.get("recent_reviews") if isinstance(signals, Mapping) else None
     if not items:
         return None
     reviews: list[Review] = []
     for item in items:
         if not isinstance(item, Mapping):
             continue
+        rating = item.get("rating")
+        day = item.get("date") or item.get("created_at")
+        if rating is None or day is None:
+            continue
+        try:
+            seen = date.fromisoformat(str(day)[:10])
+        except ValueError:
+            continue
         reviews.append(
             Review(
-                rating=int(item["rating"]),
-                date=date.fromisoformat(str(item["date"])),
-                verified=bool(item.get("verified", False)),
-                text=str(item.get("text", "")),
+                rating=int(rating),
+                date=seen,
+                verified=bool(item.get("verified", item.get("verified_purchase", False))),
+                text=str(item.get("text") or ""),
             )
         )
     return reviews or None

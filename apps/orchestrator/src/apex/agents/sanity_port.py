@@ -59,7 +59,9 @@ class DomainSanityPort:
         except SanityError as exc:
             raise SanityUnavailable(exc.code, str(exc)) from exc
         return SanityOutcome(
-            band=PriceBand(result.band.value), config_version=result.config_version
+            band=PriceBand(result.band.value),
+            config_version=result.config_version,
+            detail=result,
         )
 
 

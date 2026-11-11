@@ -84,7 +84,8 @@
     "sample": "Sample size",
     "deviation": "Deviation from reference",
     "noSanity": "No price check yet.",
-    "noLanded": "No landed cost yet."
+    "noLanded": "No landed cost yet.",
+    "linesPending": "The API does not send the line breakdown yet; only the total is available."
   },
   "stale": {
     "body": "The active financial snapshot has expired. Direct purchases are blocked until the CSV is re-imported.",

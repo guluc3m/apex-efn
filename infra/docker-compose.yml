@@ -187,6 +187,9 @@ services:
     container_name: apex-unleash
     environment:
       DATABASE_URL: postgres://apex:apex@postgres:5432/unleash
+      # Unleash 5+ defaults to a TLS connection; the local Postgres has no certificate, so the server
+      # exits with "The server does not support SSL connections". Dev only.
+      DATABASE_SSL: 'false'
       # DEV ONLY tokens. Client token is the value of UNLEASH_API_TOKEN in .env.example.
       INIT_ADMIN_API_TOKENS: '*:*.apex-dev-unleash-admin'
       INIT_CLIENT_API_TOKENS: 'default:development.apex-dev-unleash-client'

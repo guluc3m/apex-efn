@@ -1,6 +1,6 @@
 'use client'
 
-import type { Deal, DealAction, Money } from '@apex/shared-types/contracts'
+import type { ActionAvailability, Deal, DealAction, Money } from '@apex/shared-types/contracts'
 import { Button, Dialog, DialogContent, Icon, Input, Label, MoneyDisplay, Select } from '@apex/ui'
 import {
   ArrowDown, ChartBarStacked, Flag, Gauge, Hand, MessagesSquare, Package, Pause, PenLine, Receipt, Shield, Trash2, Upload,
@@ -53,7 +53,21 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
   const [action, setAction] = useState<DealAction | null>(null)
   const [form, setForm] = useState(emptyActionForm)
   const mutation = useDealAction()
-  const money = (m: Money) => <MoneyDisplay amountMinor={m.amount_minor} currency={m.currency} locale={locale} />
+  /**
+   * One entry per action. The API can repeat an action once per blocking reason; the panel shows a
+   * single button with all the reasons, so merge them here instead of rendering duplicates.
+   */
+  const actions = deal.actions.reduce<ActionAvailability[]>((acc, a) => {
+    const found = acc.find((x) => x.action === a.action)
+    if (found) {
+      found.allowed = found.allowed && a.allowed
+      found.blocked_by = [...found.blocked_by, ...a.blocked_by]
+    } else {
+      acc.push({ ...a, blocked_by: [...a.blocked_by] })
+    }
+    return acc
+  }, [])
+  const money = (m: Money | null | undefined) => (m ? <MoneyDisplay amountMinor={m.amount_minor} currency={m.currency} locale={locale} /> : '—')
   /** Translation when the key exists, the raw code otherwise (the API's vocabularies can grow). */
   const known = (ns: string, code: string) => (t.has(`${ns}.${code}`) ? t(`${ns}.${code}`) : code)
 
@@ -74,10 +88,10 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
 
   const confBreakdown = conf && (
     <div className="text-[13px]">
-      {Object.entries(conf.signals_normalized).map(([k, v]) => (
+      {Object.entries(conf.signals_normalized ?? {}).map(([k, v]) => (
         <Row key={k} k={known('signal', k)}>{(v * 100).toFixed(0)} %</Row>
       ))}
-      {conf.penalties.map((p) => (
+      {(conf.penalties ?? []).map((p) => (
         <Row key={p} k={t('detail.penalty')}>{known('signal', p)}</Row>
       ))}
     </div>
@@ -127,7 +141,7 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           <div className="flex flex-[1_1_200px] flex-col gap-2.5 pt-5">
             <div>
               <span className="text-[13px] text-ink-muted">{t('detail.landed')} </span>
-              <strong>{fit ? money(fit.landed_cost.total) : '—'}</strong>
+              <strong>{fit ? money(fit.landed_cost?.total) : '—'}</strong>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <DealBadges deal={deal} confidenceBreakdown={confBreakdown} />
@@ -140,7 +154,7 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {deal.actions.map((a, n) => {
+          {actions.map((a, n) => {
             const codes = blockedCodes(a)
             const reason = codes?.map((c) => a.blocked_by.find((b) => b.code === c)?.message ?? t(`block.${c}`)).join(' ')
             return (
@@ -152,7 +166,7 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           })}
         </div>
         <ul className="mt-1.5 list-none p-0 text-[13px] text-ink-muted">
-          {deal.actions.filter((a) => !a.allowed).map((a) => (
+          {actions.filter((a) => !a.allowed).map((a) => (
             <li key={a.action}>
               <strong>{t(`action.${a.action}`)}:</strong>{' '}
               {(blockedCodes(a) ?? []).map((c) => a.blocked_by.find((b) => b.code === c)?.message ?? t(`block.${c}`)).join(' ')}
@@ -189,11 +203,14 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
         <Section icon={Gauge} title={t('detail.sanity')}>
           {sanity ? (
             <>
+              {/* La API puede omitir los números de referencia mientras no haya muestra suficiente. */}
               <Row k={t('detail.reference')}>{money(sanity.reference_price_eur)}</Row>
               <Row k={t('detail.median')}>{money(sanity.median)}</Row>
-              <Row k={t('detail.sample')}>{sanity.sample_size}</Row>
-              <Row k={t('detail.deviation')}>{(sanity.relative_deviation * 100).toFixed(1)} %</Row>
-              {sanity.explanations.map((e) => (
+              <Row k={t('detail.sample')}>{sanity.sample_size ?? '—'}</Row>
+              <Row k={t('detail.deviation')}>
+                {typeof sanity.relative_deviation === 'number' ? `${(sanity.relative_deviation * 100).toFixed(1)} %` : '—'}
+              </Row>
+              {(sanity.explanations ?? []).map((e) => (
                 <div key={e.code} className="py-0.5 text-[13px]">{known('explanation', e.code)}</div>
               ))}
             </>
@@ -211,14 +228,17 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
         <Section icon={Receipt} title={t('detail.landedBreakdown')}>
           {fit ? (
             <>
-              {fit.landed_cost.lines.map((l) => (
+              {(fit.landed_cost.lines ?? []).map((l) => (
                 <Row key={l.code} k={t(`line.${l.code}`)}>{money(l.amount)}</Row>
               ))}
+              {(fit.landed_cost.lines ?? []).length === 0 && (
+                <p className="my-1 text-[13px] text-ink-muted">{t('detail.linesPending')}</p>
+              )}
               <div className="flex justify-between border-t border-line pt-1.5">
                 <strong>{t('detail.total')}</strong>
                 <strong>{money(fit.landed_cost.total)}</strong>
               </div>
-              {fit.reasons.map((r) => (
+              {(fit.reasons ?? []).map((r) => (
                 <p key={r} className="mt-1 text-[13px] text-ink-muted">{r}</p>
               ))}
             </>
@@ -296,7 +316,7 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
             <dl className="mt-2 mb-4 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
               {[
                 [t('dialog.decision'), t(`action.${action}`)],
-                [t('dialog.amount'), fit ? money(fit.landed_cost.total) : '—'],
+                [t('dialog.amount'), money(fit?.landed_cost?.total)],
                 [t('dialog.offer'), offer.seller_name],
                 [t('dialog.band'), t(`band.${deal.price_band}`)],
                 [t('dialog.confidence'), t('confLabel', { band: t(`conf.${deal.confidence_band}`), score: conf?.score ?? '—' })],

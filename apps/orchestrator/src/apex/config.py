@@ -47,6 +47,21 @@ class Settings(BaseSettings):
     browser_worker_max_polls: int = Field(default=60, ge=1)
     browser_worker_poll_interval_s: float = Field(default=0.5, gt=0)
 
+    # Mock marketplace base URL (D5-04/D5-11). Empty means "no negotiation": a mission stops after the gate
+    # instead of opening a chat with a seller that is not there.
+    mock_marketplace_url: str = Field(default="")
+    # Demo mode (hackathon). On top of the demo tenant config, startup leaves an **unsigned** active
+    # financial snapshot for tenant-a/tenant-b, so a mission can be launched without the passkey ceremony.
+    # Never enable outside a demo: it skips the signature that criterion 17/21 requires.
+    demo_mode: bool = Field(default=False)
+    # Phase 1 is semi-automatic on purpose: every drafted message waits for a person (spec §3.6 step 5).
+    # A demo flips this so the conversation runs while the audience watches; it is the same flag Unleash
+    # exposes, read statically here until the flag client is wired into the orchestrator.
+    negotiation_autonomous_send: bool = Field(default=False)
+    # Pause between negotiation rounds. Zero is the honest default for tests and CI; a demo sets it so the
+    # transcript arrives one message at a time instead of all at once.
+    negotiation_step_delay_s: float = Field(default=0.0, ge=0.0)
+
     # Run a mission in the background as soon as it is created; progress streams on the SSE route. A port
     # that is not configured (no BROWSER_WORKER_URL, for instance) fails the mission with the reason, which
     # is the honest answer. Set MISSION_AUTORUN=false to only plan missions.

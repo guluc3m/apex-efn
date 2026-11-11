@@ -186,3 +186,95 @@ apps/orchestrator/src/apex/negotiation/sim/        compradores IA, pipeline, CLI
 
 Decisiones: `docs/adr/505-mock-b-html-over-http.md`, `506-wallapop-not-automated.md`,
 `507-mock-c-sanctioned-api-shape.md`.
+
+---
+
+## 8. Demo de la app completa (`pnpm demo:app`)
+
+La demo anterior enseña el motor de negociación aislado. Esta arranca **la app entera**: la web en
+http://localhost:3000, el orchestrator, el browser worker y el mercado simulado, con datos ya sembrados para
+poder lanzar una misión sin preparar nada a mano.
+
+```bash
+pnpm demo:app            # idempotente: lo que ya está vivo se respeta
+pnpm demo:app --dry-run  # imprime cada paso sin ejecutar nada
+pnpm demo:app --reset    # ¡BORRA los volúmenes locales! Re-migra y re-siembra desde cero
+```
+
+Requisitos: Docker con `docker compose`, `pnpm`, `uv` (Python 3.12+) y `node` 22+. La primera vez, con el
+repo recién clonado, ejecuta `pnpm install` y luego `pnpm demo:app`: si la base está vacía, el script aplica
+las migraciones, el seed y la configuración demo por su cuenta. `--reset` solo hace falta para **borrar** lo
+que ya hubiera y empezar de cero.
+
+### Qué levanta
+
+| Pieza | Dónde | Puerto |
+|---|---|---|
+| PostgreSQL, Redis, Keycloak, Vault, RustFS, Unleash, LLM stub | Docker (`infra/docker-compose.yml`) | 5432, 6379, 8080, 8200, 9000, 4242, 8001 |
+| `apps/mock-marketplace` (plataformas `mock-a/b/c` y chat) | host, `pnpm --filter` | 8002 |
+| `apps/browser-worker` (adaptadores y colas) | host | 4010 |
+| `apps/orchestrator` (API, agentes y negociación) | host, `uv run uvicorn` | 8000 |
+| `apps/web` (Next.js) | host, `pnpm --filter` | 3000 |
+
+El script también:
+
+- crea el rol de login de la aplicación (`apex_app_login`, sujeto a RLS) dentro del contenedor de Postgres,
+  sin necesidad de `psql` en el host;
+- si la base no está migrada (máquina limpia), aplica `prisma migrate deploy`, el seed y
+  `load_defaults --demo-values` **sin borrar nada**;
+- crea y activa en el entorno `development` de Unleash las flags `platform.mock-{a,b,c}.enabled` y
+  `negotiation.autonomous_send` (idempotente). Sin ellas el browser worker rechaza toda plataforma con
+  `platform_disabled`;
+- se niega a arrancar si otro proceso ocupa 8000/8001/8002/3000/4010 y dice cuál es.
+
+### Qué hace `DEMO_MODE=1`
+
+El orchestrator arranca con `DEMO_MODE=1`, `MISSION_AUTORUN=1`, `MOCK_MARKETPLACE_URL` (negociación real
+contra el chat del mercado simulado) y `NEGOTIATION_STEP_DELAY_S=0.8` (la transcripción llega ronda a ronda).
+Además, al arrancar:
+
+- siembra la configuración de los dos tenants demo (`tenant-a` y `tenant-b`) con los valores de ADR-900 Q7
+  (`neg.target_discount` 8 %, máximo 15 %, umbrales de aprobación);
+- importa un CSV financiero pequeño y deja un **snapshot financiero activo sin firma** para cada tenant, con
+  un sobre explícito de 30.000 EUR. Sin él, toda misión muere en `no_active_snapshot`.
+
+**Aviso honesto:** ese snapshot se activa **sin firma**, que es justo lo que los criterios 17/21 exigen en
+producción. Es una excepción exclusiva de la demo para que puedas lanzar una misión sin el ceremonial de
+passkey. No lo uses fuera de la hackathon.
+
+Credenciales demo (realm `apex`): usuario **`owner-a@apex.local`**, contraseña **`apex-dev`**, tenant
+**`tenant-a`** (también existe `tenant-b` con `owner-b@apex.local`). El script lee la contraseña de
+`infra/keycloak/realm-apex.json` y la imprime en el banner final.
+
+La web necesita su propio `apps/web/.env.local` (Next.js no lee el `.env` de la raíz). El script **no lo
+escribe ni lo pisa**; si falta, avisa y puedes crearlo una vez con `cp .env.example apps/web/.env.local`.
+
+### Pararlo
+
+El script se queda en primer plano y es dueño de los cuatro procesos: **Ctrl-C** los para todos (Docker se
+queda levantado, que es lo que quieres entre ensayos). Además:
+
+```bash
+pnpm demo:app:stop   # si quedó algo de una ejecución anterior (mata por PID guardado)
+pnpm dev:down        # para también los contenedores de Docker
+```
+
+Los logs están en `/tmp/apex-demo/*.log` y los PID en `/tmp/apex-demo/pids/`.
+
+### Lo que esta demo todavía no muestra
+
+- **El texto de la negociación lo escribe el stub**, no un modelo real: repite la misma frase cada ronda. El
+  contenido es correcto (los precios los decide el motor), pero la prosa se repite. La demo de la sección 2 sí
+  puede usar DeepSeek con `DEEPSEEK_API_KEY`; llevarlo a la app requiere cablear `llm.roles.*` y el resolvedor
+  de secretos, que hoy apuntan al stub.
+- **Nada está firmado**: `signature_status` sale `pending`/`unsigned` y las acciones del trato abren la
+  decisión, pero el flujo de firma con passkey no está cableado en el dashboard.
+- El bloque de *sanity* ya trae mediana, muestra y desviación del motor, pero la explicación en lenguaje
+  natural y el gráfico de distribución siguen pendientes.
+
+### Si un puerto está ocupado
+
+El script imprime el proceso que lo tiene (`ss -lptn 'sport = :3000'` lo muestra también). Normalmente es
+una ejecución anterior: `pnpm demo:app:stop`, o mata ese PID. El puerto 8001 debe ser siempre el contenedor
+`apex-llm-stub`; si lo ocupa un stub arrancado a mano (por ejemplo el de la sección 2), páralo antes.
+

@@ -33,7 +33,10 @@ export function DecisionsView({ role }: { role: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const query = useSearchParams()
-  const { dealId } = useParams<{ dealId?: string }>()
+  // `useParams` returns the route segment still percent-encoded, and offer ids contain `:`
+  // (`mock-a:a-gloves-02`), so the id has to be decoded before comparing it with the API's ids.
+  const dealIdParam = useParams<{ dealId?: string }>().dealId
+  const dealId = dealIdParam ? decodeURIComponent(dealIdParam) : undefined
   const inTranscript = pathname.endsWith('/transcripcion')
 
   const view = query.get('vista') === 'tratos' ? 'tratos' : 'cola'

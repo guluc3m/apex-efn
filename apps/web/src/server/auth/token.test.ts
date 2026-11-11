@@ -14,6 +14,7 @@ function cookieStore(values: { name: string; value: string }[]) {
 beforeEach(() => {
   mocks.cookies.mockReset()
   mocks.getToken.mockReset()
+  process.env.AUTH_SECRET = 'test-secret'
 })
 
 describe('getAccessToken', () => {
@@ -34,6 +35,13 @@ describe('getAccessToken', () => {
     await expect(getAccessToken()).resolves.toBeNull()
   })
 
+  it('returns null when no AUTH_SECRET is configured instead of throwing MissingSecret', async () => {
+    delete process.env.AUTH_SECRET
+    mocks.cookies.mockResolvedValue(cookieStore([{ name: 'authjs.session-token', value: 'jwe' }]))
+    await expect(getAccessToken()).resolves.toBeNull()
+    expect(mocks.getToken).not.toHaveBeenCalled()
+  })
+
   it('decodes the cookie and returns the Keycloak access token', async () => {
     mocks.cookies.mockResolvedValue(cookieStore([{ name: 'authjs.session-token', value: 'jwe' }]))
     mocks.getToken.mockResolvedValue({
@@ -44,6 +52,7 @@ describe('getAccessToken', () => {
     await expect(getAccessToken()).resolves.toBe('keycloak-access-token')
     expect(mocks.getToken).toHaveBeenCalledWith({
       req: { headers: { cookie: 'authjs.session-token=jwe' } },
+      secret: 'test-secret',
     })
   })
 

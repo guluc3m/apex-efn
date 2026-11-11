@@ -199,7 +199,8 @@
         "confidence": "信任度",
         "verdict": "结论",
         "status": "状态",
-        "landed": "到岸成本"
+        "landed": "到岸成本",
+        "negotiation": "洽谈"
       },
       "band": {
         "normal": "正常",
@@ -248,7 +249,8 @@
       "pending": "待处理",
       "above": "高于中位数",
       "below": "低于中位数",
-      "more": "还有更多报价未在此显示。"
+      "more": "还有更多报价未在此显示。",
+      "open": "查看聊天"
     }
   }
 }

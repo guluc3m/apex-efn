@@ -199,7 +199,8 @@
         "confidence": "Confidence",
         "verdict": "Verdict",
         "status": "Status",
-        "landed": "Landed cost"
+        "landed": "Landed cost",
+        "negotiation": "Negotiation"
       },
       "band": {
         "normal": "Normal",
@@ -248,7 +249,8 @@
       "pending": "Pending",
       "above": "Above the median",
       "below": "Below the median",
-      "more": "More offers exist than shown here."
+      "more": "More offers exist than shown here.",
+      "open": "Open chat"
     }
   }
 }
