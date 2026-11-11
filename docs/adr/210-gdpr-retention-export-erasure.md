@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (needs Tech Lead approval, D2-12)
+Accepted (Tech Lead, D2-12)
 
 ## Context
 
