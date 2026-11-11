@@ -142,3 +142,29 @@ def test_router_is_closed_without_the_dev_flag(
 def test_missing_header_is_401_even_with_the_flag(client_and_port: Any) -> None:
     client, _ = client_and_port
     assert client.get("/config/effective").status_code == 401
+
+
+def test_versions_lists_the_baseline_newest_first(client_and_port: Any) -> None:
+    client, _ = client_and_port
+    body = client.get("/config/versions", headers=_h()).json()
+    assert [v["config_version"] for v in body["items"]] == [1]
+    assert body["next_cursor"] is None
+    assert client.get("/config/versions", headers=_h("tenant-x")).json()["items"] == []
+    assert client.get("/config/versions?cursor=%25", headers=_h()).status_code == 400
+
+
+def test_categories_and_profiles_are_honestly_empty_without_data() -> None:
+    from apex.api import categories as categories_api
+    from apex.api import profiles as profiles_api
+
+    repo = InMemoryConfigRepository()
+    app = FastAPI()
+    install_problem_handlers(app)
+    app.include_router(categories_api.router, prefix="/categories")
+    app.include_router(profiles_api.router, prefix="/profiles")
+    app.dependency_overrides[config_api.get_config_service] = lambda: TenantConfigService(
+        repo, FakeDecisionPort(), FixedClock(datetime(2026, 11, 8, tzinfo=UTC))
+    )
+    with TestClient(app) as client:
+        assert client.get("/categories", headers=_h()).json() == {"items": []}
+        assert client.get("/profiles").json() == {"items": []}

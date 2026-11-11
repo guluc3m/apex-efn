@@ -127,6 +127,17 @@ class TenantConfigService:
             typed=typed,
         )
 
+    async def history(self, tenant_id: str) -> list[ConfigVersionRecord]:
+        """Stored versions, newest first."""
+        rows = await self._repo.list_versions(tenant_id)
+        return sorted(rows, key=lambda r: r.config_version, reverse=True)
+
+    async def categories(self, tenant_id: str) -> list[str]:
+        """Categories that have an override in the latest tenant version, sorted."""
+        latest = await self._repo.latest_version(tenant_id)
+        cats = latest.values.get(CATEGORY_KEY, {}) if latest else {}
+        return sorted(cats) if isinstance(cats, dict) else []
+
     async def verify_version(self, tenant_id: str, config_version: int) -> None:
         """Recompute a stored version's hash; raise on mismatch (ADR-400 §4 reproducibility)."""
         record = await self._repo.get_version(tenant_id, config_version)

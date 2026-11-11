@@ -20,10 +20,13 @@ from fastapi import APIRouter, Depends, Query, status
 
 from apex.common.clock import Clock, SystemClock
 from apex.common.errors import Problem, not_implemented
+from apex.common.pagination import Cursor
 from apex.contracts.generated.models import (
     ConfigChangeRequest,
     ConfigLayer,
     ConfigValueStatus,
+    ConfigVersionPage,
+    ConfigVersionSummary,
     DecisionAccepted,
     DecisionStatus,
     EffectiveConfig,
@@ -132,7 +135,43 @@ async def propose_change(
     return DecisionAccepted(decision_id=decision_id, status=DecisionStatus.pending_signature)
 
 
-@router.get("/versions", tags=["config"])
-async def list_config_versions() -> None:
-    """Config version history (contract route, issue #302). 501 until DEV-4 implements it."""
-    raise not_implemented("config version history is not implemented yet")
+def _changed_keys(prev: dict[str, Any], cur: dict[str, Any]) -> list[str]:
+    from apex.tenant_config.resolver import flatten
+
+    before, after = flatten(prev), flatten(cur)
+    return sorted(k for k in {*before, *after} if before.get(k) != after.get(k))
+
+
+@router.get("/versions", response_model=ConfigVersionPage, tags=["config"])
+async def list_config_versions(
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    service: Annotated[TenantConfigService, Depends(get_config_service)],
+    cursor: str | None = None,
+    limit: int = Query(default=25, ge=1, le=100),
+) -> ConfigVersionPage:
+    """Config version history, newest first. The cursor is the last ``config_version`` returned."""
+    rows = await service.history(tenant_id)
+    by_version = {r.config_version: r for r in rows}
+    if cursor is not None:
+        before = Cursor.decode(cursor).get("v")
+        if not isinstance(before, int):
+            raise Problem(400, "Invalid cursor", detail="The pagination cursor is malformed.")
+        rows = [r for r in rows if r.config_version < before]
+    page = rows[:limit]
+    items = [
+        ConfigVersionSummary(
+            config_version=r.config_version,
+            created_at=r.created_at,
+            decision_id=r.decision_id,
+            summary=_changed_keys(
+                by_version[r.config_version - 1].values
+                if r.config_version - 1 in by_version
+                else {},
+                r.values,
+            )
+            or None,
+        )
+        for r in page
+    ]
+    nxt = Cursor.encode({"v": page[-1].config_version}) if len(rows) > limit else None
+    return ConfigVersionPage(items=items, next_cursor=nxt)
