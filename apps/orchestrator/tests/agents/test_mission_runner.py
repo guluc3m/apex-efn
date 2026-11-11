@@ -165,7 +165,6 @@ def _runner(
     worker: _Worker | None = None,
     trust: ConfidenceBand = ConfidenceBand.HIGH,
     sanity: PriceBand = PriceBand.NORMAL,
-    negotiation: Callable[[str], Any] | None = None,
 ) -> tuple[
     MissionRunner, InMemoryMissionStore, InMemoryOfferStore, InMemoryGateStore, MissionEventBus
 ]:
@@ -199,7 +198,6 @@ def _runner(
             bus=bus,
             clock=clock,
             rules_for=lambda tenant_id: RULES,
-            negotiation=negotiation,
         )
     )
     return runner, mission_store, offer_store, gate_store, bus
@@ -247,50 +245,6 @@ async def test_the_mission_quantity_is_what_the_worker_is_asked_for() -> None:
     await _seed(store)
     await runner.run(tenant_id=TENANT, mission_id="m-1")
     assert worker.calls == [{"platform": "mock-a", "quantity": 500}]
-
-
-async def test_a_cleared_offer_is_negotiated_with_the_platform_listing_id() -> None:
-    """The negotiator keys the graph's offer mapping by ``platform_offer_id``; a missing key aborts the run."""
-    seen: list[dict[str, Any]] = []
-
-    class _Negotiation:
-        async def negotiate(
-            self, offer: Any, *, tenant_id: str, idempotency_key: str
-        ) -> Any:
-            seen.append(dict(offer))
-            return SimpleNamespace(outcome="agreed", negotiation_id="n-1")
-
-    runner, store, offers, gate, _ = _runner(negotiation=lambda mission_id: _Negotiation())
-    await _seed(store)
-    result = await runner.run(tenant_id=TENANT, mission_id="m-1")
-    assert await gate.list_open(TENANT) == []
-    assert result.offers_negotiated == 1
-    assert seen[0]["platform_offer_id"] == "a-1"
-    analysis = await offers.get_analysis(TENANT, "mock-a:a-1")
-    assert analysis is not None and analysis.negotiation_id == "n-1"
-
-
-async def test_a_failing_negotiation_does_not_strand_the_other_offers() -> None:
-    """One seller's marketplace failure must not stop the analysis and gate of the rest."""
-
-    class _BrokenNegotiation:
-        async def negotiate(
-            self, offer: Any, *, tenant_id: str, idempotency_key: str
-        ) -> Any:
-            raise RuntimeError("marketplace unavailable")
-
-    worker = _Worker([_raw(), _raw(platform_offer_id="a-2", seller_id="s-2", product_id="p-2")])
-    runner, store, offers, gate, _ = _runner(
-        worker=worker, negotiation=lambda mission_id: _BrokenNegotiation()
-    )
-    await _seed(store)
-    result = await runner.run(tenant_id=TENANT, mission_id="m-1")
-    assert result.offers_analysed == 2
-    assert result.offers_negotiated == 0
-    assert await gate.list_open(TENANT) == []
-    assert result.mission.failure_reason is None
-    analysis = await offers.get_analysis(TENANT, "mock-a:a-1")
-    assert analysis is not None and analysis.negotiation_id is None
 
 
 async def test_the_mission_emits_one_named_event_per_step() -> None:

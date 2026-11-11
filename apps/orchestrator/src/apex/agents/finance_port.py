@@ -88,6 +88,7 @@ class DomainFinancePort:
             fx_provisional=False,
             landed_cost_total_minor=breakdown.total.amount_minor,
             landed_cost=breakdown,
+            detail=fit,
         )
 
 

@@ -302,8 +302,6 @@ class ScrapingService:
                 currency="EUR",
                 quantity=item.quantity_available,
                 seller_name=item.seller_name,
-                title=item.title,
-                moq=item.moq,
                 collected_at=self._deps.clock.now(),
                 raw_signals={
                     **dict(item.raw_signals),

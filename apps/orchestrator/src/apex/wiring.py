@@ -21,6 +21,8 @@ honest: the alternative would be inventing the numbers those engines own.
 
 from __future__ import annotations
 
+import structlog
+
 import asyncio
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -34,7 +36,7 @@ from apex.agents.browser_worker import HttpBrowserWorker
 from apex.agents.csv_importer import DomainCsvImporter
 from apex.agents.dashboard import Dashboard
 from apex.agents.finance_port import DomainFinancePort
-from apex.agents.fx import DomainFxPort, InMemoryFxRateReader
+from apex.agents.fx import DomainFxPort, EcbFxRateReader
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
 from apex.agents.header_mapping import HeaderMapper
 from apex.agents.intake_chat import IntakeChatAgent
@@ -94,6 +96,9 @@ from apex.tenant_config.repository import InMemoryConfigRepository
 from apex.tenant_config.resolver import content_hash
 from apex.tenant_config.service import TenantConfigService
 from apex.workers.ports import WorkerPorts
+
+logger = structlog.get_logger(__name__)
+
 
 DEV_PLATFORMS: tuple[PlatformInfo, ...] = (
     PlatformInfo(platform_id="mock-a", transport="http", regions=("EU", "CN")),
@@ -468,7 +473,12 @@ def build_app_services(
     )
     prompts = PromptRegistry()
     active_flags = flags or StaticFlags(
-        {f"platform.{p.platform_id}.enabled": True for p in DEV_PLATFORMS}
+        {
+            **{f"platform.{p.platform_id}.enabled": True for p in DEV_PLATFORMS},
+            # Phase 1 is semi-automatic by product design (every draft waits for a person). A demo turns
+            # this on so the chat advances while the audience watches; it is the flag Unleash exposes.
+            "negotiation.autonomous_send": cfg.negotiation_autonomous_send,
+        }
     )
     mission_bus = MissionEventBus()
     mission_store = InMemoryMissionStore()
@@ -491,13 +501,13 @@ def build_app_services(
     # history is empty until D3-03's ingestion persists it, so a non-EUR offer fails with `rate_unavailable`
     # rather than `not_wired` — an honest "no rate yet", not a missing engine.
     fx_port: Any = DomainFxPort(
-        rates=fx_rates or InMemoryFxRateReader(), config=tenant_config, clock=active_clock
+        rates=fx_rates or EcbFxRateReader(), config=tenant_config, clock=active_clock
     )
     onboarding = OnboardingService(
         OnboardingDeps(
             store=InMemoryOnboardingStore(),
             importer=DomainCsvImporter(
-                rates=fx_rates or InMemoryFxRateReader(), config=tenant_config
+                rates=fx_rates or EcbFxRateReader(), config=tenant_config
             ),
             objects=objects or S3ObjectStore(cfg),
             decisions=signing_port(tenant_config, active_clock),
@@ -625,6 +635,64 @@ async def seed_demo_tenants(services: AppServices) -> list[str]:
     return [record.tenant_id for record in written]
 
 
+DEMO_FINANCIALS_CSV = b"""period,metric,value_minor,value_bp,currency,notes
+2026-08,cash_balance,5000000,,EUR,
+2026-09,cash_balance,5200000,,EUR,
+2026-10,cash_balance,5400000,,EUR,
+2026-10,credit_line_available,1000000,,EUR,
+2026-10,tax_reserve,200000,,EUR,
+2026-10,safety_buffer_pct,,1500,,
+2026-10,payment_term_days,60,,,
+"""
+"""Three periods of a small importer's finances (EUR minor units). Three periods enable projection."""
+
+DEMO_ENVELOPES: list[dict[str, Any]] = [
+    {"category": None, "available": {"amount_minor": 3_000_000, "currency": "EUR"}}
+]
+"""EUR 30,000 for any category, stated by the demo instead of derived (ADR-900 Q2 leaves it open)."""
+
+
+async def seed_demo_financials(services: AppServices) -> list[str]:
+    """Demo mode only: leave an active financial snapshot for the demo tenants (criterion 1).
+
+    Without one every mission fails at the financial fit, so a demo reaches offers but never a negotiation.
+    This imports a real CSV through DEV-3 and activates it **unsigned** — ``activation_decision_id =
+    "demo:unsigned"`` — which is why it only runs with ``DEMO_MODE=1``. Idempotent: a tenant that already
+    has an active snapshot is left alone.
+    """
+    if not services.settings.demo_mode:
+        return []
+    seeded: list[str] = []
+    for tenant_id in sorted(DEMO_TENANTS):
+        try:
+            await services.onboarding.require_active_snapshot(tenant_id=tenant_id)
+            continue
+        except OnboardingIncomplete:
+            pass
+        session = await services.onboarding.start_session(tenant_id=tenant_id)
+        snapshot = await services.onboarding.upload_financial_csv(
+            tenant_id=tenant_id,
+            session_id=session.id,
+            content=DEMO_FINANCIALS_CSV,
+            filename="demo-finances.csv",
+            base_currency="EUR",
+        )
+        activated = await services.onboarding.activate_unsigned_for_demo(
+            tenant_id=tenant_id,
+            session_id=session.id,
+            snapshot_id=snapshot.id,
+            envelopes=DEMO_ENVELOPES,
+        )
+        logger.warning(
+            "demo_snapshot_seeded",
+            tenant_id=tenant_id,
+            snapshot_id=activated.id,
+            signed=False,
+        )
+        seeded.append(tenant_id)
+    return seeded
+
+
 def _default_config_version() -> Callable[[str], str]:
     """``tenant_id -> config_version`` for the defaults the services resolved.
 
@@ -654,6 +722,7 @@ __all__ = [
     "S3ObjectStore",
     "UnwiredDecisionPort",
     "build_app_services",
+    "seed_demo_financials",
     "seed_demo_tenants",
 ]
 

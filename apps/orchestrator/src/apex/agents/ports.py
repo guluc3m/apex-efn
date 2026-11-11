@@ -73,6 +73,8 @@ class FitOutcome(_Frozen):
     Kept so the dashboard can show the amount next to the verdict instead of recomputing it."""
     landed_cost: Any | None = None
     """The full ``LandedCostBreakdown`` (every line plus the total). The UI expands it line by line."""
+    detail: Any | None = None
+    """The engine's full ``FinancialFit`` (verdict plus its numeric reasons), ready for the contract."""
 
 
 class GateOutcome(_Frozen):
