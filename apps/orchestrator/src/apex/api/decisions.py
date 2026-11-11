@@ -91,6 +91,13 @@ async def create_decision(
         return await _view(session, ref.id)
 
 
+@router.get("/{id}", response_model=Decision)
+async def get_decision(id: str, principal: Reader, sessions: Sessions) -> Decision:
+    """The decision with its canonical payload: the bytes a signer must sign."""
+    async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
+        return await _view(session, id)
+
+
 @router.post("/{id}/sign", response_model=Signature, status_code=status.HTTP_201_CREATED)
 async def sign_decision(
     id: str, body: SignDecisionRequest, principal: Signer, sessions: Sessions, clock: Now

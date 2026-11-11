@@ -59,7 +59,7 @@
       "request": "Solicitar activación",
       "requesting": "Solicitando…",
       "requested": "Activación solicitada. Queda pendiente de tu firma.",
-      "signPending": "La firma aún no está disponible: depende del backend de decisiones firmadas",
+      "signPending": "Crea antes la decisión y fírmala después con tu clave.",
       "noSession": "Abre antes la importación desde el alta de empresa",
       "requestError": "No se pudo solicitar la activación. Inténtalo de nuevo."
     },
@@ -123,7 +123,7 @@
     "proposeFailed": "No se pudo proponer el cambio.",
     "stale": "Las reglas cambiaron entretanto. Recarga y vuelve a proponer.",
     "sign": "Firmar con passkey",
-    "signDisabled": "Pendiente de conexión: la firma de decisiones aún no está conectada",
+    "signDisabled": "Crea antes la decisión y fírmala después con tu clave.",
     "signNote": "Un cambio es una decisión firmada con reautenticación inmediata por passkey.",
     "noPermission": "Solo Finanzas, administración o propietario pueden cambiar reglas.",
     "history": "Historial",

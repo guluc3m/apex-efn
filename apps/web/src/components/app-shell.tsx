@@ -38,6 +38,7 @@ import { useSigningSession } from '@/stores/signing-session'
 import { AppLink, renderLink } from './app-link'
 import { AppLanguageSwitcher } from './language-switcher'
 import { ConnectedSigningIndicator } from './signing-indicator'
+import { ViewerProvider } from './viewer-context'
 
 /** Ruta sin el prefijo de idioma. */
 function useAppPath() {
@@ -109,7 +110,7 @@ export function AppShell({ children, viewer }: { children: ReactNode; viewer: Vi
     },
   ]
   return (
-    <>
+    <ViewerProvider viewer={viewer}>
       <AppHeader
         navLabel={t('nav.label')}
         skipLabel={t('skip')}
@@ -135,7 +136,7 @@ export function AppShell({ children, viewer }: { children: ReactNode; viewer: Vi
       <main id="contenido" tabIndex={-1}>
         {children}
       </main>
-    </>
+    </ViewerProvider>
   )
 }
 

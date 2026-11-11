@@ -2245,6 +2245,15 @@ export const zCreateDecisionHeaders = z.object({
  */
 export const zCreateDecisionResponse = zDecision
 
+export const zGetDecisionPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * The decision.
+ */
+export const zGetDecisionResponse = zDecision
+
 export const zSignDecisionBody = zSignDecisionRequest
 
 export const zSignDecisionHeaders = z.object({

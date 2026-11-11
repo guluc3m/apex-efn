@@ -136,7 +136,7 @@
     "create": "Create decision",
     "creating": "Creating…",
     "created": "Decision {id} created and waiting for its signature.",
-    "signUnavailable": "Signing is not available yet: the signing flow is still being connected.",
+    "signUnavailable": "Create the decision first, then sign it with your key.",
     "incomplete": "Complete the required fields.",
     "error": "The decision could not be created."
   },

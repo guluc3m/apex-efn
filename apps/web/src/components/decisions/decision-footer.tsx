@@ -2,15 +2,15 @@
 
 import type { DecisionAccepted } from '@apex/shared-types/contracts'
 import { Button, Icon } from '@apex/ui'
-import { FilePlus2, PenLine, X } from 'lucide-react'
+import { FilePlus2, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { SignDecisionButton } from '@/components/signing/sign-decision-button'
 import { ApiError } from '@/lib/api'
 
 /**
  * Footer of every action dialog. "Create decision" calls the API and leaves it pending signature.
- * "Sign" stays disabled until the signing flow (POST /v1/decisions/{id}/sign, D2-09) exists: this
- * screen never fakes a signature.
+ * "Sign" signs the created decision with the browser key; nothing shows as signed until the API accepts it.
  */
 export function DecisionFooter({
   disabledReason,
@@ -48,10 +48,9 @@ export function DecisionFooter({
             {t('create')}
           </Button>
         )}
-        <Button variant="pri" disabledReason={t('signUnavailable')}>
-          <Icon icon={PenLine} />
+        <SignDecisionButton {...(accepted ? { decisionId: accepted.decision_id } : {})} reasonWithout={t('signUnavailable')}>
           {t('sign')}
-        </Button>
+        </SignDecisionButton>
         <Button onClick={onClose}>
           <Icon icon={X} />
           {accepted ? t('close') : t('cancel')}

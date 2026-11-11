@@ -70,6 +70,8 @@ CONFIG_ROUTES: frozenset[tuple[str, str]] = frozenset(
 DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
     {
         ("PATCH", "/v1/onboarding/sessions/{id}"),
+        # Read a decision and its canonical payload before signing (D6-151-contract).
+        ("GET", "/v1/decisions/{id}"),
         # IntakeAgent chat (D6-04-contract): declared in contracts/openapi.yaml, 501 until the agent turn is wired.
         ("GET", "/v1/onboarding/sessions/{id}/messages"),
         ("POST", "/v1/onboarding/sessions/{id}/messages"),

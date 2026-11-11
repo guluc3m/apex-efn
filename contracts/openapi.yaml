@@ -827,6 +827,23 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '422': {$ref: '#/components/responses/ValidationProblem'}
+  /v1/decisions/{id}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [decisions]
+      operationId: getDecision
+      summary: Read a decision with its canonical payload and signatures.
+      description: Actions, activation and rule proposals answer only `decision_id`. The signer reads the payload here before signing.
+      responses:
+        '200':
+          description: The decision.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Decision'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /v1/decisions/{id}/sign:
     parameters:
     - {$ref: '#/components/parameters/PathId'}

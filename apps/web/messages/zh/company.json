@@ -59,7 +59,7 @@
       "request": "申请激活",
       "requesting": "正在申请…",
       "requested": "已申请激活，等待你的签名。",
-      "signPending": "暂时无法签名：依赖签名决定后端",
+      "signPending": "请先创建决定，然后用您的密钥签名。",
       "noSession": "请先从公司注册流程打开该导入",
       "requestError": "无法申请激活，请重试。"
     },
@@ -123,7 +123,7 @@
     "proposeFailed": "无法提议此更改。",
     "stale": "规则已在此期间更改。请刷新后重新提议。",
     "sign": "使用通行密钥签名",
-    "signDisabled": "待连接：决定签名尚未接通",
+    "signDisabled": "请先创建决定，然后用您的密钥签名。",
     "signNote": "更改是一项决定，需要立即通过通行密钥重新验证后签名。",
     "noPermission": "只有财务、管理员或所有者可以更改规则。",
     "history": "历史",
