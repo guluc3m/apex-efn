@@ -13,6 +13,7 @@ export const queryKeys = {
   mission: (id: string) => ['mission', id] as const,
   missionOffers: (id: string) => ['mission', id, 'offers'] as const,
   recommendation: (id: string, profile: string) => ['mission', id, 'recommendation', profile] as const,
+  profiles: ['profiles'] as const,
   sellerConfidence: (id: string) => ['seller', id, 'confidence'] as const,
   negotiation: (id: string) => ['negotiation', id] as const,
   negotiationMessages: (id: string) => ['negotiation', id, 'messages'] as const,
@@ -57,6 +58,16 @@ export function useMissionRecommendation(id: string, profile: string | undefined
     queryKey: queryKeys.recommendation(id, profile ?? ''),
     queryFn: ({ signal }) => api.getMissionRecommendation(id, profile!, signal),
     enabled: !!profile,
+  })
+}
+
+/** No retry: until the server serves profiles it answers 501 and the screen falls back to typing the id. */
+export function useProfiles() {
+  return useQuery({
+    queryKey: queryKeys.profiles,
+    queryFn: ({ signal }) => api.listProfiles(signal),
+    retry: false,
+    staleTime: 5 * 60_000,
   })
 }
 

@@ -62,6 +62,7 @@ import type {
   VerifyAuditChainResponse,
   VerifyDecisionResponse,
   GetFinancialImportResponse,
+  ListProfilesResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
@@ -163,6 +164,9 @@ export function createOperations(client: ApiClient) {
 
     listMissionOffers: (id: string, query?: ListMissionOffersData['query'], signal?: AbortSignal) =>
       client.request<ListMissionOffersResponse>('/v1/missions/{id}/offers', { path: { id }, query, signal }),
+
+    /** Ranking profiles the user can pick for a recommendation. */
+    listProfiles: (signal?: AbortSignal) => client.request<ListProfilesResponse>('/v1/profiles', { path: {}, signal }),
 
     getMissionRecommendation: (id: string, profile: GetMissionRecommendationData['query']['profile'], signal?: AbortSignal) =>
       client.request<GetMissionRecommendationResponse>('/v1/missions/{id}/recommendation', {
