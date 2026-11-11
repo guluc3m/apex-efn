@@ -109,13 +109,13 @@ def test_disabled_auth_answers_503(app: FastAPI, monkeypatch) -> None:
 def test_a_route_without_its_own_auth_dependency_is_still_protected(
     app: FastAPI, make_token, monkeypatch
 ) -> None:
-    # GET /v1/audit is a stub owned by DEV-2 and depends on no tenant helper of its own. Authentication
+    # GET /v1/sellers/s-1/confidence is a stub and depends on no tenant helper of its own. Authentication
     # is applied to the whole /v1 surface, so an unauthenticated call must not fall through to the stub.
     monkeypatch.delenv("APEX_ALLOW_TENANT_HEADER", raising=False)
 
-    anonymous = TestClient(app).get("/v1/audit")
+    anonymous = TestClient(app).get("/v1/sellers/s-1/confidence")
     authenticated = TestClient(app).get(
-        "/v1/audit", headers={"authorization": f"Bearer {make_token()}"}
+        "/v1/sellers/s-1/confidence", headers={"authorization": f"Bearer {make_token()}"}
     )
 
     assert anonymous.status_code == 401
@@ -123,7 +123,9 @@ def test_a_route_without_its_own_auth_dependency_is_still_protected(
 
 
 def test_a_real_route_is_no_longer_blocked_by_the_placeholder(app: FastAPI, make_token) -> None:
-    response = TestClient(app).get("/v1/audit", headers={"authorization": f"Bearer {make_token()}"})
+    response = TestClient(app).get(
+        "/v1/sellers/s-1/confidence", headers={"authorization": f"Bearer {make_token()}"}
+    )
 
     # Whatever the owning lane answers (501 today, 200/403 later), it must not be the auth 401.
     assert response.status_code != 401
