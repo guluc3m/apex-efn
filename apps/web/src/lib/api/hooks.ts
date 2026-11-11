@@ -9,6 +9,7 @@ import { ApiError } from './problem'
 export const api = createOperations(createApiClient())
 
 export const queryKeys = {
+  intakeMessages: (id: string) => ['onboarding', id, 'messages'] as const,
   mission: (id: string) => ['mission', id] as const,
   missionOffers: (id: string) => ['mission', id, 'offers'] as const,
   recommendation: (id: string, profile: string) => ['mission', id, 'recommendation', profile] as const,
@@ -153,5 +154,29 @@ export function useGateAction() {
   return useMutation({
     mutationFn: (v: { id: string; body: Parameters<typeof api.applyGateQueueAction>[1] }) => api.applyGateQueueAction(v.id, v.body),
     onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ['deals'] }), qc.invalidateQueries({ queryKey: ['gate'] })]),
+  })
+}
+
+export function useIntakeMessages(sessionId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.intakeMessages(sessionId ?? ''),
+    queryFn: ({ signal }) => api.listIntakeMessages(sessionId!, signal),
+    enabled: !!sessionId,
+  })
+}
+
+/** The user message only enters the list once the API returned it, together with the agent reply. */
+export function useSendIntakeMessage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ sessionId, text }: { sessionId: string; text: string }) => ({
+      sessionId,
+      turn: await api.sendIntakeMessage(sessionId, { text }),
+    }),
+    onSuccess: ({ sessionId, turn }) => {
+      qc.setQueryData<{ items: typeof turn.messages }>(queryKeys.intakeMessages(sessionId), (old) => ({
+        items: [...(old?.items ?? []), ...turn.messages],
+      }))
+    },
   })
 }

@@ -18,6 +18,9 @@ interface OnboardingStore {
   financialImport: UploadFinancialCsvResponse | null
   setFinancialImport: (i: UploadFinancialCsvResponse | null) => void
   setSessionId: (id: string) => void
+  /** Bumped when the agent changes a draft, so a mounted form remounts with the new values. */
+  draftsRevision: number
+  applyAgentDraft: <K extends FormStepId>(step: K, values: Drafts[K]) => void
   save: <K extends FormStepId>(step: K, values: Drafts[K]) => void
   setCsv: (csv: CsvSelection | null) => void
 }
@@ -29,6 +32,8 @@ export const useOnboarding = create<OnboardingStore>((set) => ({
   financialImport: null,
   setFinancialImport: (financialImport) => set({ financialImport }),
   setSessionId: (sessionId) => set({ sessionId }),
+  draftsRevision: 0,
+  applyAgentDraft: (step, values) => set((s) => ({ drafts: { ...s.drafts, [step]: values }, draftsRevision: s.draftsRevision + 1 })),
   save: (step, values) => set((s) => ({ drafts: { ...s.drafts, [step]: values } })),
   setCsv: (csv) => set({ csv }),
 }))

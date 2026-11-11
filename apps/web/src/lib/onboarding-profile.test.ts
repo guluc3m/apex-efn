@@ -2,22 +2,17 @@ import { describe, expect, it } from 'vitest'
 
 import { initialDrafts } from '@/fixtures/onboarding'
 
-import { toProfilePatch } from './onboarding-profile'
+import { fromProfile } from './onboarding-profile'
 
-describe('toProfilePatch', () => {
-  it('maps the company step and copies shipping to billing when equal', () => {
-    const p = toProfilePatch('empresa', initialDrafts)
-    expect(p).toMatchObject({
-      country: 'ES',
-      legal_name: 'Industrias Ejemplo, S.L.',
-      billing_address: p?.shipping_address,
-    })
+const empresa = initialDrafts.empresa
+
+describe('fromProfile', () => {
+  it('maps the agent-filled name and country onto the empresa draft', () => {
+    expect(fromProfile({ legal_name: 'ACME S.L.', country: 'ES' }, empresa)).toEqual({ ...empresa, razonSocial: 'ACME S.L.', pais: 'ES' })
   })
-  it('maps the sector step to contract enums and a category list', () => {
-    const p = toProfilePatch('sector', {
-      ...initialDrafts,
-      sector: { ...initialDrafts.sector, frecuencia: 'occasional', compras: 'a, b\nc' },
-    })
-    expect(p).toMatchObject({ purchase_frequency: 'one_off', purchase_categories: ['a', 'b', 'c'] })
+
+  it('returns null when nothing changes, so the form is not remounted', () => {
+    expect(fromProfile({ legal_name: null, country: null }, empresa)).toBeNull()
+    expect(fromProfile({ legal_name: empresa.razonSocial, country: empresa.pais }, empresa)).toBeNull()
   })
 })
