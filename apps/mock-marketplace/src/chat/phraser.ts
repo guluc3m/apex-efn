@@ -71,8 +71,10 @@ function userPrompt(scripted: string, price: Quote | null): string {
 
 export interface LlmPhraserOptions {
   timeoutMs?: number
-  /** Stub scenario to force; the demo uses the price-echoing one. */
-  scenario?: string
+  /** Stub scenario to force. `null` sends no header (a real provider, e.g. DeepSeek). */
+  scenario?: string | null
+  /** Bearer token for a real provider. Never logged, never in the payload. */
+  apiKey?: string
   /** Injected in tests so no socket is ever opened. */
   fetchImpl?: FetchLike
   model?: string
@@ -87,6 +89,8 @@ export function createLlmPhraser(baseUrl: string, options: LlmPhraserOptions = {
   const timeoutMs = options.timeoutMs ?? LLM_TIMEOUT_MS
   const fetchImpl = options.fetchImpl ?? fetch
   const model = options.model ?? 'seller'
+  // `undefined` keeps the local stub default; `null` means a real provider and no header at all.
+  const scenario = options.scenario === undefined ? 'sim-negotiation' : options.scenario
 
   return {
     async phrased(scripted: string, price: Quote | null): Promise<string> {
@@ -94,7 +98,8 @@ export function createLlmPhraser(baseUrl: string, options: LlmPhraserOptions = {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-stub-scenario': options.scenario ?? 'sim-negotiation',
+          ...(scenario ? { 'x-stub-scenario': scenario } : {}),
+          ...(options.apiKey ? { authorization: `Bearer ${options.apiKey}` } : {}),
         },
         body: JSON.stringify({
           model,
@@ -123,4 +128,30 @@ export function createPhraser(
   options: LlmPhraserOptions = {}
 ): ChatPhraser {
   return url === undefined || url.trim().length === 0 ? noopPhraser : createLlmPhraser(url, options)
+}
+
+/**
+ * Reads the phraser configuration from the environment.
+ *
+ * With `SIM_LLM_API_KEY` (or `DEEPSEEK_API_KEY`) set, the endpoint is treated as a real provider: no stub
+ * scenario header, no `seller` model name, and a timeout that a real request can meet. Without a key it is the
+ * local stub the demo ships with. The key is read here and only here.
+ */
+export function phraserFromEnv(
+  env: Record<string, string | number | undefined> = process.env
+): ChatPhraser {
+  const text = (key: string): string | undefined => {
+    const value = env[key]
+    return value === undefined ? undefined : String(value)
+  }
+  const apiKey = text('SIM_LLM_API_KEY') ?? text('DEEPSEEK_API_KEY')
+  const model = text('SIM_LLM_MODEL') ?? (apiKey ? 'deepseek-chat' : 'seller')
+  const scenario = text('SIM_LLM_SCENARIO') ?? (apiKey ? null : 'sim-negotiation')
+  const timeoutMs = Number(text('SIM_LLM_TIMEOUT_MS') ?? (apiKey ? 8000 : LLM_TIMEOUT_MS))
+  return createPhraser(text('SIM_LLM_URL'), {
+    ...(apiKey ? { apiKey } : {}),
+    ...(scenario === null ? { scenario: null } : { scenario }),
+    ...(Number.isFinite(timeoutMs) && timeoutMs > 0 ? { timeoutMs } : {}),
+    model,
+  })
 }

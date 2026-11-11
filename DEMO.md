@@ -57,6 +57,42 @@ cd apps/mock-marketplace  && SIM_LLM_URL=http://127.0.0.1:8001 pnpm dev       # 
 cd apps/orchestrator      && uv run python -m apex.negotiation.sim.server     # :8003
 ```
 
+### Con un modelo de verdad (DeepSeek)
+
+El demo funciona igual, pero las frases las escribe un modelo real. **Los precios los sigue decidiendo el
+código**: si el modelo cambia una cifra, su frase se descarta y se usa la plantilla.
+
+```bash
+export SIM_LLM_URL=https://api.deepseek.com
+export DEEPSEEK_API_KEY=sk-...            # o SIM_LLM_API_KEY
+export SIM_LLM_MODEL=deepseek-chat        # opcional: es el valor por defecto con clave
+export SIM_LLM_TIMEOUT_MS=8000            # opcional: una respuesta real tarda más que el stub
+./apps/orchestrator/src/apex/negotiation/sim/demo.sh
+```
+
+**Dónde pongo la clave.** Dos formas, ninguna toca el repo:
+
+```bash
+# A) en la terminal, solo para esa sesión
+export DEEPSEEK_API_KEY=sk-...
+
+# B) en un .env.local en la raíz del repo (ya está en .gitignore), y el script lo carga solo
+echo 'DEEPSEEK_API_KEY=sk-...' > .env.local
+./apps/orchestrator/src/apex/negotiation/sim/demo.sh
+```
+
+No la pongas en `demo.sh`, en `compose.yaml` ni en ningún fichero versionado: `.env.local`, `.env` y
+`.env.*.local` están ignorados por git, y el script no imprime la clave.
+
+Con clave configurada el script **no arranca el stub** y apunta el mercado y el comprador al proveedor. Detalles:
+
+- La clave viaja solo en la cabecera `Authorization`, nunca en el cuerpo ni en los logs.
+- Sin clave, todo sigue siendo local y determinista (el escenario `sim-negotiation` del stub).
+- Una partida son ~20–30 llamadas cortas (una por mensaje); con `deepseek-chat` es céntimos.
+- El modelo no decide precios: el vendedor los calcula en `personas.ts` y el comprador en el playbook. El
+  stub/proveedor solo pone el texto, y las guardas (`pinsPrice` en el vendedor, `plan_matches` en el
+  comprador) tiran la frase si la cifra no coincide.
+
 Y si quieres la traza en texto en vez de la página:
 
 ```bash
@@ -73,7 +109,10 @@ uv run python -m apex.negotiation.sim run --llm-url http://127.0.0.1:8001 --json
 2. **El montaje (30 s).** "Esto no toca ninguna plataforma real": mercado falso en local, modelos falsos en local,
    datos sintéticos. Enseña la tabla de la sección 1.
 3. **El catálogo (1 min).** Precios, MOQ y por qué el comprador elige un proveedor y no otro.
-4. **La negociación (3 min).** Abre la tarjeta de **Ana** y ve leyendo la conversación:
+4. **La negociación (3 min).** Pulsa **Run scenario** y la conversación **no aparece de golpe**: los mensajes
+   van saliendo de uno en uno, ronda a ronda entre los tres compradores. Usa **Step** (un mensaje), **Play**
+   (uno cada 1,2 s) o **Show all** (todo de golpe) según el ritmo que quieras. Abre la tarjeta de **Ana** y ve
+   leyendo la conversación:
    - el comprador abre bajo (3,68 €) y el vendedor **no acepta**: contesta 4,22 €;
    - cada ronda el vendedor cede un 15% de la diferencia, nunca su suelo;
    - Ana sube hasta su objetivo (3,81 €) y aun así el vendedor está en 4,05 €;

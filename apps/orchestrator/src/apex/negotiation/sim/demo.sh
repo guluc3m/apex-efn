@@ -1,14 +1,41 @@
 #!/usr/bin/env bash
-# One-command demo (D5-11): LLM stub + fake marketplace + the AI-buyer simulation UI.
+# One-command demo (D5-11): LLM + fake marketplace + the AI-buyer simulation UI.
 #
+#   ./apps/orchestrator/src/apex/negotiation/sim/demo.sh            # local LLM stub
+#   DEEPSEEK_API_KEY=sk-... ./…/demo.sh                            # real model, both sides
+#
+# Real provider (prices are still decided in code; the model only words the messages):
+#   export SIM_LLM_URL=https://api.deepseek.com
+#   export DEEPSEEK_API_KEY=sk-...
+#   export SIM_LLM_MODEL=deepseek-chat        # optional, this is the default with a key
+#   export SIM_LLM_TIMEOUT_MS=8000            # optional, a real reply is slower than the stub
 #   ./apps/orchestrator/src/apex/negotiation/sim/demo.sh
-#   open http://127.0.0.1:8003
 #
-# Everything is local: no Docker, no database, no network. Ctrl-C stops all three processes.
+# Everything else is local: no marketplace, no database, no Docker. Ctrl-C stops all the processes.
 set -euo pipefail
 
 SIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SIM_DIR/../../../../../.." && pwd)"
+
+# Local secrets, already gitignored: put `DEEPSEEK_API_KEY=...` in .env.local at the repo root.
+if [ -f "$ROOT/.env.local" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$ROOT/.env.local"
+  set +a
+fi
+
+API_KEY="${SIM_LLM_API_KEY:-${DEEPSEEK_API_KEY:-}}"
+if [ -n "$API_KEY" ]; then
+  export SIM_LLM_API_KEY="${SIM_LLM_API_KEY:-$API_KEY}"
+  export SIM_LLM_URL="${SIM_LLM_URL:-https://api.deepseek.com}"
+  export SIM_LLM_MODEL="${SIM_LLM_MODEL:-deepseek-chat}"
+  export SIM_LLM_TIMEOUT_MS="${SIM_LLM_TIMEOUT_MS:-8000}"
+  unset SIM_LLM_SCENARIO || true
+else
+  export SIM_LLM_URL="${SIM_LLM_URL:-http://127.0.0.1:8001}"
+  export SIM_LLM_SCENARIO="${SIM_LLM_SCENARIO:-sim-negotiation}"
+fi
 
 cleanup() {
   echo ""
@@ -29,15 +56,19 @@ wait_for() {
   exit 1
 }
 
-echo "1/3  LLM stub            :8001"
-(cd "$ROOT/apps/llm-stub" && exec uv run python -m llm_stub) &
-wait_for "http://127.0.0.1:8001/v1/models" "LLM stub"
+if [ -n "$API_KEY" ]; then
+  echo "     LLM                   $SIM_LLM_URL  (model $SIM_LLM_MODEL, key loaded)"
+else
+  echo "     LLM stub              :8001"
+  (cd "$ROOT/apps/llm-stub" && exec uv run python -m llm_stub) &
+  wait_for "http://127.0.0.1:8001/v1/models" "LLM stub"
+fi
 
-echo "2/3  fake marketplace    :8002  (mock-a, mock-b, mock-c)"
+echo "     fake marketplace      :8002  (mock-a, mock-b, mock-c)"
 (cd "$ROOT/apps/mock-marketplace" && exec pnpm dev) &
 wait_for "http://127.0.0.1:8002/healthz" "fake marketplace"
 
-echo "3/3  simulation UI       :8003"
+echo "     simulation UI         :8003"
 (cd "$ROOT/apps/orchestrator" && exec uv run python -m apex.negotiation.sim.server) &
 wait_for "http://127.0.0.1:8003/api/config" "simulation UI"
 

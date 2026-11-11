@@ -5,6 +5,7 @@ import {
   createLlmPhraser,
   createPhraser,
   noopPhraser,
+  phraserFromEnv,
   pinsPrice,
   type FetchLike,
 } from './phraser.js'
@@ -142,5 +143,50 @@ describe('createLlmPhraser', () => {
       timeoutMs: 20,
     })
     await expect(slow.phrased(SCRIPTED, PRICE)).rejects.toThrow()
+  })
+})
+
+
+describe('provider configuration', () => {
+  it('sends the stub scenario header and the seller model without a key', async () => {
+    const { impl, calls } = stubFetch('Understood. We can do EUR 4.32 per unit for that volume.')
+    const phraser = createPhraser('http://stub.test', { fetchImpl: impl })
+    await phraser.phrased(SCRIPTED, PRICE)
+
+    const headers = calls[0]?.init.headers as Record<string, string>
+    expect(headers['x-stub-scenario']).toBe('sim-negotiation')
+    expect(headers.authorization).toBeUndefined()
+    const body = JSON.parse(calls[0]?.init.body as string) as { model: string }
+    expect(body.model).toBe('seller')
+  })
+
+  it('sends a bearer token and no stub header for a real provider', async () => {
+    const { impl, calls } = stubFetch('Understood. We can do EUR 4.32 per unit for that volume.')
+    const phraser = phraserFromEnv({
+      SIM_LLM_URL: 'https://api.deepseek.com',
+      SIM_LLM_API_KEY: 'sk-test-key',
+    })
+    // The env-built phraser uses the real fetch; drive the same options through the injectable one instead.
+    await createLlmPhraser('https://api.deepseek.com', {
+      fetchImpl: impl,
+      apiKey: 'sk-test-key',
+      scenario: null,
+      model: 'deepseek-chat',
+    }).phrased(SCRIPTED, PRICE)
+    void phraser
+
+    const headers = calls[0]?.init.headers as Record<string, string>
+    expect(headers.authorization).toBe('Bearer sk-test-key')
+    expect(headers['x-stub-scenario']).toBeUndefined()
+    const body = JSON.parse(calls[0]?.init.body as string) as { model: string }
+    expect(body.model).toBe('deepseek-chat')
+  })
+
+  it('reads the provider settings from the environment', () => {
+    const real = phraserFromEnv({
+      SIM_LLM_URL: 'https://api.deepseek.com',
+      DEEPSEEK_API_KEY: 'sk-env',
+    })
+    expect(real).not.toBe(noopPhraser)
   })
 })

@@ -47,6 +47,12 @@
         background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px;
       }
       button[disabled] { opacity: .55; cursor: progress; }
+      button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); font-weight: 600; padding: 7px 12px; }
+      button.ghost:hover { border-color: var(--accent); color: var(--accent); }
+      .playback { display: inline-flex; gap: 8px; align-items: center; }
+      .chat-controls { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; }
+      button.ghost.small { padding: 4px 9px; font-size: 11px; }
+      .line.pending { display: none; }
       .status { font-size: 12px; color: var(--muted); margin-left: auto; }
       .error {
         border: 1px solid #fda29b; background: #fffbfa; color: var(--bad);
@@ -71,7 +77,9 @@
       .buyer-head { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--wash); }
       .buyer-head h3 { margin: 0; font-size: 14px; }
       .buyer-body { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 0; align-items: start; }
-      .steps { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; align-self: stretch; }
+      .ladder { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; align-self: stretch; }
+      .ladder summary { cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
+      .steps { list-style: none; margin: 0; padding: 0; }
       .steps li { list-style: none; margin: 0 0 8px; padding-left: 14px; position: relative; }
       .steps li::before { content: ""; position: absolute; left: 0; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
       .steps li.done::before { background: var(--accent); }
@@ -84,8 +92,6 @@
       .line .who { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
       .empty { color: var(--muted); font-size: 13px; }
       .legend { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-      .steps li.legend { padding-left: 0; margin-bottom: 10px; }
-      .steps li.legend::before { content: none; }
       footer { margin-top: 34px; color: var(--muted); font-size: 12px; }
       code { background: var(--wash); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
       @media (max-width: 760px) { .buyer-body { grid-template-columns: 1fr; } .steps { border-right: 0; border-bottom: 1px solid var(--line); } }
@@ -94,7 +100,7 @@
   <body>
     <header>
       <h1>APEX-EFN · simulated marketplace</h1>
-      <p>Three AI buyers, one fake marketplace, no real platforms — prices are decided in code, words come from the LLM stub.</p>
+      <p>Three AI buyers, one fake marketplace, no real platforms — prices are decided in code, the words come from the model (stub or DeepSeek).</p>
     </header>
 
     <main>
@@ -104,7 +110,7 @@
           <input id="market" class="wide" placeholder="http://127.0.0.1:8002" />
         </div>
         <div class="field">
-          <label for="llm">LLM stub</label>
+          <label for="llm">LLM endpoint</label>
           <input id="llm" class="wide" placeholder="http://127.0.0.1:8001" />
         </div>
         <div class="field">
@@ -116,6 +122,12 @@
           <input id="qty" type="number" min="1" value="5000" />
         </div>
         <button id="run">Run scenario</button>
+        <span class="playback" id="playback" hidden>
+          <button id="step" class="ghost">Step</button>
+          <button id="play" class="ghost">Play</button>
+          <button id="all" class="ghost">Show all</button>
+          <span class="status" id="progress"></span>
+        </span>
         <span class="status" id="status"></span>
       </div>
 
@@ -213,7 +225,7 @@
           .join("");
 
         $("run-buyers").innerHTML = (report.buyers || [])
-          .map((buyer) => {
+          .map((buyer, index) => {
             const outcome = buyer.outcome || "error";
             const lines =
               (buyer.transcript || [])
@@ -230,7 +242,7 @@
               )
               .join("");
             return `
-              <div class="buyer">
+              <div class="buyer" data-buyer="${index}">
                 <div class="buyer-head">
                   <h3>${esc(buyer.name)}</h3>
                   <span class="badge ${outcome}">${esc(outcome.replaceAll("_", " "))}</span>
@@ -239,15 +251,143 @@
                     ${buyer.final_price ? ` · final ${money(buyer.final_price)}` : ""}
                     ${buyer.reason ? ` · ${esc(buyer.reason)}` : ""}
                   </span>
+                  <span class="chat-controls">
+                    <button class="ghost small" data-act="step">Step</button>
+                    <button class="ghost small" data-act="play">Play</button>
+                    <button class="ghost small" data-act="all">All</button>
+                    <span class="status" data-counter>0 / 0</span>
+                  </span>
                 </div>
                 <div class="buyer-body">
-                  <ul class="steps"><li class="legend">Offer ladder</li>${steps}</ul>
+                  <details class="ladder"><summary>Offer ladder (spoiler)</summary><ul class="steps">${steps}</ul></details>
                   <div class="transcript"><p class="legend">Conversation</p>${lines}</div>
                 </div>
               </div>`;
           })
           .join("") || '<p class="empty">No buyers ran.</p>';
+        preparePlayback();
       }
+
+      const playback = { buyers: [], timer: null };
+
+      function stopTimer(state) {
+        if (state.timer !== null) {
+          clearInterval(state.timer);
+          state.timer = null;
+          state.play.textContent = "Play";
+        }
+      }
+
+      function stopAll() {
+        if (playback.timer !== null) {
+          clearInterval(playback.timer);
+          playback.timer = null;
+          $("play").textContent = "Play";
+        }
+        for (const state of playback.buyers) stopTimer(state);
+      }
+
+      function counters() {
+        const total = playback.buyers.reduce((n, state) => n + state.lines.length, 0);
+        const shown = playback.buyers.reduce(
+          (n, state) => n + Math.min(state.index, state.lines.length),
+          0
+        );
+        $("progress").textContent = `${shown} / ${total}`;
+        for (const state of playback.buyers) {
+          state.counter.textContent = `${Math.min(state.index, state.lines.length)} / ${state.lines.length}`;
+        }
+      }
+
+      function advance(state) {
+        const line = state.lines[state.index];
+        if (line === undefined) {
+          stopTimer(state);
+          return false;
+        }
+        line.classList.remove("pending");
+        line.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        state.index += 1;
+        counters();
+        if (state.index >= state.lines.length) stopTimer(state);
+        return true;
+      }
+
+      // One click on the global Step = one message in each chat (one round).
+      function advanceRound() {
+        let any = false;
+        for (const state of playback.buyers) {
+          if (advance(state)) any = true;
+        }
+        if (!any) stopAll();
+      }
+
+      function togglePlay(state) {
+        if (state.timer !== null) {
+          stopTimer(state);
+          return;
+        }
+        if (state.index >= state.lines.length) return;
+        state.play.textContent = "Pause";
+        state.timer = setInterval(() => {
+          if (!advance(state)) stopTimer(state);
+        }, 1200);
+      }
+
+      function revealAll(state) {
+        stopTimer(state);
+        for (const line of state.lines) line.classList.remove("pending");
+        state.index = state.lines.length;
+        counters();
+      }
+
+      function preparePlayback() {
+        stopAll();
+        playback.buyers = [...document.querySelectorAll("[data-buyer]")].map((card) => {
+          const lines = [...card.querySelectorAll(".line")];
+          for (const line of lines) line.classList.add("pending");
+          const state = {
+            card,
+            lines,
+            index: 0,
+            timer: null,
+            step: card.querySelector('[data-act="step"]'),
+            play: card.querySelector('[data-act="play"]'),
+            all: card.querySelector('[data-act="all"]'),
+            counter: card.querySelector("[data-counter]"),
+          };
+          state.step.addEventListener("click", () => {
+            stopTimer(state);
+            advance(state);
+          });
+          state.play.addEventListener("click", () => togglePlay(state));
+          state.all.addEventListener("click", () => revealAll(state));
+          return state;
+        });
+        // Start with the opening message of every chat, so the page is never blank.
+        for (const state of playback.buyers) advance(state);
+        const total = playback.buyers.reduce((n, state) => n + state.lines.length, 0);
+        $("playback").hidden = total === 0;
+        counters();
+      }
+
+      $("step").addEventListener("click", () => {
+        stopAll();
+        advanceRound();
+      });
+      $("play").addEventListener("click", () => {
+        if (playback.timer !== null) {
+          stopAll();
+          return;
+        }
+        if (playback.buyers.every((state) => state.index >= state.lines.length)) return;
+        $("play").textContent = "Pause";
+        playback.timer = setInterval(advanceRound, 1200);
+      });
+      $("all").addEventListener("click", () => {
+        stopAll();
+        for (const state of playback.buyers) revealAll(state);
+      });
 
       $("run").addEventListener("click", run);
       loadConfig().then(() => { /* first run is manual: the marketplace may not be up yet */ });
