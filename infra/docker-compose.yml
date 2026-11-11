@@ -377,6 +377,8 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-apex-dev-secret}
       BROWSER_WORKER_URL: http://browser-worker:4010
       BROWSER_WORKER_TOKEN: ${BROWSER_WORKER_TOKEN:-apex-dev-browser-worker-token-0123456789}
+      # The config defaults point every LLM role at the stub as seen from the host (localhost:8001).
+      LLM_BASE_URL_OVERRIDE: http://llm-stub:8001/v1
       AUTH_ISSUER_URL: http://localhost:8080/realms/apex
       # D1-05: the issuer is the browser-facing URL that appears in the token's `iss`; the JWKS is
       # fetched over the compose network, where Keycloak is `keycloak` and not `localhost`.
@@ -434,6 +436,13 @@ services:
       VAULT_TOKEN: apex-dev-root-token
       # D5-02: the real browser stack is opt-in; with 0 the worker stays on its deterministic path.
       BROWSER_WORKER_REAL_BROWSER: '0'
+      # The mock marketplace (D5-04) is the only platform in dev. Each adapter is still gated by its
+      # `platform.<id>.enabled` flag: `node infra/unleash/seed-flags.mjs --enable-platforms` turns them on.
+      MOCK_A_BASE_URL: http://mock-marketplace:8002
+      MOCK_B_BASE_URL: http://mock-marketplace:8002
+      MOCK_C_BASE_URL: http://mock-marketplace:8002
+      UNLEASH_URL: http://unleash:4242/api
+      UNLEASH_API_TOKEN: ${UNLEASH_API_TOKEN:-default:development.apex-dev-unleash-client}
       APEX_LOG_LEVEL: info
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:

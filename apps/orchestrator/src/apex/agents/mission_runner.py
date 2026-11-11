@@ -15,6 +15,7 @@ the mission with a reason that names the owning lane, instead of leaving it sile
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -64,6 +65,8 @@ class MissionRunnerDeps:
     not know about the gateway."""
 
 
+logger = logging.getLogger(__name__)
+
 _ENGINE_REFUSALS = (TrustUnavailable, SanityUnavailable, FinanceUnavailable, FxUnavailable)
 
 
@@ -104,6 +107,11 @@ class MissionRunner:
         except _ENGINE_REFUSALS as exc:
             # An engine refused to run (unset config, no snapshot, no rate): the mission fails with the reason.
             return await self._fail(mission, str(exc))
+        except Exception as exc:
+            # Runs happen in the background (``mission_autorun``): nobody awaits them, so an unexpected error
+            # must still close the mission with a reason instead of leaving it ``running`` forever.
+            logger.exception("mission run failed", extra={"mission_id": mission.id})
+            return await self._fail(mission, f"internal_error: {type(exc).__name__}: {exc}")
 
     async def _run(self, mission: Mission, plan: SourcingPlan) -> MissionRunResult:
         scrape = await self._deps.scraping.scrape(

@@ -299,6 +299,15 @@ async def test_an_unwired_port_fails_the_mission_with_the_owner_named() -> None:
     assert result.mission.events[-1].type is MissionEventType.MISSION_FAILED
 
 
+async def test_an_unexpected_error_fails_the_mission_instead_of_leaving_it_running() -> None:
+    """Background runs are not awaited by anyone: the runner itself must close the mission."""
+    runner, store, _, _, _ = _runner(worker=_Worker(RuntimeError("database is down")))
+    await _seed(store)
+    result = await runner.run(tenant_id=TENANT, mission_id="m-1")
+    assert result.mission.status is MissionStatus.FAILED
+    assert result.failed_reason == "internal_error: RuntimeError: database is down"
+
+
 async def test_a_failed_mission_keeps_its_reason_for_the_ui() -> None:
     runner, store, _, _, _ = _runner(worker=_Worker(NotImplementedError("owner: DEV-5, D5-01")))
     await _seed(store)

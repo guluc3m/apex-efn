@@ -316,15 +316,15 @@ class DefaultRoleConfigProvider:
     have to be applied here explicitly rather than silently ignored.
     """
 
-    def __init__(self, defaults_path: Path | None = None) -> None:
+    def __init__(self, defaults_path: Path | None = None, *, base_url_override: str = "") -> None:
         self._version, values = load_global_layer(defaults_path or DEFAULT_PATH)
-        self._roles = _roles_from(values)
+        self._roles = _roles_from(values, base_url_override=base_url_override)
 
     def llm_roles(self, tenant_id: str) -> LLMRolesConfig:
         return self._roles
 
 
-def _roles_from(values: dict[str, Any]) -> LLMRolesConfig:
+def _roles_from(values: dict[str, Any], *, base_url_override: str = "") -> LLMRolesConfig:
     """Build the gateway's role configuration from the ``llm.roles`` block. Loud on anything unknown."""
     raw = values.get("llm", {}).get("roles")
     if not raw:
@@ -340,7 +340,7 @@ def _roles_from(values: dict[str, Any]) -> LLMRolesConfig:
             raise RuntimeError(f"unknown llm role {name!r} in config") from exc
         endpoint = RoleEndpointConfig(
             endpoint_id=f"default-{name}",
-            base_url=str(role["base_url"]),
+            base_url=base_url_override or str(role["base_url"]),
             model=str(role["model"]),
             capabilities=_capabilities(tuple(role.get("capabilities", ()))),
         )
@@ -409,7 +409,7 @@ def build_app_services(
     )
     signing._config = tenant_config
     gateway = LLMGateway(
-        config_provider=DefaultRoleConfigProvider(),
+        config_provider=DefaultRoleConfigProvider(base_url_override=cfg.llm_base_url_override),
         secrets=StaticSecretResolver({}),
         budget=TokenBudget(InMemoryBudgetStore(), mission_limit=cfg.llm_mission_token_budget),
         sink=InMemorySink(),
