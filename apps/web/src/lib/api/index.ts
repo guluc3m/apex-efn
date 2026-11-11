@@ -18,6 +18,7 @@ export {
   useNegotiation,
   useNegotiationAction,
   useNegotiationMessages,
+  useProfiles,
   useProposeConfigChange,
   useSellerConfidence,
   useVerifyDecision,

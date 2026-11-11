@@ -1,15 +1,15 @@
 'use client'
 
 import type { Offer, Recommendation } from '@apex/shared-types/contracts'
-import { Button, EmptyState, FinancialVerdictBadge, Icon, Input, Label, MoneyDisplay, PriceBandBadge } from '@apex/ui'
+import { Button, EmptyState, FinancialVerdictBadge, Icon, Input, Label, MoneyDisplay, PriceBandBadge, Select } from '@apex/ui'
 import { ArrowDown, ArrowLeft, ArrowUp, Download, PiggyBank, Scale, SlidersHorizontal } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 
 import { AppLink } from '@/components/app-link'
 import { QueryBoundary } from '@/components/query-boundary'
 import { OfferConfidence } from '@/components/sellers/offer-confidence'
-import { useMissionOffers, useMissionRecommendation } from '@/lib/api'
+import { useMissionOffers, useMissionRecommendation, useProfiles } from '@/lib/api'
 import { buildCompareModel } from '@/lib/compare'
 
 import { PriceDistribution } from './price-distribution'
@@ -20,6 +20,10 @@ export function CompareView({ missionId }: { missionId: string }) {
   const profile = useSearchParams().get('profile')?.trim() || undefined
   const offers = useMissionOffers(missionId)
   const rec = useMissionRecommendation(missionId, profile)
+  const profiles = useProfiles()
+  const router = useRouter()
+  const pathname = usePathname()
+  const choices = profiles.data?.items ?? []
 
   return (
     <main id="contenido" className="flex flex-col">
@@ -30,16 +34,27 @@ export function CompareView({ missionId }: { missionId: string }) {
           </AppLink>
           <div className="text-[13px] text-ink-muted">{t('context', { code: missionId })}</div>
         </div>
-        {/* Plain GET form: the profile lives in the URL, so the comparison can be shared and re-ranks in place. */}
-        <form method="get" className="flex items-end gap-2">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="profile">{t('profile')}</Label>
-            <Input id="profile" name="profile" defaultValue={profile ?? ''} key={profile ?? ''} className="w-56" />
-          </div>
-          <Button type="submit" variant="sec">
-            <Icon icon={SlidersHorizontal} label="" /> {t('applyProfile')}
-          </Button>
-        </form>
+        {choices.length > 0 ? (
+          <Select
+            label={t('profile')}
+            className="w-56"
+            value={profile}
+            options={choices.map((p) => ({ value: p.id, label: p.name }))}
+            onValueChange={(id) => router.replace(`${pathname}?profile=${encodeURIComponent(id)}`)}
+          />
+        ) : (
+          /* Plain GET form: the profile lives in the URL, so the comparison can be shared and re-ranks in place.
+             Fallback while the server does not list profiles (it answers 501). */
+          <form method="get" className="flex items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="profile">{t('profile')}</Label>
+              <Input id="profile" name="profile" defaultValue={profile ?? ''} key={profile ?? ''} className="w-56" />
+            </div>
+            <Button type="submit" variant="sec">
+              <Icon icon={SlidersHorizontal} label="" /> {t('applyProfile')}
+            </Button>
+          </form>
+        )}
       </header>
 
       <div className="flex flex-col gap-8 px-(--gutter-page) py-6">
