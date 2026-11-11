@@ -226,6 +226,12 @@ async def upload_financial_csv(
     return SnapshotOut.of(snapshot)
 
 
+@router.get("/{id}/financial-csv/{import_id}", tags=["onboarding"])
+async def get_financial_import(id: str, import_id: str) -> None:
+    """Contract route (#341, issue #299). DEV-4 implements it; until then it answers 501."""
+    raise not_implemented("reading a financial import is not implemented yet")
+
+
 @router.post(
     "/{id}/financial-csv/activate",
     response_model=ActivationAcceptedOut,
