@@ -1033,6 +1033,48 @@ export type GateQueuePage = {
   next_cursor: string | null
 }
 
+/**
+ * `sign` waits for signatures, `progress` is fully signed, `closed` was rejected or expired.
+ */
+export type ApprovalInboxStatus = 'sign' | 'progress' | 'closed'
+
+export type ApprovalDocumentKind = 'rfq' | 'po' | 'certificate'
+
+export type ApprovalDocument = {
+  kind: ApprovalDocumentKind
+  sha256?: string | null
+  available: boolean
+}
+
+export type ApprovalTrackingEvent = {
+  at: string
+  event: 'signed' | 'po_sent' | 'confirmed' | 'transit'
+}
+
+/**
+ * Inbox view of an approval decision. Amount and seller come from the signed payload.
+ */
+export type ApprovalView = {
+  /**
+   * The decision id.
+   */
+  id: string
+  status: ApprovalInboxStatus
+  subject_ref: string
+  amount?: NullableMoney
+  seller_ref?: string | null
+  required_signers: number
+  signatures: Array<Signature>
+  documents: Array<ApprovalDocument>
+  tracking: Array<ApprovalTrackingEvent>
+  created_at: string
+}
+
+export type ApprovalViewPage = {
+  items: Array<ApprovalView>
+  next_cursor: string | null
+}
+
 export type Approval = {
   id: string
   decision_id: string
@@ -2351,6 +2393,77 @@ export type ApplyGateQueueActionResponses = {
 
 export type ApplyGateQueueActionResponse =
   ApplyGateQueueActionResponses[keyof ApplyGateQueueActionResponses]
+
+export type ListApprovalsData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * Opaque cursor returned as `next_cursor` by the previous page.
+     */
+    cursor?: string
+    limit?: number
+    status?: ApprovalInboxStatus
+  }
+  url: '/v1/approvals'
+}
+
+export type ListApprovalsErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListApprovalsError = ListApprovalsErrors[keyof ListApprovalsErrors]
+
+export type ListApprovalsResponses = {
+  /**
+   * Page of approvals, newest first.
+   */
+  200: ApprovalViewPage
+}
+
+export type ListApprovalsResponse = ListApprovalsResponses[keyof ListApprovalsResponses]
+
+export type GetApprovalData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/approvals/{id}'
+}
+
+export type GetApprovalErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type GetApprovalError = GetApprovalErrors[keyof GetApprovalErrors]
+
+export type GetApprovalResponses = {
+  /**
+   * The approval.
+   */
+  200: ApprovalView
+}
+
+export type GetApprovalResponse = GetApprovalResponses[keyof GetApprovalResponses]
 
 export type GetEffectiveConfigData = {
   body?: never
