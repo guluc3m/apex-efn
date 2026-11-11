@@ -159,16 +159,6 @@ def test_read_routes_are_wired_and_empty_before_any_mission(app: FastAPI) -> Non
         assert client.get("/v1/gate/queue", headers=_h()).status_code == 200
 
 
-def test_signed_actions_still_answer_501_while_signing_is_unwired(app: FastAPI) -> None:
-    """Honest failure: no decision port is wired, so recomputing (audited) says so instead of faking it."""
-    with TestClient(app) as client:
-        response = client.post("/v1/sellers/s-1/confidence/recompute", headers=_h())
-    assert response.status_code == 501
-
-
-# ----- config and onboarding are wired too -------------------------------------------------------
-
-
 def test_effective_config_is_served_for_a_demo_tenant(app: FastAPI) -> None:
     with TestClient(app) as client:
         response = client.get("/v1/config/effective", headers=_h())
@@ -195,16 +185,6 @@ def test_a_tenant_outside_the_demo_set_keeps_the_unset_keys(app: FastAPI) -> Non
     values = response.json()["values"]
     assert values["neg.max_discount"]["status"] == "unset"
     assert values["approval.threshold"]["status"] == "unset"
-
-
-def test_a_config_proposal_says_signing_is_not_wired(app: FastAPI) -> None:
-    with TestClient(app) as client:
-        response = client.post(
-            "/v1/config/proposals",
-            json={"base_config_version": 1, "patch": {"sanity": {"z_gate": "7.0"}}},
-            headers=_h(),
-        )
-    assert response.status_code == 501, response.text
 
 
 def test_an_onboarding_session_can_be_started_and_profiled(app: FastAPI) -> None:

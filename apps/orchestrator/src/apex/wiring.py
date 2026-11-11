@@ -21,7 +21,7 @@ honest: the alternative would be inventing the numbers those engines own.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -52,10 +52,13 @@ from apex.agents.signing_port import SigningDecisionPort
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
 from apex.agents.trust_port import DomainTrustPort
+from apex.audit.api import AuditEventInput
+from apex.audit.api import append as audit_append
 from apex.common.clock import Clock, SystemClock
 from apex.common.ids import IdGenerator
 from apex.config import Settings
-from apex.db.session import default_sessionmaker
+from apex.db.models import ActorType
+from apex.db.session import default_sessionmaker, tenant_session
 from apex.llm.accounting import InMemorySink
 from apex.llm.budget import InMemoryBudgetStore, TokenBudget
 from apex.llm.config import (
@@ -69,8 +72,11 @@ from apex.llm.gateway import LLMGateway
 from apex.llm.prompts import PromptRegistry
 from apex.platform.flags import FlagProvider, StaticFlags
 from apex.signing.api import DecisionRejected, PendingSignature, SignatureInvalid, SigningService
+from apex.signing.api import PendingSignature as SigningPending
 from apex.tenant_config.defaults import DEFAULT_PATH, load_global_layer
 from apex.tenant_config.load_defaults import DEMO_TENANTS, seed
+from apex.tenant_config.ports import Decision as ConfigDecision
+from apex.tenant_config.ports import PendingSignature as ConfigPendingSignature
 from apex.tenant_config.repository import InMemoryConfigRepository
 from apex.tenant_config.resolver import content_hash
 from apex.tenant_config.service import TenantConfigService
@@ -128,6 +134,70 @@ def signing_port(config: Any, clock: Clock) -> SigningDecisionPort:
         rejected=(DecisionRejected,),
         invalid=(SignatureInvalid,),
     )
+
+
+class DbAuditPort:
+    """``AuditPort`` over the hash-chained audit log (D2-10). One transaction per event."""
+
+    def __init__(self, clock: Clock) -> None:
+        self._clock = clock
+
+    async def append(self, event: Mapping[str, Any], *, tenant_id: str) -> None:
+        name = str(event.get("event", "agent_event"))
+        async with tenant_session(tenant_id, sessionmaker=default_sessionmaker()) as session:
+            await audit_append(
+                session,
+                AuditEventInput(
+                    tenant_id=tenant_id,
+                    actor_type=ActorType.SERVICE,
+                    actor_id="orchestrator",
+                    event_type=name,
+                    subject_ref=str(event.get("seller_id") or event.get("offer_id") or tenant_id),
+                    payload=dict(event),
+                ),
+                clock=self._clock,
+            )
+
+
+class ConfigDecisionPort:
+    """Tenant config's ``DecisionPort`` (no tenant argument) over the signing service.
+
+    The tenant is read from the payload on create and remembered per decision id for ``require_signed``.
+    """
+
+    def __init__(self, signing: _LazySigningService) -> None:
+        self._signing = signing
+        self._tenants: dict[str, str] = {}
+
+    async def create_decision(
+        self, type: str, subject_ref: str, payload: Mapping[str, Any]
+    ) -> ConfigDecision:
+        tenant_id = str(payload["tenant_id"])
+        ref = await self._signing.create_decision(type, subject_ref, payload, tenant_id=tenant_id)
+        self._tenants[ref.id] = tenant_id
+        return ConfigDecision(
+            id=ref.id,
+            type=type,
+            subject_ref=subject_ref,
+            status=ref.status.value,
+            payload=dict(payload),
+        )
+
+    async def require_signed(self, decision_id: str) -> ConfigDecision:
+        tenant_id = self._tenants.get(decision_id)
+        if tenant_id is None:
+            raise ConfigPendingSignature(decision_id)  # unknown here: cannot be treated as signed
+        try:
+            signed = await self._signing.require_signed(decision_id, tenant_id=tenant_id)
+        except SigningPending as exc:
+            raise ConfigPendingSignature(decision_id) from exc
+        return ConfigDecision(
+            id=signed.id,
+            type=signed.type.value,
+            subject_ref=signed.subject_ref,
+            status="signed",
+            payload=dict(signed.payload),
+        )
 
 
 class UnwiredObjectStore:
@@ -309,7 +379,11 @@ def build_app_services(
     """Build the service graph. Synchronous on purpose: ``create_app`` is a sync factory."""
     active_clock = clock or SystemClock()
     config_repository = InMemoryConfigRepository()
-    tenant_config = TenantConfigService(config_repository, UnwiredDecisionPort(), active_clock)
+    signing = _LazySigningService(None, active_clock)
+    tenant_config = TenantConfigService(
+        config_repository, ConfigDecisionPort(signing), active_clock
+    )
+    signing._config = tenant_config
     gateway = LLMGateway(
         config_provider=DefaultRoleConfigProvider(),
         secrets=StaticSecretResolver({}),
@@ -372,7 +446,7 @@ def build_app_services(
             ),
             offers=offer_store,
             confidence=InMemorySellerConfidenceStore(),
-            audit=UnwiredAudit(),
+            audit=DbAuditPort(active_clock),
             config=_AnalysisConfig(_default_config_version()),
             clock=active_clock,
         )
