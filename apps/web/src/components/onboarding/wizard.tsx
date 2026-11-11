@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 
-import { assistantMessages, platforms, stepStatus } from '@/fixtures/onboarding'
+import { platforms, stepStatus } from '@/fixtures/onboarding'
 import { api } from '@/lib/api'
-import { toProfilePatch } from '@/lib/onboarding-profile'
+import { useIntakeMessages, useSendIntakeMessage } from '@/lib/api/hooks'
+import { fromProfile, toProfilePatch } from '@/lib/onboarding-profile'
 import { ensureSession } from '@/lib/onboarding-session'
 import { useOnboarding } from '@/stores/onboarding'
 
@@ -26,12 +27,26 @@ function isForm(id: StepId): id is FormStepId {
 
 function Assistant() {
   const t = useTranslations('onboarding.assistant')
-  const messages: ChatMessage[] = assistantMessages.map((m) => ({
+  const sessionId = useOnboarding((s) => s.sessionId)
+  const history = useIntakeMessages(sessionId)
+  const send = useSendIntakeMessage()
+  const messages: ChatMessage[] = (history.data?.items ?? []).map((m) => ({
     id: m.id,
-    role: m.role,
+    role: m.role === 'agent' ? 'agent' : 'human',
     author: t(m.role === 'agent' ? 'agent' : 'you'),
     text: m.text,
   }))
+  const onSend = async (text: string): Promise<void> => {
+    try {
+      const id = await ensureSession()
+      const { turn } = await send.mutateAsync({ sessionId: id, text })
+      const { drafts, applyAgentDraft } = useOnboarding.getState()
+      const filled = fromProfile(turn.session.company_profile, drafts.empresa)
+      if (filled) applyAgentDraft('empresa', filled)
+    } catch {
+      // the error is shown from `send.isError`; nothing was added to the conversation
+    }
+  }
   return (
     <aside aria-label={t('title')} className="flex min-w-0 flex-col border-l border-line">
       <div className="border-b border-line p-4">
@@ -44,11 +59,15 @@ function Assistant() {
       <div className="flex flex-1 flex-col gap-3 p-4">
         <Chat
           messages={messages}
+          thinking={send.isPending}
           labels={{ input: t('input'), placeholder: t('placeholder'), send: t('send'), stop: t('stop') }}
-          // //todo_#152: conectar el chat con el IntakeAgent; hasta entonces el envío queda deshabilitado con motivo.
-          disabledReason={t('sendReason')}
-          onSend={() => undefined}
+          onSend={(text) => void onSend(text)}
         />
+        {send.isError && (
+          <p role="alert" className="m-0 text-bad">
+            {t('error')}
+          </p>
+        )}
       </div>
     </aside>
   )
@@ -62,6 +81,7 @@ export function OnboardingWizard({ step }: { step: StepId }) {
   const prev = STEP_IDS[index - 1]
   const next = STEP_IDS[index + 1]
   const [saveError, setSaveError] = useState(false)
+  const revision = useOnboarding((s) => s.draftsRevision)
   const go = () => next && router.push(`/${locale}/onboarding/${next}` as never)
   // empresa and sector persist to the session; a failed save keeps the user on the step.
   const goNext = async (): Promise<void> => {
@@ -83,7 +103,7 @@ export function OnboardingWizard({ step }: { step: StepId }) {
     (() => {
       const Body = FORMS[step]
       return (
-        <StepForm key={step} id={step} onValid={goNext}>
+        <StepForm key={`${step}-${revision}`} id={step} onValid={goNext}>
           <Body />
         </StepForm>
       )

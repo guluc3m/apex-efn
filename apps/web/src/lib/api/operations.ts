@@ -10,6 +10,9 @@ import type {
   CreateMissionData,
   CreateMissionResponse,
   CreateOnboardingSessionData,
+  ListIntakeMessagesResponse,
+  SendIntakeMessageData,
+  SendIntakeMessageResponse,
   CreateOnboardingSessionResponse,
   CreateSourcingRequestData,
   CreateSourcingRequestResponse,
@@ -82,6 +85,18 @@ export function createOperations(client: ApiClient) {
     ) =>
       client.request<UpdateOnboardingSessionResponse>('/v1/onboarding/sessions/{id}', {
         method: 'PATCH',
+        path: { id },
+        body,
+        signal,
+      }),
+
+    listIntakeMessages: (id: string, signal?: AbortSignal) =>
+      client.request<ListIntakeMessagesResponse>('/v1/onboarding/sessions/{id}/messages', { path: { id }, signal }),
+
+    /** One IntakeAgent turn: the user message, the reply and the session with any profile fields it filled in. */
+    sendIntakeMessage: (id: string, body: SendIntakeMessageData['body'], signal?: AbortSignal) =>
+      client.request<SendIntakeMessageResponse>('/v1/onboarding/sessions/{id}/messages', {
+        method: 'POST',
         path: { id },
         body,
         signal,

@@ -206,6 +206,6 @@
     "placeholder": "Escribe al asistente",
     "send": "Enviar",
     "stop": "Parar",
-    "sendReason": "Pendiente de conectar: el asistente aún no puede recibir mensajes."
+    "error": "El asistente no ha podido responder. Tu mensaje no se ha enviado; inténtalo de nuevo."
   }
 }

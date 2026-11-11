@@ -30,3 +30,18 @@ export function toProfilePatch(step: 'empresa' | 'sector', d: Drafts): Patch {
     seasonality: s.estacionalidad || null,
   }
 }
+
+type Profile = { legal_name?: string | null; country?: string | null }
+
+/**
+ * Inverse of `toProfilePatch` for the fields the IntakeAgent can fill (name and country). Only non-empty
+ * values count, and they replace what is in the draft: the user still confirms the step.
+ */
+export function fromProfile(profile: Profile, current: Drafts['empresa']): Drafts['empresa'] | null {
+  const next = {
+    ...current,
+    ...(profile.legal_name ? { razonSocial: profile.legal_name } : {}),
+    ...(profile.country ? { pais: profile.country } : {}),
+  }
+  return next.razonSocial === current.razonSocial && next.pais === current.pais ? null : next
+}

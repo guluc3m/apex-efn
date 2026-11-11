@@ -76,12 +76,6 @@ export const platforms: Platform[] = [
   { id: 'p3', name: 'Plataforma 3', connection: 'password', state: 'none' },
 ]
 
-// //todo_#152: conversación y propuesta del IntakeAgent
-export const assistantMessages = [
-  { id: 'm1', role: 'agent', text: '¿Qué compráis con más frecuencia y cada cuánto?' },
-  { id: 'm2', role: 'human', text: 'Rodamientos y válvulas cada mes. Paramos línea en marzo y septiembre.' },
-] as const
-
 // //todo_#152: umbrales efectivos de /v1/config (solo lectura). `null` = sin definir en el tenant.
 export const effectiveThresholds: { key: 'referenceWeights' | 'approval' | 'dual'; value: string | null }[] = [
   { key: 'referenceWeights', value: '50 / 30 / 20 %' },

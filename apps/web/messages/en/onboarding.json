@@ -206,6 +206,6 @@
     "placeholder": "Write to the assistant",
     "send": "Send",
     "stop": "Stop",
-    "sendReason": "Not connected yet: the assistant cannot receive messages."
+    "error": "The assistant could not answer. Your message was not sent; try again."
   }
 }
