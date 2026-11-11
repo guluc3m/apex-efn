@@ -4,7 +4,9 @@
 // Existing flags are never modified. Naming convention: docs/observability/flags.md.
 //
 // Usage (after `pnpm dev:up`):
-//   node infra/unleash/seed-flags.mjs [extra.flag.name ...]
+//   node infra/unleash/seed-flags.mjs [--enable-platforms] [extra.flag.name ...]
+// --enable-platforms turns every seeded `platform.*` flag on in development (the demo needs the mock
+// platforms callable). `negotiation.autonomous_send` is never turned on here.
 // Env: UNLEASH_URL (default http://localhost:4242/api), UNLEASH_ADMIN_TOKEN (dev default below).
 
 const BASE_URL = (process.env.UNLEASH_URL ?? 'http://localhost:4242/api').replace(/\/+$/, '')
@@ -28,7 +30,10 @@ const KNOWN_FLAGS = [
   'negotiation.autonomous_send',
 ]
 
-const flagNames = [...new Set([...KNOWN_FLAGS, ...process.argv.slice(2)])]
+const ENABLE_PLATFORMS = process.argv.includes('--enable-platforms')
+const flagNames = [
+  ...new Set([...KNOWN_FLAGS, ...process.argv.slice(2).filter((a) => a !== '--enable-platforms')]),
+]
 for (const name of flagNames) {
   if (!FLAG_PATTERNS.some((pattern) => pattern.test(name))) {
     console.error(`malformed feature flag name "${name}"; see docs/observability/flags.md`)
@@ -83,6 +88,10 @@ async function seedFlag(name) {
 try {
   for (const name of flagNames) {
     await seedFlag(name)
+    if (ENABLE_PLATFORMS && name.startsWith('platform.')) {
+      await admin('POST', `${featureUrl(name)}/environments/${ENVIRONMENT}/on`)
+      console.log(`enabled ${name} (${ENVIRONMENT})`)
+    }
   }
 } catch (error) {
   const cause = error instanceof TypeError ? ` (${error.cause?.code ?? error.message})` : ''

@@ -10,6 +10,7 @@ mission's state.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Annotated, Any
@@ -136,24 +137,36 @@ async def create_mission(
     )
 
 
+_RUNS: set[asyncio.Task[Any]] = set()
+"""Strong references to the background runs, so the event loop does not garbage-collect them mid-flight."""
+
+
+def _autorun_on(request: Request) -> bool:
+    settings = getattr(request.app.state, "settings", None)
+    services = getattr(request.app.state, "app_services", None)
+    return bool(
+        settings is not None
+        and getattr(services, "runner", None) is not None
+        and settings.mission_autorun
+    )
+
+
 async def _maybe_autorun(
     request: Request, *, tenant_id: str, mission: DomainMission
 ) -> DomainMission:
-    """Advance the mission right away when ``mission_autorun`` is on.
+    """Start the mission in the background when ``mission_autorun`` is on.
 
-    Off by default: the runner needs the browser worker (D5-01) and the DEV-3 engines, so with them missing
-    every mission would fail at its first step. The flag makes turning it on a configuration change.
+    The reply returns at ``planned`` and the run is followed live on ``GET /v1/missions/{id}/events``: the
+    runner publishes every step to the bus. The runner itself turns any failure into a ``failed`` mission
+    with the reason, so a background run never leaves the mission stuck.
     """
-    settings = getattr(request.app.state, "settings", None)
-    services = getattr(request.app.state, "app_services", None)
-    runner = getattr(services, "runner", None)
-    if settings is None or runner is None or not settings.mission_autorun:
+    if not _autorun_on(request) or mission.status is not MissionStatus.PLANNED:
         return mission
-    if mission.status is not MissionStatus.PLANNED:
-        return mission
-    result = await runner.run(tenant_id=tenant_id, mission_id=mission.id)
-    advanced: DomainMission = result.mission
-    return advanced
+    runner = request.app.state.app_services.runner
+    task = asyncio.create_task(runner.run(tenant_id=tenant_id, mission_id=mission.id))
+    _RUNS.add(task)
+    task.add_done_callback(_RUNS.discard)
+    return mission
 
 
 @router.get("/{id}", response_model=Mission, tags=["missions"])
@@ -188,8 +201,10 @@ async def stream_mission_events(
     except MissionMissing as exc:
         raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
     after = _parse_last_event_id(last_event_id)
+    # With autorun the runner picks a planned mission up right away, so the stream must stay open.
+    ends_at = STREAM_ENDS_AT - {MissionStatus.PLANNED} if _autorun_on(request) else STREAM_ENDS_AT
     return StreamingResponse(
-        _stream(mission, bus, after_seq=after),
+        _stream(mission, bus, after_seq=after, ends_at=ends_at),
         media_type=SSE_MEDIA_TYPE,
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -366,14 +381,20 @@ async def export_mission_recommendation(
     )
 
 
-async def _stream(mission: DomainMission, bus: Any, *, after_seq: int) -> AsyncIterator[bytes]:
+async def _stream(
+    mission: DomainMission,
+    bus: Any,
+    *,
+    after_seq: int,
+    ends_at: frozenset[MissionStatus] = STREAM_ENDS_AT,
+) -> AsyncIterator[bytes]:
     """Replay the mission's log, then follow the bus until the mission reaches a terminal status."""
     last = after_seq
     for event in mission.events:
         if event.seq > last:
             yield _sse(to_contract_event(mission, event))
             last = event.seq
-    if mission.status in STREAM_ENDS_AT:
+    if mission.status in ends_at:
         return
     async for item in bus.stream(mission.id, after_seq=last, idle_timeout_s=HEARTBEAT_SECONDS):
         if item is None:

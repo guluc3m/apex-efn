@@ -43,16 +43,14 @@ def app() -> Iterator[FastAPI]:
     import asyncio
 
     stub = asyncio.run(_open_stub())
+    # Planning only: the autorun tests below build their own app.
+    cfg = Settings(idempotency_backend="memory", mission_autorun=False)
     services = build_app_services(
-        Settings(idempotency_backend="memory"),
+        cfg,
         clock=FixedClock(NOW),
         http_client_factory=lambda cfg: _scoped(stub, _scenario_for(cfg)),
     )
-    application = create_app(
-        Settings(idempotency_backend="memory"),
-        store=InMemoryIdempotencyStore(),
-        services=services,
-    )
+    application = create_app(cfg, store=InMemoryIdempotencyStore(), services=services)
     application.state.stub = stub
     yield application
     asyncio.run(stub.aclose())
@@ -308,59 +306,59 @@ def test_the_app_still_boots_when_the_service_graph_is_unavailable() -> None:
         assert client.get("/health").status_code == 200
 
 
-# ----- mission autorun is a flag, off by default -------------------------------------------------
+# ----- mission autorun: on by default, runs in the background, streams live ------------------------
 
 
-def test_missions_are_not_run_automatically_by_default(app: FastAPI) -> None:
-    """The runner needs D5-01 and the DEV-3 engines; with them missing every mission would fail."""
+def test_missions_are_not_run_when_autorun_is_off(app: FastAPI) -> None:
     with TestClient(app) as client:
         mission = _new_mission(client)
     assert mission["state"] == "sourcing"
     assert mission["error"] is None
 
 
-def test_turning_autorun_on_advances_the_mission_and_reports_the_missing_owner() -> None:
-    """With the flag on, the mission does not sit at `planned`: it fails naming the port it needs."""
+def test_autorun_runs_in_the_background_and_streams_until_the_mission_closes() -> None:
+    """The POST answers at `planned`; the run is followed live on SSE until it fails naming the owner."""
     import asyncio
 
-    from apex.wiring import build_app_services
-
     stub = asyncio.run(_open_stub())
+    cfg = Settings(idempotency_backend="memory")
     services = build_app_services(
-        Settings(idempotency_backend="memory", mission_autorun=True),
+        cfg,
         clock=FixedClock(NOW),
         http_client_factory=lambda cfg: _scoped(stub, _scenario_for(cfg)),
     )
-    application = create_app(
-        Settings(idempotency_backend="memory", mission_autorun=True),
-        store=InMemoryIdempotencyStore(),
-        services=services,
-    )
-    application.state.stub = stub
+    application = create_app(cfg, store=InMemoryIdempotencyStore(), services=services)
     try:
         with TestClient(application) as client:
-            request = client.post(
-                "/v1/sourcing-requests",
-                json={"natural_language": "guantes", "delivery_country": "ES"},
-                headers=_h(),
-            ).json()
-            mission = client.post(
-                "/v1/missions", json={"sourcing_request_id": request["id"]}, headers=_h()
-            ).json()
-        assert mission["state"] == "failed"
-        assert mission["error"] is not None
-        assert "D5-01" in mission["error"]["detail"]
+            mission = _new_mission(client)
+            assert mission["state"] == "sourcing"  # planned: the run has not been awaited
+            with client.stream(
+                "GET", f"/v1/missions/{mission['id']}/events", headers=_h()
+            ) as response:
+                body = "".join(response.iter_text())
+            fetched = client.get(f"/v1/missions/{mission['id']}", headers=_h()).json()
+        events = [line.split(": ", 1)[1] for line in body.splitlines() if line.startswith("event: ")]
+        assert events[-1] == "error"  # the stream stayed open past `planned` and saw the failure
+        assert fetched["state"] == "failed"
+        assert "D5-01" in fetched["error"]["detail"]  # no BROWSER_WORKER_URL: the owner is named
     finally:
         asyncio.run(stub.aclose())
 
 
-def test_the_service_graph_exposes_a_runner_with_named_unwired_ports() -> None:
+def test_autorun_is_on_by_default() -> None:
     from apex.agents.mission_runner import MissionRunner
-    from apex.wiring import build_app_services
 
     services = build_app_services(Settings())
     assert isinstance(services.runner, MissionRunner)
-    assert services.settings.mission_autorun is False
+    assert services.settings.mission_autorun is True
+
+
+def test_the_llm_base_url_can_be_overridden_per_deployment() -> None:
+    from apex.llm.config import LLMRole
+    from apex.wiring import DefaultRoleConfigProvider
+
+    roles = DefaultRoleConfigProvider(base_url_override="http://llm-stub:8001/v1").llm_roles("t")
+    assert roles.roles[LLMRole.PLANNER].base_url == "http://llm-stub:8001/v1"
 
 
 # ----- an unreachable model endpoint is a 502 with a reason, not a bare 500 -----------------------

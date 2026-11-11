@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # LLM Gateway (OpenAI-compatible)
     llm_gateway_url: str = Field(default="http://localhost:8001/v1")
     llm_gateway_api_key: str = Field(default="")
+    # Deployment override for every ``llm.roles.*.base_url`` of the config defaults. The defaults point at
+    # http://localhost:8001/v1 (the stub seen from the host); a container reaches it at http://llm-stub:8001/v1.
+    llm_base_url_override: str = Field(default="")
 
     # Browser worker internal API (D5-01). Empty means "not wired": a mission that needs to scrape fails
     # with the owner named instead of calling a service that is not there.
@@ -44,10 +47,10 @@ class Settings(BaseSettings):
     browser_worker_max_polls: int = Field(default=60, ge=1)
     browser_worker_poll_interval_s: float = Field(default=0.5, gt=0)
 
-    # Run a mission as soon as it is created. Off by default: the runner needs the browser worker (D5-01)
-    # and the DEV-3 engines, so with them missing it would fail every mission at its first step. Turn it on
-    # once those ports are real; the flag exists so that is a configuration change, not a code change.
-    mission_autorun: bool = Field(default=False)
+    # Run a mission in the background as soon as it is created; progress streams on the SSE route. A port
+    # that is not configured (no BROWSER_WORKER_URL, for instance) fails the mission with the reason, which
+    # is the honest answer. Set MISSION_AUTORUN=false to only plan missions.
+    mission_autorun: bool = Field(default=True)
 
     # LLM token budget per mission (criterion 28). An operator limit, not a business threshold: the
     # business limits live in tenant config. Kept here until tenant config carries it.

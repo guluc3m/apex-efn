@@ -21,18 +21,22 @@ queued ──▶ planning ──▶ planned ──▶ running ──▶ complete
 | `failed` | A step could not run; `failure_reason` says which | anything |
 | `cancelled` | A person stopped it | D4-11 (not implemented yet) |
 
-Only `queued → planning → planned` happens automatically today (`POST /v1/missions` plans inline). The
-runner that goes from `planned` to `running` only runs when `mission_autorun` is on, and it needs the
-browser worker (D5-01) and the DEV-3 engines.
+`POST /v1/missions` plans inline and answers at `planned`. With `mission_autorun` (on by default, set
+`MISSION_AUTORUN=false` to only plan) the runner then advances the mission **in the background**:
+scrape through the browser worker (`BROWSER_WORKER_URL`), analyse every offer, queue what needs a human.
+Follow it live on the SSE route. Any error closes the mission as `failed` with the reason.
+
+Local demo against the mock marketplace: `docker compose --profile apps up -d --build`, then
+`node infra/unleash/seed-flags.mjs --enable-platforms` so the worker may call `mock-a`/`mock-b`.
 
 ## Reading a mission
 
 - `GET /v1/missions/{id}` — the contract's `Mission`: `state`, `offers_discovered`, `offers_in_gate`,
   `tokens_used`, `token_budget`, `started_at`, `completed_at` and `error` (an RFC 9457 problem carrying the
   failure reason). The plan steps are not in this body: they are in the `plan_ready` event payload.
-- `GET /v1/missions/{id}/events` — SSE. Reconnect with `Last-Event-ID: <seq>` to resume without gaps. The
-  stream ends at `planned` on purpose (planning is the last step the sourcing service performs); reconnect
-  when the mission starts running.
+- `GET /v1/missions/{id}/events` — SSE. Reconnect with `Last-Event-ID: <seq>` to resume without gaps. With
+  autorun the stream stays open past `planned` and closes when the mission fails or is cancelled, or after
+  15 s without events (the browser's EventSource reconnects by itself). With autorun off it ends at `planned`.
 
   Frames are the contract's `MissionEvent` (`id`, `mission_id`, `type`, `at`, `data`), so the SSE `event:`
   field is one of the contract's closed set: `state_changed`, `offer_discovered`, `sanity_checked`, `error`,
@@ -48,15 +52,15 @@ stable code followed by a detail. The codes:
 |---|---|---|
 | `no_viable_platform:` | The planner proposed only platforms that are disabled or not in the catalogue | Check `platform.<id>.enabled` feature flags and the platform catalogue |
 | `planner_output_invalid` | The model did not return a valid plan after the structured-output ladder | Check the LLM endpoint; the gateway already retried and repaired |
+| `internal_error: ...` | An unexpected exception in a background run (logged with the mission id) | Read the orchestrator log |
 | `not_wired: ...` | A port the runner needs is not implemented yet; the detail names the owner lane | Expected until the DEV-3 engines land (the browser worker is wired as soon as `browser_worker_url` is set) |
 | `gate_rejected` | A human rejected the gate decision | Nothing; the offer is rejected by design |
 | `renegotiation_limit` | `gate.max_renegotiations` reached | Raise the limit in tenant config if the case justifies it |
 
 ## When a mission is stuck in `planned`
 
-That is the normal state today: nothing advances it because the runner needs ports that do not exist yet.
-Either turn on `mission_autorun` (it will then fail with `not_wired: ...`, which is honest) or leave it
-until D5-01 lands.
+`mission_autorun` is off (`MISSION_AUTORUN=false`), or the process restarted mid-run (the in-memory store
+keeps no running task). Turn autorun on and create the mission again.
 
 ## When a mission is stuck in `running`
 
