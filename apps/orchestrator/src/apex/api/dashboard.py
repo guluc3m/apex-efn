@@ -16,41 +16,31 @@ from apex.agents.gate import (
     ActionBlocked,
     DealAction,
     DiscardReason,
+    GateItemStatus,
+    GateQueueItem,
+    GateResolution,
 )
+from apex.agents.gate import Deal as DomainDeal
+from apex.api.contract_map import to_contract_offer
 from apex.api.gate import DecisionAcceptedOut, _blocked
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_roles, get_tenant_id
-from apex.contracts.generated.models import DashboardSummary
+from apex.contracts.generated.models import (
+    ActionAvailability,
+    BlockReason,
+    BlockReasonCode,
+    DashboardSummary,
+    Deal,
+    DealPage,
+    DealState,
+    FinancialVerdict,
+    PriceSanityBand,
+    SellerConfidenceBand,
+    SignatureStatus,
+)
+from apex.contracts.generated.models import DealAction as ContractDealAction
 
 router = APIRouter()
-
-
-class BlockedOut(BaseModel):
-    action: str
-    reason: str
-    detail: str
-
-
-class DealOut(BaseModel):
-    offer_id: str
-    mission_id: str
-    platform_id: str
-    seller_id: str
-    product_id: str
-    unit_price_eur_minor: int
-    list_price_eur_minor: int | None
-    quantity: int
-    currency: str
-    seller_confidence: dict[str, Any]
-    price_sanity: dict[str, Any]
-    financial_fit: dict[str, Any]
-    gate_item_id: str | None
-    allowed_actions: list[str]
-    blocked_actions: list[BlockedOut]
-
-
-class DealsOut(BaseModel):
-    deals: list[DealOut]
 
 
 class DealActionIn(BaseModel):
@@ -70,48 +60,102 @@ def get_dashboard() -> Any:
     )
 
 
-@router.get("/deals", response_model=DealsOut, tags=["dashboard"])
+@router.get("/deals", response_model=DealPage, tags=["dashboard"])
 async def get_deals(
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     dashboard: Annotated[Any, Depends(get_dashboard)],
+    mission_id: Annotated[str | None, Query(max_length=128)] = None,
     platform: Annotated[str | None, Query(max_length=64)] = None,
     price_band: Annotated[str | None, Query(max_length=32)] = None,
+    confidence_band: Annotated[str | None, Query(max_length=32)] = None,
+    financial_verdict: Annotated[str | None, Query(max_length=32)] = None,
     verdict: Annotated[str | None, Query(max_length=32)] = None,
     signature_status: Annotated[str | None, Query(max_length=32)] = None,
-) -> DealsOut:
-    """Deals with the filters the spec asks for (band, verdict, platform, signature status)."""
+) -> DealPage:
+    """Deals with the contract's filters (mission, bands, verdict, platform, signature status)."""
     deals = await dashboard.deals(
         tenant_id=tenant_id,
         platform=platform,
         price_band=price_band,
-        verdict=verdict,
-        signature_status=signature_status,
+        verdict=financial_verdict or verdict,
     )
-    return DealsOut(
-        deals=[
-            DealOut(
-                offer_id=d.offer.id,
-                mission_id=d.offer.mission_id,
-                platform_id=d.offer.platform_id,
-                seller_id=d.offer.seller_id,
-                product_id=d.offer.product_id,
-                unit_price_eur_minor=d.offer.unit_price_eur_minor,
-                list_price_eur_minor=d.offer.list_price_eur_minor,
-                quantity=d.offer.quantity,
-                currency=d.offer.currency,
-                seller_confidence=d.analysis.confidence.model_dump(mode="json"),
-                price_sanity=d.analysis.sanity.model_dump(mode="json"),
-                financial_fit=d.analysis.fit.model_dump(mode="json"),
-                gate_item_id=d.gate_item_id,
-                allowed_actions=d.allowed_actions,
-                blocked_actions=[
-                    BlockedOut(action=b.action, reason=b.reason.value, detail=b.detail)
-                    for b in d.blocked_actions
+    items = [await _contract_deal(dashboard, tenant_id, d) for d in deals]
+    items = [
+        d
+        for d in items
+        if (mission_id is None or d.mission_id == mission_id)
+        and (confidence_band is None or d.confidence_band.value == confidence_band)
+        and (signature_status is None or d.signature_status.value == signature_status)
+    ]
+    return DealPage(
+        items=items, next_cursor=None
+    )  # ponytail: one page; cursor when stores move to DB
+
+
+async def _contract_deal(dashboard: Any, tenant_id: str, d: DomainDeal) -> Deal:
+    """The contract's ``Deal`` for one dashboard row. Every number comes from the stored analysis."""
+    item: GateQueueItem | None = (
+        await dashboard.gate_item(tenant_id=tenant_id, item_id=d.gate_item_id)
+        if d.gate_item_id
+        else None
+    )
+    negotiation = await dashboard.negotiation_for(tenant_id=tenant_id, offer_id=d.offer.id)
+    analysis = d.analysis
+    return Deal(
+        id=d.offer.id,
+        mission_id=d.offer.mission_id,
+        offer=to_contract_offer(d.offer, analysis),
+        state=_state(item),
+        price_band=PriceSanityBand(analysis.sanity.band.value),
+        confidence_band=SellerConfidenceBand(analysis.confidence.band.value),
+        financial_verdict=FinancialVerdict(analysis.fit.verdict),
+        signature_status=_signature(item),
+        flags=[c.value for c in item.causes] if item is not None else [],
+        negotiation=negotiation,
+        actions=_actions(d),
+        updated_at=analysis.analysed_at,
+    )
+
+
+_STATE_BY_RESOLUTION: dict[GateResolution, DealState] = {
+    GateResolution.FOLLOWED: DealState.followed,
+    GateResolution.DISCARDED: DealState.discarded,
+    GateResolution.HELD: DealState.on_hold,
+}
+
+
+def _state(item: GateQueueItem | None) -> DealState:
+    if item is None or item.resolution is None:
+        return DealState.open
+    return _STATE_BY_RESOLUTION.get(item.resolution, DealState.open)
+
+
+def _signature(item: GateQueueItem | None) -> SignatureStatus:
+    """Signed once the gate item is resolved (resolution only follows a signed decision)."""
+    if item is None or item.decision_id is None:
+        return SignatureStatus.unsigned
+    return (
+        SignatureStatus.signed
+        if item.status is GateItemStatus.RESOLVED
+        else SignatureStatus.pending
+    )
+
+
+def _actions(d: DomainDeal) -> list[ActionAvailability]:
+    out = []
+    for action in ContractDealAction:
+        blocked = [b for b in d.blocked_actions if b.action in (action.value, "all")]
+        out.append(
+            ActionAvailability(
+                action=action,
+                allowed=action.value in d.allowed_actions,
+                blocked_by=[
+                    BlockReason(code=BlockReasonCode(b.reason.value), message=b.detail)
+                    for b in blocked
                 ],
             )
-            for d in deals
-        ]
-    )
+        )
+    return out
 
 
 @router.post(
@@ -149,29 +193,6 @@ async def deal_action(
 __all__ = ["get_dashboard", "router"]
 
 
-def _deal_out(d: Any) -> DealOut:
-    return DealOut(
-        offer_id=d.offer.id,
-        mission_id=d.offer.mission_id,
-        platform_id=d.offer.platform_id,
-        seller_id=d.offer.seller_id,
-        product_id=d.offer.product_id,
-        unit_price_eur_minor=d.offer.unit_price_eur_minor,
-        list_price_eur_minor=d.offer.list_price_eur_minor,
-        quantity=d.offer.quantity,
-        currency=d.offer.currency,
-        seller_confidence=d.analysis.confidence.model_dump(mode="json"),
-        price_sanity=d.analysis.sanity.model_dump(mode="json"),
-        financial_fit=d.analysis.fit.model_dump(mode="json"),
-        gate_item_id=d.gate_item_id,
-        allowed_actions=d.allowed_actions,
-        blocked_actions=[
-            BlockedOut(action=b.action, reason=b.reason.value, detail=b.detail)
-            for b in d.blocked_actions
-        ],
-    )
-
-
 @router.get("/summary", response_model=DashboardSummary, tags=["dashboard"])
 async def get_dashboard_summary(
     tenant_id: Annotated[str, Depends(get_tenant_id)],
@@ -187,14 +208,14 @@ async def get_dashboard_summary(
     )
 
 
-@router.get("/deals/{id}", response_model=DealOut, tags=["dashboard"])
+@router.get("/deals/{id}", response_model=Deal, tags=["dashboard"])
 async def get_deal(
     id: str,
     tenant_id: Annotated[str, Depends(get_tenant_id)],
     dashboard: Annotated[Any, Depends(get_dashboard)],
-) -> DealOut:
+) -> Deal:
     """One deal by offer id."""
     for deal in await dashboard.deals(tenant_id=tenant_id):
         if deal.offer.id == id:
-            return _deal_out(deal)
+            return await _contract_deal(dashboard, tenant_id, deal)
     raise Problem(404, "Deal not found", detail=f"deal {id} not found")

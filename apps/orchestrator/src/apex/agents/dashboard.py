@@ -6,7 +6,8 @@ It joins what the other services already persist; it computes no price, band or 
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
+from typing import Any
 
 from apex.agents.gate import (
     Deal,
@@ -31,7 +32,9 @@ class Dashboard:
         gate_store: GateStore,
         gate: GateAgent,
         rules_for: Callable[[str], GateRules],
+        negotiation_for: Callable[[str, str], Awaitable[Any]] | None = None,
     ) -> None:
+        self._negotiation_for = negotiation_for
         self._offers = offers
         self._missions = missions
         self._gate_store = gate_store
@@ -65,6 +68,15 @@ class Dashboard:
 
     async def open_gate_items(self, *, tenant_id: str) -> list[GateQueueItem]:
         return await self._gate_store.list_open(tenant_id)
+
+    async def gate_item(self, *, tenant_id: str, item_id: str) -> GateQueueItem | None:
+        return await self._gate_store.get(tenant_id, item_id)
+
+    async def negotiation_for(self, *, tenant_id: str, offer_id: str) -> Any:
+        """The contract ``Negotiation`` of the offer, or ``None`` when none was opened (or none is wired)."""
+        if self._negotiation_for is None:
+            return None
+        return await self._negotiation_for(tenant_id, offer_id)
 
     async def _deal(
         self, tenant_id: str, offer: Offer, analysis: OfferAnalysis, rules: GateRules

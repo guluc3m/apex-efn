@@ -53,7 +53,10 @@ class GateItemOut(BaseModel):
 
 
 class GateQueueOut(BaseModel):
+    """The contract's ``GateQueuePage``: one page, so ``next_cursor`` is always null for now."""
+
     items: list[GateItemOut]
+    next_cursor: str | None = None
 
 
 class QueueActionIn(BaseModel):

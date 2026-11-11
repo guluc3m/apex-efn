@@ -153,7 +153,10 @@ def test_read_routes_are_wired_and_empty_before_any_mission(app: FastAPI) -> Non
     with TestClient(app) as client:
         seller = client.get("/v1/sellers/s-1/confidence", headers=_h())
         assert seller.status_code == 200 and seller.json()["history"] == []
-        assert client.get("/v1/dashboard/deals", headers=_h()).json() == {"deals": []}
+        assert client.get("/v1/dashboard/deals", headers=_h()).json() == {
+            "items": [],
+            "next_cursor": None,
+        }
         assert client.get("/v1/gate/queue", headers=_h()).status_code == 200
 
 

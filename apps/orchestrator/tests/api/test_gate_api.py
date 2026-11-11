@@ -113,7 +113,7 @@ class _Dashboard:
         platform: str | None,
         price_band: str | None,
         verdict: str | None,
-        signature_status: str | None,
+        signature_status: str | None = None,
     ) -> list[Any]:
         item = await self.store.find_for_offer(tenant_id, self.offer.id)
         blocked = self.agent.blocked_deal_actions(
@@ -131,6 +131,12 @@ class _Dashboard:
         if verdict and verdict != self.analysis.fit.verdict:
             return []
         return [view]
+
+    async def gate_item(self, *, tenant_id: str, item_id: str) -> Any:
+        return await self.store.get(tenant_id, item_id)
+
+    async def negotiation_for(self, *, tenant_id: str, offer_id: str) -> Any:
+        return None
 
     async def decide(
         self,
@@ -276,31 +282,43 @@ def test_acting_on_an_unknown_item_is_409_not_500(app: FastAPI) -> None:
 # ----- dashboard ---------------------------------------------------------------------------------
 
 
-def test_deals_explain_every_blocked_action(app: FastAPI) -> None:
+def test_deals_are_the_contract_deal_page_and_explain_every_blocked_action(app: FastAPI) -> None:
+    from apex.contracts.generated.models import DealPage
+
     _enqueue(app)
     with TestClient(app) as client:
         response = client.get("/dashboard/deals", headers=_h())
     assert response.status_code == 200
-    deal = response.json()["deals"][0]
-    assert deal["offer_id"] == "o-1"
-    assert deal["gate_item_id"] is not None
-    reasons = {b["reason"] for b in deal["blocked_actions"]}
-    assert "price_band_requires_unblock" in reasons
-    assert "follow" not in deal["allowed_actions"]
-    assert {"takeover", "hold", "discard"} <= set(deal["allowed_actions"])
-    assert all(b["detail"] for b in deal["blocked_actions"])
+    page = DealPage.model_validate(response.json())  # the web reads exactly this shape
+    deal = page.items[0]
+    assert deal.id == "o-1" and deal.offer.id == "o-1"
+    assert deal.price_band.value == "atypical"
+    assert deal.state.value == "open" and deal.signature_status.value == "unsigned"
+    assert deal.flags  # the gate causes
+    actions = {a.action.value: a for a in deal.actions}
+    assert not actions["follow"].allowed
+    assert "price_band_requires_unblock" in {b.code.value for b in actions["follow"].blocked_by}
+    assert all(b.message for b in actions["follow"].blocked_by)
+    assert all(actions[a].allowed for a in ("takeover", "hold", "discard"))
 
 
 def test_deals_filters(app: FastAPI) -> None:
     _enqueue(app)
     with TestClient(app) as client:
-        assert len(client.get("/dashboard/deals", headers=_h()).json()["deals"]) == 1
-        assert client.get("/dashboard/deals?platform=mock-b", headers=_h()).json()["deals"] == []
-        assert client.get("/dashboard/deals?price_band=normal", headers=_h()).json()["deals"] == []
-        assert (
-            len(client.get("/dashboard/deals?price_band=atypical", headers=_h()).json()["deals"])
-            == 1
-        )
+
+        def items(query: str = "") -> list[dict[str, object]]:
+            out: list[dict[str, object]] = client.get(
+                f"/dashboard/deals{query}", headers=_h()
+            ).json()["items"]
+            return out
+
+        assert len(items()) == 1
+        assert items("?platform=mock-b") == []
+        assert items("?price_band=normal") == []
+        assert len(items("?price_band=atypical")) == 1
+        assert items("?mission_id=other") == []
+        assert items("?signature_status=signed") == []
+        assert len(items("?signature_status=unsigned")) == 1
 
 
 def test_a_blocked_deal_action_is_409_with_every_reason(app: FastAPI) -> None:
@@ -374,3 +392,13 @@ def test_without_a_principal_every_role_gated_action_is_refused(app: FastAPI) ->
         )
     assert response.status_code == 409
     assert response.json()["reason"] == "role_not_allowed"
+
+
+def test_the_gate_queue_is_the_contract_page(app: FastAPI) -> None:
+    from apex.contracts.generated.models import GateQueuePage
+
+    _enqueue(app)
+    with TestClient(app) as client:
+        body = client.get("/gate/queue", headers=_h()).json()
+    page = GateQueuePage.model_validate(body)
+    assert page.items[0].offer_id == "o-1" and page.next_cursor is None
