@@ -7,6 +7,8 @@
       "pending": "尚未连接",
       "accepted": "已接受行数",
       "rejected": "已拒绝",
+      "duplicated": "重复",
+      "converted": "已换算",
       "periods": "期间",
       "mappingTitle": "表头映射",
       "mappingHint": "暂时无法确认表头映射：服务器尚未提供该功能。",

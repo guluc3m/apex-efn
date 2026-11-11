@@ -15,6 +15,8 @@ export function ImportReport({ data }: { data: FinancialImport }) {
   const stats: { label: string; value: string | number; cls?: string; note?: string }[] = [
     { label: t('accepted'), value: r.rows_ok },
     { label: t('rejected'), value: r.rows_rejected, cls: r.rows_rejected ? 'text-bad' : undefined },
+    ...(r.rows_duplicated === undefined ? [] : [{ label: t('duplicated'), value: r.rows_duplicated }]),
+    ...(r.rows_converted === undefined ? [] : [{ label: t('converted'), value: r.rows_converted }]),
     { label: t('periods'), value: r.periods_loaded, note: t(r.projection_enabled ? 'projectionOn' : 'projectionOff') },
     { label: t('referenceDate'), value: r.reference_date },
   ]
@@ -34,7 +36,7 @@ export function ImportReport({ data }: { data: FinancialImport }) {
         <h2 className="m-0 flex items-center gap-2 text-base font-semibold"><Icon icon={ArrowRightLeft} />{t('mappingTitle')}</h2>
         <p className="m-0 text-[13px] text-ink-muted">{t('mappingHint')}</p>
         <div>
-          {/* Sin contrato de mapeo ni de duplicadas/convertidas (issue #299). */}
+          {/* Sin contrato de mapeo (issue #299, punto 2). */}
           <Button variant="sec" disabledReason={t('pending')}>{t('confirmMapping')}</Button>
         </div>
       </section>

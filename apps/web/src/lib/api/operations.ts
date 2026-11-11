@@ -61,6 +61,7 @@ import type {
   SignDecisionResponse,
   VerifyAuditChainResponse,
   VerifyDecisionResponse,
+  GetFinancialImportResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
   UpdateOnboardingSessionResponse,
@@ -120,6 +121,13 @@ export function createOperations(client: ApiClient) {
         signal,
       })
     },
+
+    /** One import with its report, addressed by import id (the report page is a route by id). */
+    getFinancialImport: (onboardingId: string, importId: string, signal?: AbortSignal) =>
+      client.request<GetFinancialImportResponse>('/v1/onboarding/{id}/financial-csv/{import_id}', {
+        path: { id: onboardingId, import_id: importId },
+        signal,
+      }),
 
     /** Creates the activation decision (pending signature). It does not activate anything by itself. */
     activateFinancialSnapshot: (
