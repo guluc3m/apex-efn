@@ -4,5 +4,13 @@ scenarios:
   - name: sim-negotiation
     description: Echoes the unit price stated in the prompt; no price in the prompt -> neutral sentence.
     models: ["negotiator", "seller"]
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+        supports_tools: true
+        supports_streaming: true
+        supports_seed: true
+        supports_guided: true
     response:
       kind: echo_price

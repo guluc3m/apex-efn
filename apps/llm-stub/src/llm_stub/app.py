@@ -135,7 +135,9 @@ def _build_completion(
         completion_text = args
         finish = scripted.finish_reason or "tool_calls"
     elif scripted.kind == "echo_price":
-        text = echo_price_text(req.messages)
+        text = echo_price_text(
+            req.messages, role="buyer" if req.model == "negotiator" else "seller"
+        )
         message["content"] = text
         completion_text = text
         finish = scripted.finish_reason or "stop"

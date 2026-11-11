@@ -59,6 +59,9 @@ export interface ChatSnapshot {
  * In-memory chat store. Deterministic: chat ids are sequential and each chat's RNG is derived from the
  * global seed plus the chat id, so the same seed and the same buyer messages give the same transcript.
  */
+/** Seller messages that close the deal: sent exactly as scripted. */
+const CONFIRMATION_RE = /confirmed in writing|确认|confirmad[oa]s?\b|we accept the summary/i
+
 export class ChatEngine {
   private chats = new Map<string, Chat>()
   private counter = 0
@@ -142,8 +145,9 @@ export class ChatEngine {
     if (clean.length === 0) throw new ChatError('empty_message', 'message is empty')
     const buyer = this.append(chat, 'buyer', clean)
     const reply = respond(chat.state, clean, this.product(chat.productId), chat.rng)
+    // A persona that has closed the deal answers with the written confirmation: never reworded.
     const sellerText =
-      this.phraser === undefined || this.phraser === noopPhraser
+      this.phraser === undefined || this.phraser === noopPhraser || chat.state.agreed !== null
         ? reply.text
         : await this.rephrase(reply)
     const seller = this.append(chat, 'seller', sellerText)
@@ -153,6 +157,8 @@ export class ChatEngine {
   /** Rephrasing is cosmetic: anything unexpected (error, timeout, price drift) keeps the scripted text. */
   private async rephrase(reply: PersonaReply): Promise<string> {
     if (this.phraser === undefined) return reply.text
+    // A written confirmation is the sentence the buyer relies on; it is never reworded by a model.
+    if (CONFIRMATION_RE.test(reply.text)) return reply.text
     try {
       const candidate = await this.phraser.phrased(reply.text, reply.quote)
       return pinsPrice(reply.text, candidate, reply.quote) ? candidate.trim() : reply.text

@@ -35,6 +35,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+from uuid import uuid4
 
 from apex.common.clock import Clock, SystemClock
 from apex.common.ids import IdGenerator
@@ -110,13 +111,14 @@ class SimContext:
     gateway: SimGateway
     clock: Clock
     config: ScenarioConfig
+    run_id: str = ""
 
 
 def default_engine_factory(ctx: SimContext, mission_id: str) -> NegotiationEngine:
     """The real negotiation engine with in-memory ports and the simulation adapters."""
     ids = IdGenerator(ctx.clock)
     return NegotiationEngine(
-        transport=MarketChatTransport(ctx.market),
+        transport=MarketChatTransport(ctx.market, run_id=ctx.run_id),
         drafter=LLMDrafter(ctx.gateway, mission_id=mission_id),
         extractor=LLMExtractor(ctx.gateway, mission_id=mission_id),
         sanity=NormalSanity(),
@@ -146,7 +148,8 @@ async def run_scenario(
     market = client if client is not None else HttpMarketplace(config.marketplace_url)
     gateway = build_gateway(config.llm_url)
     factory = engine_factory or default_engine_factory
-    ctx = SimContext(market=market, gateway=gateway, clock=clock, config=config)
+    run_id = uuid4().hex[:8]
+    ctx = SimContext(market=market, gateway=gateway, clock=clock, config=config, run_id=run_id)
     seen_items: dict[str, MarketItem] = {}
     seller_cache: dict[str, SupplierMetrics] = {}
     started_at = clock.now()
@@ -267,6 +270,23 @@ async def _run_buyer(
     except (NegotiationError, MarketplaceError) as exc:
         return fail(f"negotiation failed: {exc}")
 
+    # The marketplace thread is the authoritative record of what was said, in order: read it once at the
+    # end instead of stitching engine slices (which a re-read can duplicate or reorder).
+    if session.chat_id:
+        try:
+            thread = await ctx.market.messages(session.chat_id, after_seq=0)
+        except MarketplaceError:
+            thread = []
+        if thread:
+            transcript = [
+                TranscriptLine(
+                    seq=message.seq,
+                    role="seller" if message.author == "supplier" else "buyer",
+                    text=message.body,
+                    at=message.sent_at,
+                )
+                for message in thread
+            ]
     return _finish(ctx, buyer, chosen, supplier_name, asking, session, steps, transcript)
 
 

@@ -23,15 +23,17 @@ __all__ = ["MarketChatTransport"]
 class MarketChatTransport:
     """One transport per simulated buyer; thread ids are cached per platform/product pair."""
 
-    def __init__(self, market: Marketplace) -> None:
+    def __init__(self, market: Marketplace, *, run_id: str = "") -> None:
         self._market = market
         self._threads: dict[str, str] = {}
+        self._run_id = run_id
 
     async def open(self, *, platform: str, seller_id: str, product_id: str, account_id: str) -> str:
-        key = f"{platform}:{seller_id}:{product_id}"
+        key = f"{platform}:{seller_id}:{product_id}:{account_id}"
         thread_id = self._threads.get(key)
         if thread_id is None:
-            thread_id = await self._market.open_thread(product_id)
+            buyer_id = f"{account_id}:{self._run_id}" if self._run_id else account_id
+            thread_id = await self._market.open_thread(product_id, buyer_id=buyer_id)
             self._threads[key] = thread_id
         return thread_id
 

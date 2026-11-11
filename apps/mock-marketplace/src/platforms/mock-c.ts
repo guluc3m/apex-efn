@@ -20,7 +20,7 @@ import type { Catalog, Product, Seller } from '../fixtures/schema.js'
 const P = 'mock-c'
 const PREFIX = '/mock-c/api'
 
-const OpenThread = z.object({ item_id: z.string().min(1) }).strict()
+const OpenThread = z.object({ item_id: z.string().min(1), buyer_id: z.string().min(1).optional() }).strict()
 const SendMessage = z.object({ body: z.string().min(1).max(2000) }).strict()
 
 interface Thread {
@@ -28,6 +28,8 @@ interface Thread {
   chatId: string
   itemId: string
   supplierId: string
+  /** Empty string for a caller that does not identify its buyer (the adapter path). */
+  buyerId: string
 }
 
 function money(minor: number, currency: string) {
@@ -180,7 +182,11 @@ export function registerMockC(app: FastifyInstance, catalog: Catalog, chats: Cha
     if (!parsed.success) return error(reply, 'invalid_request', 400)
     const product = findProduct(catalog, P, parsed.data.item_id)
     if (product === undefined) return error(reply, 'unknown_item', 404)
-    const existing = [...threads.values()].find((t) => t.itemId === product.id)
+    // A thread belongs to one buyer: two buyers negotiating the same item are two conversations.
+    const buyer = parsed.data.buyer_id ?? ''
+    const existing = [...threads.values()].find(
+      (t) => t.itemId === product.id && t.buyerId === buyer
+    )
     if (existing !== undefined) {
       return reply.code(200).send({ thread_id: existing.id, supplier_id: existing.supplierId, item_id: product.id })
     }
@@ -191,6 +197,7 @@ export function registerMockC(app: FastifyInstance, catalog: Catalog, chats: Cha
         chatId: chat.id,
         itemId: product.id,
         supplierId: product.sellerId,
+        buyerId: buyer,
       }
       threads.set(thread.id, thread)
       return reply.code(201).send({ thread_id: thread.id, supplier_id: thread.supplierId, item_id: product.id })

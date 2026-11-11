@@ -24,6 +24,9 @@ def test_echoes_the_pinned_price() -> None:
 
 
 def test_says_something_neutral_when_no_price_is_given() -> None:
-    text = echo_price_text([ChatMessage(role="user", content="Hello there")])
-    assert text.startswith("Understood.")
-    assert "EUR" not in text and "USD" not in text and "CNY" not in text
+    buyer = echo_price_text([ChatMessage(role="user", content="Hello there")], role="buyer")
+    seller = echo_price_text([ChatMessage(role="user", content="Hello there")], role="seller")
+    assert buyer.startswith("Hello,")
+    assert seller.startswith("Thanks")
+    for text in (buyer, seller):
+        assert "EUR" not in text and "USD" not in text and "CNY" not in text

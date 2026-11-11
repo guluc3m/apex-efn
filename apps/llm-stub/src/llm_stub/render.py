@@ -97,10 +97,23 @@ def extract_money(text: str) -> str | None:
     return f"{currency} {amount}"
 
 
-def echo_price_text(messages: list[ChatMessage], *, fallback: str = "Understood. Let us review and come back to you.") -> str:
-    """A neutral sentence that repeats the price the prompt states, if any."""
+def echo_price_text(
+    messages: list[ChatMessage],
+    *,
+    role: str = "seller",
+    fallback: str | None = None,
+) -> str:
+    """A sentence in the requested voice that repeats the price the prompt states, if any."""
+    if fallback is None:
+        fallback = (
+            "Hello, could you share your volume tiers and best unit price for this order?"
+            if role == "buyer"
+            else "Thanks for the message, let me check with the factory and come back to you."
+        )
     for message in reversed(messages):
         money = extract_money(content_to_text(message.content))
         if money is not None:
+            if role == "buyer":
+                return f"We can offer {money} per unit for that volume. Would that work for you?"
             return f"Understood. We can do {money} per unit for that volume."
     return fallback

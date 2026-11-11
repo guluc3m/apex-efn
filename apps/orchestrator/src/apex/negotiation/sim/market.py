@@ -93,7 +93,7 @@ class Marketplace(Protocol):
 
     async def metrics(self, supplier_id: str) -> SupplierMetrics: ...
 
-    async def open_thread(self, item_id: str) -> str: ...
+    async def open_thread(self, item_id: str, *, buyer_id: str = "") -> str: ...
 
     async def send(self, thread_id: str, body: str) -> None: ...
 
@@ -209,8 +209,11 @@ class HttpMarketplace:
             orders_total=total if isinstance(total, int) and not isinstance(total, bool) else None,
         )
 
-    async def open_thread(self, item_id: str) -> str:
-        payload = await self._post("/threads", json={"item_id": item_id})
+    async def open_thread(self, item_id: str, *, buyer_id: str = "") -> str:
+        body: dict[str, Any] = {"item_id": item_id}
+        if buyer_id:
+            body["buyer_id"] = buyer_id
+        payload = await self._post("/threads", json=body)
         return _as_str(payload.get("thread_id"), "thread.thread_id")
 
     async def send(self, thread_id: str, body: str) -> None:

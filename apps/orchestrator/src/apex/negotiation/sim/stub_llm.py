@@ -170,7 +170,9 @@ class OpenAICompatGateway:
 
     async def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
         try:
-            response = await self._client.post(self._url, json=payload)
+            response = await self._client.post(
+                self._url, json=payload, headers={"X-Stub-Scenario": "sim-negotiation"}
+            )
         except httpx.HTTPError as exc:
             raise LLMUnavailable(f"LLM request failed: {exc}") from exc
         if response.status_code >= httpx.codes.BAD_REQUEST:

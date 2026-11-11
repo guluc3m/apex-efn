@@ -71,7 +71,7 @@ class FakeMarketplace:
             orders_total=100,
         )
 
-    async def open_thread(self, item_id: str) -> str:
+    async def open_thread(self, item_id: str, *, buyer_id: str = "") -> str:
         thread_id = self._thread_by_item.get(item_id)
         if thread_id is None:
             thread_id = f"thread-{item_id}"

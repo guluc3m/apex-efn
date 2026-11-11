@@ -71,6 +71,8 @@ function userPrompt(scripted: string, price: Quote | null): string {
 
 export interface LlmPhraserOptions {
   timeoutMs?: number
+  /** Stub scenario to force; the demo uses the price-echoing one. */
+  scenario?: string
   /** Injected in tests so no socket is ever opened. */
   fetchImpl?: FetchLike
   model?: string
@@ -90,7 +92,10 @@ export function createLlmPhraser(baseUrl: string, options: LlmPhraserOptions = {
     async phrased(scripted: string, price: Quote | null): Promise<string> {
       const response = await fetchImpl(endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          'x-stub-scenario': options.scenario ?? 'sim-negotiation',
+        },
         body: JSON.stringify({
           model,
           messages: [
