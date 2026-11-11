@@ -63,6 +63,9 @@ import type {
   VerifyDecisionResponse,
   GetFinancialImportResponse,
   ListConfigVersionsResponse,
+  PauseMissionResponse,
+  ResumeMissionResponse,
+  CancelMissionResponse,
   ListProfilesResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
@@ -162,6 +165,15 @@ export function createOperations(client: ApiClient) {
 
     getMission: (id: string, signal?: AbortSignal) =>
       client.request<GetMissionResponse>('/v1/missions/{id}', { path: { id }, signal }),
+
+    pauseMission: (id: string, signal?: AbortSignal) =>
+      client.request<PauseMissionResponse>('/v1/missions/{id}/pause', { method: 'POST', path: { id }, signal }),
+
+    resumeMission: (id: string, signal?: AbortSignal) =>
+      client.request<ResumeMissionResponse>('/v1/missions/{id}/resume', { method: 'POST', path: { id }, signal }),
+
+    cancelMission: (id: string, signal?: AbortSignal) =>
+      client.request<CancelMissionResponse>('/v1/missions/{id}/cancel', { method: 'POST', path: { id }, signal }),
 
     listMissionOffers: (id: string, query?: ListMissionOffersData['query'], signal?: AbortSignal) =>
       client.request<ListMissionOffersResponse>('/v1/missions/{id}/offers', { path: { id }, query, signal }),

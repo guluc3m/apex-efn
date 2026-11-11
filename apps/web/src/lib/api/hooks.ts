@@ -46,6 +46,18 @@ export function useMission(id: string) {
   })
 }
 
+export type MissionControl = 'pause' | 'resume' | 'cancel'
+
+/** Pause, resume or cancel a mission. The server answers with the mission, which replaces the cached one. */
+export function useMissionControl(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (action: MissionControl) =>
+      action === 'pause' ? api.pauseMission(id) : action === 'resume' ? api.resumeMission(id) : api.cancelMission(id),
+    onSuccess: (mission) => qc.setQueryData(queryKeys.mission(id), mission),
+  })
+}
+
 /** First page (the API maximum) of offers; the matrix filters and sorts it locally. */
 export function useMissionOffers(id: string) {
   return useQuery({

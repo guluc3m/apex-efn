@@ -3,13 +3,13 @@
 import type { MissionEvent } from '@apex/shared-types/contracts'
 import { Button, Icon } from '@apex/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { CircleX, Columns3, Pause, Plus } from 'lucide-react'
+import { CircleX, Columns3, Pause, Play, Plus } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Suspense, useEffect, useState } from 'react'
 
 import { AppLink } from '@/components/app-link'
 import { ErrorPanel } from '@/components/error-panel'
-import { ApiError, queryKeys, subscribeMissionEvents, useMission } from '@/lib/api'
+import { ApiError, queryKeys, subscribeMissionEvents, useMission, useMissionControl } from '@/lib/api'
 import { PHASES, phaseStates, pushEvent } from '@/lib/missions'
 
 import { MissionActivity } from './mission-activity'
@@ -27,6 +27,8 @@ export function MissionLive({ missionId }: { missionId: string }) {
   const { data: mission, error, isPending, refetch } = useMission(missionId)
   const [events, setEvents] = useState<MissionEvent[]>([])
   const [streamLost, setStreamLost] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const control = useMissionControl(missionId)
 
   useEffect(() => {
     const handle = subscribeMissionEvents(missionId, {
@@ -74,17 +76,38 @@ export function MissionLive({ missionId }: { missionId: string }) {
               {t('compare')}
             </AppLink>
           </Button>
-          {/* //todo_#156: pausar y cancelar la misión (la API no tiene operación todavía: contract-change) */}
-          <Button disabledReason={t('pending')}>
-            <Icon icon={Pause} />
-            {t('pause')}
-          </Button>
-          <Button variant="ghost" disabledReason={t('pending')}>
-            <Icon icon={CircleX} />
-            {t('cancel')}
-          </Button>
+          {(() => {
+            const over = mission.state === 'completed' || mission.state === 'cancelled' || mission.state === 'failed'
+            const busy = control.isPending ? t('controlBusy') : undefined
+            return (
+              <>
+                <Button disabledReason={over ? t('controlOver') : busy} onClick={() => control.mutate(mission.paused ? 'resume' : 'pause')}>
+                  <Icon icon={mission.paused ? Play : Pause} />
+                  {mission.paused ? t('resume') : t('pause')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabledReason={over ? t('controlOver') : busy}
+                  onClick={() => {
+                    if (!confirmCancel) return setConfirmCancel(true)
+                    setConfirmCancel(false)
+                    control.mutate('cancel')
+                  }}
+                  onBlur={() => setConfirmCancel(false)}
+                >
+                  <Icon icon={CircleX} />
+                  {confirmCancel ? t('cancelConfirm') : t('cancel')}
+                </Button>
+              </>
+            )
+          })()}
         </div>
       </div>
+      {control.isError && (
+        <p className="border-b border-warn bg-warn-subtle px-gutter-page py-3 text-warn" role="alert">
+          {control.error instanceof ApiError ? control.error.title : t('controlFailed')}
+        </p>
+      )}
       {mission.error && (
         <p className="border-b border-warn bg-warn-subtle px-gutter-page py-3 text-warn" role="alert">
           {t('failed', { detail: mission.error.detail ?? mission.error.title })}

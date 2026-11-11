@@ -131,6 +131,11 @@
     "compare": "Ver comparativa",
     "pause": "Pausar",
     "cancel": "Cancelar misión",
+    "resume": "Reanudar",
+    "cancelConfirm": "¿Cancelar de verdad? Pulsa otra vez",
+    "controlOver": "La misión ya terminó",
+    "controlFailed": "No se pudo cambiar la misión",
+    "controlBusy": "…",
     "pending": "Pendiente de conectar",
     "side": "Embudo y actividad de la misión",
     "phases": {
