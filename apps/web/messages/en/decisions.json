@@ -74,6 +74,8 @@
     "penalty": "Penalty",
     "leadTime": "Lead time",
     "leadTimeV": "{n} days",
+    "payment": "Payment term",
+    "prepayment": "Prepayment",
     "moq": "Minimum order",
     "noConfidence": "No seller confidence computed yet.",
     "reference": "Reference price",

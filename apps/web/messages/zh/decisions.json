@@ -74,6 +74,8 @@
     "penalty": "扣分",
     "leadTime": "交付周期",
     "leadTimeV": "{n} 天",
+    "payment": "付款条件",
+    "prepayment": "预付",
     "moq": "最小起订量",
     "noConfidence": "尚未计算该卖家的可信度。",
     "reference": "参考价格",

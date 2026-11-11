@@ -71,6 +71,7 @@
   },
   "distribution": {
     "none": "No price checks yet.",
-    "caption": "Unit price per offer. Dashed line: market median {median}."
+    "caption": "Unit price per offer. Dashed line: market median {median}.",
+    "captionBand": "Unit price per offer. Dashed line: market median {median}. Shaded area: normal band, {lower} to {upper}."
   }
 }
