@@ -1,8 +1,8 @@
 'use client'
 
 import type { FinancialImport } from '@apex/shared-types/contracts'
-import { Badge, Button, Icon } from '@apex/ui'
-import { ArrowRightLeft, OctagonAlert, TriangleAlert } from 'lucide-react'
+import { Badge, Icon } from '@apex/ui'
+import { OctagonAlert, TriangleAlert } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 const TH = 'border-b border-line px-3 py-2 text-left text-[13px] font-medium text-ink-muted'
@@ -31,15 +31,6 @@ export function ImportReport({ data }: { data: FinancialImport }) {
           </div>
         ))}
       </dl>
-
-      <section className="flex max-w-[760px] flex-col gap-3">
-        <h2 className="m-0 flex items-center gap-2 text-base font-semibold"><Icon icon={ArrowRightLeft} />{t('mappingTitle')}</h2>
-        <p className="m-0 text-[13px] text-ink-muted">{t('mappingHint')}</p>
-        <div>
-          {/* Sin contrato de mapeo (issue #299, punto 2). */}
-          <Button variant="sec" disabledReason={t('pending')}>{t('confirmMapping')}</Button>
-        </div>
-      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="m-0 flex items-center gap-2 text-base font-semibold"><Icon icon={OctagonAlert} />{t('rejectionsTitle')}</h2>
