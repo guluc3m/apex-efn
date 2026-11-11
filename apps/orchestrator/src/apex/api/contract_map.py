@@ -193,7 +193,9 @@ def to_contract_offer(offer: Offer, analysis: OfferAnalysis | None) -> ContractO
                 computed_at=analysis.analysed_at,
             )
         )
-        sanity = analysis.sanity.detail if isinstance(analysis.sanity.detail, PriceSanityCheck) else None
+        sanity = (
+            analysis.sanity.detail if isinstance(analysis.sanity.detail, PriceSanityCheck) else None
+        )
         fit = analysis.fit.detail
     return ContractOffer(
         id=offer.id,

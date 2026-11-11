@@ -34,6 +34,7 @@ class Offer(_Model):
     seller_id: str
     product_id: str
     title: str = ""
+    """Product title as the adapter saw it. Display only: no engine reads it."""
     moq: int = Field(default=1, ge=1)
     """As the adapter reported it (``RawOffer.moq``, which defaults to 1)."""
     unit_price_eur_minor: int = Field(ge=0)
@@ -42,9 +43,6 @@ class Offer(_Model):
     currency: str = Field(pattern="^(EUR|USD|CNY)$")
     quantity: int = Field(gt=0)
     seller_name: str = ""
-    title: str = ""
-    """Product title as the adapter saw it. Display only: no engine reads it."""
-    moq: int = Field(default=1, ge=1)
     collected_at: datetime
     raw_signals: dict[str, Any] = Field(default_factory=dict)
     """Raw seller signals as the adapter returned them. Input to the trust engine, never to the LLM."""

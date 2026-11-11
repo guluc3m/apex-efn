@@ -77,6 +77,8 @@ class EcbFxRateReader:
             return None
 
     def add(self, rate: FxRate) -> None:
+        if self._rates is None:
+            self._rates = []
         self._rates.append(rate)
 
 
