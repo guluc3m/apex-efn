@@ -71,44 +71,47 @@ services:
       retries: 5
 
   # =============================================================================
-  # MinIO (S3-compatible storage with Object Lock)
-  # Upstream Docker Hub images were removed in 2026. The Quay tags below are the
-  # last community releases. Override with MINIO_IMAGE / MC_IMAGE if a mirror is
-  # needed. Decision pending with the TL (see docs/runbooks/local-dev.md).
+  # RustFS (S3-compatible storage with Object Lock/WORM)
+  # Local development backend. Production uses AWS S3 with Object Lock
+  # (infra/terraform). Decision and evidence: docs/adr/107-rustfs-local-object-lock.md.
   # =============================================================================
-  minio:
-    image: ${MINIO_IMAGE:-quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z}
-    container_name: apex-minio
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:1.0.5
+    container_name: apex-rustfs
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-apex-dev}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-apex-dev-secret}
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOGGER_LEVEL: error
     ports:
       - '9000:9000'
       - '9001:9001'
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/health/ready']
       interval: 10s
       timeout: 5s
       retries: 5
 
   # One-shot: creates the buckets with Object Lock. Idempotent, safe to rerun.
-  minio-init:
-    image: ${MC_IMAGE:-quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z}
-    container_name: apex-minio-init
+  rustfs-init:
+    image: amazon/aws-cli:2.40.0
+    container_name: apex-rustfs-init
     entrypoint: ['/bin/sh', '/scripts/init-buckets.sh']
     environment:
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      RUSTFS_ENDPOINT: http://rustfs:9000
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-apex-dev}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-apex-dev-secret}
+      AWS_DEFAULT_REGION: us-east-1
       # DEV ONLY. Production retention is a TL decision (not in the spec).
-      MINIO_AUDIT_RETENTION: ${MINIO_AUDIT_RETENTION:-1d}
+      RUSTFS_AUDIT_RETENTION_DAYS: ${RUSTFS_AUDIT_RETENTION_DAYS:-1}
     volumes:
-      - ./minio/init-buckets.sh:/scripts/init-buckets.sh:ro
+      - ./rustfs/init-buckets.sh:/scripts/init-buckets.sh:ro
     depends_on:
-      minio:
+      rustfs:
         condition: service_healthy
     restart: 'no'
 
@@ -369,7 +372,9 @@ services:
       # LangGraph checkpointer needs it for setup() (D4-06 follow-up). Not set in the Helm chart.
       MIGRATE_DATABASE_URL: postgresql://apex:apex@postgres:5432/apex
       REDIS_URL: redis://redis:6379
-      S3_ENDPOINT: http://minio:9000
+      S3_ENDPOINT: http://rustfs:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-apex-dev}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-apex-dev-secret}
       AUTH_ISSUER_URL: http://localhost:8080/realms/apex
       # D1-05: the issuer is the browser-facing URL that appears in the token's `iss`; the JWKS is
       # fetched over the compose network, where Keycloak is `keycloak` and not `localhost`.
@@ -385,6 +390,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rustfs-init:
+        condition: service_completed_successfully
 
   web:
     profiles: ['apps']
@@ -518,7 +525,7 @@ volumes:
   postgres_data:
   clickhouse_data:
   redis_data:
-  minio_data:
+  rustfs_data:
   grafana_data:
   tempo_data:
   loki_data:

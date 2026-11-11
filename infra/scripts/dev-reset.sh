@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reinicio completo del entorno local: borra volúmenes (datos de Postgres, MinIO, Keycloak...),
+# Reinicio completo del entorno local: borra volúmenes (datos de Postgres, RustFS, Keycloak...),
 # levanta PostgreSQL, aplica migraciones y seed como el propietario del esquema, crea el rol de login
 # de la aplicación (RLS) y solo entonces levanta el resto de servicios.
 # Uso: pnpm dev:reset   (desde la raíz del repositorio)
@@ -47,7 +47,7 @@ bootstrap_app_role() {
 }
 
 log "Borrando contenedores y volúmenes (datos locales)."
-log "Nota: MinIO con Object Lock en COMPLIANCE no permite borrar objetos antes de caducar; aquí se borra el volumen entero."
+log "Nota: RustFS con Object Lock en COMPLIANCE no permite borrar objetos antes de caducar; aquí se borra el volumen entero."
 docker compose down -v --remove-orphans
 
 log "Levantando PostgreSQL (las migraciones necesitan la base de datos)."
