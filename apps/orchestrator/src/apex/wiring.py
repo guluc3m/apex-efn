@@ -31,6 +31,7 @@ import httpx
 from apex.agents.analysis import AnalysisDeps, AnalysisNodes
 from apex.agents.browser_worker import HttpBrowserWorker
 from apex.agents.csv_importer import DomainCsvImporter
+from apex.agents.finance_port import DomainFinancePort
 from apex.agents.fx import DomainFxPort, InMemoryFxRateReader
 from apex.agents.gate import GateAgent, GateDeps, GateRules, InMemoryGateStore
 from apex.agents.header_mapping import HeaderMapper
@@ -44,6 +45,7 @@ from apex.agents.onboarding import (
     OnboardingService,
 )
 from apex.agents.request_store import InMemorySourcingRequestStore
+from apex.agents.sanity_port import DomainSanityPort
 from apex.agents.scraping import ScrapingDeps, ScrapingService
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
@@ -109,16 +111,6 @@ class UnwiredBrowserWorker:
 class UnwiredFx:
     async def to_eur_unit(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError("FX is not wired yet (owner: DEV-3, D3-03)")
-
-
-class UnwiredSanity:
-    async def check(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("price sanity engine is not wired yet (owner: DEV-3, D3-07)")
-
-
-class UnwiredFinance:
-    async def fit(self, *args: Any, **kwargs: Any) -> Any:
-        raise NotImplementedError("financial fit is not wired yet (owner: DEV-3, D3-05)")
 
 
 class UnwiredAudit:
@@ -314,6 +306,22 @@ def build_app_services(
     fx_port: Any = DomainFxPort(
         rates=fx_rates or InMemoryFxRateReader(), config=tenant_config, clock=active_clock
     )
+    onboarding = OnboardingService(
+        OnboardingDeps(
+            store=InMemoryOnboardingStore(),
+            importer=DomainCsvImporter(
+                rates=fx_rates or InMemoryFxRateReader(), config=tenant_config
+            ),
+            objects=UnwiredObjectStore(),
+            decisions=UnwiredDecisionPort(),
+            clock=active_clock,
+            ids=IdGenerator(active_clock),
+            stale_after_days=_finance_stale_after_days(),
+            config_version=_default_config_version(),
+            intake=IntakeChatAgent(gateway, prompts),
+            mapper=HeaderMapper(gateway, prompts),
+        )
+    )
     gate_store = InMemoryGateStore()
     rules = _gate_rules()
     runner = MissionRunner(
@@ -330,8 +338,12 @@ def build_app_services(
             nodes=AnalysisNodes(
                 AnalysisDeps(
                     trust=DomainTrustPort(config=tenant_config, clock=active_clock),
-                    sanity=UnwiredSanity(),
-                    finance=UnwiredFinance(),
+                    sanity=DomainSanityPort(
+                        config=tenant_config, offers=offer_store, clock=active_clock
+                    ),
+                    finance=DomainFinancePort(
+                        config=tenant_config, onboarding=onboarding, clock=active_clock
+                    ),
                     offers=offer_store,
                     confidence=InMemorySellerConfidenceStore(),
                     audit=UnwiredAudit(),
@@ -352,22 +364,6 @@ def build_app_services(
             clock=active_clock,
             rules_for=lambda tenant_id: rules,
             mission_cost_minor=gateway.mission_cost_minor,
-        )
-    )
-    onboarding = OnboardingService(
-        OnboardingDeps(
-            store=InMemoryOnboardingStore(),
-            importer=DomainCsvImporter(
-                rates=fx_rates or InMemoryFxRateReader(), config=tenant_config
-            ),
-            objects=UnwiredObjectStore(),
-            decisions=UnwiredDecisionPort(),
-            clock=active_clock,
-            ids=IdGenerator(active_clock),
-            stale_after_days=_finance_stale_after_days(),
-            config_version=_default_config_version(),
-            intake=IntakeChatAgent(gateway, prompts),
-            mapper=HeaderMapper(gateway, prompts),
         )
     )
     return AppServices(
