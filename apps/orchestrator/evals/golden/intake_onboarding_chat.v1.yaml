@@ -1,0 +1,24 @@
+prompt: intake_onboarding_chat
+version: 1
+schema: IntakeTurnDraft
+cases:
+  - id: states-name-and-country
+    variables:
+      profile_json: '{"legal_name": null, "sector": null, "country": null, "base_currency": null}'
+      history_text: ""
+      user_text: "Somos Envases Norte S.L., una empresa de España"
+    expect:
+      - equals: {profile: {legal_name: "Envases Norte S.L.", sector: null, country: ES, base_currency: null}}
+    stub_response:
+      reply: "Gracias. ¿A qué sector pertenece Envases Norte S.L.?"
+      profile: {legal_name: "Envases Norte S.L.", sector: null, country: ES, base_currency: null}
+  - id: nothing-invented
+    variables:
+      profile_json: '{"legal_name": "ACME", "sector": null, "country": "ES", "base_currency": null}'
+      history_text: "agent: ¿Cuál es su sector?"
+      user_text: "No estoy seguro todavía"
+    expect:
+      - equals: {profile: {legal_name: null, sector: null, country: null, base_currency: null}}
+    stub_response:
+      reply: "Sin problema, podemos volver a ello más tarde. ¿En qué moneda trabaja su empresa?"
+      profile: {legal_name: null, sector: null, country: null, base_currency: null}

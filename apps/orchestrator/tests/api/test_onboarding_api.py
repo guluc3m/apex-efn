@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
 
@@ -174,3 +175,37 @@ def test_onboarding_needs_a_tenant(app: FastAPI, monkeypatch: pytest.MonkeyPatch
     monkeypatch.delenv("APEX_ALLOW_TENANT_HEADER", raising=False)
     with TestClient(app) as client:
         assert client.post("/onboarding/sessions", headers=_h()).status_code == 401
+
+
+def test_intake_chat_turn_and_history(app: FastAPI) -> None:
+    from apex.agents.onboarding import CompanyProfile
+
+    class _Replier:
+        async def reply(self, **_: Any) -> Any:
+            return "Gracias.", CompanyProfile(legal_name="ACME")
+
+    service = app.dependency_overrides[onboarding_api.get_onboarding]()
+    service._deps = replace(service._deps, intake=_Replier())
+    with TestClient(app) as client:
+        sid = client.post("/onboarding/sessions", headers=_h()).json()["id"]
+        turn = client.post(
+            f"/onboarding/sessions/{sid}/messages", json={"text": "Somos ACME"}, headers=_h()
+        )
+        assert turn.status_code == 200
+        body = turn.json()
+        assert [m["role"] for m in body["messages"]] == ["user", "agent"]
+        assert body["session"]["company_profile"]["legal_name"] == "ACME"
+        history = client.get(f"/onboarding/sessions/{sid}/messages", headers=_h()).json()
+        assert [m["text"] for m in history["items"]] == ["Somos ACME", "Gracias."]
+        empty = client.post(f"/onboarding/sessions/{sid}/messages", json={"text": ""}, headers=_h())
+        assert empty.status_code == 422
+        assert client.get("/onboarding/sessions/nope/messages", headers=_h()).status_code == 404
+
+
+def test_intake_chat_without_an_agent_answers_501(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        sid = client.post("/onboarding/sessions", headers=_h()).json()["id"]
+        response = client.post(
+            f"/onboarding/sessions/{sid}/messages", json={"text": "hola"}, headers=_h()
+        )
+    assert response.status_code == 501
