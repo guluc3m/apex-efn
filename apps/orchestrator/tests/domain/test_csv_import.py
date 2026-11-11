@@ -19,7 +19,7 @@ RATES = [
     FxRate(
         base=Currency.EUR,
         quote=Currency.USD,
-        rate="0.8",  # applied USD->EUR rate
+        rate="1.25",
         as_of=datetime(2026, 10, 31, tzinfo=UTC),
         source="ecb",
     )
