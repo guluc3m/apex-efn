@@ -133,6 +133,23 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /v1/onboarding/{id}/financial-csv/{import_id}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    - {name: import_id, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [onboarding]
+      operationId: getFinancialImport
+      summary: Read one financial import with its ImportReport (the report page is addressed by import id).
+      responses:
+        '200':
+          description: The import.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinancialImport'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /v1/onboarding/{id}/financial-csv/activate:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
@@ -1377,6 +1394,8 @@ components:
       properties:
         rows_ok: {type: integer, minimum: 0}
         rows_rejected: {type: integer, minimum: 0}
+        rows_duplicated: {type: integer, minimum: 0, description: Rows rejected as later duplicates (spec 3.1.1). Subset of rows_rejected.}
+        rows_converted: {type: integer, minimum: 0, description: Rows whose amount was converted to the base currency (converted=true).}
         rejections:
           type: array
           items: {$ref: '#/components/schemas/RowRejection'}
