@@ -208,15 +208,26 @@ llm:
   extraEnv: []
 
 ingress:
-  # Disabled until the staging/production domains exist. When enabled, both hosts are REQUIRED.
+  # Disabled until the staging/production domains exist. Only ingress.web.host is required: the API
+  # and Keycloak are internal services by default.
   enabled: false
   className: ''
   annotations: {}
   web:
     host: ''
   api:
-    # Routes /v1 and /health to the orchestrator.
+    # Optional. Leave empty to keep the API internal; the web BFF reaches it over the cluster network.
+    # Set a host only if external clients need the full /v1 API.
     host: ''
+  webhooks:
+    # Publish POST /v1/webhooks/platforms/* on the web host, straight to the orchestrator (HMAC).
+    enabled: false
+  keycloak:
+    # Publish /realms/apex/* and /resources/* on the web host, straight to Keycloak. The browser
+    # needs these paths for the OIDC login; the admin console stays internal.
+    enabled: false
+    serviceName: keycloak
+    servicePort: 8080
   tls:
     enabled: false
     secretName: ''

@@ -91,6 +91,7 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
    prints a notice that says what is missing.
 
 6. **Helm** runs from CD. For a manual first install (same values as CD):
+
    ```bash
    helm upgrade --install apex infra/helm/apex -n apex-staging --create-namespace \
      -f infra/helm/apex/values-staging.yaml \
@@ -98,10 +99,18 @@ Placeholders with defaults, to review before applying: `vpc_cidr`, instance type
      --set-string browserWorker.image.tag=sha-<short> --set-string migrations.image.tag=sha-<short> \
      --atomic --timeout 10m
    ```
+
    Also set the IRSA annotations and `config.*` values (see `.github/workflows/cd.yml`, which generates them).
    `migrations.image` is the `migrator` target of `apps/web/Dockerfile`, published by CD as
    `ghcr.io/guluc3m/apex-efn/web-migrations`; build it locally with
    `docker build -f apps/web/Dockerfile --target migrator -t apex/web-migrations:dev .`.
+
+   **Minimal public surface:** set `ingress.enabled=true` and `ingress.web.host`; that is the only required host.
+   Leave `ingress.api.host` empty to keep the API internal (the web BFF reaches it over the cluster network).
+   Set `ingress.webhooks.enabled=true` to publish only `POST /v1/webhooks/platforms/*` on the web host, and
+   `ingress.keycloak.enabled=true` (with `keycloak.serviceName`/`servicePort`) to publish only
+   `/realms/apex/*` and `/resources/*` for the browser OIDC flow. See `README.md` §Despliegue for the endpoint
+   inventory and the nginx example.
 
 ## 4. How CD works (`.github/workflows/cd.yml`)
 
