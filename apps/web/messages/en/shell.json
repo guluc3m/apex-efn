@@ -67,7 +67,7 @@
     "emailPlaceholder": "name@company.com",
     "continue": "Continue",
     "passkey": "Sign in with passkey",
-    "pending": "Not connected yet: sign-in is not available.",
+    "pending": "Passkey sign-in is not available yet. Use Continue.",
     "sso": "Does your company use SSO? Sign in with your provider (not connected yet).",
     "ed25519": "Signing requires a browser that supports Ed25519.",
     "queue": {
