@@ -19,13 +19,18 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from apex.common.clock import SystemClock
+from apex.negotiation.sim.market import HttpMarketplace
 from apex.negotiation.sim.models import BuyerProfile, ScenarioConfig
-from apex.negotiation.sim.pipeline import run_scenario
+from apex.negotiation.sim.pipeline import SimContext, default_engine_factory, run_scenario
+from apex.negotiation.sim.session import SimSession
+from apex.negotiation.sim.stub_llm import build_gateway
 
 DEFAULT_MARKETPLACE_URL = "http://127.0.0.1:8002"
 DEFAULT_LLM_URL = "http://127.0.0.1:8001"
@@ -96,7 +101,31 @@ def default_config(
     )
 
 
+class StepRequest(BaseModel):
+    """Which chat to advance. Omitted: advance every chat by one message (one round)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    buyer_id: str | None = None
+
+
 app = FastAPI(title="APEX-EFN simulation", docs_url=None, redoc_url=None)
+
+#: Live runs, keyed by run id. One demo at a time: starting a new one closes the previous.
+_sessions: dict[str, SimSession] = {}
+
+
+async def _close_sessions() -> None:
+    for session in list(_sessions.values()):
+        await session.close()
+    _sessions.clear()
+
+
+def _session(run_id: str) -> SimSession:
+    session = _sessions.get(run_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="unknown run")
+    return session
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -114,6 +143,72 @@ async def config() -> dict[str, Any]:
         "quantity": scenario.quantity,
         "buyers": [profile.model_dump() for profile in scenario.buyers],
     }
+
+
+@app.post("/api/session")
+async def start_session(request: ScenarioRequest | None = None) -> JSONResponse:
+    """Open the threads and draft the opening message of every buyer, nothing more."""
+    body = request or ScenarioRequest()
+    scenario = default_config(
+        marketplace_url=body.marketplace_url,
+        llm_url=body.llm_url,
+        quantity=body.quantity,
+        buyer_count=body.buyer_count,
+    )
+    await _close_sessions()
+    marketplace = HttpMarketplace(scenario.marketplace_url)
+    run_id = uuid4().hex[:8]
+    ctx = SimContext(
+        market=marketplace,
+        gateway=build_gateway(scenario.llm_url),
+        clock=SystemClock(),
+        config=scenario,
+        run_id=run_id,
+    )
+    session = SimSession(
+        scenario,
+        marketplace,
+        ctx,
+        default_engine_factory,
+        run_id,
+        owns_marketplace=True,
+    )
+    try:
+        await session.start()
+    except Exception:
+        await session.close()
+        raise
+    _sessions[run_id] = session
+    return JSONResponse(await session.view())
+
+
+@app.post("/api/session/{run_id}/step")
+async def step_session(run_id: str, body: StepRequest | None = None) -> JSONResponse:
+    """Advance one chat (or all of them) by one exchange. This is where the model is called."""
+    session = _session(run_id)
+    await session.step(body.buyer_id if body else None)
+    return JSONResponse(await session.view())
+
+
+@app.post("/api/session/{run_id}/all")
+async def finish_session(run_id: str) -> JSONResponse:
+    """Run every chat to its end at once, for when nobody wants to click."""
+    session = _session(run_id)
+    await session.run_all()
+    return JSONResponse(await session.view())
+
+
+@app.get("/api/session/{run_id}")
+async def read_session(run_id: str) -> JSONResponse:
+    return JSONResponse(await _session(run_id).view())
+
+
+@app.delete("/api/session/{run_id}")
+async def close_session(run_id: str) -> dict[str, bool]:
+    session = _sessions.pop(run_id, None)
+    if session is not None:
+        await session.close()
+    return {"closed": session is not None}
 
 
 @app.post("/api/scenario")

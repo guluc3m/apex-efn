@@ -93,6 +93,9 @@ Con clave configurada el script **no arranca el stub** y apunta el mercado y el 
   stub/proveedor solo pone el texto, y las guardas (`pinsPrice` en el vendedor, `plan_matches` en el
   comprador) tiran la frase si la cifra no coincide.
 
+La conversación se genera **en directo**: al arrancar solo hay una frase por comprador, y cada pulsación pide
+al modelo el siguiente mensaje. Con DeepSeek eso significa ~1–2 s por paso; con el stub, instantáneo.
+
 Y si quieres la traza en texto en vez de la página:
 
 ```bash
@@ -109,9 +112,10 @@ uv run python -m apex.negotiation.sim run --llm-url http://127.0.0.1:8001 --json
 2. **El montaje (30 s).** "Esto no toca ninguna plataforma real": mercado falso en local, modelos falsos en local,
    datos sintéticos. Enseña la tabla de la sección 1.
 3. **El catálogo (1 min).** Precios, MOQ y por qué el comprador elige un proveedor y no otro.
-4. **La negociación (3 min).** Pulsa **Run scenario** y la conversación **no aparece de golpe**: los mensajes
-   van saliendo de uno en uno, ronda a ronda entre los tres compradores. Usa **Step** (un mensaje), **Play**
-   (uno cada 1,2 s) o **Show all** (todo de golpe) según el ritmo que quieras. Abre la tarjeta de **Ana** y ve
+4. **La negociación (3 min).** Pulsa **Run scenario**: se abren los tres hilos y se pide al modelo solo la
+   primera frase. A partir de ahí **cada Step es una llamada real al modelo** — verás el indicador de
+   "pensando" y la respuesta llegar con su latencia. Cada tarjeta tiene su propio **Step / Play / All**, y los
+   botones de la cabecera avanzan los tres chats a la vez (una ronda). Abre la tarjeta de **Ana** y ve
    leyendo la conversación:
    - el comprador abre bajo (3,68 €) y el vendedor **no acepta**: contesta 4,22 €;
    - cada ronda el vendedor cede un 15% de la diferencia, nunca su suelo;
