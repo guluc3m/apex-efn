@@ -612,6 +612,28 @@ class NegotiationHumanMessage(BaseModel):
     ]
 
 
+class TargetLanguage(StrEnum):
+    es = "es"
+    en = "en"
+    zh = "zh"
+    he = "he"
+
+
+class NegotiationMessageTranslateRequest(BaseModel):
+    target_language: TargetLanguage
+
+
+class NegotiationMessageTranslation(BaseModel):
+    message_id: str
+    target_language: TargetLanguage
+    text: Annotated[
+        str,
+        Field(
+            description="Translation of the message; the original stays untouched in the transcript."
+        ),
+    ]
+
+
 class NegotiationControlRequest(BaseModel):
     reason: Annotated[str | None, Field(max_length=500)] = None
 

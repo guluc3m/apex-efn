@@ -8,6 +8,7 @@ import { useState } from 'react'
 
 import { AppLink } from '@/components/app-link'
 import { ErrorPanel } from '@/components/error-panel'
+import { TranslateMessage } from '@/components/negotiation/translate-message'
 import { OfferConfidence } from '@/components/sellers/offer-confidence'
 import { ApiError, useMissionOffers, useNegotiation, useNegotiationAction, useNegotiationMessages } from '@/lib/api'
 
@@ -56,6 +57,7 @@ export function NegotiationView({ negotiationId, missionId }: { negotiationId: s
         {t(`roles.${m.role}`)} · <time dateTime={m.at}>{time(m.at)}</time>
       </span>
       <p className="m-0 whitespace-pre-wrap">{m.content}</p>
+      {m.role === 'seller' && <TranslateMessage negotiationId={negotiationId} messageId={m.id} />}
     </li>
   )
 

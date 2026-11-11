@@ -179,6 +179,14 @@ export function useNegotiationAction(id: string) {
   })
 }
 
+/** Read-only translation of one seller message; nothing is stored, so there is nothing to invalidate. */
+export function useTranslateMessage(id: string) {
+  return useMutation({
+    mutationFn: ({ messageId, language }: { messageId: string; language: Parameters<typeof api.translateNegotiationMessage>[2] }) =>
+      api.translateNegotiationMessage(id, messageId, language),
+  })
+}
+
 export function useDeals(query?: Parameters<typeof api.listDeals>[0]) {
   return useQuery({ queryKey: queryKeys.deals(query), queryFn: ({ signal }) => api.listDeals(query, signal) })
 }

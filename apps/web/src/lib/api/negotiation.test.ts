@@ -15,6 +15,18 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 describe('negotiation operations', () => {
+  it('translates a message with both path ids and the target language', async () => {
+    let seen: { url: string; body: unknown } | null = null
+    server.use(
+      http.post('*/api/v1/negotiations/:id/messages/:mid/translate', async ({ request }) => {
+        seen = { url: new URL(request.url).pathname, body: await request.json() }
+        return HttpResponse.json({ message_id: 'neg_1:2', target_language: 'he', text: 'x' })
+      }),
+    )
+    await ops().translateNegotiationMessage('neg_1', 'neg_1:2', 'he')
+    expect(seen).toEqual({ url: expect.stringContaining('/negotiations/neg_1/messages/neg_1%3A2/translate') as unknown, body: { target_language: 'he' } })
+  })
+
   it('approves the exact draft id with an Idempotency-Key', async () => {
     let seen: { body: unknown; key: string | null } | null = null
     server.use(

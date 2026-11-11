@@ -1,6 +1,7 @@
 import {
   zEffectiveConfig,
   zMission,
+  zNegotiationMessageTranslation,
   zOnboardingSession,
   zSigningSession,
   zSourcingRequest,
@@ -13,6 +14,7 @@ import {
   onboardingSessionFixture,
   signingSessionFixture,
   sourcingRequestFixture,
+  translationFixture,
 } from './handlers'
 
 // The contract has no examples yet, so the fixtures are validated against the generated schemas.
@@ -22,6 +24,7 @@ describe('MSW fixtures match the generated contract schemas', () => {
     ['Mission', zMission, missionFixture],
     ['EffectiveConfig', zEffectiveConfig, effectiveConfigFixture],
     ['SigningSession', zSigningSession, signingSessionFixture],
+    ['NegotiationMessageTranslation', zNegotiationMessageTranslation, translationFixture],
     ['OnboardingSession', zOnboardingSession, onboardingSessionFixture],
   ])('%s', (_name, schema, fixture) => {
     expect(schema.safeParse(fixture).success).toBe(true)

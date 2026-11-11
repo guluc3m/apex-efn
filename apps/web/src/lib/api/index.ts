@@ -25,6 +25,7 @@ export {
   useProfiles,
   useProposeConfigChange,
   useSellerConfidence,
+  useTranslateMessage,
   useVerifyDecision,
 } from './hooks'
 export { createApiClient, type ApiClient } from './client'
