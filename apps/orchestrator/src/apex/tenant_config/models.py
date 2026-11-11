@@ -25,7 +25,7 @@ from pydantic import (
     model_validator,
 )
 
-from apex.contracts.generated.models import ScoreCriterion
+from apex.contracts.generated.models import HardConstraints, NegotiationParams, ScoreCriterion
 
 SUPPORTED_CURRENCIES: Final[tuple[str, ...]] = ("EUR", "USD", "CNY")
 """Closed enum (ADR-400 §5). Not configurable. Mirrors DB enum ``Currency`` (D2-03)."""
@@ -248,6 +248,9 @@ class ScoringProfile(_Section):
 
     name: str = Field(min_length=1)
     weights: dict[ScoreCriterion, Rate]
+    negotiation: NegotiationParams | None = None
+    hard_constraints: HardConstraints | None = None
+    """Both are needed to list the profile in ``GET /v1/profiles``; unset means it is not listed."""
 
     @model_validator(mode="after")
     def _weights(self) -> ScoringProfile:
