@@ -346,6 +346,11 @@ services:
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
       AUTH_ISSUER_URL: http://localhost:8080/realms/apex
+      # D1-05: the issuer is the browser-facing URL that appears in the token's `iss`; the JWKS is
+      # fetched over the compose network, where Keycloak is `keycloak` and not `localhost`.
+      APEX_AUTH_ISSUER: http://localhost:8080/realms/apex
+      APEX_AUTH_AUDIENCE: apex-orchestrator
+      APEX_AUTH_JWKS_URL: http://keycloak:8080/realms/apex/protocol/openid-connect/certs
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       UNLEASH_URL: http://unleash:4242/api
     ports:
@@ -386,9 +391,16 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       VAULT_ADDR: http://vault:8200
+      # DEV ONLY root token, the same value the vault service is started with (D1-06).
+      VAULT_TOKEN: apex-dev-root-token
+      # D5-02: the real browser stack is opt-in; with 0 the worker stays on its deterministic path.
+      BROWSER_WORKER_REAL_BROWSER: '0'
+      APEX_LOG_LEVEL: info
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       redis:
+        condition: service_healthy
+      vault:
         condition: service_healthy
 
   # Built from source (D1-03). The context is the repo root because the app uses
