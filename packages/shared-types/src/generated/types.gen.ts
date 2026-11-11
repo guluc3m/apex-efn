@@ -2550,6 +2550,51 @@ export type AbortNegotiationResponses = {
 
 export type AbortNegotiationResponse = AbortNegotiationResponses[keyof AbortNegotiationResponses]
 
+export type ReopenNegotiationData = {
+  body?: NegotiationControl
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/negotiations/{id}/reopen'
+}
+
+export type ReopenNegotiationErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+}
+
+export type ReopenNegotiationError = ReopenNegotiationErrors[keyof ReopenNegotiationErrors]
+
+export type ReopenNegotiationResponses = {
+  /**
+   * Negotiation reopened and waiting for the seller.
+   */
+  200: Negotiation
+}
+
+export type ReopenNegotiationResponse = ReopenNegotiationResponses[keyof ReopenNegotiationResponses]
+
 export type GetNegotiationData = {
   body?: never
   path: {

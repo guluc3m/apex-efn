@@ -226,6 +226,8 @@ class NegotiationSession(BaseModel):
     guardrail_hits: list[str] = Field(default_factory=list)
     guardrail_events: list[GuardrailEvent] = Field(default_factory=list)
     stop_reason: str | None = None
+    reopen_reason: str | None = None
+    """Why a human reopened an aborted negotiation (#128). Kept for the audit trail and the UI."""
 
     @property
     def best_quote(self) -> Quote | None:

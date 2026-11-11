@@ -335,3 +335,71 @@ class TestReadOne:
         with pytest.raises(NegotiationError) as exc:
             await h.engine.get("nope", tenant_id=T)
         assert _code(exc) == "not_found"
+
+
+class TestReopen:
+    """Reopening an aborted negotiation (#128)."""
+
+    async def test_reopen_clears_the_stop_and_keeps_the_history(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.abort(session.id, reason="buyer_cancelled", tenant_id=T)
+        transcript_before = len(session.transcript)
+
+        again = await h.engine.reopen(session.id, tenant_id=T, reason="seller_called_back")
+
+        assert again.status is NegotiationOutcome.AWAITING_SELLER
+        assert again.stop_reason is None
+        assert again.reopen_reason == "seller_called_back"
+        assert len(again.transcript) == transcript_before  # nothing is erased
+        assert again.rounds_sent == session.rounds_sent  # no free extra rounds
+
+    async def test_reopen_claims_the_seller_again(self) -> None:
+        h = harness(cooperative_seller())
+        session = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.abort(session.id, reason="buyer_cancelled", tenant_id=T)
+        assert (
+            await h.engine.seller_holder(tenant_id=T, platform="mock-b", seller_id=SELLER) is None
+        )
+
+        await h.engine.reopen(session.id, tenant_id=T, reason="r")
+
+        assert (
+            await h.engine.seller_holder(tenant_id=T, platform="mock-b", seller_id=SELLER)
+            == session.id
+        )
+
+    async def test_a_live_negotiation_cannot_be_reopened(self) -> None:
+        h = harness(cooperative_seller())
+        live = await h.engine.start(request(), idempotency_key="k")
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.reopen(live.id, tenant_id=T, reason="r")
+        assert _code(exc) == "not_aborted"
+
+    async def test_an_agreed_negotiation_cannot_be_reopened(self) -> None:
+        h = harness(cooperative_seller())
+        session = await run_autonomous(
+            h, await h.engine.start(request(params(semi_automatic=False)), idempotency_key="k")
+        )
+        assert session.status is NegotiationOutcome.AGREED
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.reopen(session.id, tenant_id=T, reason="r")
+        assert _code(exc) == "not_aborted"
+
+    async def test_reopen_is_refused_when_another_negotiation_holds_the_seller(self) -> None:
+        h = harness(cooperative_seller())
+        first = await h.engine.start(request(), idempotency_key="k1")
+        await h.engine.abort(first.id, reason="buyer_cancelled", tenant_id=T)
+        await h.engine.start(request(), idempotency_key="k2")  # takes the seller
+
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.reopen(first.id, tenant_id=T, reason="r")
+        assert _code(exc) == "seller_busy"
+
+    async def test_another_tenant_cannot_reopen(self) -> None:
+        h = harness(cooperative_seller())
+        first = await h.engine.start(request(), idempotency_key="k")
+        await h.engine.abort(first.id, reason="buyer_cancelled", tenant_id=T)
+        with pytest.raises(NegotiationError) as exc:
+            await h.engine.reopen(first.id, tenant_id="tenant-b", reason="r")
+        assert _code(exc) == "not_found"

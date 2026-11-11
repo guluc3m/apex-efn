@@ -86,6 +86,7 @@ DEV5_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/v1/negotiations/{id}/messages"),
         ("POST", "/v1/negotiations/{id}/approve"),
         ("POST", "/v1/negotiations/{id}/reject"),
+        ("POST", "/v1/negotiations/{id}/reopen"),
     }
 )
 

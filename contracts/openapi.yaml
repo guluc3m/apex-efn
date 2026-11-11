@@ -568,6 +568,37 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
+  /v1/negotiations/{id}/reopen:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [negotiations]
+      operationId: reopenNegotiation
+      summary: Reopen an aborted negotiation so it can continue.
+      description: 'Only an aborted negotiation can be reopened; anything else answers `409` with reason
+
+        `not_aborted`. The transcript and the rounds already used are kept: reopening buys no extra concessions.
+
+        The seller is claimed again, so if another negotiation took it after the abort the answer is `409
+
+        seller_busy`.
+
+        Not a signed decision: reopening commits nothing and can be aborted again. The reason is recorded for
+
+        the audit trail.'
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody: {$ref: '#/components/requestBodies/NegotiationControl'}
+      responses:
+        '200':
+          description: Negotiation reopened and waiting for the seller.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Negotiation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
   /v1/negotiations/{id}:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
