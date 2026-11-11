@@ -103,7 +103,7 @@ export function useNegotiationMessages(id: string) {
   })
 }
 
-export type NegotiationAction = 'approve' | 'reject' | 'takeover' | 'resume' | 'abort' | 'send'
+export type NegotiationAction = 'approve' | 'reject' | 'takeover' | 'resume' | 'abort' | 'reopen' | 'send'
 
 /** One mutation for every write on a negotiation; the server answer is the only source of truth, so refetch after it. */
 export function useNegotiationAction(id: string) {
@@ -121,6 +121,8 @@ export function useNegotiationAction(id: string) {
           return api.resumeNegotiation(id, reason)
         case 'abort':
           return api.abortNegotiation(id, reason)
+        case 'reopen':
+          return api.reopenNegotiation(id, reason)
         case 'send':
           return api.sendHumanNegotiationMessage(id, { content: text ?? '' })
       }

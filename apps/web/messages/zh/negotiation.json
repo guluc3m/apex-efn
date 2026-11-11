@@ -37,12 +37,13 @@
     "resumeText": "代理将以半自动模式继续起草：每条消息都需等待您的批准。",
     "abortTitle": "中止谈判",
     "abortText": "代理停止写信。对话记录会保存，之后可以重新开启。",
-    "reason": "原因"
+    "reason": "原因",
+    "reopenTitle": "重新开启此谈判",
+    "reopenText": "代理从中断处继续。记录和已用轮次会保留：重新开启不会增加额外让步。"
   },
   "titleNoMax": "谈判 · 第 {round} 轮",
   "loading": "正在加载谈判…",
   "empty": "暂无消息。",
-  "reopenUnavailable": "暂不支持重新开启。",
   "states": {
     "queued": "排队中",
     "running": "代理处理中",
@@ -80,6 +81,8 @@
     "draft_superseded": "卖家已在此期间回复。批准前请查看新草稿。",
     "draft_not_pending": "该草稿已不再待处理。",
     "human_in_control": "聊天由人工控制。请先交还给代理。",
-    "not_in_human_control": "请先接管聊天，再给卖家写消息。"
+    "not_in_human_control": "请先接管聊天，再给卖家写消息。",
+    "seller_busy": "该卖家目前正在另一场谈判中。",
+    "not_aborted": "只有已中止的谈判才能重新开启。"
   }
 }
