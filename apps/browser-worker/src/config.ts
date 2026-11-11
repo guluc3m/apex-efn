@@ -20,10 +20,22 @@ const envSchema = z.object({
   PROXY_RESIDENTIAL_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   PROXY_DATACENTER_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   ARTIFACT_DIR: z.string().min(1).default('./artifacts'),
+  // The User-Agent goes to every platform in clear text and lands in their logs. It identifies the product, never
+  // a person, a tenant or a credential: an email or an identity word here is a leak to a third party (see
+  // docs/compliance/wallapop.md section 6). The default is a product token plus an organisational URL.
   ADAPTER_USER_AGENT: z
     .string()
     .min(1)
     .max(200)
+    .refine(
+      (value) =>
+        !value.includes('@') &&
+        !/\b(token|secret|tenant|account|password|apikey|api[_-]?key)/i.test(value),
+      {
+        message:
+          'must be an anonymous product token; emails, credentials, tenant or account identifiers are forbidden',
+      }
+    )
     .default('APEX-EFN-bot/0.1 (+https://example.invalid/bot)'),
   ADAPTER_MIN_INTERVAL_MS: z.coerce.number().int().min(0).default(1000),
   ADAPTER_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
