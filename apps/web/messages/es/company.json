@@ -7,6 +7,8 @@
       "pending": "Pendiente de conectar",
       "accepted": "Filas aceptadas",
       "rejected": "Rechazadas",
+      "duplicated": "Duplicadas",
+      "converted": "Convertidas",
       "periods": "Periodos",
       "mappingTitle": "Mapeo de cabeceras",
       "mappingHint": "Confirmar el mapeo de cabeceras aún no está disponible: el servidor no lo expone.",

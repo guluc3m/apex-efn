@@ -7,6 +7,8 @@
       "pending": "Not connected yet",
       "accepted": "Accepted rows",
       "rejected": "Rejected",
+      "duplicated": "Duplicated",
+      "converted": "Converted",
       "periods": "Periods",
       "mappingTitle": "Header mapping",
       "mappingHint": "Confirming header mappings is not available yet: the server does not expose it.",

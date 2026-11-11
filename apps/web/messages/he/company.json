@@ -7,6 +7,8 @@
       "pending": "טרם חובר",
       "accepted": "שורות שהתקבלו",
       "rejected": "נדחו",
+      "duplicated": "כפולות",
+      "converted": "הומרו",
       "periods": "תקופות",
       "mappingTitle": "מיפוי כותרות",
       "mappingHint": "אישור מיפוי הכותרות עדיין לא זמין: השרת אינו חושף אותו.",
