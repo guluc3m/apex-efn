@@ -85,7 +85,7 @@ class MissionRunner:
         mission = await self._deps.store.get(tenant_id, mission_id)
         if mission is None:
             raise LookupError(f"mission {mission_id} not found")
-        if mission.status is not MissionStatus.PLANNED:
+        if mission.status is not MissionStatus.PLANNED or mission.paused:
             raise MissionNotRunnable(mission_id, mission.status)
         plan = mission.plan
         if plan is None:
