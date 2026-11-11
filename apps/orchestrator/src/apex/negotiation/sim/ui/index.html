@@ -205,8 +205,15 @@
         color: var(--ink-muted);
         font-variant-numeric: tabular-nums;
       }
-      .toolbar .status:last-child {
+      .toolbar > .status {
         margin-left: auto;
+      }
+      .hint {
+        flex-basis: 100%;
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--ink-muted);
       }
 
       /* ---------- panels ---------- */
@@ -536,6 +543,37 @@
           <input id="llm" class="wide" placeholder="http://127.0.0.1:8001" />
         </div>
         <div class="field">
+          <label for="llmkey">Clave API</label>
+          <input
+            id="llmkey"
+            class="wide"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="llm-hint"
+            placeholder="sk-… (opcional)"
+          />
+        </div>
+        <div class="field">
+          <label for="llmmodel">Modelo</label>
+          <input
+            id="llmmodel"
+            class="wide"
+            list="llm-models"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="deepseek-chat"
+          />
+          <datalist id="llm-models">
+            <option value="deepseek-chat"></option>
+            <option value="gpt-4o-mini"></option>
+            <option value="gpt-4.1-mini"></option>
+            <option value="llama3.1"></option>
+            <option value="qwen2.5"></option>
+            <option value="mistral-large-latest"></option>
+          </datalist>
+        </div>
+        <div class="field">
           <label for="buyers">Compradores IA</label>
           <input id="buyers" type="number" min="1" max="3" value="3" />
         </div>
@@ -551,6 +589,10 @@
           <span class="status" id="progress"></span>
         </span>
         <span class="status" id="status"></span>
+        <p class="hint" id="llm-hint">
+          La clave solo vive en la memoria de este navegador y se envía únicamente a este servidor de
+          simulación local; si la dejas vacía se usa el stub local.
+        </p>
       </div>
 
       <div id="error" class="error" hidden></div>
@@ -608,6 +650,31 @@
       };
 
       const state = { runId: null, view: null, busy: null, timers: {}, prev: {}, allTimer: null };
+      const STORAGE_URL = "apex.sim.llm_url";
+      const STORAGE_MODEL = "apex.sim.llm_model";
+
+      function readPref(key) {
+        try {
+          return localStorage.getItem(key) || "";
+        } catch {
+          return "";
+        }
+      }
+
+      function writePref(key, value) {
+        try {
+          if (value) localStorage.setItem(key, value);
+          else localStorage.removeItem(key);
+        } catch {
+          /* Storage can be unavailable (private mode, file://); the page still works. */
+        }
+      }
+
+      function saveLlmPrefs() {
+        // Only the endpoint and the model are persisted. The API key never leaves memory.
+        writePref(STORAGE_URL, $("llm").value.trim());
+        writePref(STORAGE_MODEL, $("llmmodel").value.trim());
+      }
 
       async function api(path, body) {
         const init =
@@ -621,8 +688,10 @@
       }
 
       function showError(message) {
-        $("error").hidden = message === null;
-        $("error").textContent = message || "";
+        const key = $("llmkey").value.trim();
+        const safe = key && message ? String(message).split(key).join("[redacted]") : message;
+        $("error").hidden = safe === null;
+        $("error").textContent = safe || "";
       }
 
       function setBusy(id) {
@@ -653,11 +722,16 @@
       }
 
       async function loadConfig() {
+        const savedUrl = readPref(STORAGE_URL);
+        const savedModel = readPref(STORAGE_MODEL);
+        if (savedUrl) $("llm").value = savedUrl;
+        if (savedModel) $("llmmodel").value = savedModel;
         const response = await fetch("/api/config");
         if (!response.ok) return;
         const cfg = await response.json();
         $("market").value = cfg.marketplace_url;
-        $("llm").value = cfg.llm_url || "";
+        if (!savedUrl && !$("llm").value.trim()) $("llm").value = cfg.llm_url || "";
+        if (!savedModel && !$("llmmodel").value.trim()) $("llmmodel").value = cfg.llm_model || "";
         $("qty").value = cfg.quantity;
       }
 
@@ -669,13 +743,20 @@
         const button = $("run");
         button.disabled = true;
         $("status").textContent = "abriendo hilos y pidiendo la primera frase al modelo…";
+        const body = {
+          marketplace_url: $("market").value || null,
+          llm_url: $("llm").value || null,
+          buyer_count: Number($("buyers").value) || null,
+          quantity: Number($("qty").value) || null,
+        };
+        // Blank credentials are omitted, so an empty key keeps the local stub path untouched.
+        const apiKey = $("llmkey").value.trim();
+        const model = $("llmmodel").value.trim();
+        if (apiKey) body.llm_api_key = apiKey;
+        if (model) body.llm_model = model;
+        saveLlmPrefs();
         try {
-          const view = await api("/api/session", {
-            marketplace_url: $("market").value || null,
-            llm_url: $("llm").value || null,
-            buyer_count: Number($("buyers").value) || null,
-            quantity: Number($("qty").value) || null,
-          });
+          const view = await api("/api/session", body);
           state.runId = view.run_id;
           render(view);
           $("playback").hidden = false;
@@ -883,6 +964,8 @@
       });
       $("play").addEventListener("click", toggleAllPlay);
       $("all").addEventListener("click", finishAll);
+      $("llm").addEventListener("change", saveLlmPrefs);
+      $("llmmodel").addEventListener("change", saveLlmPrefs);
 
       loadConfig();
     </script>

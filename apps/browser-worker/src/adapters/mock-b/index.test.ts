@@ -132,6 +132,43 @@ describe('mock-b adapter', () => {
     ])
   })
 
+  it('falls back to the visible price when a card has no data-minor', async () => {
+    const transport = new FixtureTransport({
+      'GET /mock-b/search': html(`<ul data-testid="results">
+        <li data-testid="result" data-item-id="x-1" data-seller-id="s-1">
+          <a class="title">Thing</a>
+          <span data-testid="price">£51.77</span>
+          <span data-testid="moq">Min. order: 1 units</span>
+          <a class="shop">Shop</a>
+        </li>
+      </ul>`),
+    })
+
+    const result = await adapter(transport).search({ query: 'x', quantity: null, maxResults: 10 })
+
+    expect(result.offers).toHaveLength(1)
+    expect(result.offers[0]?.unit_price).toEqual({ amount_minor: 5177, currency: 'GBP' })
+    expect(result.skipped).toEqual([])
+  })
+
+  it('skips a listing whose visible price is ambiguous', async () => {
+    const transport = new FixtureTransport({
+      'GET /mock-b/search': html(`<ul data-testid="results">
+        <li data-testid="result" data-item-id="x-1" data-seller-id="s-1">
+          <a class="title">Thing</a>
+          <span data-testid="price">£51.77 - £60.00</span>
+          <span data-testid="moq">Min. order: 1 units</span>
+          <a class="shop">Shop</a>
+        </li>
+      </ul>`),
+    })
+
+    const result = await adapter(transport).search({ query: 'x', quantity: null, maxResults: 10 })
+
+    expect(result.offers).toEqual([])
+    expect(result.skipped).toEqual([{ platform_offer_id: 'x-1', reason: 'missing_price' }])
+  })
+
   it('parses the item page: specs, tiers, shipping, incoterm and lead time', async () => {
     const offer = await adapter().getProduct('b-gloves-01')
 

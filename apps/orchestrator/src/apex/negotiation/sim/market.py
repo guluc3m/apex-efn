@@ -159,10 +159,38 @@ def _wire_message(payload: Any) -> ThreadMessage:
     )
 
 
+def _provider_headers(
+    llm_url: str | None, llm_api_key: str | None, llm_model: str | None
+) -> dict[str, str]:
+    """Provider configuration forwarded to the mock marketplace on every request.
+
+    The marketplace rephrases the scripted seller replies with the same endpoint, so it needs the
+    per-session values too (its own environment is only the fallback). Empty values mean "not
+    configured" and omit the header; the key is a header and never appears in a URL or a body.
+    """
+    headers: dict[str, str] = {}
+    if llm_url:
+        headers["x-sim-llm-url"] = llm_url
+    if llm_api_key:
+        headers["x-sim-llm-key"] = llm_api_key
+    if llm_model:
+        headers["x-sim-llm-model"] = llm_model
+    return headers
+
+
 class HttpMarketplace:
     """``httpx`` client over the mock marketplace. One instance per simulation run."""
 
-    def __init__(self, base_url: str, *, timeout: float = 15.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        timeout: float = 15.0,
+        llm_url: str | None = None,
+        llm_api_key: str | None = None,
+        llm_model: str | None = None,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         root = base_url.rstrip("/")
         if root.endswith(_API_SUFFIX):
             root = root[: -len(_API_SUFFIX)]
@@ -170,7 +198,12 @@ class HttpMarketplace:
             raise ValueError("marketplace_url must include a host")
         self._root = root
         self._api = f"{root}{_API_SUFFIX}"
-        self._client = httpx.AsyncClient(base_url=self._api, timeout=timeout)
+        self._client = httpx.AsyncClient(
+            base_url=self._api,
+            timeout=timeout,
+            headers=_provider_headers(llm_url, llm_api_key, llm_model),
+            transport=transport,
+        )
 
     async def aclose(self) -> None:
         await self._client.aclose()

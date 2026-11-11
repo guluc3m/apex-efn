@@ -135,32 +135,36 @@ export class ChatEngine {
   /**
    * Appends the buyer message and the seller reply. Returns both messages.
    *
+   * `phraser` overrides the engine's own phraser for this call only (the orchestrator sim sends a
+   * per-request provider configuration). It is a parameter, never stored, so concurrent chats cannot
+   * see each other's provider or key.
+   *
    * Without a phraser (unset, or the no-op phraser `SIM_LLM_URL` unset builds) the whole call still runs
    * synchronously, so the appended order, `seq` and `at` are exactly as before. With a real phraser, only
    * the seller's wording is awaited — state and numbers are already decided by `respond`.
    */
-  async send(chatId: string, text: string): Promise<ChatMessage[]> {
+  async send(chatId: string, text: string, phraser?: ChatPhraser): Promise<ChatMessage[]> {
     const chat = this.get(chatId)
     const clean = text.trim()
     if (clean.length === 0) throw new ChatError('empty_message', 'message is empty')
     const buyer = this.append(chat, 'buyer', clean)
     const reply = respond(chat.state, clean, this.product(chat.productId), chat.rng)
+    const active = phraser ?? this.phraser
     // A persona that has closed the deal answers with the written confirmation: never reworded.
     const sellerText =
-      this.phraser === undefined || this.phraser === noopPhraser || chat.state.agreed !== null
+      active === undefined || active === noopPhraser || chat.state.agreed !== null
         ? reply.text
-        : await this.rephrase(reply)
+        : await this.rephrase(reply, active)
     const seller = this.append(chat, 'seller', sellerText)
     return [buyer, seller]
   }
 
   /** Rephrasing is cosmetic: anything unexpected (error, timeout, price drift) keeps the scripted text. */
-  private async rephrase(reply: PersonaReply): Promise<string> {
-    if (this.phraser === undefined) return reply.text
+  private async rephrase(reply: PersonaReply, phraser: ChatPhraser): Promise<string> {
     // A written confirmation is the sentence the buyer relies on; it is never reworded by a model.
     if (CONFIRMATION_RE.test(reply.text)) return reply.text
     try {
-      const candidate = await this.phraser.phrased(reply.text, reply.quote)
+      const candidate = await phraser.phrased(reply.text, reply.quote)
       return pinsPrice(reply.text, candidate, reply.quote) ? candidate.trim() : reply.text
     } catch {
       return reply.text

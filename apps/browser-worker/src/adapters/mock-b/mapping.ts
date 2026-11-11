@@ -112,6 +112,10 @@ export function searchResults(html: string, context: PageContext): SearchPage {
       continue
     }
     const price = priceOf(priceElement, 'price')
+    if (price === null) {
+      skipped.push({ platform_offer_id: offerId, reason: 'missing_price' })
+      continue
+    }
     if (!SUPPORTED.has(price.currency)) {
       skipped.push({
         platform_offer_id: offerId,
@@ -156,6 +160,9 @@ export function offerFromItemPage(html: string, context: PageContext): RawOffer 
   const article = requireByTestId(root, 'item')
   const offerId = requireAttr(article, 'data-item-id', 'item')
   const price = priceOf(requireByTestId(root, 'price'), 'price')
+  if (price === null) {
+    throw domChanged('price')
+  }
   if (!SUPPORTED.has(price.currency)) {
     throw domChanged('supported currency on item')
   }

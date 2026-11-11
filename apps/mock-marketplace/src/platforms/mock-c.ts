@@ -1,8 +1,11 @@
+import type { IncomingHttpHeaders } from 'node:http'
+
 import type { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 
 import { findProduct, findSeller, search } from '../catalog.js'
 import { ChatError, type ChatEngine, type ChatMessage } from '../chat/engine.js'
+import { createLlmPhraser, type ChatPhraser } from '../chat/phraser.js'
 import type { Catalog, Product, Seller } from '../fixtures/schema.js'
 
 /**
@@ -144,6 +147,33 @@ function wire(m: ChatMessage) {
   }
 }
 
+/** First value of a request header, trimmed; `undefined` when absent or blank. */
+function headerText(value: string | string[] | undefined): string | undefined {
+  const first = Array.isArray(value) ? value[0] : value
+  const text = first?.trim()
+  return text === undefined || text.length === 0 ? undefined : text
+}
+
+/**
+ * Per-request provider configuration for the seller wording (`x-sim-llm-*`).
+ *
+ * The orchestrator sim sends these so one demo can use a real model without restarting the marketplace.
+ * No URL header means the process-wide `SIM_LLM_*` phraser the engine was built with. The key is only
+ * handed to the provider: never logged, never echoed in a response or an error.
+ */
+function requestPhraser(headers: IncomingHttpHeaders): ChatPhraser | undefined {
+  const url = headerText(headers['x-sim-llm-url'])
+  if (url === undefined) return undefined
+  const apiKey = headerText(headers['x-sim-llm-key'])
+  const model = headerText(headers['x-sim-llm-model'])
+  return createLlmPhraser(url, {
+    apiKey,
+    model,
+    scenario: apiKey ? null : 'sim-negotiation',
+    timeoutMs: apiKey ? 8000 : undefined,
+  })
+}
+
 export function registerMockC(app: FastifyInstance, catalog: Catalog, chats: ChatEngine): void {
   const threads = new Map<string, Thread>()
 
@@ -226,8 +256,10 @@ export function registerMockC(app: FastifyInstance, catalog: Catalog, chats: Cha
     if (thread === undefined) return error(reply, 'unknown_thread', 404)
     const parsed = SendMessage.safeParse(req.body)
     if (!parsed.success) return error(reply, 'invalid_message', 400)
+    // Built per request and passed by value: no shared state, so one session's key never reaches another.
+    const phraser = requestPhraser(req.headers)
     try {
-      const produced = await chats.send(thread.chatId, parsed.data.body)
+      const produced = await chats.send(thread.chatId, parsed.data.body, phraser)
       const [sent] = produced
       const received = produced.slice(1)
       return reply.code(201).send({

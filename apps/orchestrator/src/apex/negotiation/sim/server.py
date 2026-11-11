@@ -78,6 +78,8 @@ class ScenarioRequest(BaseModel):
 
     marketplace_url: str | None = None
     llm_url: str | None = None
+    llm_api_key: str | None = Field(default=None, repr=False)
+    llm_model: str | None = None
     quantity: int | None = Field(default=None, gt=0)
     buyer_count: int | None = Field(default=None, ge=1, le=len(DEFAULT_BUYERS))
 
@@ -86,16 +88,22 @@ def default_config(
     *,
     marketplace_url: str | None = None,
     llm_url: str | None = None,
+    llm_api_key: str | None = None,
+    llm_model: str | None = None,
     quantity: int | None = None,
     buyer_count: int | None = None,
 ) -> ScenarioConfig:
-    """The scenario the page runs: environment first, then what the caller asked for."""
+    """The scenario the page runs: the request first, then the environment, then the demo defaults."""
     market = marketplace_url or os.environ.get("SIM_MARKETPLACE_URL") or DEFAULT_MARKETPLACE_URL
     llm = llm_url or os.environ.get("SIM_LLM_URL") or DEFAULT_LLM_URL
+    key = llm_api_key or os.environ.get("SIM_LLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+    model = llm_model or os.environ.get("SIM_LLM_MODEL")
     selected = list(DEFAULT_BUYERS)[: buyer_count or len(DEFAULT_BUYERS)]
     return ScenarioConfig(
         marketplace_url=market,
         llm_url=llm,
+        llm_api_key=key,
+        llm_model=model,
         quantity=quantity or DEFAULT_QUANTITY,
         buyers=selected,
     )
@@ -152,15 +160,24 @@ async def start_session(request: ScenarioRequest | None = None) -> JSONResponse:
     scenario = default_config(
         marketplace_url=body.marketplace_url,
         llm_url=body.llm_url,
+        llm_api_key=body.llm_api_key,
+        llm_model=body.llm_model,
         quantity=body.quantity,
         buyer_count=body.buyer_count,
     )
     await _close_sessions()
-    marketplace = HttpMarketplace(scenario.marketplace_url)
+    marketplace = HttpMarketplace(
+        scenario.marketplace_url,
+        llm_url=scenario.llm_url,
+        llm_api_key=scenario.llm_api_key,
+        llm_model=scenario.llm_model,
+    )
     run_id = uuid4().hex[:8]
     ctx = SimContext(
         market=marketplace,
-        gateway=build_gateway(scenario.llm_url),
+        gateway=build_gateway(
+            scenario.llm_url, api_key=scenario.llm_api_key, model=scenario.llm_model
+        ),
         clock=SystemClock(),
         config=scenario,
         run_id=run_id,
@@ -217,6 +234,8 @@ async def run(request: ScenarioRequest | None = None) -> JSONResponse:
     scenario = default_config(
         marketplace_url=body.marketplace_url,
         llm_url=body.llm_url,
+        llm_api_key=body.llm_api_key,
+        llm_model=body.llm_model,
         quantity=body.quantity,
         buyer_count=body.buyer_count,
     )
