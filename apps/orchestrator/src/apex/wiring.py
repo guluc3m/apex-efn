@@ -21,8 +21,6 @@ honest: the alternative would be inventing the numbers those engines own.
 
 from __future__ import annotations
 
-import structlog
-
 import asyncio
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -30,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import structlog
 
 from apex.agents.analysis import AnalysisDeps, AnalysisNodes
 from apex.agents.browser_worker import HttpBrowserWorker
@@ -418,9 +417,7 @@ def _roles_from(
             base_url=base_url_override or str(role["base_url"]),
             api_key_ref=api_key_ref,
             model=model_override or str(role["model"]),
-            capabilities=_capabilities(
-                tuple(capabilities) or tuple(role.get("capabilities", ()))
-            ),
+            capabilities=_capabilities(tuple(capabilities) or tuple(role.get("capabilities", ()))),
         )
         endpoints[endpoint.endpoint_id] = endpoint
         by_role[llm_role] = endpoint
@@ -496,8 +493,7 @@ def build_app_services(
     gateway = LLMGateway(
         config_provider=DefaultRoleConfigProvider(
             base_url_override=(
-                cfg.llm_base_url_override
-                or (cfg.llm_gateway_url if llm_api_key else "")
+                cfg.llm_base_url_override or (cfg.llm_gateway_url if llm_api_key else "")
             ),
             model_override=cfg.llm_model_override,
             api_key_ref=llm_api_key_ref,
@@ -505,9 +501,7 @@ def build_app_services(
             # only uses a capability that is declared, so say it out loud here.
             capabilities=("json_object",) if llm_api_key else (),
         ),
-        secrets=StaticSecretResolver(
-            {llm_api_key_ref: llm_api_key} if llm_api_key_ref else {}
-        ),
+        secrets=StaticSecretResolver({llm_api_key_ref: llm_api_key} if llm_api_key_ref else {}),
         budget=TokenBudget(InMemoryBudgetStore(), mission_limit=cfg.llm_mission_token_budget),
         sink=InMemorySink(),
         clock=active_clock,
@@ -548,9 +542,7 @@ def build_app_services(
     onboarding = OnboardingService(
         OnboardingDeps(
             store=InMemoryOnboardingStore(),
-            importer=DomainCsvImporter(
-                rates=fx_rates or EcbFxRateReader(), config=tenant_config
-            ),
+            importer=DomainCsvImporter(rates=fx_rates or EcbFxRateReader(), config=tenant_config),
             objects=objects or S3ObjectStore(cfg),
             decisions=signing_port(tenant_config, active_clock),
             clock=active_clock,

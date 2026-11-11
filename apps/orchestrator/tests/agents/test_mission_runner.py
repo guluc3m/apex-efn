@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from datetime import UTC, datetime
-from types import SimpleNamespace
 from typing import Any
 
 import pytest

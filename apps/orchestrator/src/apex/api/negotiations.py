@@ -28,7 +28,7 @@ The approver/author identity is provisional in the same way; see :func:`get_acto
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Header, Query, Request
 
@@ -73,7 +73,7 @@ def get_negotiation_control(request: Request) -> NegotiationControlService:
     """
     negotiation = getattr(getattr(request.app.state, "app_services", None), "negotiation", None)
     if negotiation is not None:
-        return negotiation.control()
+        return cast(NegotiationControlService, negotiation.control())
     return _control
 
 
