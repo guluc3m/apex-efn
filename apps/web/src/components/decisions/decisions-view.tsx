@@ -2,14 +2,13 @@
 
 import type { Deal } from '@apex/shared-types/contracts'
 import { Button, Icon, MoneyDisplay, Select, Tabs, TabsList, TabsTrigger } from '@apex/ui'
+import { useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, Handshake, ListTodo, ScrollText } from 'lucide-react'
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 
 import { AppLink } from '@/components/app-link'
-import { useQueryClient } from '@tanstack/react-query'
-
 import { queryKeys, subscribeMissionEvents, useDeals, useGateQueue, useNegotiationMessages } from '@/lib/api'
 import { remaining } from '@/lib/decisions'
 
