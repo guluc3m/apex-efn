@@ -3002,6 +3002,43 @@ export type RejectNegotiationDraftResponses = {
 export type RejectNegotiationDraftResponse =
   RejectNegotiationDraftResponses[keyof RejectNegotiationDraftResponses]
 
+export type CloseAllMySigningSessionsData = {
+  body?: never
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path?: never
+  query?: never
+  url: '/v1/signing-sessions'
+}
+
+export type CloseAllMySigningSessionsErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type CloseAllMySigningSessionsError =
+  CloseAllMySigningSessionsErrors[keyof CloseAllMySigningSessionsErrors]
+
+export type CloseAllMySigningSessionsResponses = {
+  /**
+   * All active sessions revoked.
+   */
+  204: void
+}
+
+export type CloseAllMySigningSessionsResponse =
+  CloseAllMySigningSessionsResponses[keyof CloseAllMySigningSessionsResponses]
+
 export type OpenSigningSessionData = {
   body: OpenSigningSessionRequest
   headers: {

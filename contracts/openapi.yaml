@@ -833,6 +833,20 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '422': {$ref: '#/components/responses/ValidationProblem'}
         '428': {$ref: '#/components/responses/ReauthRequired'}
+    delete:
+      tags: [signing]
+      operationId: closeAllMySigningSessions
+      summary: Revoke every active signing session of the caller (logout on every device).
+      description: 'Ends all active windows of the current user with reason `session_revoked`. Idempotent: no
+        active session is still 204. The web logout calls it before clearing its cookie (issue #272).
+
+        '
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '204': {description: All active sessions revoked.}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
   /v1/signing-sessions/{id}:
     parameters:
     - {$ref: '#/components/parameters/PathId'}

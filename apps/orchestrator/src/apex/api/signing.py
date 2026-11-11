@@ -3,6 +3,7 @@
 - ``POST ""``      open a fixed window from the step-up token's ``auth_time``.
 - ``GET  /{id}``   state, remaining signatures and ``server_time`` for the UI countdown.
 - ``DELETE /{id}`` close the window explicitly.
+- ``DELETE ""``    revoke every active window of the caller (logout on all devices, issue #272).
 
 Sessions belong to their user: another user's (or tenant's) session is 404. Signatures consume the window in
 D2-09 through ``apex.signing.sessions.consume``.
@@ -14,7 +15,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apex.api.keys import Now, Sessions, Signer, member_id
@@ -147,3 +148,17 @@ async def close_signing_session(
     async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
         row = await signing_sessions.close(session, await _own(session, id, principal), now)
         return _view(row, now)
+
+
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+async def close_all_my_signing_sessions(
+    principal: Signer, sessions: Sessions, clock: Now
+) -> Response:
+    async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
+        await signing_sessions.invalidate_user_sessions(
+            session,
+            await member_id(session, principal),
+            models.ReauthReason.SESSION_REVOKED,
+            now=clock.now(),
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

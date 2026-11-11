@@ -2284,6 +2284,15 @@ export const zRejectNegotiationDraftPath = z.object({
  */
 export const zRejectNegotiationDraftResponse = zNegotiation
 
+export const zCloseAllMySigningSessionsHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+/**
+ * All active sessions revoked.
+ */
+export const zCloseAllMySigningSessionsResponse = z.void()
+
 export const zOpenSigningSessionBody = zOpenSigningSessionRequest
 
 export const zOpenSigningSessionHeaders = z.object({

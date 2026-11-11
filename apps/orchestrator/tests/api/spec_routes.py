@@ -98,7 +98,10 @@ DEV5_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
     }
 )
 
+# Routes DEV-2 added that section 8 does not list: logout on every device (issue #272).
+DEV2_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset({("DELETE", "/v1/signing-sessions")})
+
 # The exact-set check covers both. The 501 stub check covers only SPEC_ROUTES minus IMPLEMENTED_ROUTES.
 EXPECTED_ROUTES: frozenset[tuple[str, str]] = (
-    SPEC_ROUTES | CONFIG_ROUTES | DEV4_EXTRA_ROUTES | DEV5_EXTRA_ROUTES
+    SPEC_ROUTES | CONFIG_ROUTES | DEV2_EXTRA_ROUTES | DEV4_EXTRA_ROUTES | DEV5_EXTRA_ROUTES
 )
