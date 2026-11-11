@@ -74,6 +74,8 @@
     "penalty": "Penalización",
     "leadTime": "Plazo de entrega",
     "leadTimeV": "{n} días",
+    "payment": "Pago",
+    "prepayment": "Prepago",
     "moq": "Pedido mínimo",
     "noConfidence": "Aún no hay confianza calculada para este vendedor.",
     "reference": "Precio de referencia",

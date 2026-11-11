@@ -71,6 +71,7 @@
   },
   "distribution": {
     "none": "Aún no hay verificaciones de precio.",
-    "caption": "Precio/ud de cada oferta. Línea discontinua: mediana de mercado {median}."
+    "caption": "Precio/ud de cada oferta. Línea discontinua: mediana de mercado {median}.",
+    "captionBand": "Precio unitario por oferta. Línea discontinua: mediana de mercado {median}. Zona sombreada: banda normal, de {lower} a {upper}."
   }
 }

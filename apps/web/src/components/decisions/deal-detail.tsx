@@ -10,7 +10,8 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState, type ReactNode } from 'react'
 
 import { AppLink } from '@/components/app-link'
-import { useDealAction } from '@/lib/api'
+import { PriceDistribution } from '@/components/compare/price-distribution'
+import { useDealAction, useMissionOffers } from '@/lib/api'
 import { blockedCodes, dealActionBody, DISCARD_REASONS, emptyActionForm } from '@/lib/decisions'
 
 import { DealBadges } from './deal-badges'
@@ -41,6 +42,7 @@ const Row = ({ k, children }: { k: string; children: ReactNode }) => (
 )
 
 export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
+  const missionOffers = useMissionOffers(deal.mission_id)
   const t = useTranslations('decisions')
   const locale = useLocale()
   const [action, setAction] = useState<DealAction | null>(null)
@@ -79,6 +81,9 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
   const terms = [
     ...Object.entries(offer.specifications ?? {}),
     ...(offer.lead_time_days != null ? [[t('detail.leadTime'), t('detail.leadTimeV', { n: offer.lead_time_days })]] : []),
+    ...(offer.payment_terms_days != null
+      ? [[t('detail.payment'), offer.payment_terms_days === 0 ? t('detail.prepayment') : t('detail.leadTimeV', { n: offer.payment_terms_days })]]
+      : []),
     ...(offer.incoterm ? [['Incoterm', offer.incoterm]] : []),
     [t('detail.moq'), String(offer.moq)],
   ]
@@ -190,8 +195,13 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           ) : (
             <p className="text-[13px] text-ink-muted">{t('detail.noSanity')}</p>
           )}
-          {/* //todo_#148: gráfica de distribución de precios con la banda marcada (datos de GET /v1/missions/{id}/offers) */}
-          <div className="mt-2 flex h-24 items-center justify-center border border-line bg-bg text-[13px] text-ink-muted">{t('detail.chartPending')}</div>
+          <div className="mt-2">
+            {missionOffers.data ? (
+              <PriceDistribution offers={missionOffers.data.items} />
+            ) : (
+              <div className="flex h-24 items-center justify-center border border-line bg-bg text-[13px] text-ink-muted">{t('detail.chartPending')}</div>
+            )}
+          </div>
         </Section>
         <Section icon={Receipt} title={t('detail.landedBreakdown')}>
           {fit ? (
@@ -229,7 +239,6 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           {terms.map(([k, v]) => (
             <Row key={k} k={k!}>{v}</Row>
           ))}
-          {/* //todo_#148: condiciones de pago de la oferta (no vienen en el contrato) */}
         </Section>
       </div>
 

@@ -74,6 +74,8 @@
     "penalty": "קנס",
     "leadTime": "זמן אספקה",
     "leadTimeV": "{n} ימים",
+    "payment": "תנאי תשלום",
+    "prepayment": "תשלום מראש",
     "moq": "הזמנה מינימלית",
     "noConfidence": "עדיין לא חושב אמון במוכר.",
     "reference": "מחיר ייחוס",
