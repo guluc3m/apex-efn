@@ -93,7 +93,12 @@ application/problem+json` instead of an HTML redirect.
     `@auth/core` copies them into the authorization URL.
   - The server never trusts the request: D2-08 validates the resulting token's `auth_time` and (once wired)
     `acr`. The step-up is a request for fresh strong authentication, not a grant.
-- **Logout.** `signOut()` clears the Auth.js cookie. The Keycloak SSO session is not ended yet (no
+- **Logout.** `signOut()` clears the Auth.js cookie. The user menu now runs `signOutWithCleanup()`
+  (`src/lib/signing/sign-out.ts`) first: it closes the active signing session on this device through
+  `DELETE /v1/signing-sessions/{id}` and clears the local store, **best-effort** — a failed close is
+  swallowed so logout still happens, and the window expires on its own. Cross-device revocation (closing
+  signing sessions opened elsewhere) needs a new `invalidate_user_sessions` endpoint that DEV-2 owns; the
+  current contract only closes one session per call. The Keycloak SSO session is not ended yet (no
   `end_session_endpoint` call), so a new login can reuse it until it expires; wiring RP-initiated logout
   is a follow-up.
 - **Settings.** `AUTH_SECRET`, `AUTH_KEYCLOAK_ID`, `AUTH_KEYCLOAK_SECRET`, `AUTH_KEYCLOAK_ISSUER`,
