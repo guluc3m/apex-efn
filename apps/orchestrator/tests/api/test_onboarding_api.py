@@ -209,3 +209,47 @@ def test_intake_chat_without_an_agent_answers_501(app: FastAPI) -> None:
             f"/onboarding/sessions/{sid}/messages", json={"text": "hola"}, headers=_h()
         )
     assert response.status_code == 501
+
+
+class _Mapper:
+    async def suggest(self, *, tenant_id: str, session_id: str, content: bytes) -> dict[str, Any]:
+        return {"canonical_columns": ["period"], "mappings": []}
+
+
+def test_mapping_suggestion_returns_501_until_wired_and_works_when_wired(app: FastAPI) -> None:
+    service = app.dependency_overrides[onboarding_api.get_onboarding]()
+    with TestClient(app) as client:
+        session = client.post("/onboarding/sessions", headers=_h()).json()
+        url = f"/onboarding/{session['id']}/financial-csv/mapping"
+        files = {"file": ("fin.csv", b"fecha,metric\n", "text/csv")}
+        assert client.post(url, files=files, headers=_h()).status_code == 501
+        service._deps = replace(service._deps, mapper=_Mapper())
+        ok = client.post(url, files=files, headers=_h())
+    assert ok.status_code == 200 and ok.json()["canonical_columns"] == ["period"]
+
+
+def test_upload_rejects_a_bad_column_mapping(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        session = client.post("/onboarding/sessions", headers=_h()).json()
+        response = client.post(
+            f"/onboarding/{session['id']}/financial-csv",
+            files={"file": ("fin.csv", b"fecha,metric,value_minor\n", "text/csv")},
+            data={"column_mapping": '{"fecha": "amount"}'},
+            headers=_h(),
+        )
+    assert response.status_code == 422
+
+
+def test_get_import_returns_it_and_404s_for_other_sessions(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        session = client.post("/onboarding/sessions", headers=_h()).json()
+        other = client.post("/onboarding/sessions", headers=_h()).json()
+        up = client.post(
+            f"/onboarding/{session['id']}/financial-csv",
+            files={"file": ("fin.csv", b"period,metric,value_minor\n", "text/csv")},
+            headers=_h(),
+        ).json()
+        ok = client.get(f"/onboarding/{session['id']}/financial-csv/{up['id']}", headers=_h())
+        wrong = client.get(f"/onboarding/{other['id']}/financial-csv/{up['id']}", headers=_h())
+    assert ok.status_code == 200 and ok.json()["report"] == REPORT
+    assert wrong.status_code == 404

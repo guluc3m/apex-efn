@@ -133,6 +133,32 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /v1/onboarding/{id}/financial-csv/mapping:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    post:
+      tags: [onboarding]
+      operationId: suggestFinancialCsvMapping
+      summary: Suggest how the CSV headers map to the canonical columns. A suggestion only; the buyer confirms it.
+      description: 'Only the header row of the file reaches the model, never a data row. Targets are always canonical
+        columns or null, validated in code. The confirmed mapping is sent as `column_mapping` on the upload.
+        '
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: {$ref: '#/components/schemas/FinancialCsvUpload'}
+      responses:
+        '200':
+          description: One suggestion per header that is not already a canonical column.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HeaderMappingSuggestion'}
+        '413': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /v1/onboarding/{id}/financial-csv/{import_id}:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
@@ -1525,6 +1551,25 @@ components:
       required: [file]
       properties:
         file: {type: string, format: binary, description: 'UTF-8 CSV, long format (spec 3.1.1). Separator is autodetected.'}
+        column_mapping:
+          type: string
+          description: 'Optional JSON object {source_header: canonical_column} the buyer confirmed. Applied to the header row before parsing.'
+    HeaderMappingSuggestion:
+      type: object
+      required: [canonical_columns, mappings]
+      properties:
+        canonical_columns:
+          type: array
+          items: {type: string}
+        mappings:
+          type: array
+          items:
+            type: object
+            required: [source, target, reason]
+            properties:
+              source: {type: string}
+              target: {type: [string, 'null'], description: A canonical column, or null when nothing fits.}
+              reason: {type: string}
     FinancialImport:
       type: object
       description: Result of a CSV import. Status `draft` until a signed activation.

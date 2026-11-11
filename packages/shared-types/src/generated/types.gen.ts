@@ -271,6 +271,22 @@ export type FinancialCsvUpload = {
    * UTF-8 CSV, long format (spec 3.1.1). Separator is autodetected.
    */
   file: Blob | File
+  /**
+   * Optional JSON object {source_header: canonical_column} the buyer confirmed. Applied to the header row before parsing.
+   */
+  column_mapping?: string
+}
+
+export type HeaderMappingSuggestion = {
+  canonical_columns: Array<string>
+  mappings: Array<{
+    source: string
+    /**
+     * A canonical column
+     */
+    target: string | null
+    reason: string
+  }>
 }
 
 /**
@@ -1918,6 +1934,51 @@ export type UploadFinancialCsvResponses = {
 
 export type UploadFinancialCsvResponse =
   UploadFinancialCsvResponses[keyof UploadFinancialCsvResponses]
+
+export type SuggestFinancialCsvMappingData = {
+  body: FinancialCsvUpload
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/onboarding/{id}/financial-csv/mapping'
+}
+
+export type SuggestFinancialCsvMappingErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * RFC 9457 problem.
+   */
+  413: Problem
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+}
+
+export type SuggestFinancialCsvMappingError =
+  SuggestFinancialCsvMappingErrors[keyof SuggestFinancialCsvMappingErrors]
+
+export type SuggestFinancialCsvMappingResponses = {
+  /**
+   * One suggestion per header that is not already a canonical column.
+   */
+  200: HeaderMappingSuggestion
+}
+
+export type SuggestFinancialCsvMappingResponse =
+  SuggestFinancialCsvMappingResponses[keyof SuggestFinancialCsvMappingResponses]
 
 export type GetFinancialImportData = {
   body?: never
