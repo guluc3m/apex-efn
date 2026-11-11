@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
+import httpx
+
 from apex.common.clock import Clock
 from apex.contracts.generated.models import Currency, FxRate
 from apex.domain.fx import FxConfig, FxError, convert
@@ -37,6 +39,42 @@ class InMemoryFxRateReader:
 
     async def rates(self) -> list[FxRate]:
         return list(self._rates)
+
+    def add(self, rate: FxRate) -> None:
+        self._rates.append(rate)
+
+
+class EcbFxRateReader:
+    """Bootstrap reader over the ECB daily reference rates.
+
+    Dev and demo only: production reads the immutable ``fx_rates`` history that D3-03's worker job fills.
+    A local stack has no ingestion running yet, so without this every offer quoted in USD or CNY dies with
+    ``rate_unavailable`` and no mission ever reaches the gate.
+
+    Fetched once per process, on first use. A failure is not fatal: the reader answers with what it has
+    (nothing), and the engine keeps reporting ``rate_unavailable`` instead of inventing a rate.
+    """
+
+    def __init__(self, *, url: str | None = None, timeout_s: float = 10.0) -> None:
+        self._url = url
+        self._timeout_s = timeout_s
+        self._rates: list[FxRate] | None = None
+
+    async def rates(self) -> list[FxRate]:
+        if self._rates is None:
+            self._rates = await self._fetch() or []
+        return list(self._rates)
+
+    async def _fetch(self) -> list[FxRate] | None:
+        from apex.domain.fx.ingest import ECB_DAILY_URL, parse_ecb
+
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout_s) as client:
+                response = await client.get(self._url or ECB_DAILY_URL)
+                response.raise_for_status()
+            return parse_ecb(response.content)
+        except Exception:  # noqa: BLE001 - a bootstrap read never takes the app down
+            return None
 
     def add(self, rate: FxRate) -> None:
         self._rates.append(rate)

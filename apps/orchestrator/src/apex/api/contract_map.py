@@ -23,6 +23,7 @@ from apex.contracts.generated.models import (
     MissionState,
     NullableMoney,
     OfferState,
+    PriceSanityCheck,
     Problem,
     QuantityPriority,
     SellerConfidence,
@@ -168,21 +169,32 @@ __all__ = [
 
 
 def to_contract_offer(offer: Offer, analysis: OfferAnalysis | None) -> ContractOffer:
-    """An offer as the contract shows it. ``price_sanity_check`` and ``financial_fit`` stay null: the store
-    keeps their verdicts, not the full objects (reference sample, landed breakdown), and inventing those
-    fields would be worse than leaving them out. The verdicts still drive the endpoint's filters."""
+    """An offer as the contract shows it.
+
+    The analysis keeps the engines' own objects (``detail`` / ``landed_cost``), so the confidence
+    breakdown, the sanity reference numbers and the landed-cost lines reach the UI. When an older
+    analysis exists without them, only the verdicts are sent — never invented numbers.
+    """
     confidence = None
+    sanity = None
+    fit = None
     if analysis is not None:
-        confidence = SellerConfidence(
-            seller_id=offer.seller_id,
-            score=analysis.confidence.score,
-            band=SellerConfidenceBand(analysis.confidence.band.value),
-            signals_normalized={},
-            penalties=[],
-            flags=[],
-            model_version=analysis.confidence.model_version,
-            computed_at=analysis.analysed_at,
+        confidence = (
+            analysis.confidence.detail
+            if analysis.confidence.detail is not None
+            else SellerConfidence(
+                seller_id=offer.seller_id,
+                score=analysis.confidence.score,
+                band=SellerConfidenceBand(analysis.confidence.band.value),
+                signals_normalized={},
+                penalties=[],
+                flags=[],
+                model_version=analysis.confidence.model_version,
+                computed_at=analysis.analysed_at,
+            )
         )
+        sanity = analysis.sanity.detail if isinstance(analysis.sanity.detail, PriceSanityCheck) else None
+        fit = analysis.fit.detail
     return ContractOffer(
         id=offer.id,
         mission_id=offer.mission_id,
@@ -201,5 +213,8 @@ def to_contract_offer(offer: Offer, analysis: OfferAnalysis | None) -> ContractO
         moq=offer.moq,
         state=OfferState.financially_checked if analysis is not None else OfferState.discovered,
         discovered_at=offer.collected_at,
+        negotiation_id=analysis.negotiation_id if analysis is not None else None,
         seller_confidence=confidence,
+        price_sanity_check=sanity,
+        financial_fit=fit,
     )

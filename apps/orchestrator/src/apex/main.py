@@ -35,6 +35,7 @@ from apex.wiring import (
     AppServices,
     build_anchor_store,
     build_app_services,
+    seed_demo_financials,
     seed_demo_tenants,
 )
 
@@ -63,6 +64,9 @@ def create_app(
         # Startup: the demo tenants get their config baseline, so reads and proposals have a version.
         if active_services is not None:
             await seed_demo_tenants(active_services)
+            # DEMO_MODE only: an unsigned active snapshot, so a mission can run without the passkey
+            # ceremony. No-op (and never reached) outside the demo.
+            await seed_demo_financials(active_services)
         yield
         # Shutdown
 

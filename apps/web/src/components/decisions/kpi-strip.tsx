@@ -10,8 +10,8 @@ export function KpiStrip() {
   const gate = useGateQueue({ status: 'open' })
   const signed = useDeals({ signature_status: 'signed' })
   const kpis = [
-    { key: 'pending', value: gate.data?.items.length },
-    { key: 'signed', value: signed.data?.items.length },
+    { key: 'pending', value: (gate.data?.items ?? []).length },
+    { key: 'signed', value: (signed.data?.items ?? []).length },
   ]
   return (
     <section aria-label={t('label')} className="grid grid-cols-1 gap-4 border-b border-line px-gutter-panel py-4 md:grid-cols-4">

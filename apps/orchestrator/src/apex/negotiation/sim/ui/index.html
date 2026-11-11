@@ -5,150 +5,549 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>APEX-EFN · simulated marketplace</title>
     <style>
+      /* Same canvas as the app (apps/web/src/styles/globals.css): dark, square, one accent. */
       :root {
-        --ink: #101828;
-        --muted: #667085;
-        --line: #e4e7ec;
-        --wash: #f9fafb;
-        --accent: #0b5fff;
-        --good: #067647;
-        --warn: #b54708;
-        --bad: #b42318;
+        color-scheme: dark;
+        --bg: #0b0b0d;
+        --panel: #131316;
+        --raised: #1b1b20;
+        --line: #26262c;
+        --line-strong: #36363e;
+        --control-border: #6b6b77;
+        --ink: #ededf0;
+        --ink-soft: #b4b4be;
+        --ink-muted: #8e8e9a;
+        --on-accent: #0b0b0d;
+        --accent: #8fbb8b;
+        --accent-hover: #a0c99c;
+        --accent-subtle: #16211a;
+        --accent-line: #3a4a3b;
+        --good: #5aa9ff;
+        --good-subtle: #0d1f35;
+        --warn: #e6c34a;
+        --warn-subtle: #2a2308;
+        --bad: #f7566a;
+        --bad-subtle: #2e1117;
+        --danger: #c4271f;
+        --halo-1: #8fbb8b;
+        --halo-2: #5aa9ff;
+        --halo-3: #a58bf0;
+        --halo-4: #e07f9c;
+        --press: 60ms;
+        --fast: 120ms;
+        --base: 180ms;
+        --easing: cubic-bezier(0.2, 0, 0, 1);
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+        border-color: var(--line);
+      }
       body {
         margin: 0;
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
         color: var(--ink);
-        background: #fff;
+        font:
+          14px/1.5 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+        -webkit-font-smoothing: antialiased;
       }
-      header {
+      :where(a, button, input, summary, [tabindex]):focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .page-head {
         border-bottom: 1px solid var(--line);
-        padding: 18px 24px;
+        padding: 20px 40px;
         display: flex;
-        align-items: baseline;
+        align-items: center;
         gap: 16px;
         flex-wrap: wrap;
       }
-      h1 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
-      header p { margin: 0; color: var(--muted); font-size: 13px; }
-      main { padding: 20px 24px 60px; max-width: 1180px; }
-      .toolbar {
-        display: flex; gap: 10px; align-items: end; flex-wrap: wrap;
-        background: var(--wash); border: 1px solid var(--line); border-radius: 10px;
-        padding: 12px; margin-bottom: 18px;
+      .mark {
+        width: 22px;
+        height: 22px;
+        background: var(--accent);
+        flex: none;
       }
-      .field { display: flex; flex-direction: column; gap: 4px; }
-      .field label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-      input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; min-width: 90px; }
-      input.wide { min-width: 230px; }
-      button {
-        font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-        background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px;
+      .page-head h1 {
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
       }
-      button[disabled] { opacity: .55; cursor: progress; }
-      button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); font-weight: 600; padding: 7px 12px; }
-      button.ghost:hover { border-color: var(--accent); color: var(--accent); }
-      .playback { display: inline-flex; gap: 8px; align-items: center; }
-      .chat-controls { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; }
-      button.ghost.small { padding: 4px 9px; font-size: 11px; }
-      .line.pending { display: none; }
-      .status { font-size: 12px; color: var(--muted); margin-left: auto; }
-      .error {
-        border: 1px solid #fda29b; background: #fffbfa; color: var(--bad);
-        border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 16px; white-space: pre-wrap;
+      .page-head p {
+        margin: 0;
+        color: var(--ink-muted);
+        font-size: 13px;
       }
-      h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 26px 0 10px; }
-      .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-      .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
-      .card h3 { font-size: 14px; margin: 0 0 6px; line-height: 1.35; }
-      .money { font-variant-numeric: tabular-nums; font-weight: 600; }
-      .meta { font-size: 12px; color: var(--muted); }
-      .badge {
-        display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .03em;
-        text-transform: uppercase; border-radius: 999px; padding: 2px 8px;
+      main {
+        padding: 24px 40px 64px;
+        max-width: 1240px;
       }
-      .badge.agreed { background: #ecfdf3; color: var(--good); }
-      .badge.escalated { background: #fffaeb; color: var(--warn); }
-      .badge.no_agreement, .badge.error { background: #fef3f2; color: var(--bad); }
-      .badge.running { background: #eff8ff; color: var(--accent); }
-      .buyers { display: grid; gap: 16px; }
-      .buyer { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-      .buyer-head { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--wash); }
-      .buyer-head h3 { margin: 0; font-size: 14px; }
-      .buyer-body { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 0; align-items: start; }
-      .ladder { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; align-self: stretch; }
-      .ladder summary { cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
-      .steps { list-style: none; margin: 0; padding: 0; }
-      .steps li { list-style: none; margin: 0 0 8px; padding-left: 14px; position: relative; }
-      .steps li::before { content: ""; position: absolute; left: 0; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
-      .steps li.done::before { background: var(--accent); }
-      .steps .kind { font-weight: 600; }
-      .transcript { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: min(60vh, 620px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-      .line { max-width: 80%; padding: 8px 11px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
-      .line .text { display: block; overflow-wrap: anywhere; white-space: pre-wrap; }
-      .line.buyer { align-self: flex-end; background: #eef4ff; }
-      .line.seller { align-self: flex-start; background: var(--wash); border: 1px solid var(--line); }
-      .line .who { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
-      .empty { color: var(--muted); font-size: 13px; }
-      .legend { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-      footer { margin-top: 34px; color: var(--muted); font-size: 12px; }
-      code { background: var(--wash); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
 
-      /* Eye candy: the page is on a projector, it should not look like a form. */
-      body { background: radial-gradient(1200px 600px at 15% -10%, #eef4ff 0%, #ffffff 55%) fixed; }
-      .buyer { transition: box-shadow .2s ease; }
-      .buyer:hover { box-shadow: 0 10px 28px rgba(16, 24, 40, .09); }
-      .buyer.outcome-agreed { border-left: 3px solid var(--good); }
-      .buyer.outcome-escalated { border-left: 3px solid var(--warn); }
-      .buyer.outcome-no_agreement, .buyer.outcome-error { border-left: 3px solid var(--bad); }
-      .buyer.outcome-running, .buyer.outcome-pending { border-left: 3px solid var(--accent); }
-      .line.fresh { animation: rise .32s ease-out both; }
-      @keyframes rise { from { opacity: 0; transform: translateY(6px) scale(.99); } to { opacity: 1; transform: none; } }
-      .badge.agreed { animation: pop .35s ease-out; }
-      @keyframes pop { 0% { transform: scale(.85); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
-      .buyer.thinking .transcript::after {
-        content: "●  ●  ●"; color: var(--accent); font-size: 12px; letter-spacing: 2px;
-        align-self: flex-start; padding: 6px 10px; animation: blink 1.1s infinite;
+      /* ---------- controls ---------- */
+      .toolbar {
+        display: flex;
+        gap: 16px;
+        align-items: end;
+        flex-wrap: wrap;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 16px;
+        margin-bottom: 24px;
       }
-      @keyframes blink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
-      body.busy button { opacity: .55; pointer-events: none; }
-      button { transition: background .15s ease, transform .06s ease; }
-      button:active { transform: translateY(1px); }
-      .badge.pending, .badge.running { background: #eff8ff; color: var(--accent); }
-      .status { font-variant-numeric: tabular-nums; }
-      @media (max-width: 760px) { .buyer-body { grid-template-columns: 1fr; } .steps { border-right: 0; border-bottom: 1px solid var(--line); } }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label,
+      .legend,
+      .eyebrow {
+        font-size: 11px;
+        line-height: 1.45;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-muted);
+        margin: 0;
+      }
+      input {
+        font: inherit;
+        font-size: 13px;
+        color: var(--ink);
+        background: var(--raised);
+        border: 1px solid var(--line-strong);
+        padding: 6px 10px;
+        min-width: 110px;
+      }
+      input.wide {
+        min-width: 240px;
+      }
+      input:focus-visible {
+        border-color: var(--accent);
+      }
+      .btn {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 32px;
+        padding: 0 12px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--ink);
+        cursor: pointer;
+        transition:
+          background-color var(--fast) var(--easing),
+          border-color var(--fast) var(--easing),
+          color var(--fast) var(--easing),
+          translate var(--fast) var(--easing);
+      }
+      .btn:active {
+        translate: 0 1px;
+      }
+      .btn.pri {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--on-accent);
+        font-weight: 600;
+      }
+      .btn.pri:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      .btn.sec {
+        background: var(--panel);
+        border-color: var(--control-border);
+      }
+      .btn.sec:hover {
+        background: var(--raised);
+        border-color: var(--ink-muted);
+      }
+      .btn.ghost {
+        color: var(--ink-soft);
+      }
+      .btn.ghost:hover {
+        background: var(--panel);
+        color: var(--ink);
+      }
+      .btn.sm {
+        min-height: 26px;
+        padding: 0 9px;
+        font-size: 12px;
+      }
+      .btn:disabled,
+      body.busy .btn {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      .playback {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .status {
+        font-size: 12px;
+        color: var(--ink-muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .toolbar .status:last-child {
+        margin-left: auto;
+      }
+
+      /* ---------- panels ---------- */
+      h2.section {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-muted);
+        margin: 32px 0 12px;
+      }
+      .grid {
+        display: grid;
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+      .card {
+        background: var(--panel);
+        padding: 14px 16px;
+      }
+      .card h3 {
+        font-size: 14px;
+        margin-bottom: 6px;
+        line-height: 1.35;
+      }
+      .money {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink);
+      }
+      .meta {
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+      .empty {
+        color: var(--ink-muted);
+        font-size: 13px;
+        margin: 0;
+      }
+
+      /* ---------- badges: icon + colour + text ---------- */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+      }
+      .badge svg {
+        flex: none;
+      }
+      .badge.ok {
+        background: var(--good-subtle);
+        color: var(--good);
+      }
+      .badge.warn {
+        background: var(--warn-subtle);
+        color: var(--warn);
+      }
+      .badge.bad {
+        background: var(--bad-subtle);
+        color: var(--bad);
+      }
+      .badge.running {
+        background: var(--accent-subtle);
+        color: var(--accent);
+      }
+      .badge.ok {
+        animation: pop var(--base) var(--easing);
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(0.92);
+        }
+        60% {
+          transform: scale(1.03);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* ---------- buyers ---------- */
+      .buyers {
+        display: grid;
+        gap: 16px;
+      }
+      .buyer {
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+      .buyer-head {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .buyer-head h3 {
+        font-size: 14px;
+      }
+      .buyer-head .meta {
+        flex: 1 1 auto;
+      }
+      .chat-controls {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .buyer-body {
+        display: grid;
+        grid-template-columns: minmax(250px, 320px) 1fr;
+        position: relative;
+        isolation: isolate;
+      }
+      /* Halo de IA (DESIGN §6): only while the model is answering, like the app's composer. */
+      .buyer.thinking .buyer-body::before {
+        content: '';
+        position: absolute;
+        inset: -14px;
+        z-index: -1;
+        pointer-events: none;
+        background: conic-gradient(
+          from var(--ang),
+          var(--halo-1),
+          var(--halo-2),
+          var(--halo-3),
+          var(--halo-4),
+          var(--halo-1)
+        );
+        filter: blur(22px);
+        opacity: 0.22;
+        animation: gyro 14s linear infinite;
+      }
+      @property --ang {
+        syntax: '<angle>';
+        inherits: false;
+        initial-value: 0deg;
+      }
+      @keyframes gyro {
+        to {
+          --ang: 360deg;
+        }
+      }
+      .ladder {
+        border-right: 1px solid var(--line);
+        padding: 14px 16px;
+        font-size: 12px;
+        align-self: stretch;
+        background: var(--bg);
+      }
+      .ladder summary {
+        cursor: pointer;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-muted);
+        list-style: none;
+      }
+      .ladder summary::-webkit-details-marker {
+        display: none;
+      }
+      .ladder summary::before {
+        content: '▸ ';
+        color: var(--accent);
+      }
+      .ladder[open] summary::before {
+        content: '▾ ';
+      }
+      .steps {
+        list-style: none;
+        margin: 12px 0 0;
+        padding: 0;
+      }
+      .steps li {
+        position: relative;
+        padding-left: 14px;
+        margin-bottom: 8px;
+        color: var(--ink-soft);
+      }
+      .steps li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 7px;
+        width: 4px;
+        height: 4px;
+        background: var(--accent-line);
+      }
+      .steps .kind {
+        color: var(--ink);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-right: 6px;
+      }
+      .transcript {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: min(62vh, 640px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+      }
+      .line {
+        max-width: 82%;
+        padding: 8px 11px;
+        font-size: 13px;
+        line-height: 1.5;
+        border: 1px solid transparent;
+        animation: msg var(--base) var(--easing) both;
+      }
+      .line.buyer {
+        align-self: flex-end;
+        background: var(--accent-subtle);
+        border-color: var(--accent-line);
+      }
+      .line.seller {
+        align-self: flex-start;
+        background: var(--raised);
+        border-color: var(--line);
+      }
+      .line .who {
+        display: block;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-muted);
+        margin-bottom: 3px;
+      }
+      .line .text {
+        display: block;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+      }
+      .line.fresh {
+        animation: msg var(--base) var(--easing) both;
+      }
+      @keyframes msg {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+      }
+      .buyer.thinking .transcript::after {
+        content: '●  ●  ●';
+        color: var(--accent);
+        font-size: 11px;
+        letter-spacing: 2px;
+        align-self: flex-start;
+        padding: 6px 4px;
+        animation: pulse 1.1s var(--easing) infinite;
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.25;
+        }
+      }
+
+      .error {
+        border: 1px solid var(--bad);
+        background: var(--bad-subtle);
+        color: var(--bad);
+        padding: 12px 14px;
+        font-size: 13px;
+        margin-bottom: 20px;
+        white-space: pre-wrap;
+      }
+      footer {
+        margin-top: 40px;
+        color: var(--ink-muted);
+        font-size: 12px;
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+      code {
+        background: var(--raised);
+        border: 1px solid var(--line);
+        padding: 0 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+      }
+      @media (max-width: 820px) {
+        .page-head,
+        main {
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+        .buyer-body {
+          grid-template-columns: 1fr;
+        }
+        .ladder {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 1ms !important;
+          transition-duration: 1ms !important;
+        }
+      }
     </style>
   </head>
   <body>
-    <header>
-      <h1>APEX-EFN · simulated marketplace</h1>
-      <p>Three AI buyers, one fake marketplace, no real platforms — prices are decided in code, the words come from the model (stub or DeepSeek).</p>
+    <header class="page-head">
+      <span class="mark" aria-hidden="true"></span>
+      <h1>APEX-EFN · mercado simulado</h1>
+      <p>Tres compradores IA, un mercado falso, ninguna plataforma real — los precios los decide el código, las palabras el modelo.</p>
     </header>
 
     <main>
       <div class="toolbar">
         <div class="field">
-          <label for="market">Marketplace</label>
+          <label for="market">Mercado</label>
           <input id="market" class="wide" placeholder="http://127.0.0.1:8002" />
         </div>
         <div class="field">
-          <label for="llm">LLM endpoint</label>
+          <label for="llm">Endpoint del modelo</label>
           <input id="llm" class="wide" placeholder="http://127.0.0.1:8001" />
         </div>
         <div class="field">
-          <label for="buyers">AI buyers</label>
+          <label for="buyers">Compradores IA</label>
           <input id="buyers" type="number" min="1" max="3" value="3" />
         </div>
         <div class="field">
-          <label for="qty">Units per buyer</label>
+          <label for="qty">Unidades</label>
           <input id="qty" type="number" min="1" value="5000" />
         </div>
-        <button id="run">Run scenario</button>
+        <button id="run" class="btn pri">Run scenario</button>
         <span class="playback" id="playback" hidden>
-          <button id="step" class="ghost">Step</button>
-          <button id="play" class="ghost">Play</button>
-          <button id="all" class="ghost">Show all</button>
+          <button id="step" class="btn ghost">Step</button>
+          <button id="play" class="btn ghost">Play</button>
+          <button id="all" class="btn ghost">Show all</button>
           <span class="status" id="progress"></span>
         </span>
         <span class="status" id="status"></span>
@@ -156,19 +555,19 @@
 
       <div id="error" class="error" hidden></div>
 
-      <h2>The marketplace</h2>
-      <div id="items" class="grid"><p class="empty">Run the scenario to load the catalogue.</p></div>
+      <h2 class="section">El mercado</h2>
+      <div id="items" class="grid"><p class="empty">Pulsa Run scenario para cargar el catálogo.</p></div>
 
-      <h2>AI sellers</h2>
+      <h2 class="section">Vendedores IA</h2>
       <div id="sellers" class="grid"></div>
 
-      <h2>The AI buyers</h2>
-      <div id="run-buyers" class="buyers"><p class="empty">No run yet.</p></div>
+      <h2 class="section">Los compradores IA</h2>
+      <div id="run-buyers" class="buyers"><p class="empty">Todavía no hay ninguna partida.</p></div>
 
       <footer>
-        Every request in this page stays on your machine. Start the pieces with
-        <code>pnpm dev</code> in <code>apps/mock-marketplace</code>, <code>python -m llm_stub</code> in
-        <code>apps/llm-stub</code>, and <code>python -m apex.negotiation.sim.server</code> here.
+        Todo ocurre en tu máquina. Arranca las piezas con <code>pnpm dev</code> en
+        <code>apps/mock-marketplace</code>, <code>python -m llm_stub</code> en <code>apps/llm-stub</code> y
+        <code>python -m apex.negotiation.sim.server</code> aquí.
       </footer>
     </main>
 
@@ -185,6 +584,28 @@
       const esc = (s) =>
         String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const TERMINAL = ["agreed", "escalated", "no_agreement", "error"];
+      const GLYPH = {
+        agreed:
+          '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4 4.6 9 10 3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+        escalated:
+          '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11 11H1Z" fill="currentColor"/></svg>',
+        no_agreement:
+          '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg>',
+        error:
+          '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg>',
+        running:
+          '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="currentColor"/></svg>',
+        pending:
+          '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+      };
+      const TONE = {
+        agreed: "ok",
+        escalated: "warn",
+        no_agreement: "bad",
+        error: "bad",
+        running: "running",
+        pending: "running",
+      };
 
       const state = { runId: null, view: null, busy: null, timers: {}, prev: {}, allTimer: null };
 
@@ -258,7 +679,7 @@
           state.runId = view.run_id;
           render(view);
           $("playback").hidden = false;
-          $("status").textContent = "listo · Step avanza un mensaje, Play lo hace solo";
+          $("status").textContent = "listo · Step pide un mensaje, Play lo hace solo";
         } catch (error) {
           showError(
             `No se pudo arrancar: ${error.message}\n\nComprueba el mercado en ` +
@@ -306,6 +727,10 @@
         }
       }
 
+      function buyerIdFor(index) {
+        return (state.view?.buyers || [])[Number(index)]?.buyer_id;
+      }
+
       function toggleBuyerPlay(index) {
         const id = String(index);
         if (state.timers[id]) {
@@ -322,10 +747,6 @@
           }
           void step(buyerIdFor(index));
         }, 1200);
-      }
-
-      function buyerIdFor(index) {
-        return (state.view?.buyers || [])[Number(index)]?.buyer_id;
       }
 
       function toggleAllPlay() {
@@ -353,38 +774,45 @@
         }</span><span class="text">${esc(line.text)}</span></div>`;
       }
 
+      function badgeHtml(outcome) {
+        const tone = TONE[outcome] || "running";
+        return `<span class="badge ${tone}">${GLYPH[outcome] || GLYPH.running}${esc(
+          outcome.replaceAll("_", " ")
+        )}</span>`;
+      }
+
       function cardHtml(buyer, index) {
         const outcome = buyer.outcome || "pending";
         const chosen = buyer.chosen;
         const steps = (buyer.steps || [])
           .map(
             (entry) =>
-              `<li class="done"><span class="kind">${esc(entry.kind)}</span> ${esc(
-                entry.detail || ""
-              )}${entry.price ? ` <span class="money">${money(entry.price)}</span>` : ""}</li>`
+              `<li><span class="kind">${esc(entry.kind)}</span>${esc(entry.detail || "")}${
+                entry.price ? ` <span class="money">${money(entry.price)}</span>` : ""
+              }</li>`
           )
           .join("");
         return `
-          <div class="buyer outcome-${outcome}" data-buyer="${index}">
+          <div class="buyer" data-buyer="${index}">
             <div class="buyer-head">
               <h3>${esc(buyer.name)}</h3>
-              <span class="badge ${outcome}">${esc(outcome.replaceAll("_", " "))}</span>
+              ${badgeHtml(outcome)}
               <span class="meta">
-                ${chosen ? `${esc(chosen.supplier_name || chosen.supplier_id)} · asking ${money(chosen.asking_price)}` : ""}
-                ${buyer.final_price ? ` · final ${money(buyer.final_price)}` : ""}
+                ${chosen ? `${esc(chosen.supplier_name || chosen.supplier_id)} · pide ${money(chosen.asking_price)}` : ""}
+                ${buyer.final_price ? ` · final <span class="money">${money(buyer.final_price)}</span>` : ""}
                 ${buyer.reason ? ` · ${esc(buyer.reason)}` : ""}
               </span>
               <span class="chat-controls">
-                <button class="ghost small" data-act="step">Step</button>
-                <button class="ghost small" data-act="play">${
+                <button class="btn ghost sm" data-act="step">Step</button>
+                <button class="btn ghost sm" data-act="play">${
                   state.timers[String(index)] ? "Pause" : "Play"
                 }</button>
                 <span class="status" data-counter>${(buyer.transcript || []).length} mensajes</span>
               </span>
             </div>
             <div class="buyer-body">
-              <details class="ladder"><summary>Offer ladder (spoiler)</summary><ul class="steps">${steps}</ul></details>
-              <div class="transcript"><p class="legend">Conversation</p>${(buyer.transcript || [])
+              <details class="ladder"><summary>Ofertas · spoiler</summary><ul class="steps">${steps}</ul></details>
+              <div class="transcript"><p class="eyebrow">Conversación</p>${(buyer.transcript || [])
                 .map(lineHtml)
                 .join("")}</div>
             </div>
@@ -430,7 +858,7 @@
           card.querySelector('[data-act="play"]').addEventListener("click", () => toggleBuyerPlay(index));
         });
 
-        // Highlight what arrived in this step.
+        // Mark what arrived in this step, so the entrance animation only plays for the new bubbles.
         (view.buyers || []).forEach((buyer, index) => {
           const previous = state.prev[buyer.buyer_id] ?? 0;
           const card = document.querySelector(`[data-buyer="${index}"]`);
@@ -457,6 +885,6 @@
       $("all").addEventListener("click", finishAll);
 
       loadConfig();
-        </script>
+    </script>
   </body>
 </html>

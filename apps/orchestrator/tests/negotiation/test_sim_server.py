@@ -68,8 +68,9 @@ async def client() -> AsyncIterator[AsyncClient]:
 async def test_the_page_is_served(client: AsyncClient) -> None:
     response = await client.get("/")
     assert response.status_code == 200
-    assert "simulated marketplace" in response.text
-    assert "AI buyers" in response.text
+    # The page is in Spanish like the rest of the demo docs; assert on structure, not on a translated string.
+    assert "mercado simulado" in response.text
+    assert 'id="run-buyers"' in response.text
 
 
 async def test_the_config_endpoint_describes_the_demo(client: AsyncClient) -> None:

@@ -34,6 +34,8 @@
     "dev:up": "docker compose up -d --wait",
     "dev:down": "docker compose down",
     "dev:reset": "bash infra/scripts/dev-reset.sh",
+    "demo:app": "bash infra/scripts/demo-app.sh",
+    "demo:app:stop": "bash infra/scripts/demo-app.sh stop",
     "prepare": "husky",
     "postinstall": "turbo run build --filter=./packages/*"
   },

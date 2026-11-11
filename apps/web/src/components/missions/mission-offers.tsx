@@ -15,7 +15,7 @@ import {
 import { ArrowDown, ArrowUp, CircleCheck, CircleDot, CircleStop, MessagesSquare, ShieldAlert, type LucideIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 
-import { renderLink } from '@/components/app-link'
+import { AppLink, renderLink } from '@/components/app-link'
 import { QueryBoundary } from '@/components/query-boundary'
 import { OfferConfidence } from '@/components/sellers/offer-confidence'
 import { useMissionOffers } from '@/lib/api'
@@ -109,6 +109,21 @@ function OffersMatrix({ offers, more }: { offers: readonly Offer[]; more: boolea
       header: t('cols.status'),
       sortValue: (o) => o.state,
       cell: (o) => <StatusBadge tone={STATE[o.state].tone} icon={STATE[o.state].icon} label={t(`status.${o.state}`)} />,
+    },
+    {
+      id: 'negotiation',
+      header: t('cols.negotiation'),
+      cell: (o) =>
+        o.negotiation_id ? (
+          <AppLink
+            className="whitespace-nowrap text-accent underline-offset-4 hover:underline"
+            href={`/misiones/${o.mission_id}/negociaciones/${o.negotiation_id}`}
+          >
+            {t('open')}
+          </AppLink>
+        ) : (
+          none
+        ),
     },
     {
       id: 'landed',

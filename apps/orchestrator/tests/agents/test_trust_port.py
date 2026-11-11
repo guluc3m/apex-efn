@@ -146,6 +146,38 @@ async def test_reviews_are_passed_so_the_burst_check_can_fire() -> None:
     assert with_reviews.score is not None
 
 
+async def test_worker_recent_reviews_are_read_with_the_contract_field_names() -> None:
+    """A real worker publishes ``recent_reviews`` with ``created_at``/``verified_purchase``."""
+    port = DomainTrustPort(config=await _config(seller=SELLER_CONFIG), clock=FixedClock(NOW))
+    offer = _offer(
+        account_age_days=2801,
+        first_sale_date="2019-04-02",
+        months_active_last_12=12,
+        lifetime_transactions=4200,
+        transactions_12m=900,
+        published_products_count=140,
+        reviews_total=500,
+        reviews_12m=260,
+        rating_avg=4.8,
+        rating_count=500,
+        verified_review_share=0.92,
+        identity_verified=True,
+        trade_assurance=True,
+        escrow_available=True,
+        recent_reviews=[
+            {
+                "rating": 5,
+                "created_at": "2026-09-14T00:00:00.000Z",
+                "verified_purchase": True,
+                "text": "Second order of the same gloves.",
+            }
+        ],
+    )
+    outcome = await port.score(offer, tenant_id=TENANT)
+    assert outcome.band is not ConfidenceBand.INSUFFICIENT_DATA
+    assert outcome.score is not None
+
+
 async def test_an_offer_without_a_capture_time_is_refused() -> None:
     """A snapshot is immutable and stamped at capture; without the instant it is not a snapshot."""
     port = DomainTrustPort(config=await _config(seller=SELLER_CONFIG), clock=FixedClock(NOW))

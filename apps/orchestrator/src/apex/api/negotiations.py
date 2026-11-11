@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Header, Query, Request
 
 from apex.common.errors import Problem
 from apex.common.tenant import get_tenant_id
@@ -64,13 +64,16 @@ LOCAL_ACTOR = "local-user"
 """Recorded as approver/author when the caller sends no actor. Replaced by the principal in D1-05."""
 
 
-def get_negotiation_control() -> NegotiationControlService:
-    """Overridable dependency.
+def get_negotiation_control(request: Request) -> NegotiationControlService:
+    """The negotiation control service, shared with the mission runner.
 
-    Defaults to an in-process engine over an in-memory store, which serves every call in this router but
-    cannot see negotiations created by another process. When DEV-4 wires the mission graph, it injects the
-    shared engine here (or in ``apex.wiring``), exactly like the gate router's dependency.
+    ``apex.wiring`` puts the bridge on ``app.state`` when a marketplace is configured, and the runner and this
+    router then see the same sessions. Without one (a deployment with no marketplace, or the isolated router
+    test) it falls back to the in-process default, which only knows its own negotiations.
     """
+    negotiation = getattr(getattr(request.app.state, "app_services", None), "negotiation", None)
+    if negotiation is not None:
+        return negotiation.control()
     return _control
 
 

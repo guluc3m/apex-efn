@@ -2034,6 +2034,10 @@ class Offer(BaseModel):
     ] = None
     signature_status: SignatureStatus | None = None
     state: OfferState
+    negotiation_id: Annotated[
+        str | None,
+        Field(description="The negotiation opened for this offer once the gate cleared it."),
+    ] = None
     seller_confidence: SellerConfidence | None = None
     price_sanity_check: PriceSanityCheck | None = None
     financial_fit: FinancialFit | None = None

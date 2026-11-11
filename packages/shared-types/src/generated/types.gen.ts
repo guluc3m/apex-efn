@@ -716,6 +716,10 @@ export type Offer = {
   payment_terms_days?: number | null
   signature_status?: SignatureStatus
   state: OfferState
+  /**
+   * The negotiation opened for this offer once the gate cleared it.
+   */
+  negotiation_id?: string | null
   seller_confidence?: SellerConfidence | null
   price_sanity_check?: PriceSanityCheck | null
   financial_fit?: FinancialFit | null

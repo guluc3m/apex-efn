@@ -43,11 +43,18 @@ export function applyQueryDefaults(client: QueryClient): QueryClient {
   return client
 }
 
-/** First page (the API maximum) of missions; the list filters and sorts it locally. */
+/**
+ * Page size for the list queries. The contract allows up to 200, but the orchestrator rejects
+ * anything above 100 (`limit must be between 1 and 100`), so ask for the smaller ceiling until the
+ * two agree; the lists filter and sort locally either way.
+ */
+const LIST_PAGE_LIMIT = 100
+
+/** First page of missions; the list filters and sorts it locally. */
 export function useMissions() {
   return useQuery({
     queryKey: queryKeys.missions,
-    queryFn: ({ signal }) => api.listMissions({ limit: 200 }, signal),
+    queryFn: ({ signal }) => api.listMissions({ limit: LIST_PAGE_LIMIT }, signal),
   })
 }
 
@@ -70,11 +77,11 @@ export function useMissionControl(id: string) {
   })
 }
 
-/** First page (the API maximum) of offers; the matrix filters and sorts it locally. */
+/** First page of offers; the matrix filters and sorts it locally. */
 export function useMissionOffers(id: string) {
   return useQuery({
     queryKey: queryKeys.missionOffers(id),
-    queryFn: ({ signal }) => api.listMissionOffers(id, { limit: 200 }, signal),
+    queryFn: ({ signal }) => api.listMissionOffers(id, { limit: LIST_PAGE_LIMIT }, signal),
   })
 }
 

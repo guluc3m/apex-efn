@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Deployment override for every ``llm.roles.*.base_url`` of the config defaults. The defaults point at
     # http://localhost:8001/v1 (the stub seen from the host); a container reaches it at http://llm-stub:8001/v1.
     llm_base_url_override: str = Field(default="")
+    # One model for every role, overriding ``llm.roles.*`` in /config/defaults. Needed by a provider that
+    # names its models differently (DeepSeek: ``deepseek-chat``); empty keeps each role's own model.
+    llm_model_override: str = Field(default="")
 
     # Browser worker internal API (D5-01). Empty means "not wired": a mission that needs to scrape fails
     # with the owner named instead of calling a service that is not there.
@@ -46,6 +49,21 @@ class Settings(BaseSettings):
     browser_worker_max_results: int = Field(default=50, ge=1, le=200)
     browser_worker_max_polls: int = Field(default=60, ge=1)
     browser_worker_poll_interval_s: float = Field(default=0.5, gt=0)
+
+    # Mock marketplace base URL (D5-04/D5-11). Empty means "no negotiation": a mission stops after the gate
+    # instead of opening a chat with a seller that is not there.
+    mock_marketplace_url: str = Field(default="")
+    # Demo mode (hackathon). On top of the demo tenant config, startup leaves an **unsigned** active
+    # financial snapshot for tenant-a/tenant-b, so a mission can be launched without the passkey ceremony.
+    # Never enable outside a demo: it skips the signature that criterion 17/21 requires.
+    demo_mode: bool = Field(default=False)
+    # Phase 1 is semi-automatic on purpose: every drafted message waits for a person (spec §3.6 step 5).
+    # A demo flips this so the conversation runs while the audience watches; it is the same flag Unleash
+    # exposes, read statically here until the flag client is wired into the orchestrator.
+    negotiation_autonomous_send: bool = Field(default=False)
+    # Pause between negotiation rounds. Zero is the honest default for tests and CI; a demo sets it so the
+    # transcript arrives one message at a time instead of all at once.
+    negotiation_step_delay_s: float = Field(default=0.0, ge=0.0)
 
     # Run a mission in the background as soon as it is created; progress streams on the SSE route. A port
     # that is not configured (no BROWSER_WORKER_URL, for instance) fails the mission with the reason, which

@@ -29,11 +29,17 @@ FIXTURES = Path(__file__).resolve().parents[4] / "apps/mock-marketplace/fixtures
 
 
 class _Worker:
-    """Plays D5-01: returns the offers registered per platform."""
+    """Plays D5-01: returns the offers registered per platform, and raw signals per seller."""
 
-    def __init__(self, by_platform: dict[str, list[RawOffer]]) -> None:
+    def __init__(
+        self,
+        by_platform: dict[str, list[RawOffer]],
+        signals: dict[tuple[str, str], dict[str, Any]] | None = None,
+    ) -> None:
         self.by_platform = by_platform
+        self.signals = signals or {}
         self.calls: list[dict[str, Any]] = []
+        self.signal_calls: list[tuple[str, str]] = []
 
     async def search(
         self, *, tenant_id: str, mission_id: str, step: PlanStep, quantity: int
@@ -42,6 +48,12 @@ class _Worker:
         return WorkerSearchResult(
             platform_id=step.platform_id, offers=list(self.by_platform.get(step.platform_id, []))
         )
+
+    async def seller_signals(
+        self, *, tenant_id: str, mission_id: str, platform: str, seller_id: str
+    ) -> dict[str, Any]:
+        self.signal_calls.append((platform, seller_id))
+        return self.signals.get((platform, seller_id), {})
 
 
 class _Fx:
@@ -156,6 +168,46 @@ async def test_raw_signals_are_carried_through_untouched() -> None:
     await service.scrape(tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500)
     stored = await offers.list_for_mission(TENANT, MISSION)
     assert stored[0].raw_signals == {"reviewsTotal": 500, "disputeRate": 0.01}
+
+
+async def test_seller_signals_are_nested_under_seller_signals_for_the_trust_port() -> None:
+    """The snapshot lives under one key so the trust port never reads a listing field as a signal."""
+    worker = _Worker(
+        {"mock-a": [_raw(raw_signals={"certifications": ["EN 455"]})]},
+        signals={
+            ("mock-a", "s-1"): {
+                "platform": "mock-a",
+                "platform_seller_id": "s-1",
+                "captured_at": NOW.isoformat(),
+                "account_age_days": 1500,
+                "reviews_total": 500,
+                "gmv_12m": {"amount_minor": 1000, "currency": "EUR"},
+            }
+        },
+    )
+    service, offers, _ = _service(worker)
+    await service.scrape(tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500)
+    stored = await offers.list_for_mission(TENANT, MISSION)
+    assert stored[0].raw_signals["certifications"] == ["EN 455"]
+    signals = stored[0].raw_signals["seller_signals"]
+    assert signals["account_age_days"] == 1500
+    assert "platform" not in stored[0].raw_signals  # no flattening: the namespace stays separate
+
+
+async def test_gmv_is_converted_to_eur_at_ingestion() -> None:
+    """The trust engine refuses a non-EUR GMV, so ingestion is where the conversion belongs."""
+    worker = _Worker(
+        {"mock-a": [_raw()]},
+        signals={("mock-a", "s-1"): {"gmv_12m": {"amount_minor": 1000, "currency": "USD"}}},
+    )
+    service, offers, fx = _service(worker)
+    await service.scrape(tenant_id=TENANT, mission_id=MISSION, plan=_plan("mock-a"), quantity=500)
+    stored = await offers.list_for_mission(TENANT, MISSION)
+    assert stored[0].raw_signals["seller_signals"]["gmv_12m"] == {
+        "amount_minor": 500,
+        "currency": "EUR",
+    }
+    assert (1000, "USD") in fx.calls
 
 
 # ----- dedupe ------------------------------------------------------------------------------------

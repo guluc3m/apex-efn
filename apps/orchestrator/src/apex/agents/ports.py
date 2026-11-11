@@ -51,17 +51,30 @@ class TrustOutcome(_Frozen):
     band: ConfidenceBand
     score: int | None
     model_version: str
+    detail: Any | None = None
+    """The engine's full ``SellerConfidence`` (normalized signals, penalties, flags). Kept so the UI can
+    answer "why this score?" with the engine's own numbers instead of an empty panel."""
 
 
 class SanityOutcome(_Frozen):
     band: PriceBand
     config_version: str
+    detail: Any | None = None
+    """The engine's full ``PriceSanityCheck``: reference price, median, sample size, dispersion, band limits.
+    Without it the sanity block has a band and no numbers behind it."""
 
 
 class FitOutcome(_Frozen):
     verdict: Literal["within_budget", "stretch", "out_of_budget"]
     financials_stale: bool = False
     fx_provisional: bool = False
+    landed_cost_total_minor: int | None = None
+    """The engine's landed cost for the whole order, EUR minor units. ``None`` when it did not compute one.
+    Kept so the dashboard can show the amount next to the verdict instead of recomputing it."""
+    landed_cost: Any | None = None
+    """The full ``LandedCostBreakdown`` (every line plus the total). The UI expands it line by line."""
+    detail: Any | None = None
+    """The engine's full ``FinancialFit`` (verdict plus its numeric reasons), ready for the contract."""
 
 
 class GateOutcome(_Frozen):

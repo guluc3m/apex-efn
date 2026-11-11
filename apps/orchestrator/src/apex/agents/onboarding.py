@@ -498,6 +498,62 @@ class OnboardingService:
 
     # ------------------------------------------------------------------ gates
 
+    async def activate_unsigned_for_demo(
+        self,
+        *,
+        tenant_id: str,
+        session_id: str,
+        snapshot_id: str,
+        envelopes: list[dict[str, Any]] | None = None,
+    ) -> FinancialSnapshot:
+        """Activate a snapshot **without a signed decision**, for the demo tenant only.
+
+        The product requires ``require_signed`` (criterion 17/21): this method exists so a hackathon demo can
+        run a mission end to end without a passkey ceremony, and it is only reachable from the demo seed
+        (``DEMO_MODE=1``), which logs what it did. ``activation_decision_id`` says ``demo:unsigned`` so no
+        later reader can mistake this for a decision someone signed.
+        """
+        snapshot = await self._require_snapshot(tenant_id, snapshot_id)
+        if snapshot.session_id != session_id:
+            raise SnapshotNotActivatable("snapshot does not belong to this onboarding session")
+        session = await self._require_session(tenant_id, session_id)
+        now = self._deps.clock.now()
+        previous = await self._deps.store.active_snapshot(tenant_id)
+        if previous is not None and previous.id != snapshot.id:
+            await self._deps.store.save_snapshot(
+                previous.model_copy(
+                    update={"status": SnapshotStatus.SUPERSEDED, "superseded_at": now}
+                )
+            )
+        if envelopes is not None:
+            # The import never invents envelopes (spec §3.1.1 has no `budget` metric, ADR-900 Q2 leaves the
+            # derivation open), so a tenant with a CSV but no envelope would see every offer `out_of_budget`
+            # and reach no negotiation at all. The demo states its envelope explicitly instead of hiding it.
+            report = dict(snapshot.report)
+            derived = dict(report.get("derived") or {})
+            derived["envelopes"] = list(envelopes)
+            report["derived"] = derived
+            snapshot = snapshot.model_copy(update={"report": report})
+            await self._deps.store.save_snapshot(snapshot)
+        activated = snapshot.model_copy(
+            update={
+                "status": SnapshotStatus.ACTIVE,
+                "activated_at": now,
+                "activation_decision_id": "demo:unsigned",
+            }
+        )
+        await self._deps.store.save_snapshot(activated)
+        await self._deps.store.save_session(
+            session.model_copy(
+                update={
+                    "status": OnboardingStatus.COMPLETE,
+                    "pending_snapshot_id": None,
+                    "updated_at": now,
+                }
+            )
+        )
+        return activated
+
     async def require_active_snapshot(self, *, tenant_id: str) -> FinancialSnapshot:
         """Criterion 1: no mission without an active snapshot."""
         snapshot = await self._deps.store.active_snapshot(tenant_id)

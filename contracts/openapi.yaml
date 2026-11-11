@@ -2303,6 +2303,9 @@ components:
           description: Payment term the seller offers (0 = prepayment). Null when unknown.
         signature_status: {$ref: '#/components/schemas/SignatureStatus'}
         state: {$ref: '#/components/schemas/OfferState'}
+        negotiation_id:
+          type: [string, 'null']
+          description: The negotiation opened for this offer once the gate cleared it.
         seller_confidence:
           anyOf:
           - {$ref: '#/components/schemas/SellerConfidence'}

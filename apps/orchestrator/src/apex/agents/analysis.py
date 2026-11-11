@@ -169,6 +169,14 @@ class AnalysisNodes:
         await self._deps.offers.set_analysis(tenant_id, analysis)
         return analysis
 
+    async def record_negotiation(self, *, tenant_id: str, analysis: OfferAnalysis) -> None:
+        """Persist the negotiation a cleared offer was routed into.
+
+        The analysis is the record the read side renders (``negotiation_id`` drives the dashboard state),
+        so the runner goes through this method instead of reaching into the offer store itself.
+        """
+        await self._deps.offers.set_analysis(tenant_id, analysis)
+
     async def analyse_mission(self, *, tenant_id: str, mission_id: str) -> list[OfferAnalysis]:
         """Analyse every offer of a mission that has no analysis yet. Idempotent per offer."""
         results: list[OfferAnalysis] = []
@@ -220,8 +228,16 @@ def _record_confidence(record: SellerConfidenceRecord) -> None:
 
 
 def _count_signals(signals: Mapping[str, Any]) -> int:
-    """How many raw signals were present. ``seller.min_signals`` counts present signals (ADR-900 Q3)."""
-    return sum(1 for value in signals.values() if value is not None)
+    """How many raw signals were present. ``seller.min_signals`` counts present signals (ADR-900 Q3).
+
+    The scraping service nests a seller snapshot under ``seller_signals``; that is the mapping to count, so
+    the record reports how many signals the engine could see rather than "a snapshot existed".
+    """
+    nested = signals.get("seller_signals")
+    source = nested if isinstance(nested, Mapping) else signals
+    return sum(
+        1 for name, value in source.items() if value is not None and name != "recent_reviews"
+    )
 
 
 __all__ = ["AnalysisConfig", "AnalysisDeps", "AnalysisNodes", "StaleConfigError"]

@@ -69,7 +69,11 @@ fi
 
 if [ -f apps/orchestrator/src/apex/tenant_config/load_defaults.py ]; then
   log "Cargando configuración por defecto de los tenants."
-  (cd apps/orchestrator && uv run python -m apex.tenant_config.load_defaults)
+  # The two demo tenants of the Keycloak realm (infra/keycloak/realm-apex.json) and the Prisma seed.
+  # --demo-values gives them the ADR-900 Q7 values (neg.target_discount 8%, max 15%, approval
+  # thresholds); without it every negotiation and every approval would be blocked by unset keys.
+  (cd apps/orchestrator &&
+    uv run python -m apex.tenant_config.load_defaults tenant-a tenant-b --demo-values)
 else
   log "Omitido: no existe apex.tenant_config.load_defaults todavía (D4-03)."
 fi

@@ -26,7 +26,13 @@ export async function getAccessToken(): Promise<string | null> {
   }
   if (header.length === 0) return null
 
-  const token = await getToken({ req: { headers: { cookie: header } } })
+  // Auth.js v5's `getToken` does not fall back to `AUTH_SECRET`: without an explicit secret it
+  // throws `MissingSecret` (a 500 through the BFF). With no secret configured no cookie can be
+  // decoded, so there is no session to forward.
+  const secret = process.env.AUTH_SECRET
+  if (!secret) return null
+
+  const token = await getToken({ req: { headers: { cookie: header } }, secret })
   if (!token || typeof token.access_token !== 'string' || token.access_token.length === 0) {
     return null
   }

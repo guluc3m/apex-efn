@@ -41,6 +41,10 @@ class Offer(_Model):
     """The seller's list price per unit when the adapter saw one. Used only to report savings."""
     currency: str = Field(pattern="^(EUR|USD|CNY)$")
     quantity: int = Field(gt=0)
+    seller_name: str = ""
+    title: str = ""
+    """Product title as the adapter saw it. Display only: no engine reads it."""
+    moq: int = Field(default=1, ge=1)
     collected_at: datetime
     raw_signals: dict[str, Any] = Field(default_factory=dict)
     """Raw seller signals as the adapter returned them. Input to the trust engine, never to the LLM."""
@@ -54,6 +58,8 @@ class OfferAnalysis(_Model):
     sanity: SanityOutcome
     fit: FitOutcome
     analysed_at: datetime
+    negotiation_id: str | None = None
+    """The negotiation opened for this offer once the gate cleared it. None = never negotiated."""
 
     @property
     def is_analysed(self) -> bool:

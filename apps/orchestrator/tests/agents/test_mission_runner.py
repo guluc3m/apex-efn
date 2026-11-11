@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -51,6 +53,11 @@ class _Worker:
         if isinstance(self.offers, Exception):
             raise self.offers
         return WorkerSearchResult(platform_id=step.platform_id, offers=list(self.offers))
+
+    async def seller_signals(
+        self, *, tenant_id: str, mission_id: str, platform: str, seller_id: str
+    ) -> dict[str, Any]:
+        return {}
 
 
 class _Fx:

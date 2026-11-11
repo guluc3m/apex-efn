@@ -21,6 +21,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from apex.agents.fx import FxUnavailable
 from apex.agents.missions import MissionEventBus, MissionEventType, apply_event
 from apex.agents.offers import Offer, OfferStore
 from apex.agents.sourcing import PlanStep, SourcingPlan
@@ -40,6 +41,7 @@ class RawOffer(_Model):
     platform_id: str = Field(min_length=1)
     platform_offer_id: str = Field(min_length=1)
     seller_id: str = Field(min_length=1)
+    seller_name: str = ""
     product_id: str = Field(min_length=1)
     title: str = ""
     unit_price_minor: int = Field(ge=0)
@@ -83,6 +85,12 @@ class BrowserWorkerPort(Protocol):
     async def search(
         self, *, tenant_id: str, mission_id: str, step: PlanStep, quantity: int
     ) -> WorkerSearchResult: ...
+
+    async def seller_signals(
+        self, *, tenant_id: str, mission_id: str, platform: str, seller_id: str
+    ) -> Mapping[str, Any]:
+        """Raw seller signals (spec §3.4.1). They feed the trust engine, never the LLM."""
+        ...
 
 
 class FxPort(Protocol):
@@ -194,12 +202,73 @@ class ScrapingService:
                 await self._deps.sleep(self._deps.retry_backoff_s * attempt)
                 attempt += 1
 
+    async def _signals_for(
+        self,
+        *,
+        tenant_id: str,
+        mission_id: str,
+        platform: str,
+        seller_id: str,
+        cache: dict[tuple[str, str], tuple[Mapping[str, Any], bool]],
+    ) -> tuple[Mapping[str, Any], bool]:
+        """Seller signals for one seller, fetched once per mission, with ``gmv_12m`` in EUR.
+
+        A failure here is not fatal: the offer keeps the listing signals and the trust engine answers
+        ``insufficient_data`` for that seller, which is a visible verdict, not a silent zero.
+
+        ``gmv_12m`` is converted here because ingestion is where every other amount becomes EUR: the trust
+        engine refuses a non-EUR GMV (``gmv_not_eur``) rather than hiding a missing conversion. The returned
+        flag is the ``fx_provisional`` of that conversion, so the gate sees a stale rate too.
+        """
+        key = (platform, seller_id)
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        try:
+            signals = await self._deps.worker.seller_signals(
+                tenant_id=tenant_id, mission_id=mission_id, platform=platform, seller_id=seller_id
+            )
+        except WorkerError:
+            entry: tuple[Mapping[str, Any], bool] = ({}, False)
+        else:
+            entry = await self._gmv_to_eur(signals=signals, tenant_id=tenant_id)
+        cache[key] = entry
+        return entry
+
+    async def _gmv_to_eur(
+        self, *, signals: Mapping[str, Any], tenant_id: str
+    ) -> tuple[Mapping[str, Any], bool]:
+        """Return the signals with ``gmv_12m`` in EUR, never inventing a rate or a value.
+
+        A currency outside the closed enum, or a rate the FX engine refuses, turns the GMV into ``None``:
+        one of 21 signals is missing, visible as such, and the rest still score.
+        """
+        gmv = signals.get("gmv_12m")
+        if not isinstance(gmv, Mapping):
+            return signals, False
+        currency = gmv.get("currency")
+        amount_minor = gmv.get("amount_minor")
+        if currency == "EUR":
+            return signals, False
+        if not isinstance(amount_minor, int) or currency not in SUPPORTED_CURRENCIES:
+            return {**signals, "gmv_12m": None}, False
+        try:
+            converted, provisional = await self._deps.fx.to_eur_unit(
+                amount_minor=amount_minor, currency=str(currency), tenant_id=tenant_id
+            )
+        except FxUnavailable:
+            # A missing rate must not cost the whole mission: the engine scores the other signals and the
+            # snapshot shows the gap.
+            return {**signals, "gmv_12m": None}, False
+        return {**signals, "gmv_12m": {"amount_minor": converted, "currency": "EUR"}}, provisional
+
     async def _normalise(
         self, *, tenant_id: str, mission_id: str, raw: Sequence[RawOffer]
     ) -> tuple[list[Offer], list[DuplicateOffer], bool]:
         """Convert to EUR, then keep one offer per (seller, product): the cheapest."""
         provisional = False
         converted: list[tuple[Offer, RawOffer]] = []
+        signals_cache: dict[tuple[str, str], tuple[Mapping[str, Any], bool]] = {}
         for item in raw:
             unit_eur, fx_provisional = await self._deps.fx.to_eur_unit(
                 amount_minor=item.unit_price_minor, currency=item.currency, tenant_id=tenant_id
@@ -211,6 +280,14 @@ class ScrapingService:
                     amount_minor=item.list_price_minor, currency=item.currency, tenant_id=tenant_id
                 )
                 provisional = provisional or list_provisional
+            seller_signals, signals_provisional = await self._signals_for(
+                tenant_id=tenant_id,
+                mission_id=mission_id,
+                platform=item.platform_id,
+                seller_id=item.seller_id,
+                cache=signals_cache,
+            )
+            provisional = provisional or signals_provisional
             offer = Offer(
                 id=f"{item.platform_id}:{item.platform_offer_id}",
                 tenant_id=tenant_id,
@@ -224,8 +301,12 @@ class ScrapingService:
                 list_price_eur_minor=list_eur,
                 currency="EUR",
                 quantity=item.quantity_available,
+                seller_name=item.seller_name,
                 collected_at=self._deps.clock.now(),
-                raw_signals=dict(item.raw_signals),
+                raw_signals={
+                    **dict(item.raw_signals),
+                    **({"seller_signals": dict(seller_signals)} if seller_signals else {}),
+                },
             )
             converted.append((offer, item))
 

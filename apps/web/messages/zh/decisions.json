@@ -84,7 +84,8 @@
     "sample": "样本量",
     "deviation": "相对参考价的偏差",
     "noSanity": "尚无价格检查。",
-    "noLanded": "尚无到岸成本。"
+    "noLanded": "尚无到岸成本。",
+    "linesPending": "接口尚未返回逐行明细，目前只有总额。"
   },
   "stale": {
     "body": "当前财务快照已过期。重新导入CSV前，直接采购将被阻止。",
