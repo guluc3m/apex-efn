@@ -475,6 +475,35 @@ paths:
               schema: {$ref: '#/components/schemas/DealPage'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
+  /v1/dashboard/deals/{id}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [dashboard]
+      operationId: getDeal
+      summary: One deal, so it can be opened outside the loaded page.
+      responses:
+        '200':
+          description: Deal.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Deal'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /v1/dashboard/summary:
+    get:
+      tags: [dashboard]
+      operationId: getDashboardSummary
+      summary: Counters for the dashboard strip, over all deals and not only the first page.
+      responses:
+        '200':
+          description: Summary.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DashboardSummary'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
   /v1/dashboard/deals/{id}/actions:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
@@ -1939,6 +1968,11 @@ components:
         lead_time_days:
           type: [integer, 'null']
           minimum: 0
+        payment_terms_days:
+          type: [integer, 'null']
+          minimum: 0
+          description: Payment term the seller offers (0 = prepayment). Null when unknown.
+        signature_status: {$ref: '#/components/schemas/SignatureStatus'}
         state: {$ref: '#/components/schemas/OfferState'}
         seller_confidence:
           anyOf:
@@ -2268,6 +2302,8 @@ components:
       properties:
         vs_list_price: {$ref: '#/components/schemas/NullableMoney'}
         vs_market_median: {$ref: '#/components/schemas/NullableMoney'}
+        vs_last_price: {$ref: '#/components/schemas/NullableMoney'}
+        yearly_category: {$ref: '#/components/schemas/NullableMoney'}
     Negotiation:
       type: object
       required: [id, offer_id, strategy, state, rounds, max_rounds, guardrail_hits]
@@ -2417,6 +2453,27 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ActionAvailability'}
         updated_at: {type: string, format: date-time}
+    DashboardSummary:
+      type: object
+      required: [pending_count, signed_count, nearest_sla_due_at, savings_by_week]
+      properties:
+        pending_count: {type: integer, minimum: 0}
+        signed_count: {type: integer, minimum: 0}
+        nearest_sla_due_at:
+          type: [string, 'null']
+          format: date-time
+        savings_by_week:
+          type: array
+          items: {$ref: '#/components/schemas/WeeklySavings'}
+    WeeklySavings:
+      type: object
+      required: [week_start, saved]
+      properties:
+        week_start: {type: string, format: date}
+        saved: {$ref: '#/components/schemas/Money'}
+    GateAssignee:
+      type: string
+      enum: [owner, finance, none]
     DealPage:
       type: object
       required: [items, next_cursor]
@@ -2483,6 +2540,15 @@ components:
           items: {$ref: '#/components/schemas/GateReason'}
         created_at: {type: string, format: date-time}
         sla_due_at: {type: string, format: date-time}
+        sla_elapsed_ratio:
+          type: [number, 'null']
+          minimum: 0
+          description: Share of the SLA already used (1.0 = due now, above 1 = overdue). Computed by the server.
+        assignee: {$ref: '#/components/schemas/GateAssignee'}
+        assigned_to_me: {type: boolean}
+        reminder_sent_at:
+          type: [string, 'null']
+          format: date-time
         status: {$ref: '#/components/schemas/GateStatus'}
         resolution:
           anyOf:

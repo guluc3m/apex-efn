@@ -624,6 +624,11 @@ export type Offer = {
   shipping?: ShippingEstimate | null
   incoterm?: Incoterm | null
   lead_time_days?: number | null
+  /**
+   * Payment term the seller offers (0 = prepayment). Null when unknown.
+   */
+  payment_terms_days?: number | null
+  signature_status?: SignatureStatus
   state: OfferState
   seller_confidence?: SellerConfidence | null
   price_sanity_check?: PriceSanityCheck | null
@@ -880,6 +885,8 @@ export type TradeOff = {
 export type Savings = {
   vs_list_price: NullableMoney
   vs_market_median: NullableMoney
+  vs_last_price?: NullableMoney
+  yearly_category?: NullableMoney
 }
 
 export type Negotiation = {
@@ -1011,6 +1018,20 @@ export type Deal = {
   updated_at: string
 }
 
+export type DashboardSummary = {
+  pending_count: number
+  signed_count: number
+  nearest_sla_due_at: string | null
+  savings_by_week: Array<WeeklySavings>
+}
+
+export type WeeklySavings = {
+  week_start: string
+  saved: Money
+}
+
+export type GateAssignee = 'owner' | 'finance' | 'none'
+
 export type DealPage = {
   items: Array<Deal>
   next_cursor: string | null
@@ -1077,6 +1098,13 @@ export type GateQueueItem = {
   causes: Array<GateReason>
   created_at: string
   sla_due_at: string
+  /**
+   * Share of the SLA already used (1.0 = due now, above 1 = overdue). Computed by the server.
+   */
+  sla_elapsed_ratio?: number | null
+  assignee?: GateAssignee
+  assigned_to_me?: boolean
+  reminder_sent_at?: string | null
   status: GateStatus
   resolution: GateResolution | null
   decision_id: string | null
@@ -2523,6 +2551,71 @@ export type ListDealsResponses = {
 }
 
 export type ListDealsResponse = ListDealsResponses[keyof ListDealsResponses]
+
+export type GetDealData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/dashboard/deals/{id}'
+}
+
+export type GetDealErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type GetDealError = GetDealErrors[keyof GetDealErrors]
+
+export type GetDealResponses = {
+  /**
+   * Deal.
+   */
+  200: Deal
+}
+
+export type GetDealResponse = GetDealResponses[keyof GetDealResponses]
+
+export type GetDashboardSummaryData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/v1/dashboard/summary'
+}
+
+export type GetDashboardSummaryErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type GetDashboardSummaryError = GetDashboardSummaryErrors[keyof GetDashboardSummaryErrors]
+
+export type GetDashboardSummaryResponses = {
+  /**
+   * Summary.
+   */
+  200: DashboardSummary
+}
+
+export type GetDashboardSummaryResponse =
+  GetDashboardSummaryResponses[keyof GetDashboardSummaryResponses]
 
 export type ApplyDealActionData = {
   body: DealActionRequest
