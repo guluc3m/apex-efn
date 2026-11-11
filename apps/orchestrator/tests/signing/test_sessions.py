@@ -32,7 +32,9 @@ async def _open(h: Harness, user: str) -> tuple[str, str]:
     """Enroll a key for ``user`` and open a window authenticated at T0. Returns (key_id, session_id)."""
     h.as_user(user)
     h.clock.set(T0 + timedelta(minutes=1))
-    key_id = (await h.enroll(Ed25519PrivateKey.generate())).json()["id"]
+    enrolled = await h.enroll(Ed25519PrivateKey.generate())
+    assert enrolled.status_code == 201, enrolled.text
+    key_id = enrolled.json()["id"]
     opened = await h.client.post(
         "/v1/signing-sessions", json={"key_id": key_id, "device_fingerprint_ref": DEVICE}
     )
@@ -147,3 +149,13 @@ async def test_open_close_and_risk_flag(h: Harness) -> None:
     async with tenant_session(TENANT, sessionmaker=h.factory) as db:
         assert await sessions.mark_session_risky(db, risky_id, now=h.clock.now())
     assert await _refused(h, "frank", key_id, risky_id) is ReauthReason.RISK_FLAGGED
+
+    # issue #272: logout on every device revokes all the caller's windows, idempotently, and only theirs
+    again = (
+        await h.client.post(
+            "/v1/signing-sessions", json={"key_id": key_id, "device_fingerprint_ref": DEVICE}
+        )
+    ).json()["id"]
+    assert (await h.client.delete("/v1/signing-sessions")).status_code == 204
+    assert (await h.client.delete("/v1/signing-sessions")).status_code == 204
+    assert await _refused(h, "frank", key_id, again) is ReauthReason.SESSION_REVOKED
