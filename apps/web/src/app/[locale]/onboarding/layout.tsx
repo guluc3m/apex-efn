@@ -4,6 +4,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { AppLink } from '@/components/app-link'
 import { DraftState } from '@/components/onboarding/draft-state'
+import { ViewerProvider } from '@/components/viewer-context'
+import { getViewer } from '@/lib/viewer'
 import { getSession } from '@/server/auth/session'
 
 /** Roles that may set up the company (docs/security/rbac.md). */
@@ -23,8 +25,10 @@ export default async function OnboardingLayout({
   const session = await getSession()
   if (session && !session.user.roles.some((r) => ONBOARDING_ROLES.includes(r))) redirect(`/${locale}/decisiones`)
   const t = await getTranslations('onboarding.header')
+  // Signing the activation needs the viewer's user id (useSignDecision), as in the app shell.
+  const viewer = await getViewer()
   return (
-    <>
+    <ViewerProvider viewer={viewer}>
       <header className="flex items-center gap-4 border-b border-line px-gutter-page py-3">
         <AppLink href="/decisiones" aria-label={t('home')} className="inline-flex items-center no-underline">
           <Logo size="sm" />
@@ -32,6 +36,6 @@ export default async function OnboardingLayout({
         <DraftState />
       </header>
       {children}
-    </>
+    </ViewerProvider>
   )
 }
