@@ -67,7 +67,7 @@
     "emailPlaceholder": "name@company.com",
     "continue": "继续",
     "passkey": "使用通行密钥登录",
-    "pending": "尚未连接：暂时无法登录。",
+    "pending": "暂不支持通行密钥登录，请使用“继续”。",
     "sso": "贵公司使用 SSO？请通过身份提供商登录（尚未连接）。",
     "ed25519": "签名需要支持 Ed25519 的浏览器。",
     "queue": {

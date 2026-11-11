@@ -67,7 +67,7 @@
     "emailPlaceholder": "nombre@empresa.com",
     "continue": "Continuar",
     "passkey": "Entrar con passkey",
-    "pending": "Pendiente de conectar: el acceso aún no está disponible.",
+    "pending": "El acceso con passkey aún no está disponible. Usa Continuar.",
     "sso": "¿Tu empresa usa SSO? Entra con tu proveedor (pendiente de conectar).",
     "ed25519": "La firma requiere un navegador compatible con Ed25519.",
     "queue": {

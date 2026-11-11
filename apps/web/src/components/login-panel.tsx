@@ -11,7 +11,7 @@ import { AppLanguageSwitcher } from './language-switcher'
 import type { LoginField } from './login-field'
 import { LoginFieldCanvas } from './login-field-canvas'
 
-/** Acceso (LoginRD). //todo_#147: login real contra el BFF; mientras tanto nada se simula. */
+/** Acceso (LoginRD). Continue goes to Keycloak through /login; the passkey button waits for a direct passkey flow. */
 export function LoginPanel() {
   const t = useTranslations('shell.login')
   const reason = t('pending')
@@ -41,17 +41,17 @@ export function LoginPanel() {
             <Label htmlFor="email" className="text-ink-soft">{t('email')}</Label>
             <Input id="email" type="email" autoComplete="username" onChange={(e) => field.current?.morph(e.target.value.trim().toLowerCase() === 'macarrones')} placeholder={t('emailPlaceholder')} className="min-h-11" />
           </div>
-          <Button
-            variant="pri"
-            size="lg"
-            disabledReason={reason}
-            onMouseEnter={hover(true)}
-            onMouseLeave={hover(false)}
-            onFocus={hover(true)}
-            onBlur={hover(false)}
-          >
-            <Icon icon={LogIn} />
-            {t('continue')}
+          <Button asChild variant="pri" size="lg">
+            <a
+              href="/login"
+              onMouseEnter={hover(true)}
+              onMouseLeave={hover(false)}
+              onFocus={hover(true)}
+              onBlur={hover(false)}
+            >
+              <Icon icon={LogIn} />
+              {t('continue')}
+            </a>
           </Button>
           <Button variant="sec" size="lg" disabledReason={reason}>
             <Icon icon={Fingerprint} />
