@@ -200,6 +200,20 @@ export function useNotifyFinance(id: string) {
   return useMutation({ mutationFn: () => api.notifyFinanceOfApproval(id) })
 }
 
+export function useConnectedAccounts() {
+  return useQuery({ queryKey: ['connected-accounts'], queryFn: ({ signal }) => api.listConnectedAccounts(signal) })
+}
+
+/** Connect or disconnect; the server answer is the truth, so refetch the list afterwards. */
+export function useAccountAction() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (a: { connect: Parameters<typeof api.connectAccount>[0] } | { disconnect: string }) =>
+      'connect' in a ? api.connectAccount(a.connect) : api.disconnectAccount(a.disconnect),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['connected-accounts'] }),
+  })
+}
+
 export function useApproval(id: string) {
   return useQuery({ queryKey: queryKeys.approval(id), queryFn: ({ signal }) => api.getApproval(id, signal) })
 }

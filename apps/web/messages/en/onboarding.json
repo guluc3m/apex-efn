@@ -184,7 +184,10 @@
     "password": "Password",
     "vaultNote": "They go straight to the encrypted vault. Neither the agent nor this screen ever sees them again: only an account identifier.",
     "save": "Save credentials",
-    "pending": "Not connected yet: credentials cannot be sent to the encrypted vault"
+    "connectFailed": "The account could not be connected.",
+    "vault_unavailable": "The encrypted vault is not available right now. Try again later.",
+    "forbidden": "Only owner or admin can manage accounts.",
+    "loading": "Loading accounts…"
   },
   "finance": {
     "drop": "Drop your financial CSV here",

@@ -1,9 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { AccountsStep } from '@/components/onboarding/accounts-step'
-import { platforms } from '@/fixtures/onboarding'
 
-// //todo_#154: las cuentas vendrán de GET connected-accounts; solo owner y admin
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   setRequestLocale(locale)
@@ -14,7 +12,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
         <h1 className="m-0 text-2xl font-semibold">{t('title')}</h1>
         <p className="m-0 mt-1.5 text-ink-muted">{t('intro')}</p>
       </div>
-      <AccountsStep platforms={platforms} />
+      <AccountsStep />
     </div>
   )
 }

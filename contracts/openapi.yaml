@@ -21,6 +21,7 @@ tags:
 - {name: signing}
 - {name: decisions}
 - {name: approvals}
+- {name: accounts}
 - {name: keys}
 - {name: audit}
 - {name: webhooks}
@@ -773,6 +774,63 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
+  /v1/connected-accounts:
+    get:
+      tags: [accounts]
+      operationId: listConnectedAccounts
+      summary: Marketplace accounts of the tenant and the platforms that can be connected (issue 154).
+      description: 'Only owner and admin. Credentials are never returned, only their status and an opaque CredentialRef.'
+      responses:
+        '200':
+          description: The accounts.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConnectedAccountList'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [accounts]
+      operationId: connectAccount
+      summary: Store a platform credential straight in the vault and connect the account (issue 154).
+      description: 'The username and password go to the vault and are never stored in the database, returned, logged
+        or shown to the LLM. Connecting a platform again replaces its previous account (the old credential is
+        deleted). Only owner and admin. 503 `vault_unavailable` when the vault is not configured or down.'
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ConnectAccountRequest'}
+      responses:
+        '201':
+          description: The connected account.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConnectedAccount'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /v1/connected-accounts/{id}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    delete:
+      tags: [accounts]
+      operationId: disconnectAccount
+      summary: Delete the credential from the vault and disable the account (issue 154).
+      parameters:
+      - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '200':
+          description: The account, now `disabled`. Disconnecting a disabled account is a no-op.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConnectedAccount'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/Problem'}
   /v1/config/effective:
     get:
       tags: [config]
@@ -1849,6 +1907,24 @@ components:
         platform: {type: string}
         status: {$ref: '#/components/schemas/ConnectedAccountStatus'}
         credential_ref: {$ref: '#/components/schemas/CredentialRef'}
+    ConnectedAccountList:
+      type: object
+      required: [items, platforms]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ConnectedAccount'}
+        platforms:
+          type: array
+          description: Platform ids that can be connected (those the orchestrator can search).
+          items: {type: string}
+    ConnectAccountRequest:
+      type: object
+      required: [platform, username, password]
+      properties:
+        platform: {type: string, minLength: 1, maxLength: 64}
+        username: {type: string, minLength: 1, maxLength: 256}
+        password: {type: string, format: password, writeOnly: true, minLength: 1, maxLength: 1024}
     CredentialRef:
       type: object
       required: [id]

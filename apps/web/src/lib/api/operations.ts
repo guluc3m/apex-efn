@@ -35,6 +35,10 @@ import type {
   ListMissionOffersData,
   ListMissionOffersResponse,
   GetNegotiationResponse,
+  ConnectAccountData,
+  ConnectAccountResponse,
+  DisconnectAccountResponse,
+  ListConnectedAccountsResponse,
   ListNegotiationMessagesResponse,
   NotifyFinanceOfApprovalResponse,
   ListDealsData,
@@ -207,6 +211,16 @@ export function createOperations(client: ApiClient) {
 
     notifyFinanceOfApproval: (id: string) =>
       client.request<NotifyFinanceOfApprovalResponse>('/v1/approvals/{id}/notify-finance', { method: 'POST', path: { id } }),
+
+    listConnectedAccounts: (signal?: AbortSignal) =>
+      client.request<ListConnectedAccountsResponse>('/v1/connected-accounts', { path: undefined, signal }),
+
+    /** The credentials go straight to the server's vault; the response only has the status and an opaque ref. */
+    connectAccount: (body: ConnectAccountData['body']) =>
+      client.request<ConnectAccountResponse>('/v1/connected-accounts', { method: 'POST', path: undefined, body }),
+
+    disconnectAccount: (id: string) =>
+      client.request<DisconnectAccountResponse>('/v1/connected-accounts/{id}', { method: 'DELETE', path: { id } }),
 
     listMissions: (query?: ListMissionsData['query'], signal?: AbortSignal) =>
       client.request<ListMissionsResponse>('/v1/missions', { path: undefined, query, signal }),

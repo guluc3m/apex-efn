@@ -420,6 +420,19 @@ export type ConnectedAccount = {
   credential_ref: CredentialRef
 }
 
+export type ConnectedAccountList = {
+  items: Array<ConnectedAccount>
+  /**
+   * Platform ids that can be connected (those the orchestrator can search).
+   */
+  platforms: Array<string>
+}
+
+export type ConnectAccountRequest = {
+  platform: string
+  username: string
+}
+
 export type CredentialRef = {
   /**
    * Opaque vault pointer. Never shown to the LLM or the browser.
@@ -1773,6 +1786,12 @@ export type ConfigChangeRequest = {
    * Why the change is made. Part of the signed payload and shown in the version history.
    */
   reason?: string | null
+}
+
+export type ConnectAccountRequestWritable = {
+  platform: string
+  username: string
+  password: string
 }
 
 export type PathId = string
@@ -3193,6 +3212,125 @@ export type NotifyFinanceOfApprovalResponses = {
 
 export type NotifyFinanceOfApprovalResponse =
   NotifyFinanceOfApprovalResponses[keyof NotifyFinanceOfApprovalResponses]
+
+export type ListConnectedAccountsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/v1/connected-accounts'
+}
+
+export type ListConnectedAccountsErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListConnectedAccountsError =
+  ListConnectedAccountsErrors[keyof ListConnectedAccountsErrors]
+
+export type ListConnectedAccountsResponses = {
+  /**
+   * The accounts.
+   */
+  200: ConnectedAccountList
+}
+
+export type ListConnectedAccountsResponse =
+  ListConnectedAccountsResponses[keyof ListConnectedAccountsResponses]
+
+export type ConnectAccountData = {
+  body: ConnectAccountRequestWritable
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path?: never
+  query?: never
+  url: '/v1/connected-accounts'
+}
+
+export type ConnectAccountErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+  /**
+   * RFC 9457 problem.
+   */
+  503: Problem
+}
+
+export type ConnectAccountError = ConnectAccountErrors[keyof ConnectAccountErrors]
+
+export type ConnectAccountResponses = {
+  /**
+   * The connected account.
+   */
+  201: ConnectedAccount
+}
+
+export type ConnectAccountResponse = ConnectAccountResponses[keyof ConnectAccountResponses]
+
+export type DisconnectAccountData = {
+  body?: never
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/connected-accounts/{id}'
+}
+
+export type DisconnectAccountErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * RFC 9457 problem.
+   */
+  503: Problem
+}
+
+export type DisconnectAccountError = DisconnectAccountErrors[keyof DisconnectAccountErrors]
+
+export type DisconnectAccountResponses = {
+  /**
+   * The account, now `disabled`. Disconnecting a disabled account is a no-op.
+   */
+  200: ConnectedAccount
+}
+
+export type DisconnectAccountResponse = DisconnectAccountResponses[keyof DisconnectAccountResponses]
 
 export type GetEffectiveConfigData = {
   body?: never
