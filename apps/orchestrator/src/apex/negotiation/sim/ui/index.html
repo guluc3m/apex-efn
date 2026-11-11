@@ -47,6 +47,10 @@
         background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px;
       }
       button[disabled] { opacity: .55; cursor: progress; }
+      button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); font-weight: 600; padding: 7px 12px; }
+      button.ghost:hover { border-color: var(--accent); color: var(--accent); }
+      .playback { display: inline-flex; gap: 8px; align-items: center; }
+      .line.pending { display: none; }
       .status { font-size: 12px; color: var(--muted); margin-left: auto; }
       .error {
         border: 1px solid #fda29b; background: #fffbfa; color: var(--bad);
@@ -71,7 +75,9 @@
       .buyer-head { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--wash); }
       .buyer-head h3 { margin: 0; font-size: 14px; }
       .buyer-body { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 0; align-items: start; }
-      .steps { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; align-self: stretch; }
+      .ladder { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; align-self: stretch; }
+      .ladder summary { cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
+      .steps { list-style: none; margin: 0; padding: 0; }
       .steps li { list-style: none; margin: 0 0 8px; padding-left: 14px; position: relative; }
       .steps li::before { content: ""; position: absolute; left: 0; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
       .steps li.done::before { background: var(--accent); }
@@ -84,8 +90,6 @@
       .line .who { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
       .empty { color: var(--muted); font-size: 13px; }
       .legend { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-      .steps li.legend { padding-left: 0; margin-bottom: 10px; }
-      .steps li.legend::before { content: none; }
       footer { margin-top: 34px; color: var(--muted); font-size: 12px; }
       code { background: var(--wash); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
       @media (max-width: 760px) { .buyer-body { grid-template-columns: 1fr; } .steps { border-right: 0; border-bottom: 1px solid var(--line); } }
@@ -116,6 +120,12 @@
           <input id="qty" type="number" min="1" value="5000" />
         </div>
         <button id="run">Run scenario</button>
+        <span class="playback" id="playback" hidden>
+          <button id="step" class="ghost">Step</button>
+          <button id="play" class="ghost">Play</button>
+          <button id="all" class="ghost">Show all</button>
+          <span class="status" id="progress"></span>
+        </span>
         <span class="status" id="status"></span>
       </div>
 
@@ -241,13 +251,87 @@
                   </span>
                 </div>
                 <div class="buyer-body">
-                  <ul class="steps"><li class="legend">Offer ladder</li>${steps}</ul>
+                  <details class="ladder"><summary>Offer ladder (spoiler)</summary><ul class="steps">${steps}</ul></details>
                   <div class="transcript"><p class="legend">Conversation</p>${lines}</div>
                 </div>
               </div>`;
           })
           .join("") || '<p class="empty">No buyers ran.</p>';
+        preparePlayback();
       }
+
+      const playback = { order: [], index: 0, timer: null };
+
+      function stopPlayback() {
+        if (playback.timer !== null) {
+          clearInterval(playback.timer);
+          playback.timer = null;
+        }
+        $("play").textContent = "Play";
+      }
+
+      function progress() {
+        $("progress").textContent = `${Math.min(playback.index, playback.order.length)} / ${playback.order.length}`;
+      }
+
+      function orderMessages() {
+        // Round by round across the three buyers: one message of each, then the next round.
+        const perBuyer = [...document.querySelectorAll(".buyer .transcript")].map((box) => [
+          ...box.querySelectorAll(".line"),
+        ]);
+        const rounds = Math.max(0, ...perBuyer.map((lines) => lines.length));
+        const order = [];
+        for (let round = 0; round < rounds; round += 1) {
+          for (const lines of perBuyer) {
+            if (lines[round]) order.push(lines[round]);
+          }
+        }
+        return order;
+      }
+
+      function preparePlayback() {
+        stopPlayback();
+        playback.order = orderMessages();
+        playback.index = 0;
+        for (const line of playback.order) line.classList.add("pending");
+        $("playback").hidden = playback.order.length === 0;
+        progress();
+        revealNext();
+      }
+
+      function revealNext() {
+        const line = playback.order[playback.index];
+        if (line === undefined) {
+          stopPlayback();
+          return;
+        }
+        line.classList.remove("pending");
+        line.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        playback.index += 1;
+        progress();
+        if (playback.index >= playback.order.length) stopPlayback();
+      }
+
+      function showAll() {
+        stopPlayback();
+        for (const line of playback.order) line.classList.remove("pending");
+        playback.index = playback.order.length;
+        progress();
+      }
+
+      function togglePlay() {
+        if (playback.timer !== null) {
+          stopPlayback();
+          return;
+        }
+        if (playback.index >= playback.order.length) return;
+        $("play").textContent = "Pause";
+        playback.timer = setInterval(revealNext, 1200);
+      }
+
+      $("step").addEventListener("click", () => { stopPlayback(); revealNext(); });
+      $("play").addEventListener("click", togglePlay);
+      $("all").addEventListener("click", showAll);
 
       $("run").addEventListener("click", run);
       loadConfig().then(() => { /* first run is manual: the marketplace may not be up yet */ });

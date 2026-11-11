@@ -13,6 +13,7 @@ the simulation runs with templates only and never invents wording or numbers.
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any, Protocol, TypeVar
 
@@ -85,15 +86,38 @@ class NullGateway:
 
 
 class OpenAICompatGateway:
-    """Minimal OpenAI-compatible chat client. Temperature is pinned to 0 by the callers."""
+    """Minimal OpenAI-compatible chat client (a self-hosted model, a vendor, or the stub).
 
-    def __init__(self, base_url: str, *, model: str = "negotiator", timeout: float = 30.0) -> None:
+    The endpoint decides which headers make sense: the local stub is pinned to its scenario, a real provider
+    gets a bearer token and no stub header. The API key never leaves this object: it is a header, it is not in
+    any payload, and errors carry only the status and a truncated body.
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        model: str = "negotiator",
+        api_key: str | None = None,
+        scenario: str | None = "sim-negotiation",
+        timeout: float = 30.0,
+        send_seed: bool | None = None,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         root = base_url.rstrip("/")
         self._url = (
             f"{root}/chat/completions" if root.endswith("/v1") else f"{root}/v1/chat/completions"
         )
         self._model = model
-        self._client = httpx.AsyncClient(timeout=timeout)
+        # A real provider rejects parameters it does not document (`seed` is the usual one), so it is opt-out.
+        self._send_seed = api_key is None if send_seed is None else send_seed
+        headers: dict[str, str] = {}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        if scenario:
+            headers["X-Stub-Scenario"] = scenario
+        self._headers = headers
+        self._client = httpx.AsyncClient(timeout=timeout, transport=transport)
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -115,7 +139,7 @@ class OpenAICompatGateway:
             "messages": messages,
             "temperature": 0.0 if temperature is None else temperature,
         }
-        if seed is not None:
+        if seed is not None and self._send_seed:
             payload["seed"] = seed
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
@@ -159,7 +183,7 @@ class OpenAICompatGateway:
                 },
             },
         }
-        if seed is not None:
+        if seed is not None and self._send_seed:
             payload["seed"] = seed
         body = await self._post(payload)
         raw = _content(body)
@@ -170,9 +194,7 @@ class OpenAICompatGateway:
 
     async def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
         try:
-            response = await self._client.post(
-                self._url, json=payload, headers={"X-Stub-Scenario": "sim-negotiation"}
-            )
+            response = await self._client.post(self._url, json=payload, headers=self._headers)
         except httpx.HTTPError as exc:
             raise LLMUnavailable(f"LLM request failed: {exc}") from exc
         if response.status_code >= httpx.codes.BAD_REQUEST:
@@ -203,7 +225,25 @@ def _token_count(value: Any) -> int:
 
 
 def build_gateway(llm_url: str | None) -> SimGateway:
-    """A gateway for the scenario: the stub/self-hosted endpoint when configured, else a null one."""
-    if llm_url:
-        return OpenAICompatGateway(llm_url)
-    return NullGateway()
+    """A gateway for the scenario: the stub, a self-hosted model or a vendor endpoint; else a null one.
+
+    Environment (all optional, the demo works without any of them):
+
+    - ``SIM_LLM_MODEL``    model name. Default ``negotiator`` (the stub); with a real provider, e.g.
+      ``deepseek-chat``.
+    - ``SIM_LLM_API_KEY``  bearer token (``DEEPSEEK_API_KEY`` is accepted too). Presence of a key also switches
+      off the stub scenario header and the ``seed`` parameter, which providers may reject.
+    - ``SIM_LLM_SCENARIO`` stub scenario name. Defaults to ``sim-negotiation`` only while no key is set.
+    - ``SIM_LLM_TIMEOUT_MS`` request timeout, default 30 s.
+    """
+    if not llm_url:
+        return NullGateway()
+    api_key = os.environ.get("SIM_LLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+    model = os.environ.get("SIM_LLM_MODEL") or ("deepseek-chat" if api_key else "negotiator")
+    scenario = os.environ.get("SIM_LLM_SCENARIO")
+    if scenario is None:
+        scenario = None if api_key else "sim-negotiation"
+    timeout = float(os.environ.get("SIM_LLM_TIMEOUT_MS", "30000")) / 1000
+    return OpenAICompatGateway(
+        llm_url, model=model, api_key=api_key or None, scenario=scenario or None, timeout=timeout
+    )
