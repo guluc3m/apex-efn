@@ -4,10 +4,8 @@
 # The suite starts the web app itself: apps/web/playwright.config.ts declares a `webServer`
 # (`pnpm dev`, port 3000). The specs that exist today use Playwright's `request` fixture against the
 # web app, so they need no backend and no Docker. A full-stack, browser-driven suite (mission, gate,
-# negotiation) will need the compose stack; that comes back when the dev S3 source is fixed (issue
-# #81: the MinIO images are not pullable anonymously, so `docker compose up` stops at `minio`).
-# Until then this job must not depend on it, or the merge gate is red for every lane because of a
-# registry credential.
+# negotiation) will need the compose stack, but this job must not boot it: it only runs Playwright's
+# `webServer` against the dev server (D6-08 adds the full-stack suite).
 set -euo pipefail
 # shellcheck source=common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
