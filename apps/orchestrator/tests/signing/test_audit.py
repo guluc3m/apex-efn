@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import psycopg
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from apex.api import audit as audit_api
 from apex.audit import anchor, chain
@@ -190,3 +190,12 @@ async def test_scheduled_service_anchors_good_chains_and_reports_broken_ones(
     ).verify_chain()
     assert not result.chain_ok and result.first_broken_seq is not None
     assert list(store.objects) == [f"anchors/tenant-anchor-c/{2:020d}.json"]  # only the good chain
+
+
+async def test_app_role_lists_every_tenant_but_reads_only_its_own(h: Harness) -> None:
+    from apex.audit.service import list_tenant_ids
+
+    assert {TENANT, OTHER} <= set(await list_tenant_ids(h.factory))
+    async with tenant_session(TENANT, sessionmaker=h.factory) as session:
+        rows = await session.execute(text("SELECT id FROM tenants"))
+        assert [r[0] for r in rows] == [TENANT]  # RLS is untouched by the function
