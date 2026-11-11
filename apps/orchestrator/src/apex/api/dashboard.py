@@ -20,6 +20,7 @@ from apex.agents.gate import (
 from apex.api.gate import DecisionAcceptedOut, _blocked
 from apex.common.errors import Problem, not_implemented
 from apex.common.tenant import get_roles, get_tenant_id
+from apex.contracts.generated.models import DashboardSummary
 
 router = APIRouter()
 
@@ -148,13 +149,52 @@ async def deal_action(
 __all__ = ["get_dashboard", "router"]
 
 
-@router.get("/summary", tags=["dashboard"])
-async def get_dashboard_summary() -> None:
-    """Contract route (issue #305). 501 until DEV-4 implements it."""
-    raise not_implemented("the dashboard summary is not implemented yet")
+def _deal_out(d: Any) -> DealOut:
+    return DealOut(
+        offer_id=d.offer.id,
+        mission_id=d.offer.mission_id,
+        platform_id=d.offer.platform_id,
+        seller_id=d.offer.seller_id,
+        product_id=d.offer.product_id,
+        unit_price_eur_minor=d.offer.unit_price_eur_minor,
+        list_price_eur_minor=d.offer.list_price_eur_minor,
+        quantity=d.offer.quantity,
+        currency=d.offer.currency,
+        seller_confidence=d.analysis.confidence.model_dump(mode="json"),
+        price_sanity=d.analysis.sanity.model_dump(mode="json"),
+        financial_fit=d.analysis.fit.model_dump(mode="json"),
+        gate_item_id=d.gate_item_id,
+        allowed_actions=d.allowed_actions,
+        blocked_actions=[
+            BlockedOut(action=b.action, reason=b.reason.value, detail=b.detail)
+            for b in d.blocked_actions
+        ],
+    )
 
 
-@router.get("/deals/{id}", tags=["dashboard"])
-async def get_deal(id: str) -> None:
-    """Contract route (issue #305). 501 until DEV-4 implements it."""
-    raise not_implemented("reading one deal is not implemented yet")
+@router.get("/summary", response_model=DashboardSummary, tags=["dashboard"])
+async def get_dashboard_summary(
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    dashboard: Annotated[Any, Depends(get_dashboard)],
+) -> DashboardSummary:
+    """Counters from the gate queue. Signed counts and savings need stores that do not exist yet."""
+    items = await dashboard.open_gate_items(tenant_id=tenant_id)
+    return DashboardSummary(
+        pending_count=len(items),
+        signed_count=0,  # ponytail: no signed-deal store yet
+        nearest_sla_due_at=min((i.sla_due_at for i in items), default=None),
+        savings_by_week=[],  # ponytail: savings need accepted prices, not stored yet
+    )
+
+
+@router.get("/deals/{id}", response_model=DealOut, tags=["dashboard"])
+async def get_deal(
+    id: str,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    dashboard: Annotated[Any, Depends(get_dashboard)],
+) -> DealOut:
+    """One deal by offer id."""
+    for deal in await dashboard.deals(tenant_id=tenant_id):
+        if deal.offer.id == id:
+            return _deal_out(deal)
+    raise Problem(404, "Deal not found", detail=f"deal {id} not found")

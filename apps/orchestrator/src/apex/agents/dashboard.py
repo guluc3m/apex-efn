@@ -13,6 +13,7 @@ from apex.agents.gate import (
     DealAction,
     DiscardReason,
     GateAgent,
+    GateQueueItem,
     GateRules,
     GateStore,
 )
@@ -61,6 +62,9 @@ class Dashboard:
                     continue
                 out.append(await self._deal(tenant_id, offer, analysis, rules))
         return out
+
+    async def open_gate_items(self, *, tenant_id: str) -> list[GateQueueItem]:
+        return await self._gate_store.list_open(tenant_id)
 
     async def _deal(
         self, tenant_id: str, offer: Offer, analysis: OfferAnalysis, rules: GateRules

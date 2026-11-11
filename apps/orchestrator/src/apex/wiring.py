@@ -48,12 +48,14 @@ from apex.agents.onboarding import (
 from apex.agents.request_store import InMemorySourcingRequestStore
 from apex.agents.sanity_port import DomainSanityPort
 from apex.agents.scraping import ScrapingDeps, ScrapingService
+from apex.agents.signing_port import SigningDecisionPort
 from apex.agents.sourcing import IntakeAgent, PlannerAgent, PlatformInfo, StaticCatalogue
 from apex.agents.sourcing_service import SourcingService, SourcingServiceDeps
 from apex.agents.trust_port import DomainTrustPort
 from apex.common.clock import Clock, SystemClock
 from apex.common.ids import IdGenerator
 from apex.config import Settings
+from apex.db.session import default_sessionmaker
 from apex.llm.accounting import InMemorySink
 from apex.llm.budget import InMemoryBudgetStore, TokenBudget
 from apex.llm.config import (
@@ -66,6 +68,7 @@ from apex.llm.config import (
 from apex.llm.gateway import LLMGateway
 from apex.llm.prompts import PromptRegistry
 from apex.platform.flags import FlagProvider, StaticFlags
+from apex.signing.api import DecisionRejected, PendingSignature, SignatureInvalid, SigningService
 from apex.tenant_config.defaults import DEFAULT_PATH, load_global_layer
 from apex.tenant_config.load_defaults import DEMO_TENANTS, seed
 from apex.tenant_config.repository import InMemoryConfigRepository
@@ -93,6 +96,38 @@ class UnwiredDecisionPort:
         raise NotImplementedError(
             "service signing is not wired yet (DEV-2 apex.signing.api pending)"
         )
+
+
+class _LazySigningService:
+    """``SigningService`` built on first use, so booting the app never opens a database connection."""
+
+    def __init__(self, config: Any, clock: Clock) -> None:
+        self._config, self._clock = config, clock
+        self._service: SigningService | None = None
+
+    def _get(self) -> SigningService:
+        if self._service is None:
+            self._service = SigningService(default_sessionmaker(), self._config, self._clock)
+        return self._service
+
+    async def create_decision(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._get().create_decision(*args, **kwargs)
+
+    async def require_signed(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._get().require_signed(*args, **kwargs)
+
+    async def sign_service_event(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._get().sign_service_event(*args, **kwargs)
+
+
+def signing_port(config: Any, clock: Clock) -> SigningDecisionPort:
+    """The graph's decision port over the real signing service (D2-09)."""
+    return SigningDecisionPort(
+        _LazySigningService(config, clock),
+        pending=(PendingSignature,),
+        rejected=(DecisionRejected,),
+        invalid=(SignatureInvalid,),
+    )
 
 
 class UnwiredObjectStore:
@@ -317,7 +352,7 @@ def build_app_services(
                 rates=fx_rates or InMemoryFxRateReader(), config=tenant_config
             ),
             objects=UnwiredObjectStore(),
-            decisions=UnwiredDecisionPort(),
+            decisions=signing_port(tenant_config, active_clock),
             clock=active_clock,
             ids=IdGenerator(active_clock),
             stale_after_days=_finance_stale_after_days(),
@@ -345,7 +380,7 @@ def build_app_services(
     gate = GateAgent(
         GateDeps(
             store=gate_store,
-            decisions=UnwiredDecisionPort(),
+            decisions=signing_port(tenant_config, active_clock),
             clock=active_clock,
             ids=IdGenerator(active_clock),
         )
