@@ -27,6 +27,8 @@ import type {
   GetMissionResponse,
   GetSellerConfidenceData,
   GetSellerConfidenceResponse,
+  ListMissionsData,
+  ListMissionsResponse,
   ListMissionOffersData,
   ListMissionOffersResponse,
   GetNegotiationResponse,
@@ -176,6 +178,9 @@ export function createOperations(client: ApiClient) {
         body,
         signal,
       }),
+
+    listMissions: (query?: ListMissionsData['query'], signal?: AbortSignal) =>
+      client.request<ListMissionsResponse>('/v1/missions', { path: undefined, query, signal }),
 
     getMission: (id: string, signal?: AbortSignal) =>
       client.request<GetMissionResponse>('/v1/missions/{id}', { path: { id }, signal }),

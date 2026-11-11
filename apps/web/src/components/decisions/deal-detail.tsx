@@ -11,7 +11,7 @@ import { useState, type ReactNode } from 'react'
 
 import { AppLink } from '@/components/app-link'
 import { PriceDistribution } from '@/components/compare/price-distribution'
-import { useDealAction, useMissionOffers } from '@/lib/api'
+import { useDealAction, useMission, useMissionOffers, useMissionRecommendation } from '@/lib/api'
 import { blockedCodes, dealActionBody, DISCARD_REASONS, emptyActionForm } from '@/lib/decisions'
 
 import { DealBadges } from './deal-badges'
@@ -43,8 +43,13 @@ const Row = ({ k, children }: { k: string; children: ReactNode }) => (
 
 export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
   const missionOffers = useMissionOffers(deal.mission_id)
-  const t = useTranslations('decisions')
   const locale = useLocale()
+  const mission = useMission(deal.mission_id)
+  const recommendation = useMissionRecommendation(deal.mission_id, mission.data?.profile_id ?? undefined)
+  const ranked = recommendation.data?.ranking.find((r) => r.offer_id === deal.offer.id)
+  const t = useTranslations('decisions')
+  const tc = useTranslations('compare.chart')
+  const pct = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 })
   const [action, setAction] = useState<DealAction | null>(null)
   const [form, setForm] = useState(emptyActionForm)
   const mutation = useDealAction()
@@ -222,8 +227,21 @@ export function DealDetail({ deal, role }: { deal: Deal; role: string }) {
           )}
         </Section>
         <Section icon={ChartBarStacked} title={t('detail.contribution')}>
-          {/* //todo_#148: contribución por criterio desde GET /v1/missions/{id}/recommendation (necesita el id del perfil de ranking) */}
-          <p className="text-[13px] text-ink-muted">{t('detail.unscored')}</p>
+          {ranked ? (
+            <>
+              {ranked.breakdown.map((b) => (
+                <Row key={b.criterion} k={tc(`criteria.${b.criterion}`)}>
+                  {pct.format(b.contribution)} <span className="text-[13px] text-ink-muted">({pct.format(b.weight)})</span>
+                </Row>
+              ))}
+              <div className="flex justify-between border-t border-line pt-1.5">
+                <strong>{t('detail.score')}</strong>
+                <strong>{pct.format(ranked.score)}</strong>
+              </div>
+            </>
+          ) : (
+            <p className="text-[13px] text-ink-muted">{t('detail.unscored')}</p>
+          )}
         </Section>
         <Section icon={Flag} title={t('detail.risks')}>
           {deal.flags?.length || conf?.flags.length ? (

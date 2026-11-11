@@ -3,13 +3,15 @@
 import type { HeaderMappingSuggestion } from '@apex/shared-types/contracts'
 import { Button, Checkbox, Icon, Select } from '@apex/ui'
 import { FileText, FolderOpen, Download, Plus, Upload } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FormProvider, useForm, useFormContext, type FieldValues } from 'react-hook-form'
 import type { z } from 'zod'
 
 import { AppLink } from '@/components/app-link'
-import { certifications, effectiveThresholds } from '@/fixtures/onboarding'
+import { certifications } from '@/fixtures/onboarding'
+import { useEffectiveConfig } from '@/lib/api'
+import { toRuleRows } from '@/lib/config-rules'
 import { api } from '@/lib/api'
 import { ensureSession } from '@/lib/onboarding-session'
 import { useOnboarding } from '@/stores/onboarding'
@@ -125,7 +127,7 @@ export function BudgetStep() {
           ))}
         </tbody>
       </table>
-      {/* //todo_#152: alta de categorías nuevas (necesita el catálogo del servidor) */}
+      {/* //todo_#378: alta de categorías nuevas (necesita el catálogo del servidor) */}
       <div>
         <Button variant="sec" disabledReason={t('pending')}>
           <Icon icon={Plus} />
@@ -136,10 +138,20 @@ export function BudgetStep() {
   )
 }
 
+const EFFECTIVE = [
+  { key: 'referenceWeights', rule: 'sanity.reference_weights' },
+  { key: 'approval', rule: 'approval.threshold' },
+  { key: 'dual', rule: 'approval.dual_control_above' },
+] as const
+
 export function PolicyStep() {
   const t = useTranslations('onboarding.fields')
   const trust = useOptions('trust', ['medium', 'high'])
   const lateness = useOptions('lateness', ['none', 'late5', 'late10'])
+  const locale = useLocale()
+  const config = useEffectiveConfig()
+  const rows = config.data ? toRuleRows(config.data, locale) : []
+  const effective = EFFECTIVE.map((e) => ({ ...e, value: rows.find((r) => r.key === e.rule)?.display ?? null }))
   return (
     <>
       <div className={grid}>
@@ -154,10 +166,10 @@ export function PolicyStep() {
       <section aria-labelledby="eff-title" className="flex flex-col gap-2 border border-line bg-panel p-4">
         <h2 id="eff-title" className="m-0 text-[13px] font-normal text-ink-muted">{t('effective')}</h2>
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
-          {effectiveThresholds.map((e) => (
+          {effective.map((e) => (
             <div key={e.key} className="contents">
               <dt className="text-ink-soft">{t(`thresholds.${e.key}`)}</dt>
-              <dd className="m-0 text-right tabular-nums">{e.value ?? t('unset')}</dd>
+              <dd className="m-0 text-right tabular-nums">{config.isPending ? '…' : config.isError ? t('unavailable') : (e.value ?? t('unset'))}</dd>
             </div>
           ))}
         </dl>
@@ -358,11 +370,12 @@ export function FinanceStep() {
           </div>
         </section>
       )}
-      {/* //todo_#152: plantilla y documentación de métricas aceptadas */}
       <div>
-        <Button variant="ghost" size="sm" disabledReason={t('pending')}>
-          <Icon icon={Download} />
-          {t('template')}
+        <Button variant="ghost" size="sm" asChild>
+          <a href="/financial-template.csv" download>
+            <Icon icon={Download} />
+            {t('template')}
+          </a>
         </Button>
       </div>
     </>

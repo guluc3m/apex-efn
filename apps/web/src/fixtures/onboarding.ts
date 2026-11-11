@@ -1,6 +1,6 @@
 import type { Drafts, StepId } from '@/components/onboarding/schemas'
 
-// //todo_#152: estado de cada paso, borrador guardado y mensajes del asistente vendrán de /v1/onboarding
+// //todo_#377: estado de cada paso, borrador guardado y mensajes del asistente vendrán de /v1/onboarding
 export const stepStatus: Record<StepId, { kind: 'done' | 'warnings' | 'pending' | 'none'; count?: number }> = {
   empresa: { kind: 'done' },
   sector: { kind: 'done' },
@@ -16,7 +16,7 @@ const categorias = [
   { id: 'valves', label: 'Válvulas' },
 ]
 
-// //todo_#152: borrador inicial desde el servidor. Importes y porcentajes sin valor por defecto en política y negociación.
+// //todo_#377: borrador inicial desde el servidor. Importes y porcentajes sin valor por defecto en política y negociación.
 export const initialDrafts: Drafts = {
   empresa: {
     razonSocial: 'Industrias Ejemplo, S.L.',
@@ -74,11 +74,4 @@ export const platforms: Platform[] = [
   { id: 'p1', name: 'Plataforma 1', connection: 'oauth', state: 'connected' },
   { id: 'p2', name: 'Plataforma 2', connection: 'password', state: 'expired' },
   { id: 'p3', name: 'Plataforma 3', connection: 'password', state: 'none' },
-]
-
-// //todo_#152: umbrales efectivos de /v1/config (solo lectura). `null` = sin definir en el tenant.
-export const effectiveThresholds: { key: 'referenceWeights' | 'approval' | 'dual'; value: string | null }[] = [
-  { key: 'referenceWeights', value: '50 / 30 / 20 %' },
-  { key: 'approval', value: null },
-  { key: 'dual', value: null },
 ]

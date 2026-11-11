@@ -5,7 +5,6 @@ import { Suspense } from 'react'
 
 import { AppLink } from '@/components/app-link'
 import { MissionsList } from '@/components/missions/missions-list'
-import { missionList } from '@/fixtures/missions'
 
 export default async function MissionsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -27,7 +26,7 @@ export default async function MissionsPage({ params }: { params: Promise<{ local
         </Button>
       </div>
       <Suspense>
-        <MissionsList missions={missionList} />
+        <MissionsList />
       </Suspense>
     </div>
   )

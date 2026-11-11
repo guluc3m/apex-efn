@@ -10,6 +10,7 @@ export const api = createOperations(createApiClient())
 
 export const queryKeys = {
   intakeMessages: (id: string) => ['onboarding', id, 'messages'] as const,
+  missions: ['missions'] as const,
   mission: (id: string) => ['mission', id] as const,
   missionOffers: (id: string) => ['mission', id, 'offers'] as const,
   recommendation: (id: string, profile: string) => ['mission', id, 'recommendation', profile] as const,
@@ -37,6 +38,14 @@ export function applyQueryDefaults(client: QueryClient): QueryClient {
     mutations: { retry: false },
   })
   return client
+}
+
+/** First page (the API maximum) of missions; the list filters and sorts it locally. */
+export function useMissions() {
+  return useQuery({
+    queryKey: queryKeys.missions,
+    queryFn: ({ signal }) => api.listMissions({ limit: 200 }, signal),
+  })
 }
 
 export function useMission(id: string) {

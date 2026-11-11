@@ -16,6 +16,7 @@ export {
   useMission,
   useMissionControl,
   useMissionOffers,
+  useMissions,
   useMissionRecommendation,
   useNegotiation,
   useNegotiationAction,
