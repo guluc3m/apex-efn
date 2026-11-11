@@ -7,12 +7,15 @@ looser than the configured limit.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Callable
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 
 from apex.agents.negotiation_params import (
+    DbAccountResolver,
     NegotiationNotConfigured,
     NegotiationParamsResolver,
     UnwiredAccountResolver,
@@ -179,7 +182,7 @@ async def test_an_unknown_offer_is_refused() -> None:
         )
 
 
-async def test_an_unwired_account_resolver_names_its_owner() -> None:
+async def test_an_unwired_account_resolver_fails_loudly() -> None:
     config, port = _service()
     await _seed_config(config, port, {"neg": {"target_discount": "0.08", "max_discount": "0.15"}})
     offers = InMemoryOfferStore()
@@ -187,7 +190,7 @@ async def test_an_unwired_account_resolver_names_its_owner() -> None:
     resolver = NegotiationParamsResolver(
         config=config, offers=offers, accounts=UnwiredAccountResolver()
     )
-    with pytest.raises(NotImplementedError, match="D5-02"):
+    with pytest.raises(NotImplementedError, match="no account resolver"):
         await resolver(_input(), TENANT)
 
 
@@ -236,3 +239,38 @@ async def test_the_autonomous_send_flag_turns_off_the_approval_step() -> None:
     params, _, _ = await resolver(_input(), TENANT)
     assert params.semi_automatic is False
     assert flags.calls == [("negotiation.autonomous_send", {"tenant_id": TENANT})]
+
+
+# ----- DbAccountResolver (issue #370) --------------------------------------------------------------
+
+
+class _Session:
+    def __init__(self, found: str | None) -> None:
+        self.found = found
+        self.statement: object = None
+
+    async def scalar(self, statement: object) -> str | None:
+        self.statement = statement
+        return self.found
+
+
+def _scope(session: _Session) -> Callable[[str], AbstractAsyncContextManager[Any]]:
+    @asynccontextmanager
+    async def scope(tenant_id: str) -> AsyncIterator[Any]:
+        yield session
+
+    return scope
+
+
+async def test_db_account_resolver_returns_the_active_account_id() -> None:
+    session = _Session("acc-1")
+    resolver = DbAccountResolver(_scope(session))
+    assert await resolver.account_for(tenant_id="t1", platform="mock-a") == "acc-1"
+    sql = str(session.statement)
+    assert "connected_accounts.platform" in sql and "connected_accounts.status" in sql
+
+
+async def test_db_account_resolver_fails_loudly_without_an_account() -> None:
+    resolver = DbAccountResolver(_scope(_Session(None)))
+    with pytest.raises(NegotiationNotConfigured, match="mock-a"):
+        await resolver.account_for(tenant_id="t1", platform="mock-a")

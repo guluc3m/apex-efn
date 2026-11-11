@@ -16,10 +16,15 @@ resolver, and it is deliberately strict:
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from typing import Protocol
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from apex.agents.offers import OfferStore
+from apex.db.models.generated import ConnectedAccount, ConnectedAccountStatus
 from apex.negotiation.guardrails import Counterpart, fraction_to_bp
 from apex.negotiation.models import NegotiationContext, NegotiationParams
 from apex.negotiation.node import OfferInput
@@ -39,12 +44,10 @@ class AccountResolver(Protocol):
 
 
 class UnwiredAccountResolver:
-    """D5-02 has not landed: a negotiation cannot start without an account, so this fails loudly."""
+    """No account registry is wired: a negotiation cannot start without an account, so this fails loudly."""
 
     async def account_for(self, *, tenant_id: str, platform: str) -> str:
-        raise NotImplementedError(
-            "no platform account is wired yet (owner: DEV-5, D5-02); a negotiation cannot start"
-        )
+        raise NotImplementedError("no account resolver is wired; a negotiation cannot start")
 
 
 class NegotiationNotConfigured(Exception):
@@ -53,6 +56,31 @@ class NegotiationNotConfigured(Exception):
     def __init__(self, detail: str) -> None:
         super().__init__(detail)
         self.detail = detail
+
+
+class DbAccountResolver:
+    """The tenant's active ``ConnectedAccount`` for a platform (issue #370).
+
+    Returns the row id, which is the worker's opaque ``account_id``. Credentials stay behind the vault
+    ``CredentialRef`` and never pass through here.
+    """
+
+    def __init__(self, session_scope: Callable[[str], AbstractAsyncContextManager[AsyncSession]]):
+        self._scope = session_scope
+
+    async def account_for(self, *, tenant_id: str, platform: str) -> str:
+        async with self._scope(tenant_id) as session:
+            found = await session.scalar(
+                select(ConnectedAccount.id)
+                .where(ConnectedAccount.tenant_id == tenant_id)
+                .where(ConnectedAccount.platform == platform)
+                .where(ConnectedAccount.status == ConnectedAccountStatus.ACTIVE)
+                .order_by(ConnectedAccount.id)
+                .limit(1)
+            )
+        if found is None:
+            raise NegotiationNotConfigured(f"no active connected account for platform {platform}")
+        return str(found)
 
 
 @dataclass(frozen=True)
@@ -124,6 +152,7 @@ class NegotiationParamsResolver:
 
 __all__ = [
     "AccountResolver",
+    "DbAccountResolver",
     "NegotiationNotConfigured",
     "NegotiationParamsResolver",
     "ParamsResolver",
