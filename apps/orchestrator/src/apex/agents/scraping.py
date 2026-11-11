@@ -218,6 +218,8 @@ class ScrapingService:
                 platform_id=item.platform_id,
                 seller_id=item.seller_id,
                 product_id=item.product_id,
+                title=item.title,
+                moq=item.moq,
                 unit_price_eur_minor=unit_eur,
                 list_price_eur_minor=list_eur,
                 currency="EUR",

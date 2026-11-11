@@ -79,6 +79,9 @@
         "constraints": {
           "$ref": "#/$defs/constraintsSection"
         },
+        "scoring": {
+          "$ref": "#/$defs/scoringSection"
+        },
         "supervisor": {
           "$ref": "#/$defs/supervisorSection"
         }
@@ -455,6 +458,18 @@
           "$ref": "#/$defs/entry"
         },
         "import_vat_rate": {
+          "$ref": "#/$defs/entry"
+        }
+      }
+    },
+    "scoringSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profiles"
+      ],
+      "properties": {
+        "profiles": {
           "$ref": "#/$defs/entry"
         }
       }

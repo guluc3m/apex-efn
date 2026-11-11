@@ -13,19 +13,28 @@ from typing import Any
 from apex.agents.missions import Mission as DomainMission
 from apex.agents.missions import MissionEvent as DomainEvent
 from apex.agents.missions import MissionEventType, MissionStatus
+from apex.agents.offers import Offer, OfferAnalysis
 from apex.agents.sourcing import QuantityTier, SourcingRequest
 from apex.contracts.generated.models import (
+    ConvertedMoney,
+    Currency,
     Mission,
     MissionEvent,
     MissionState,
     NullableMoney,
+    OfferState,
     Problem,
     QuantityPriority,
+    SellerConfidence,
+    SellerConfidenceBand,
     SourcingRequestStatus,
     SourcingSpec,
 )
 from apex.contracts.generated.models import (
     MissionEventType as ContractEventType,
+)
+from apex.contracts.generated.models import (
+    Offer as ContractOffer,
 )
 from apex.contracts.generated.models import (
     QuantityTier as ContractTier,
@@ -155,3 +164,41 @@ __all__ = [
     "to_contract_mission",
     "to_contract_request",
 ]
+
+
+def to_contract_offer(offer: Offer, analysis: OfferAnalysis | None) -> ContractOffer:
+    """An offer as the contract shows it. ``price_sanity_check`` and ``financial_fit`` stay null: the store
+    keeps their verdicts, not the full objects (reference sample, landed breakdown), and inventing those
+    fields would be worse than leaving them out. The verdicts still drive the endpoint's filters."""
+    confidence = None
+    if analysis is not None:
+        confidence = SellerConfidence(
+            seller_id=offer.seller_id,
+            score=analysis.confidence.score,
+            band=SellerConfidenceBand(analysis.confidence.band.value),
+            signals_normalized={},
+            penalties=[],
+            flags=[],
+            model_version=analysis.confidence.model_version,
+            computed_at=analysis.analysed_at,
+        )
+    return ContractOffer(
+        id=offer.id,
+        mission_id=offer.mission_id,
+        platform=offer.platform_id,
+        platform_offer_id=offer.id.split(":", 1)[-1],
+        product_key=offer.product_id,
+        title=offer.title or offer.product_id,
+        seller_id=offer.seller_id,
+        seller_name=offer.seller_id,
+        unit_price=ConvertedMoney(
+            amount_minor=offer.unit_price_eur_minor,
+            currency=Currency.EUR,
+            converted=False,
+            fx_provisional=analysis.fit.fx_provisional if analysis is not None else False,
+        ),
+        moq=offer.moq,
+        state=OfferState.financially_checked if analysis is not None else OfferState.discovered,
+        discovered_at=offer.collected_at,
+        seller_confidence=confidence,
+    )

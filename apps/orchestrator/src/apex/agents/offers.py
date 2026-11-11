@@ -33,6 +33,9 @@ class Offer(_Model):
     platform_id: str
     seller_id: str
     product_id: str
+    title: str = ""
+    moq: int = Field(default=1, ge=1)
+    """As the adapter reported it (``RawOffer.moq``, which defaults to 1)."""
     unit_price_eur_minor: int = Field(ge=0)
     list_price_eur_minor: int | None = Field(default=None, ge=0)
     """The seller's list price per unit when the adapter saw one. Used only to report savings."""

@@ -47,6 +47,7 @@ from apex.agents.onboarding import (
     OnboardingDeps,
     OnboardingService,
 )
+from apex.agents.recommendation import EvaluatorAgent
 from apex.agents.request_store import InMemorySourcingRequestStore
 from apex.agents.sanity_port import DomainSanityPort
 from apex.agents.scraping import ScrapingDeps, ScrapingService
@@ -383,6 +384,8 @@ class AppServices:
     nodes: AnalysisNodes
     gate: GateAgent
     dashboard: Dashboard
+    evaluator: EvaluatorAgent
+    """Recommendation (D4-12) and the mission's offers, over the same offer store the runner fills."""
     runner: MissionRunner
     """Ready to advance a planned mission. Only invoked automatically when ``mission_autorun`` is on."""
 
@@ -522,6 +525,14 @@ def build_app_services(
         nodes=nodes,
         gate=gate,
         dashboard=dashboard,
+        evaluator=EvaluatorAgent(
+            offers=offer_store,
+            missions=mission_store,
+            config=tenant_config,
+            gateway=gateway,
+            prompts=prompts,
+            clock=active_clock,
+        ),
         runner=runner,
     )
 
