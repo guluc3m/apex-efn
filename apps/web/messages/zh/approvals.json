@@ -3,7 +3,8 @@
   "tabsLabel": "审批状态",
   "tabs": { "sign": "待签名", "progress": "进行中", "closed": "已关闭" },
   "empty": "暂无已关闭的采购。",
-  "notes": { "secondMissing": "缺少第二个签名", "highAmount": "金额较大 · 需要通行密钥", "inTransit": "运输中" },
+  "signaturesOf": "{done}/{needed} 个签名",
+  "docUnavailable": "文档生成尚未接入",
   "back": "返回审批",
   "kind": "跟进并购买 · 双重控制",
   "pending": "尚未连接",
@@ -27,14 +28,13 @@
   "colAction": "操作",
   "download": "下载 PDF",
   "docs": { "rfq": "询价单 (RFQ)", "po": "采购订单", "certificate": "验证证书" },
-  "docPending": { "po": "第二个签名后生成", "certificate": "第二个签名后生成" },
   "trackHeading": "采购跟踪",
   "trackCaption": "采购可追溯记录",
   "colEvent": "事件",
   "track": {
-    "signed": "决策已由负责人签名",
-    "poSent": "采购订单已发送给卖家",
-    "confirmed": "卖家书面确认价格及 60 天付款",
-    "transit": "运输中 · 预计 11 月 20 日到达"
+    "signed": "决策已签名",
+    "po_sent": "采购订单已发送给卖家",
+    "confirmed": "卖家已书面确认",
+    "transit": "运输中"
   }
 }

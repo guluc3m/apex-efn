@@ -1,6 +1,8 @@
 export {
   api,
   queryKeys,
+  useApproval,
+  useApprovals,
   useCreateMission,
   useCreateSourcingRequest,
   useDealAction,

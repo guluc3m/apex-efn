@@ -3,7 +3,8 @@
   "tabsLabel": "סטטוס אישור",
   "tabs": { "sign": "לחתימה", "progress": "בתהליך", "closed": "סגורים" },
   "empty": "אין עדיין רכישות סגורות.",
-  "notes": { "secondMissing": "חסרה חתימה שנייה", "highAmount": "סכום גבוה · נדרש passkey", "inTransit": "בדרך" },
+  "signaturesOf": "{done} מתוך {needed} חתימות",
+  "docUnavailable": "יצירת המסמכים עדיין לא מחוברת",
   "back": "חזרה לאישורים",
   "kind": "מעקב ורכישה · בקרה כפולה",
   "pending": "טרם חובר",
@@ -27,14 +28,13 @@
   "colAction": "פעולה",
   "download": "הורדת PDF",
   "docs": { "rfq": "בקשה להצעת מחיר (RFQ)", "po": "הזמנת רכש", "certificate": "תעודת אימות" },
-  "docPending": { "po": "נוצר עם החתימה השנייה", "certificate": "נוצר עם החתימה השנייה" },
   "trackHeading": "מעקב רכישה",
   "trackCaption": "עקיבות הרכישה",
   "colEvent": "אירוע",
   "track": {
-    "signed": "ההחלטה נחתמה על ידי המנהל",
-    "poSent": "הזמנת הרכש נשלחה למוכר",
-    "confirmed": "המוכר מאשר בכתב את המחיר ואת התשלום ל-60 יום",
-    "transit": "בדרך · הגעה צפויה 20/11"
+    "signed": "ההחלטה נחתמה",
+    "po_sent": "הזמנת הרכש נשלחה למוכר",
+    "confirmed": "המוכר אישר בכתב",
+    "transit": "בדרך"
   }
 }

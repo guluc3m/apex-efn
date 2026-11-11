@@ -1,7 +1,8 @@
 import { setRequestLocale } from 'next-intl/server'
 
 import { ApprovalsList } from '@/components/approvals/approvals-view'
-import { APPROVAL_TABS, approvals } from '@/fixtures/approvals'
+
+const TABS = ['sign', 'progress', 'closed'] as const
 
 export default async function ApprovalsPage({
   params,
@@ -13,6 +14,5 @@ export default async function ApprovalsPage({
   const { locale } = await params
   setRequestLocale(locale)
   const { estado } = await searchParams
-  const status = APPROVAL_TABS.find((s) => s === estado) ?? 'sign'
-  return <ApprovalsList rows={approvals} status={status} />
+  return <ApprovalsList status={TABS.find((s) => s === estado) ?? 'sign'} />
 }
