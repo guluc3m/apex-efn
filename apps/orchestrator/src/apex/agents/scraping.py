@@ -228,10 +228,13 @@ class ScrapingService:
             signals = await self._deps.worker.seller_signals(
                 tenant_id=tenant_id, mission_id=mission_id, platform=platform, seller_id=seller_id
             )
-        except WorkerError:
-            entry: tuple[Mapping[str, Any], bool] = ({}, False)
-        else:
-            entry = await self._gmv_to_eur(signals=signals, tenant_id=tenant_id)
+            entry: tuple[Mapping[str, Any], bool] = await self._gmv_to_eur(
+                signals=signals, tenant_id=tenant_id
+            )
+        except Exception:  # noqa: BLE001 - enrichment must never strand the mission
+            # A platform that does not publish signals, a chat-only adapter, a rate the FX engine refuses:
+            # the offer keeps its listing signals and trust answers `insufficient_data`, which is visible.
+            entry = ({}, False)
         cache[key] = entry
         return entry
 

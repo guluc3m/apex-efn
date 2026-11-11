@@ -25,6 +25,7 @@ from apex.agents.finance_port import FinanceUnavailable
 from apex.agents.fx import FxUnavailable
 from apex.agents.gate import GateAgent, GateRules
 from apex.agents.missions import (
+    TERMINAL_STATUSES,
     Mission,
     MissionEventBus,
     MissionEventType,
@@ -191,6 +192,15 @@ class MissionRunner:
             MissionEventType.NEGOTIATIONS_STARTED,
             payload={"offers_negotiated": len(started), "negotiation_ids": started},
         )
+
+    async def fail(self, *, tenant_id: str, mission_id: str, reason: str) -> Mission:
+        """Mark a mission failed from outside ``run`` (a crashed background task, an operator action)."""
+        mission = await self._deps.store.get(tenant_id, mission_id)
+        if mission is None:
+            raise LookupError(f"mission {mission_id} not found")
+        if mission.status in TERMINAL_STATUSES:
+            return mission
+        return (await self._fail(mission, reason)).mission
 
     def _record_cost(self, mission_id: str) -> None:
         """``apex.mission.llm_cost``: one observation per mission at close, with no labels.
