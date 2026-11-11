@@ -526,6 +526,8 @@ class TradeOff(BaseModel):
 class Savings(BaseModel):
     vs_list_price: NullableMoney | None
     vs_market_median: NullableMoney | None
+    vs_last_price: NullableMoney | None = None
+    yearly_category: NullableMoney | None = None
 
 
 class NegotiationDraftSource(StrEnum):
@@ -556,6 +558,17 @@ class NegotiationHumanMessage(BaseModel):
 
 class NegotiationControlRequest(BaseModel):
     reason: Annotated[str | None, Field(max_length=500)] = None
+
+
+class WeeklySavings(BaseModel):
+    week_start: date_aliased
+    saved: Money
+
+
+class GateAssignee(StrEnum):
+    owner = "owner"
+    finance = "finance"
+    none = "none"
 
 
 class DealAction(StrEnum):
@@ -1450,6 +1463,13 @@ class NegotiationOutcome(BaseModel):
     ]
 
 
+class DashboardSummary(BaseModel):
+    pending_count: Annotated[int, Field(ge=0)]
+    signed_count: Annotated[int, Field(ge=0)]
+    nearest_sla_due_at: AwareDatetime | None
+    savings_by_week: list[WeeklySavings]
+
+
 class ActionAvailability(BaseModel):
     action: DealAction
     allowed: bool
@@ -1463,6 +1483,16 @@ class GateQueueItem(BaseModel):
     causes: Annotated[list[GateReason], Field(min_length=1)]
     created_at: AwareDatetime
     sla_due_at: AwareDatetime
+    sla_elapsed_ratio: Annotated[
+        float | None,
+        Field(
+            description="Share of the SLA already used (1.0 = due now, above 1 = overdue). Computed by the server.",
+            ge=0.0,
+        ),
+    ] = None
+    assignee: GateAssignee | None = None
+    assigned_to_me: bool | None = None
+    reminder_sent_at: AwareDatetime | None = None
     status: GateStatus
     resolution: GateResolution | None
     decision_id: str | None
@@ -1865,6 +1895,14 @@ class Offer(BaseModel):
     shipping: ShippingEstimate | None = None
     incoterm: Incoterm | None = None
     lead_time_days: Annotated[int | None, Field(ge=0)] = None
+    payment_terms_days: Annotated[
+        int | None,
+        Field(
+            description="Payment term the seller offers (0 = prepayment). Null when unknown.",
+            ge=0,
+        ),
+    ] = None
+    signature_status: SignatureStatus | None = None
     state: OfferState
     seller_confidence: SellerConfidence | None = None
     price_sanity_check: PriceSanityCheck | None = None

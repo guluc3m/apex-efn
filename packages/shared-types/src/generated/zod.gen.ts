@@ -546,6 +546,8 @@ export type tradeOffZodType = z.infer<typeof zTradeOff>
 export const zSavings = z.object({
   vs_list_price: zNullableMoney,
   vs_market_median: zNullableMoney,
+  vs_last_price: zNullableMoney.optional(),
+  yearly_category: zNullableMoney.optional(),
 })
 
 export type savingsZodType = z.infer<typeof zSavings>
@@ -588,6 +590,26 @@ export const zNegotiationControlRequest = z.object({
 })
 
 export type negotiationControlRequestZodType = z.infer<typeof zNegotiationControlRequest>
+
+export const zWeeklySavings = z.object({
+  week_start: z.string().date(),
+  saved: zMoney,
+})
+
+export type weeklySavingsZodType = z.infer<typeof zWeeklySavings>
+
+export const zDashboardSummary = z.object({
+  pending_count: z.number().int().gte(0),
+  signed_count: z.number().int().gte(0),
+  nearest_sla_due_at: z.string().datetime().nullable(),
+  savings_by_week: z.array(zWeeklySavings),
+})
+
+export type dashboardSummaryZodType = z.infer<typeof zDashboardSummary>
+
+export const zGateAssignee = z.enum(['owner', 'finance', 'none'])
+
+export type gateAssigneeZodType = z.infer<typeof zGateAssignee>
 
 export const zDealAction = z.enum(['follow', 'renegotiate', 'takeover', 'hold', 'discard'])
 
@@ -1625,6 +1647,8 @@ export const zOffer = z.object({
   shipping: zShippingEstimate.nullish(),
   incoterm: zIncoterm.nullish(),
   lead_time_days: z.number().int().gte(0).nullish(),
+  payment_terms_days: z.number().int().gte(0).nullish(),
+  signature_status: zSignatureStatus.optional(),
   state: zOfferState,
   seller_confidence: zSellerConfidence.nullish(),
   price_sanity_check: zPriceSanityCheck.nullish(),
@@ -1754,6 +1778,10 @@ export const zGateQueueItem = z.object({
   causes: z.array(zGateReason).min(1),
   created_at: z.string().datetime(),
   sla_due_at: z.string().datetime(),
+  sla_elapsed_ratio: z.number().gte(0).nullish(),
+  assignee: zGateAssignee.optional(),
+  assigned_to_me: z.boolean().optional(),
+  reminder_sent_at: z.string().datetime().nullish(),
   status: zGateStatus,
   resolution: zGateResolution.nullable(),
   decision_id: z.string().nullable(),
@@ -2160,6 +2188,20 @@ export const zListDealsQuery = z.object({
  * Page of deals.
  */
 export const zListDealsResponse = zDealPage
+
+export const zGetDealPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Deal.
+ */
+export const zGetDealResponse = zDeal
+
+/**
+ * Summary.
+ */
+export const zGetDashboardSummaryResponse = zDashboardSummary
 
 export const zApplyDealActionBody = zDealActionRequest
 

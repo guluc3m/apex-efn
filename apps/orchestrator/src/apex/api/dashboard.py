@@ -144,3 +144,15 @@ async def deal_action(
 
 
 __all__ = ["get_dashboard", "router"]
+
+
+@router.get("/summary", tags=["dashboard"])
+async def get_dashboard_summary() -> None:
+    """Contract route (issue #305). 501 until DEV-4 implements it."""
+    raise not_implemented("the dashboard summary is not implemented yet")
+
+
+@router.get("/deals/{id}", tags=["dashboard"])
+async def get_deal(id: str) -> None:
+    """Contract route (issue #305). 501 until DEV-4 implements it."""
+    raise not_implemented("reading one deal is not implemented yet")

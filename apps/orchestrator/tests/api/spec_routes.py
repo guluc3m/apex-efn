@@ -88,6 +88,9 @@ DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/v1/missions/{id}/cancel"),
         ("GET", "/v1/config/versions"),
         ("GET", "/v1/profiles"),
+        # Deal by id and dashboard counters (issue #305).
+        ("GET", "/v1/dashboard/deals/{id}"),
+        ("GET", "/v1/dashboard/summary"),
     }
 )
 
