@@ -21,6 +21,7 @@ import {
   Landmark,
   LogOut,
   ScrollText,
+  Sparkles,
   Target,
   UserRound,
   Wallet,
@@ -146,6 +147,7 @@ export function CompanyShell({ children, role }: { children: ReactNode; role: Vi
   const path = useAppPath()
   const items: NavItem[] = [
     { label: t('rules'), href: '/empresa/reglas', icon: ScrollText },
+    { label: t('provider'), href: '/empresa/proveedor', icon: Sparkles },
     { label: t('finance'), href: '/empresa/finanzas', icon: Wallet },
     { label: t('accounts'), href: '/empresa/cuentas', icon: Landmark },
     { label: t('signing'), href: '/empresa/firma', icon: FileSignature },

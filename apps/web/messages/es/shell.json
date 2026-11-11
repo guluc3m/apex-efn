@@ -19,7 +19,8 @@
     "finance": "Datos financieros",
     "accounts": "Cuentas de plataformas",
     "signing": "Firma y claves",
-    "audit": "Auditoría"
+    "audit": "Auditoría",
+    "provider": "Proveedor de modelos"
   },
   "signing": {
     "label": "Firma",

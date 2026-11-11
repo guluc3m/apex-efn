@@ -19,7 +19,8 @@
     "finance": "Financial data",
     "accounts": "Platform accounts",
     "signing": "Signing and keys",
-    "audit": "Audit"
+    "audit": "Audit",
+    "provider": "Model provider"
   },
   "signing": {
     "label": "Signing",

@@ -85,6 +85,8 @@ from apex.llm.config import (
 )
 from apex.llm.gateway import LLMGateway
 from apex.llm.prompts import PromptRegistry
+from apex.llm.provider_config import TenantRoleConfigProvider, TenantSecretResolver
+from apex.llm.provider_store import PROVIDER_STORE
 from apex.platform.flags import FlagProvider, StaticFlags
 from apex.signing.api import DecisionRejected, PendingSignature, SignatureInvalid, SigningService
 from apex.signing.api import PendingSignature as SigningPending
@@ -490,18 +492,24 @@ def build_app_services(
     # The key is resolved through a ref, so it never enters the role config, a log or an LLM prompt.
     llm_api_key = cfg.llm_gateway_api_key
     llm_api_key_ref = "env:llm-gateway-api-key" if llm_api_key else None
-    gateway = LLMGateway(
-        config_provider=DefaultRoleConfigProvider(
-            base_url_override=(
-                cfg.llm_base_url_override or (cfg.llm_gateway_url if llm_api_key else "")
-            ),
-            model_override=cfg.llm_model_override,
-            api_key_ref=llm_api_key_ref,
-            # DeepSeek and the rest of the OpenAI-compatible providers answer JSON objects; the gateway
-            # only uses a capability that is declared, so say it out loud here.
-            capabilities=("json_object",) if llm_api_key else (),
+    default_roles = DefaultRoleConfigProvider(
+        base_url_override=(
+            cfg.llm_base_url_override or (cfg.llm_gateway_url if llm_api_key else "")
         ),
-        secrets=StaticSecretResolver({llm_api_key_ref: llm_api_key} if llm_api_key_ref else {}),
+        model_override=cfg.llm_model_override,
+        api_key_ref=llm_api_key_ref,
+        # DeepSeek and the rest of the OpenAI-compatible providers answer JSON objects; the gateway
+        # only uses a capability that is declared, so say it out loud here.
+        capabilities=("json_object",) if llm_api_key else (),
+    )
+    static_secrets = StaticSecretResolver(
+        {llm_api_key_ref: llm_api_key} if llm_api_key_ref else {}
+    )
+    gateway = LLMGateway(
+        # The tenant settings written through /v1/settings/llm-provider overlay the env defaults; with
+        # no tenant settings the LLM_GATEWAY_* behaviour above is exactly what it was.
+        config_provider=TenantRoleConfigProvider(default_roles, PROVIDER_STORE),
+        secrets=TenantSecretResolver(PROVIDER_STORE, static_secrets),
         budget=TokenBudget(InMemoryBudgetStore(), mission_limit=cfg.llm_mission_token_budget),
         sink=InMemorySink(),
         clock=active_clock,

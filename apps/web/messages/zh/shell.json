@@ -19,7 +19,8 @@
     "finance": "财务数据",
     "accounts": "平台账户",
     "signing": "签名与密钥",
-    "audit": "审计"
+    "audit": "审计",
+    "provider": "模型提供商"
   },
   "signing": {
     "label": "签名",

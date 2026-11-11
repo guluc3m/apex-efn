@@ -20,6 +20,7 @@ from apex.api.negotiations import router as negotiations_router
 from apex.api.onboarding import router as onboarding_router
 from apex.api.profiles import router as profiles_router
 from apex.api.sellers import router as sellers_router
+from apex.api.settings import router as settings_router
 from apex.api.signing import router as signing_router
 from apex.api.sourcing import router as sourcing_router
 from apex.api.translation import router as translation_router
@@ -34,6 +35,7 @@ router.include_router(sellers_router, prefix="/sellers", tags=["sellers"])
 router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 router.include_router(gate_router, prefix="/gate", tags=["gate"])
 router.include_router(config_router, prefix="/config", tags=["config"])
+router.include_router(settings_router, prefix="/settings", tags=["settings"])
 router.include_router(negotiations_router, prefix="/negotiations", tags=["negotiations"])
 router.include_router(translation_router, prefix="/negotiations", tags=["negotiations"])
 router.include_router(webhooks_router, prefix="/webhooks", tags=["webhooks"])
