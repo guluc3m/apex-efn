@@ -4,11 +4,12 @@ import type { ApprovalDocument, ApprovalInboxStatus, ApprovalView, Signature } f
 import { Button, Icon, MoneyDisplay, SignatureStatusBadge, Table, cn, type TableColumn } from '@apex/ui'
 import { ArrowLeft, Download, FileText, Send, Truck } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useState } from 'react'
 
 import { AppLink, renderLink } from '@/components/app-link'
 import { QueryBoundary } from '@/components/query-boundary'
 import { SignDecisionButton } from '@/components/signing/sign-decision-button'
-import { useApproval, useApprovals } from '@/lib/api'
+import { api, useApproval, useApprovals, useNotifyFinance } from '@/lib/api'
 
 export const APPROVAL_TABS: readonly ApprovalInboxStatus[] = ['sign', 'progress', 'closed']
 
@@ -92,8 +93,26 @@ function SignatureRow({ slot, s }: { slot: number; s?: Signature }) {
   )
 }
 
-function DocRow({ d }: { d: ApprovalDocument }) {
+function DocRow({ id, d }: { id: string; d: ApprovalDocument }) {
   const t = useTranslations('approvals')
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const download = async (): Promise<void> => {
+    setBusy(true)
+    setFailed(false)
+    try {
+      const url = URL.createObjectURL(await api.downloadApprovalDocument(id, d.kind))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${d.kind}-${id}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setFailed(true)
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
     <tr>
       <th scope="row" className="py-2 pr-4 text-left font-medium">
@@ -101,13 +120,30 @@ function DocRow({ d }: { d: ApprovalDocument }) {
       </th>
       <td className="py-2 pr-4 text-ink-muted">{d.sha256 ? `sha256 ${d.sha256.slice(0, 8)}…` : ''}</td>
       <td className="py-2 text-right">
-        {/* La descarga solo se habilita cuando D2-11 genere el PDF; la API aún no expone la ruta. */}
-        <Button size="sm" disabledReason={t('docUnavailable')}>
+        <Button size="sm" disabled={busy} disabledReason={d.available ? undefined : t('docUnavailable')} onClick={() => void download()}>
           <Icon icon={Download} />
           {t('download')}
         </Button>
+        {failed && <p role="alert" className="m-0 mt-1 text-[13px] text-bad">{t('downloadFailed')}</p>}
       </td>
     </tr>
+  )
+}
+
+function NotifyFinance({ id }: { id: string }) {
+  const t = useTranslations('approvals')
+  const notify = useNotifyFinance(id)
+  return (
+    <div className="flex flex-col gap-1">
+      <div>
+        <Button disabled={notify.isPending || notify.isSuccess} onClick={() => notify.mutate()}>
+          <Icon icon={Send} />
+          {t('askFinance')}
+        </Button>
+      </div>
+      {notify.isSuccess && <p role="status" className="m-0 text-[13px] text-ink-muted">{t('notified')}</p>}
+      {notify.isError && <p role="alert" className="m-0 text-[13px] text-bad">{t('notifyFailed')}</p>}
+    </div>
   )
 }
 
@@ -151,13 +187,7 @@ function Detail({ a }: { a: ApprovalView }) {
           <SignDecisionButton decisionId={a.id} reasonWithout={t('addSecondReason')}>
             {t(a.signatures.length === 0 ? 'first' : 'addSecond')}
           </SignDecisionButton>
-          <div>
-            {/* Sin ruta para avisar a Finanzas (issue #302): se queda desactivado con su motivo. */}
-            <Button disabledReason={t('pending')}>
-              <Icon icon={Send} />
-              {t('askFinance')}
-            </Button>
-          </div>
+          <NotifyFinance id={a.id} />
         </div>
       ) : null}
 
@@ -177,7 +207,7 @@ function Detail({ a }: { a: ApprovalView }) {
           </thead>
           <tbody>
             {a.documents.map((d) => (
-              <DocRow key={d.kind} d={d} />
+              <DocRow key={d.kind} id={a.id} d={d} />
             ))}
           </tbody>
         </table>

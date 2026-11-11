@@ -743,6 +743,13 @@ export const zApprovalDocumentKind = z.enum(['rfq', 'po', 'certificate'])
 
 export type approvalDocumentKindZodType = z.infer<typeof zApprovalDocumentKind>
 
+export const zApprovalFinanceNotice = z.object({
+  approval_id: z.string(),
+  notified_at: z.string().datetime(),
+})
+
+export type approvalFinanceNoticeZodType = z.infer<typeof zApprovalFinanceNotice>
+
 export const zApprovalDocument = z.object({
   kind: zApprovalDocumentKind,
   sha256: z.string().nullish(),
@@ -2404,6 +2411,29 @@ export const zGetApprovalPath = z.object({
  * The approval.
  */
 export const zGetApprovalResponse = zApprovalView
+
+export const zDownloadApprovalDocumentPath = z.object({
+  id: z.string().min(1),
+  kind: zApprovalDocumentKind,
+})
+
+/**
+ * The PDF.
+ */
+export const zDownloadApprovalDocumentResponse = z.string()
+
+export const zNotifyFinanceOfApprovalHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zNotifyFinanceOfApprovalPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * Recorded.
+ */
+export const zNotifyFinanceOfApprovalResponse = zApprovalFinanceNotice
 
 export const zGetEffectiveConfigQuery = z.object({
   category: z.string().max(64).optional(),

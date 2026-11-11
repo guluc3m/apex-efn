@@ -1208,6 +1208,11 @@ export type ApprovalInboxStatus = 'sign' | 'progress' | 'closed'
 
 export type ApprovalDocumentKind = 'rfq' | 'po' | 'certificate'
 
+export type ApprovalFinanceNotice = {
+  approval_id: string
+  notified_at: string
+}
+
 export type ApprovalDocument = {
   kind: ApprovalDocumentKind
   sha256?: string | null
@@ -3099,6 +3104,95 @@ export type GetApprovalResponses = {
 }
 
 export type GetApprovalResponse = GetApprovalResponses[keyof GetApprovalResponses]
+
+export type DownloadApprovalDocumentData = {
+  body?: never
+  path: {
+    id: string
+    kind: ApprovalDocumentKind
+  }
+  query?: never
+  url: '/v1/approvals/{id}/documents/{kind}'
+}
+
+export type DownloadApprovalDocumentErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+}
+
+export type DownloadApprovalDocumentError =
+  DownloadApprovalDocumentErrors[keyof DownloadApprovalDocumentErrors]
+
+export type DownloadApprovalDocumentResponses = {
+  /**
+   * The PDF.
+   */
+  200: Blob | File
+}
+
+export type DownloadApprovalDocumentResponse =
+  DownloadApprovalDocumentResponses[keyof DownloadApprovalDocumentResponses]
+
+export type NotifyFinanceOfApprovalData = {
+  body?: never
+  headers: {
+    /**
+     * Client-generated unique key for this write. Replays return the original response.
+     */
+    'Idempotency-Key': string
+  }
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/approvals/{id}/notify-finance'
+}
+
+export type NotifyFinanceOfApprovalErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * State or business rule conflict. `reason` and `blocked` explain it when present.
+   */
+  409: Conflict
+}
+
+export type NotifyFinanceOfApprovalError =
+  NotifyFinanceOfApprovalErrors[keyof NotifyFinanceOfApprovalErrors]
+
+export type NotifyFinanceOfApprovalResponses = {
+  /**
+   * Recorded.
+   */
+  202: ApprovalFinanceNotice
+}
+
+export type NotifyFinanceOfApprovalResponse =
+  NotifyFinanceOfApprovalResponses[keyof NotifyFinanceOfApprovalResponses]
 
 export type GetEffectiveConfigData = {
   body?: never

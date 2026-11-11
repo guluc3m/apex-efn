@@ -1,10 +1,14 @@
 {
   "title": "Approvals",
   "tabsLabel": "Approval status",
-  "tabs": { "sign": "To sign", "progress": "In progress", "closed": "Closed" },
+  "tabs": {
+    "sign": "To sign",
+    "progress": "In progress",
+    "closed": "Closed"
+  },
   "empty": "No closed purchases yet.",
   "signaturesOf": "{done} of {needed} signatures",
-  "docUnavailable": "Document generation is not connected yet",
+  "docUnavailable": "Available once all signatures are in",
   "back": "Back to approvals",
   "kind": "Follow and buy · dual control",
   "pending": "Not connected yet",
@@ -27,7 +31,11 @@
   "colDetail": "Detail",
   "colAction": "Action",
   "download": "Download PDF",
-  "docs": { "rfq": "Request for quotation (RFQ)", "po": "Purchase order", "certificate": "Verification certificate" },
+  "docs": {
+    "rfq": "Request for quotation (RFQ)",
+    "po": "Purchase order",
+    "certificate": "Verification certificate"
+  },
   "trackHeading": "Purchase tracking",
   "trackCaption": "Purchase traceability",
   "colEvent": "Event",
@@ -36,5 +44,8 @@
     "po_sent": "Purchase order sent to the seller",
     "confirmed": "The seller confirmed in writing",
     "transit": "In transit"
-  }
+  },
+  "notified": "Notice recorded: Finance will see the request in the audit log.",
+  "notifyFailed": "The notice could not be recorded.",
+  "downloadFailed": "The document could not be downloaded."
 }

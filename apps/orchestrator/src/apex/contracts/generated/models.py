@@ -723,6 +723,11 @@ class ApprovalDocumentKind(StrEnum):
     certificate = "certificate"
 
 
+class ApprovalFinanceNotice(BaseModel):
+    approval_id: str
+    notified_at: AwareDatetime
+
+
 class ApprovalDocument(BaseModel):
     kind: ApprovalDocumentKind
     sha256: str | None = None
