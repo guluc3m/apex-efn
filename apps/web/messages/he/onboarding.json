@@ -134,6 +134,8 @@
     "envelope": "מעטפת חודשית",
     "maxPerOrder": "מקסימום להזמנה",
     "addCategory": "הוספת קטגוריה",
+    "newCategory": "קטגוריה חדשה",
+    "categoryNameRequired": "יש להזין שם קטגוריה",
     "approvalFrom": "אישור אנושי מסכום של",
     "dualFrom": "חתימה כפולה מסכום של",
     "amountRequired": "סכום נדרש",

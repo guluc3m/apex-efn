@@ -10,6 +10,7 @@ export {
   useCreateSourcingRequest,
   useDealAction,
   useDeals,
+  useCategories,
   useEffectiveConfig,
   useGateAction,
   useGateQueue,

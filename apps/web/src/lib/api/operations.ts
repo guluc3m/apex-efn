@@ -28,6 +28,7 @@ import type {
   GetSellerConfidenceData,
   GetSellerConfidenceResponse,
   GetOnboardingSessionResponse,
+  ListCategoriesResponse,
   ListMissionsData,
   ListOnboardingSessionsResponse,
   ListMissionsResponse,
@@ -95,6 +96,10 @@ export function createOperations(client: ApiClient) {
         body,
         signal,
       }),
+
+    /** Categories the tenant already has; suggestions only, there is no global catalog. */
+    listCategories: (signal?: AbortSignal) =>
+      client.request<ListCategoriesResponse>('/v1/categories', { path: undefined, signal }),
 
     /** The wizard's saved draft: the session with its per-step progress. */
     getOnboardingSession: (id: string, signal?: AbortSignal) =>

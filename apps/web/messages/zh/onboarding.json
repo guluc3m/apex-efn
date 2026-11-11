@@ -134,6 +134,8 @@
     "envelope": "月度额度",
     "maxPerOrder": "单笔上限",
     "addCategory": "添加类别",
+    "newCategory": "新类别",
+    "categoryNameRequired": "请输入类别名称",
     "approvalFrom": "需人工审批的起点金额",
     "dualFrom": "需双人签名的起点金额",
     "amountRequired": "必须填写金额",
