@@ -7,7 +7,6 @@
  * Sentry events go through the shared redactor (`@apex/redaction`), like the orchestrator.
  */
 
-import { redactValue } from '@apex/redaction'
 import type { Instrumentation } from 'next'
 
 export async function register(): Promise<void> {
@@ -37,6 +36,7 @@ export async function register(): Promise<void> {
   const dsn = process.env.SENTRY_DSN
   if (dsn) {
     const Sentry = await import('@sentry/nextjs')
+    const { redactValue } = await import('@apex/redaction')
     Sentry.init({
       dsn,
       environment: process.env.APEX_ENVIRONMENT ?? 'local',
