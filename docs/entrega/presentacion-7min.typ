@@ -73,9 +73,9 @@
         v(28pt)
         text(size: 15pt, fill: c.muted)[Rodamiento 6204-2RS · 5.000 ud]
         v(6pt)
-        text(size: 40pt, weight: 600, tracking: -0.02em)[8.600,00 €]
+        text(size: 40pt, weight: 600, tracking: -0.02em)[10.103,00 €]
         v(4pt)
-        text(size: 15pt, fill: c.muted)[1,72 €/ud · Vendedor A · mock-a]
+        text(size: 15pt, fill: c.muted)[coste total · 1,72 €/ud · 8.600 € mercancía · Vendedor A]
         v(24pt)
         grid(
           columns: (1fr, 1fr), row-gutter: 12pt, column-gutter: 8pt,
@@ -337,7 +337,7 @@
       criterio("01", [Mediana + MAD], [Desviación absoluta mediana: robusta ante un outlier.])
       criterio("02", [Fallback IQR], [Si la muestra no da para MAD, se usa el rango intercuartílico.])
       criterio("03", [Bandas asimétricas], [El lado barato usa umbrales más estrictos que el caro.])
-      criterio("04", [−60 % bajo la mediana], [Al menos atypical. La confianza alta no lo compensa.])
+      criterio("04", [Más de 60 % bajo la mediana], [Al menos atypical. La confianza alta no lo compensa.])
       criterio("05", [insufficient_reference], [Siempre al gate: no se negocia a ciegas.])
       v(10pt)
       text(size: 14.5pt, fill: c.muted)[Bandas y versiones salen de config; el LLM no clasifica precios.]
@@ -589,7 +589,7 @@
       - Onboarding y CSV activable
       - Dos plataformas con chat
       - Motores TS/Python con vectores
-      - Gate y dashboard firmados
+      - Gate y dashboard con acciones firmadas
       - Firma Ed25519 y cadena
       - Negociación semiautomática
       - RLS por tenant y WORM
