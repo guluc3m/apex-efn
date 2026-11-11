@@ -131,6 +131,11 @@
     "compare": "צפייה בהשוואה",
     "pause": "השהיה",
     "cancel": "ביטול משימה",
+    "resume": "המשך",
+    "cancelConfirm": "לבטל באמת? לחצו שוב",
+    "controlOver": "המשימה הסתיימה",
+    "controlFailed": "לא ניתן לשנות את המשימה",
+    "controlBusy": "…",
     "pending": "טרם חובר",
     "side": "משפך המשימה ופעילות",
     "phases": {

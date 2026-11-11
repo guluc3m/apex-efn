@@ -131,6 +131,11 @@
     "compare": "View comparison",
     "pause": "Pause",
     "cancel": "Cancel mission",
+    "resume": "Resume",
+    "cancelConfirm": "Cancel for real? Click again",
+    "controlOver": "The mission is over",
+    "controlFailed": "The mission could not be changed",
+    "controlBusy": "…",
     "pending": "Not connected yet",
     "side": "Mission funnel and activity",
     "phases": {

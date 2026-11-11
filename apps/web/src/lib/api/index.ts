@@ -14,6 +14,7 @@ export {
   useGateAction,
   useGateQueue,
   useMission,
+  useMissionControl,
   useMissionOffers,
   useMissionRecommendation,
   useNegotiation,

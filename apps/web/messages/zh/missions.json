@@ -131,6 +131,11 @@
     "compare": "查看对比",
     "pause": "暂停",
     "cancel": "取消任务",
+    "resume": "继续",
+    "cancelConfirm": "确定取消？再点一次",
+    "controlOver": "任务已结束",
+    "controlFailed": "无法修改任务",
+    "controlBusy": "…",
     "pending": "尚未接入",
     "side": "任务漏斗与动态",
     "phases": {
