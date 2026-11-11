@@ -120,11 +120,16 @@ async def consume(
     device_fingerprint_ref: str,
     decision_id: str,
     now: datetime,
+    fresh_after: datetime | None = None,
+    fresh_reason: ReauthReason = ReauthReason.IMMEDIATE_REAUTH_REQUIRED,
 ) -> SigningSession:
     """Spend one signature of the window on ``decision_id``, or raise ``ReauthRequired``. For D2-09.
 
     The signature that reaches ``max_decisions`` is accepted and ends the session as ``exhausted``. On a refusal
     the session's new state is **committed** before raising, so the caller's rollback cannot revive it.
+
+    ``fresh_after`` is the immediate-reauth rule (ADR-209): the step-up must be newer than it and the session
+    must not have signed anything yet. That refusal leaves the session usable, so nothing is committed.
     """
     row = await get_own(session, session_id, user_id, lock=True)
     if row is None or row.key_id != key_id:
@@ -143,6 +148,8 @@ async def consume(
         await session.commit()
         raise ReauthRequired(ReauthReason.DEVICE_MISMATCH)
     signed = row.decisions_signed or []
+    if fresh_after is not None and (row.auth_at < fresh_after or signed):
+        raise ReauthRequired(fresh_reason, "this decision needs a new step-up")
     if decision_id not in signed:
         signed = row.decisions_signed = [*signed, decision_id]
     if len(signed) >= row.max_decisions:

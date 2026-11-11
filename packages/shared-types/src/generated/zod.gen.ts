@@ -162,6 +162,9 @@ export const zSignatureStatus = z.enum(['unsigned', 'pending', 'signed', 'invali
 
 export type signatureStatusZodType = z.infer<typeof zSignatureStatus>
 
+/**
+ * `deal_action` carries `action` in its payload; `service_event` is an automatic transition signed by a service key (ADR-209).
+ */
 export const zDecisionType = z.enum([
   'follow',
   'renegotiate',
@@ -169,20 +172,22 @@ export const zDecisionType = z.enum([
   'hold',
   'discard',
   'approve_purchase',
-  'activate_financial_snapshot',
-  'override_discard',
+  'financial_snapshot_activation',
+  'gate_override_discard',
   'change_pricing_threshold',
   'change_confidence_weights',
   'change_scoring_weights',
   'rotate_key',
   'revoke_key',
-  'unblock',
+  'gate_unblock',
   'config_change',
+  'deal_action',
+  'service_event',
 ])
 
 export type decisionTypeZodType = z.infer<typeof zDecisionType>
 
-export const zDecisionStatus = z.enum(['pending_signature', 'signed', 'rejected'])
+export const zDecisionStatus = z.enum(['pending_signature', 'signed', 'rejected', 'expired'])
 
 export type decisionStatusZodType = z.infer<typeof zDecisionStatus>
 
@@ -653,30 +658,11 @@ export const zSignDecisionRequest = z.object({
   payload_hash: z.string().regex(/^[a-f0-9]{64}$/),
   signature: z.string(),
   signing_session_id: z.string(),
-})
-
-export type signDecisionRequestZodType = z.infer<typeof zSignDecisionRequest>
-
-/**
- * Signature record. Each record includes the hash of the previous one (hash chain, spec 5.10.2).
- */
-export const zSignature = z.object({
-  id: z.string().optional(),
-  decision_id: z.string(),
-  signer_id: z.string(),
-  key_id: z.string(),
-  alg: z.literal('Ed25519'),
-  payload_hash: z.string(),
-  signature: z.string(),
-  signed_at: z.string().datetime(),
-  signing_session_id: z.string(),
-  auth_at: z.string().datetime(),
-  prev_signature_hash: z.string().nullish(),
-  chain_hash: z.string(),
+  device_fingerprint_ref: z.string(),
   client_attestation: z.string().nullish(),
 })
 
-export type signatureZodType = z.infer<typeof zSignature>
+export type signDecisionRequestZodType = z.infer<typeof zSignDecisionRequest>
 
 export const zRegisterSigningKeyRequest = z.object({
   public_key: z.string(),
@@ -1371,6 +1357,28 @@ export const zApproval = z.object({
 })
 
 export type approvalZodType = z.infer<typeof zApproval>
+
+/**
+ * Signature record. Each record includes the hash of the previous one (hash chain, spec 5.10.2).
+ */
+export const zSignature = z.object({
+  id: z.string().optional(),
+  decision_id: z.string(),
+  signer_type: zActorType,
+  signer_id: z.string(),
+  key_id: z.string(),
+  alg: z.literal('Ed25519'),
+  payload_hash: z.string(),
+  signature: z.string(),
+  signed_at: z.string().datetime(),
+  signing_session_id: z.string().nullish(),
+  auth_at: z.string().datetime().nullish(),
+  prev_signature_hash: z.string().nullish(),
+  chain_hash: z.string(),
+  client_attestation: z.string().nullish(),
+})
+
+export type signatureZodType = z.infer<typeof zSignature>
 
 export const zDecision = z.object({
   id: z.string(),

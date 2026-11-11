@@ -316,7 +316,7 @@ def graph(conn: psycopg.Connection) -> Graph:
     snapshot_decision = _decision(
         conn,
         tenant,
-        type="activate_financial_snapshot",
+        type="financial_snapshot_activation",
         status="signed",
         signed_at=T0,
         requires_immediate_reauth=True,
@@ -481,7 +481,7 @@ def test_snapshot_can_only_move_from_active_to_superseded(
 def test_only_one_active_snapshot_per_tenant(conn: psycopg.Connection, graph: Graph) -> None:
     second_import = _financial_import(conn, graph.tenant, status="active")
     decision = _decision(
-        conn, graph.tenant, type="activate_financial_snapshot", status="signed", signed_at=T0
+        conn, graph.tenant, type="financial_snapshot_activation", status="signed", signed_at=T0
     )
     with pytest.raises(psycopg.errors.UniqueViolation):
         _snapshot(conn, graph.tenant, second_import, decision, version=2)

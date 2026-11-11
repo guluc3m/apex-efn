@@ -140,27 +140,34 @@ class SignatureStatus(StrEnum):
 
 
 class DecisionType(StrEnum):
+    """
+    `deal_action` carries `action` in its payload; `service_event` is an automatic transition signed by a service key (ADR-209).
+    """
+
     follow = "follow"
     renegotiate = "renegotiate"
     takeover = "takeover"
     hold = "hold"
     discard = "discard"
     approve_purchase = "approve_purchase"
-    activate_financial_snapshot = "activate_financial_snapshot"
-    override_discard = "override_discard"
+    financial_snapshot_activation = "financial_snapshot_activation"
+    gate_override_discard = "gate_override_discard"
     change_pricing_threshold = "change_pricing_threshold"
     change_confidence_weights = "change_confidence_weights"
     change_scoring_weights = "change_scoring_weights"
     rotate_key = "rotate_key"
     revoke_key = "revoke_key"
-    unblock = "unblock"
+    gate_unblock = "gate_unblock"
     config_change = "config_change"
+    deal_action = "deal_action"
+    service_event = "service_event"
 
 
 class DecisionStatus(StrEnum):
     pending_signature = "pending_signature"
     signed = "signed"
     rejected = "rejected"
+    expired = "expired"
 
 
 class MissionState(StrEnum):
@@ -619,26 +626,8 @@ class SignDecisionRequest(BaseModel):
         Field(description="Base64 Ed25519 signature over the canonical payload bytes."),
     ]
     signing_session_id: str
-
-
-class Signature(BaseModel):
-    """
-    Signature record. Each record includes the hash of the previous one (hash chain, spec 5.10.2).
-    """
-
-    id: str | None = None
-    decision_id: str
-    signer_id: str
-    key_id: str
-    alg: Literal["Ed25519"]
-    payload_hash: str
-    signature: str
-    signed_at: AwareDatetime
-    signing_session_id: str
-    auth_at: AwareDatetime
-    prev_signature_hash: str | None = None
-    chain_hash: Annotated[
-        str, Field(description="Hash of this record including prev_signature_hash.")
+    device_fingerprint_ref: Annotated[
+        str, Field(description="Must match the device that opened the signing session.")
     ]
     client_attestation: str | None = None
 
@@ -1432,32 +1421,30 @@ class SigningSession(BaseModel):
     server_time: AwareDatetime
 
 
-class Decision(BaseModel):
-    id: str
-    type: DecisionType
-    subject_ref: str
-    status: DecisionStatus
-    payload_canonical: Annotated[
-        str,
-        Field(description="RFC 8785 (JCS) canonical JSON, UTF-8. These are the bytes to sign."),
+class Signature(BaseModel):
+    """
+    Signature record. Each record includes the hash of the previous one (hash chain, spec 5.10.2).
+    """
+
+    id: str | None = None
+    decision_id: str
+    signer_type: ActorType
+    signer_id: str
+    key_id: str
+    alg: Literal["Ed25519"]
+    payload_hash: str
+    signature: str
+    signed_at: AwareDatetime
+    signing_session_id: Annotated[
+        str | None,
+        Field(description="Set for human signers. Service signatures have no signing session."),
+    ] = None
+    auth_at: AwareDatetime | None = None
+    prev_signature_hash: str | None = None
+    chain_hash: Annotated[
+        str, Field(description="Hash of this record including prev_signature_hash.")
     ]
-    payload_hash: Annotated[
-        str,
-        Field(description="SHA-256 of payload_canonical, hex.", pattern="^[a-f0-9]{64}$"),
-    ]
-    requires_immediate_reauth: bool
-    required_signers: Annotated[
-        int,
-        Field(
-            description="2 when the amount is above approval.dual_control_above (spec 5.10.2).",
-            ge=1,
-            le=2,
-        ),
-    ]
-    signatures: list[Signature]
-    decided_by: Actor | None = None
-    created_at: AwareDatetime
-    signed_at: AwareDatetime | None = None
+    client_attestation: str | None = None
 
 
 class VerificationResult(BaseModel):
@@ -1680,6 +1667,34 @@ class Negotiation(BaseModel):
 class NegotiationMessagePage(BaseModel):
     items: list[NegotiationMessage]
     next_cursor: str | None
+
+
+class Decision(BaseModel):
+    id: str
+    type: DecisionType
+    subject_ref: str
+    status: DecisionStatus
+    payload_canonical: Annotated[
+        str,
+        Field(description="RFC 8785 (JCS) canonical JSON, UTF-8. These are the bytes to sign."),
+    ]
+    payload_hash: Annotated[
+        str,
+        Field(description="SHA-256 of payload_canonical, hex.", pattern="^[a-f0-9]{64}$"),
+    ]
+    requires_immediate_reauth: bool
+    required_signers: Annotated[
+        int,
+        Field(
+            description="2 when the amount is above approval.dual_control_above (spec 5.10.2).",
+            ge=1,
+            le=2,
+        ),
+    ]
+    signatures: list[Signature]
+    decided_by: Actor | None = None
+    created_at: AwareDatetime
+    signed_at: AwareDatetime | None = None
 
 
 class IntakeTurn(BaseModel):

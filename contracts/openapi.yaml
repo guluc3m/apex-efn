@@ -139,7 +139,7 @@ paths:
       tags: [onboarding]
       operationId: activateFinancialSnapshot
       summary: Request activation of a draft import. Creates a signed decision that needs immediate reauth.
-      description: 'Answers 202 with a decision of type `activate_financial_snapshot`. The snapshot becomes active, all or
+      description: 'Answers 202 with a decision of type `financial_snapshot_activation`. The snapshot becomes active, all or
 
         nothing, only after that decision is signed in a session opened with immediate reauth. Earlier snapshots
 
@@ -838,7 +838,9 @@ paths:
 
         revoked, the device matches, and the payload hash matches the stored payload. Immediate-reauth
 
-        decisions require a session opened for that purpose. The private key never reaches the server.
+        decisions need a session whose step-up is newer than the decision and that has signed nothing yet (ADR-209).
+
+        The private key never reaches the server.
 
         '
       parameters:
@@ -1186,10 +1188,11 @@ components:
       enum: [unsigned, pending, signed, invalid]
     DecisionType:
       type: string
-      enum: [follow, renegotiate, takeover, hold, discard, approve_purchase, activate_financial_snapshot, override_discard, change_pricing_threshold, change_confidence_weights, change_scoring_weights, rotate_key, revoke_key, unblock, config_change]
+      description: '`deal_action` carries `action` in its payload; `service_event` is an automatic transition signed by a service key (ADR-209).'
+      enum: [follow, renegotiate, takeover, hold, discard, approve_purchase, financial_snapshot_activation, gate_override_discard, change_pricing_threshold, change_confidence_weights, change_scoring_weights, rotate_key, revoke_key, gate_unblock, config_change, deal_action, service_event]
     DecisionStatus:
       type: string
-      enum: [pending_signature, signed, rejected]
+      enum: [pending_signature, signed, rejected, expired]
     MissionState:
       type: string
       enum: [created, planning, sourcing, enriching, evaluating, negotiating, awaiting_decision, completed, cancelled, failed]
@@ -2333,27 +2336,35 @@ components:
           format: date-time
     SignDecisionRequest:
       type: object
-      required: [key_id, payload_hash, signature, signing_session_id]
+      required: [key_id, payload_hash, signature, signing_session_id, device_fingerprint_ref]
       properties:
         key_id: {type: string}
         payload_hash: {type: string, pattern: '^[a-f0-9]{64}$'}
         signature: {type: string, description: Base64 Ed25519 signature over the canonical payload bytes.}
         signing_session_id: {type: string}
+        device_fingerprint_ref: {type: string, description: Must match the device that opened the signing session.}
+        client_attestation:
+          type: [string, 'null']
     Signature:
       type: object
       description: Signature record. Each record includes the hash of the previous one (hash chain, spec 5.10.2).
-      required: [decision_id, signer_id, key_id, alg, payload_hash, signature, signed_at, signing_session_id, auth_at, chain_hash]
+      required: [decision_id, signer_type, signer_id, key_id, alg, payload_hash, signature, signed_at, chain_hash]
       properties:
         id: {type: string}
         decision_id: {type: string}
+        signer_type: {$ref: '#/components/schemas/ActorType'}
         signer_id: {type: string}
         key_id: {type: string}
         alg: {type: string, const: Ed25519}
         payload_hash: {type: string}
         signature: {type: string}
         signed_at: {type: string, format: date-time}
-        signing_session_id: {type: string}
-        auth_at: {type: string, format: date-time}
+        signing_session_id:
+          type: [string, 'null']
+          description: Set for human signers. Service signatures have no signing session.
+        auth_at:
+          type: [string, 'null']
+          format: date-time
         prev_signature_hash:
           type: [string, 'null']
         chain_hash: {type: string, description: Hash of this record including prev_signature_hash.}
