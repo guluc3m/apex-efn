@@ -15,10 +15,16 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, Request, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 
 from apex.agents.missions import InvalidMissionTransition, MissionStatus
 from apex.agents.missions import Mission as DomainMission
+from apex.agents.recommendation_export import (
+    MEDIA_TYPES,
+    ExportFormat,
+    RecommendationProvider,
+    render,
+)
 from apex.agents.request_store import SourcingRequestStore
 from apex.agents.sourcing_service import MissionMissing, SourcingService
 from apex.api.contract_map import mission_state, to_contract_event, to_contract_mission
@@ -281,10 +287,29 @@ async def get_mission_recommendation(id: str) -> None:
     raise not_implemented("recommendation arrives with D4-12")
 
 
+def get_recommendation_provider() -> RecommendationProvider:
+    """Overridable dependency. The default refuses: the evaluator and the MCDA port are not wired to the app yet."""
+    raise not_implemented("the recommendation is not wired into the app yet (D4-12)")
+
+
 @router.get("/{id}/recommendation/export")
-async def export_mission_recommendation(id: str) -> None:
-    """Download the recommendation (contract route, issue #379). 501 until implemented."""
-    raise not_implemented("exporting the recommendation is not implemented yet")
+async def export_mission_recommendation(
+    id: str,
+    profile: str,
+    format: ExportFormat,
+    tenant_id: Annotated[str, Depends(get_tenant_id)],
+    provider: Annotated[RecommendationProvider, Depends(get_recommendation_provider)],
+) -> Response:
+    """Download the recommendation as pdf, csv or json, built from the ranking numbers only."""
+    try:
+        rec = await provider.recommendation(tenant_id=tenant_id, mission_id=id, profile_id=profile)
+    except LookupError as exc:
+        raise Problem(404, "Mission not found", detail=f"mission {id} not found") from exc
+    return Response(
+        render(rec, format),
+        media_type=MEDIA_TYPES[format],
+        headers={"Content-Disposition": f'attachment; filename="recommendation-{id}.{format}"'},
+    )
 
 
 async def _stream(mission: DomainMission, bus: Any, *, after_seq: int) -> AsyncIterator[bytes]:

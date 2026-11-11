@@ -87,7 +87,14 @@ export function createApiClient(options: ApiClientOptions = {}) {
     return (await response.json()) as T
   }
 
-  return { request }
+  /** A file download (GET). Same transport and problem mapping, but the body is returned as bytes. */
+  async function blob(template: string, req: ApiRequest): Promise<Blob> {
+    const response = await once(template, { ...req, headers: { accept: '*/*', ...req.headers } }, newKey())
+    if (!response.ok) throw await problemFromResponse(response)
+    return response.blob()
+  }
+
+  return { request, blob }
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>

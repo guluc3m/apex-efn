@@ -3,6 +3,8 @@
   "context": "משימה {code}",
   "profile": "פרופיל",
   "export": "ייצוא ההשוואה",
+  "exportFormat": "פורמט",
+  "exportFailed": "הייצוא נכשל: {reason}",
   "decide": "החלטה על {name}",
   "pending": "טרם חובר",
   "tableCaption": "השוואת המועמדים הסופיים",
