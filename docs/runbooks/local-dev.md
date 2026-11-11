@@ -48,9 +48,9 @@ docker compose --profile browser up -d camoufox crw
 | --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`                          | owner `apex` / `apex`; app login `apex_app_login` / `apex_app_dev` (RLS, see "Database roles"). DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`. |
 | Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                                            | no auth                                                                                                                                                                   |
-| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`               | `minioadmin` / `minioadmin`                                                                                                                                               |
+| S3 API (SeaweedFS)                | `http://localhost:9000`                          | `chrislusf/seaweedfs`                                            | any key / any secret |
 | MinIO console                     | `http://localhost:9001`                          | (same)                                                           | `minioadmin` / `minioadmin`                                                                                                                                               |
-| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`                  | creates buckets, see section 6                                                                                                                                            |
+| s3-init (one-shot)                | n/a                                              | `amazon/aws-cli`                                                 | creates buckets, see section 6 |
 | Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                                 | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                             |
 | Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                                         | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                               |
 | Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                                | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here).      |
@@ -215,20 +215,16 @@ Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on
    (RP-initiated logout is not wired yet). Use a private window or the admin console to force a fresh
    login.
 
-## 6. Object Lock and MinIO buckets
+## 6. Object Lock and the local S3
 
-- `minio-init` runs `infra/minio/init-buckets.sh` once. It creates `apex-attachments`, `apex-csv` and
-  `apex-audit`, all with Object Lock (`mc mb --with-lock`, `--ignore-existing`, so it is safe to rerun).
-- On `apex-audit` it sets a **default retention in COMPLIANCE mode**. The dev value is
-  `MINIO_AUDIT_RETENTION` (default `1d`).
-- **Production retention is a TL decision.** The spec does not define it. Do not copy the dev value.
-- **Caveat:** in COMPLIANCE mode, locked object versions cannot be deleted by anyone, root included, until
-  retention expires. A normal `mc rm` will fail. The way out locally is to wipe the volume:
-  `pnpm dev:reset` (`docker compose down -v`), which deletes the volume directly.
-- Upstream MinIO images were removed from Docker Hub in 2026. The pinned Quay tags are the last community
-  releases. Quay may require authentication for anonymous pulls. If a pull fails, override the images
-  (`MINIO_IMAGE`, `MC_IMAGE` environment variables) with an accessible mirror and report it. Choosing a
-  replacement is a TL decision.
+- The local S3 is SeaweedFS (`chrislusf/seaweedfs`, service `s3`, host port 9000). MinIO is archived and
+  its images are not pullable, so it is not used (issue #286, TL decision). Production stays real S3.
+- `s3-init` (aws-cli image) runs `infra/s3/init-buckets.sh` once. It creates `apex-attachments`, `apex-csv`
+  and `apex-audit` with Object Lock. It is idempotent, safe to rerun.
+- On `apex-audit` it sets a **default retention in COMPLIANCE mode of 2192 days (6 years, ADR-211)**,
+  `S3_AUDIT_RETENTION_DAYS` to override.
+- **Caveat:** in COMPLIANCE mode, locked object versions cannot be deleted by anyone until retention
+  expires. The way out locally is to wipe the volume: `pnpm dev:reset` (`docker compose down -v`).
 
 ## 7. Init SQL and empty volumes
 
@@ -325,7 +321,7 @@ Verified on a machine with a Docker daemon while wiring the database roles (issu
   image (Grafana, Loki, Prometheus, Langfuse, Unleash, Vault).
 - The first interactive login forces OTP enrolment in the browser (the required action is verified, the UI
   flow is not).
-- `minio-init` creates the buckets with Object Lock, and `up --wait` treats the completed one-shot correctly.
+- `s3-init` creates the buckets with Object Lock, and `up --wait` treats the completed one-shot correctly.
 - Pulls of the MinIO Quay images (see section 6).
 - Cold-start time (section 3).
 

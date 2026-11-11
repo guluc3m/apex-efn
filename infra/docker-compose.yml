@@ -71,44 +71,39 @@ services:
       retries: 5
 
   # =============================================================================
-  # MinIO (S3-compatible storage with Object Lock)
-  # Upstream Docker Hub images were removed in 2026. The Quay tags below are the
-  # last community releases. Override with MINIO_IMAGE / MC_IMAGE if a mirror is
-  # needed. Decision pending with the TL (see docs/runbooks/local-dev.md).
+  # S3 with Object Lock for local dev: SeaweedFS (ADR-900 #81 amendment, issue #286).
+  # MinIO is archived, so it is not used. Production stays real S3 Object Lock.
   # =============================================================================
-  minio:
-    image: ${MINIO_IMAGE:-quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z}
-    container_name: apex-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+  s3:
+    image: chrislusf/seaweedfs:latest
+    container_name: apex-s3
+    command: server -s3 -dir=/data
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '9000:8333'
     volumes:
-      - minio_data:/data
+      - s3_data:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:8333/']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # One-shot: creates the buckets with Object Lock. Idempotent, safe to rerun.
-  minio-init:
-    image: ${MC_IMAGE:-quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z}
-    container_name: apex-minio-init
+  s3-init:
+    image: amazon/aws-cli:latest
+    container_name: apex-s3-init
     entrypoint: ['/bin/sh', '/scripts/init-buckets.sh']
     environment:
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      # DEV ONLY. Production retention is a TL decision (not in the spec).
-      MINIO_AUDIT_RETENTION: ${MINIO_AUDIT_RETENTION:-1d}
+      S3_ENDPOINT: http://s3:8333
+      AWS_ACCESS_KEY_ID: any
+      AWS_SECRET_ACCESS_KEY: any
+      AWS_DEFAULT_REGION: us-east-1
+      # Audit anchors: COMPLIANCE, 6 years = 2192 days (ADR-211). Override only for short local experiments.
+      S3_AUDIT_RETENTION_DAYS: ${S3_AUDIT_RETENTION_DAYS:-2192}
     volumes:
-      - ./minio/init-buckets.sh:/scripts/init-buckets.sh:ro
+      - ./s3/init-buckets.sh:/scripts/init-buckets.sh:ro
     depends_on:
-      minio:
+      s3:
         condition: service_healthy
     restart: 'no'
 
@@ -369,7 +364,7 @@ services:
       # LangGraph checkpointer needs it for setup() (D4-06 follow-up). Not set in the Helm chart.
       MIGRATE_DATABASE_URL: postgresql://apex:apex@postgres:5432/apex
       REDIS_URL: redis://redis:6379
-      S3_ENDPOINT: http://minio:9000
+      S3_ENDPOINT: http://s3:8333
       AUTH_ISSUER_URL: http://localhost:8080/realms/apex
       # D1-05: the issuer is the browser-facing URL that appears in the token's `iss`; the JWKS is
       # fetched over the compose network, where Keycloak is `keycloak` and not `localhost`.
@@ -518,7 +513,7 @@ volumes:
   postgres_data:
   clickhouse_data:
   redis_data:
-  minio_data:
+  s3_data:
   grafana_data:
   tempo_data:
   loki_data:
