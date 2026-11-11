@@ -55,7 +55,9 @@ async def test_export_then_erase_keeps_the_audit_chain_verifiable(h: Harness) ->
 
     async with tenant_session(TENANT, sessionmaker=h.factory) as db:
         user = await db.get(User, "user-erin")
-        assert user is not None and user.email.startswith("erased+") and user.external_subject is None
+        assert (
+            user is not None and user.email.startswith("erased+") and user.external_subject is None
+        )
         dump = await gdpr.export_subject(db, "user-erin")
         assert dump["keys"][0]["revoked_at"] is not None and dump["keys"][0]["label"] is None
         assert dump["signing_sessions"][0]["device_fingerprint_ref"] == "erased"
