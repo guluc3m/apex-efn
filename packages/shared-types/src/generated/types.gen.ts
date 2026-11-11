@@ -553,6 +553,10 @@ export type Mission = {
    * Default ranking profile of the mission (a UserProfilePreference id).
    */
   profile_id?: string | null
+  /**
+   * True after POST /pause until POST /resume. Orthogonal to `state`, which keeps the graph step.
+   */
+  paused?: boolean
   plan_id?: string | null
   state: MissionState
   offers_discovered: number
