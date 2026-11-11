@@ -56,9 +56,10 @@ Issue #286 tracks the replacement.
 
 - **A local `rustfs_data` volume is not MinIO data.** Existing developers must run `pnpm dev:reset`
   (`docker compose down -v`); the old `minio_data` volume is orphaned and can be removed by hand.
-- RustFS is a **new component with a short track record** (1.0.x, first release days old). Pin the exact
-  tag, review upgrades in a PR, and treat a local incompatibility as a bug to report, not as a reason to
-  weaken Object Lock. The alternative if it fails is a new ADR (see below).
+- RustFS is a **new component with a short track record** (the 1.0.x line started in September 2026;
+  1.0.5 is one day old at the time of writing). Pin the exact tag, review upgrades in a PR, and treat a
+  local incompatibility as a bug to report, not as a reason to weaken Object Lock. The alternative if it
+  fails is a new ADR (see below).
 - Apache-2.0 keeps the repo's licence obligations simple (no AGPL-style service boundary questions).
 - The dev retention (1 day) must never be copied to production; production retention is a TL decision
   (ADR-900: 6 years for audit under Spanish Commercial Code art. 30).

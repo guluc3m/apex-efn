@@ -11,7 +11,7 @@ set -eu
 : "${RUSTFS_AUDIT_RETENTION_DAYS:=1}"
 
 case "$RUSTFS_AUDIT_RETENTION_DAYS" in
-  ''|*[!0-9]*) echo "RUSTFS_AUDIT_RETENTION_DAYS must be a positive integer" >&2; exit 2 ;;
+  ''|0|*[!0-9]*) echo "RUSTFS_AUDIT_RETENTION_DAYS must be a positive integer" >&2; exit 2 ;;
 esac
 
 aws_s3() { aws --endpoint-url "$RUSTFS_ENDPOINT" "$@"; }
