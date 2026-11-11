@@ -1,4 +1,5 @@
 # APEX-EFN (Apex Platform Enterprise Xchange - Element Fintech Network)
+
 <img width="1321" height="529" alt="image" src="https://github.com/user-attachments/assets/2315fc91-7a9d-4c05-a66a-d791e64b827b" />
 
 > Plataforma B2B de sourcing inteligente y negociación automatizada de compras por volumen
@@ -50,7 +51,7 @@ APEX-EFN es un **agente de compras** que:
 # Instalar dependencias
 pnpm install
 
-# Levantar servicios (Postgres, Redis, MinIO, Keycloak, Langfuse, LLM stub)
+# Levantar servicios (Postgres, Redis, RustFS, Keycloak, Langfuse, LLM stub)
 cd infra && docker compose up -d
 
 # Ejecutar migraciones
@@ -62,18 +63,18 @@ pnpm dev
 
 ## Stack
 
-| Componente | Tecnología |
-|------------|------------|
-| Frontend | Next.js 15, React 19, TanStack Query, Tailwind CSS |
-| BFF | Next.js API Routes |
-| Orquestador | FastAPI, LangGraph, Celery |
-| Scraping | Puppeteer, Playwright, BullMQ |
-| Base de datos | PostgreSQL 16, Prisma + SQLAlchemy |
-| Caché/Colas | Redis |
-| Almacenamiento | S3-compatible (MinIO/R2) |
-| Auth | Keycloak (OIDC) |
-| LLM | Compatible OpenAI (`/v1/chat/completions`) |
-| Observabilidad | OpenTelemetry, Langfuse, Grafana |
+| Componente     | Tecnología                                         |
+| -------------- | -------------------------------------------------- |
+| Frontend       | Next.js 15, React 19, TanStack Query, Tailwind CSS |
+| BFF            | Next.js API Routes                                 |
+| Orquestador    | FastAPI, LangGraph, Celery                         |
+| Scraping       | Puppeteer, Playwright, BullMQ                      |
+| Base de datos  | PostgreSQL 16, Prisma + SQLAlchemy                 |
+| Caché/Colas    | Redis                                              |
+| Almacenamiento | S3-compatible (RustFS/R2)                          |
+| Auth           | Keycloak (OIDC)                                    |
+| LLM            | Compatible OpenAI (`/v1/chat/completions`)         |
+| Observabilidad | OpenTelemetry, Langfuse, Grafana                   |
 
 ## Documentación
 

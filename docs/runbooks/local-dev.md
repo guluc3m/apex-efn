@@ -48,9 +48,9 @@ docker compose --profile browser up -d camoufox crw
 | --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Postgres 16 + pgvector            | `localhost:5432`                                 | `pgvector/pgvector:0.8.7-pg16-bookworm`                          | owner `apex` / `apex`; app login `apex_app_login` / `apex_app_dev` (RLS, see "Database roles"). DBs: `apex` (app, `vector` extension), `keycloak`, `langfuse`, `unleash`. |
 | Redis                             | `localhost:6379`                                 | `redis:7.4.12-alpine`                                            | no auth                                                                                                                                                                   |
-| MinIO API                         | `http://localhost:9000`                          | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`               | `minioadmin` / `minioadmin`                                                                                                                                               |
-| MinIO console                     | `http://localhost:9001`                          | (same)                                                           | `minioadmin` / `minioadmin`                                                                                                                                               |
-| minio-init (one-shot)             | n/a                                              | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z`                  | creates buckets, see section 6                                                                                                                                            |
+| RustFS API                        | `http://localhost:9000`                          | `rustfs/rustfs:1.0.5`                                            | `apex-dev` / `apex-dev-secret`. S3-compatible with Object Lock, ADR-107.                                                                                                  |
+| RustFS console                    | `http://localhost:9001`                          | (same)                                                           | `apex-dev` / `apex-dev-secret`                                                                                                                                            |
+| rustfs-init (one-shot)            | n/a                                              | `amazon/aws-cli:2.40.0`                                          | creates buckets, see section 6                                                                                                                                            |
 | Keycloak (OIDC)                   | `http://localhost:8080`                          | `quay.io/keycloak/keycloak:26.0`                                 | admin console: `admin` / `admin` (master realm). Realm `apex`, see section 5.                                                                                             |
 | Vault (dev mode)                  | `http://localhost:8200`                          | `hashicorp/vault:1.21.4`                                         | root token `apex-dev-root-token`. In-memory: everything is lost on restart.                                                                                               |
 | Unleash                           | `http://localhost:4242`                          | `unleashorg/unleash-server:8.3.1`                                | client API token `default:development.apex-dev-unleash-client`, admin API token `*:*.apex-dev-unleash-admin`. UI login: Unleash bootstrap admin (not verified here).      |
@@ -215,20 +215,25 @@ Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on
    (RP-initiated logout is not wired yet). Use a private window or the admin console to force a fresh
    login.
 
-## 6. Object Lock and MinIO buckets
+## 6. Object Lock and RustFS buckets
 
-- `minio-init` runs `infra/minio/init-buckets.sh` once. It creates `apex-attachments`, `apex-csv` and
-  `apex-audit`, all with Object Lock (`mc mb --with-lock`, `--ignore-existing`, so it is safe to rerun).
+- `rustfs-init` runs `infra/rustfs/init-buckets.sh` once. It creates `apex-attachments`, `apex-csv` and
+  `apex-audit`, all with Object Lock enabled (and therefore versioning `Enabled`). It is idempotent: it
+  skips a bucket that already exists, so it is safe to rerun.
 - On `apex-audit` it sets a **default retention in COMPLIANCE mode**. The dev value is
-  `MINIO_AUDIT_RETENTION` (default `1d`).
+  `RUSTFS_AUDIT_RETENTION_DAYS` (default `1`, in days; the script rejects anything that is not a positive
+  integer).
 - **Production retention is a TL decision.** The spec does not define it. Do not copy the dev value.
-- **Caveat:** in COMPLIANCE mode, locked object versions cannot be deleted by anyone, root included, until
-  retention expires. A normal `mc rm` will fail. The way out locally is to wipe the volume:
-  `pnpm dev:reset` (`docker compose down -v`), which deletes the volume directly.
-- Upstream MinIO images were removed from Docker Hub in 2026. The pinned Quay tags are the last community
-  releases. Quay may require authentication for anonymous pulls. If a pull fails, override the images
-  (`MINIO_IMAGE`, `MC_IMAGE` environment variables) with an accessible mirror and report it. Choosing a
-  replacement is a TL decision.
+- Production uses **real AWS S3 with Object Lock in COMPLIANCE mode** (Terraform, `infra/terraform`), not
+  RustFS. RustFS is the local backend only (ADR-107).
+- **Caveat:** in COMPLIANCE mode, retained object versions cannot be deleted by anyone until retention
+  expires, not even root: a delete of a retained version returns `403 AccessDenied` and the version stays
+  readable. A normal delete of the current object creates a delete marker instead of removing data.
+  The way out locally is to wipe the volume: `pnpm dev:reset` (`docker compose down -v`), which deletes
+  the volume directly.
+- RustFS 1.0.5 is Apache-2.0 and pulls anonymously from Docker Hub (`rustfs/rustfs`). The stale MinIO
+  images are gone from this repo; the decision, the spike evidence and the rejected alternatives are in
+  `docs/adr/107-rustfs-local-object-lock.md` and issue #286.
 
 ## 7. Init SQL and empty volumes
 
@@ -243,7 +248,7 @@ Keycloak test users (realm `apex`, password `apex-dev` for all, MFA enrolment on
 
 - Stop, keep data: `pnpm dev:down`.
 - Start again: `pnpm dev:up`.
-- Full reset (wipes Postgres, Redis, MinIO, Grafana, Loki, Tempo, Prometheus data, and re-imports Keycloak):
+- Full reset (wipes Postgres, Redis, RustFS, Grafana, Loki, Tempo, Prometheus data, and re-imports Keycloak):
   `pnpm dev:reset`.
 - Logs: `pnpm docker:logs`, or `docker compose logs -f <service>`.
 
@@ -276,7 +281,7 @@ Verified on the authoring machine (no Docker daemon):
   (0.165.0), `promtool check config` (3.16.0) and `loki -verify-config` (3.6.20) all pass. End to end, an OTLP
   trace, log and metric sent to the collector arrive in Tempo (trace found by ID), Loki (LogQL query) and the
   collector's Prometheus exporter.
-- Every pinned image tag exists in its registry (anonymous manifest lookup), except the MinIO images (section 6).
+- Every pinned image tag exists in its registry (anonymous manifest lookup).
 
 Verified separately, on a machine with a Docker daemon, while wiring the LLM stub (D1-03):
 
@@ -319,14 +324,25 @@ Verified on a machine with a Docker daemon while wiring the database roles (issu
   `actionlint`, `sh -n` and `shellcheck` on the scripts. The `web-migrations` image itself was not
   built locally (it is built by CD); its steps were run on the host instead.
 
+Verified on a machine with a Docker daemon while replacing MinIO with RustFS (issue #286, ADR-107):
+
+- `rustfs/rustfs:1.0.5` starts as user `rustfs`, answers `GET /health/ready` with `200` in about 2 s and
+  reports `healthy` in `docker compose ps`.
+- `rustfs-init` (`amazon/aws-cli:2.40.0`) creates `apex-attachments`, `apex-csv` and `apex-audit` with
+  `--object-lock-enabled-for-bucket` (versioning `Enabled` on all three), sets the `apex-audit` default
+  retention to `COMPLIANCE` 1 day, and exits 0. A second run prints `already exists` for every bucket and
+  is a no-op (idempotent).
+- With boto3, deleting a retained version of an object in `apex-audit` returns `403 AccessDenied` and
+  the version remains readable; a normal delete creates a delete marker.
+- `docker compose config -q` exits 0 and `docker compose up -d rustfs rustfs-init` completes with the
+  init one-shot in `Exited (0)`.
+
 **Not verified** (needs a machine with Docker):
 
 - Starting the stack in containers, service health, and whether every healthcheck command works inside its
   image (Grafana, Loki, Prometheus, Langfuse, Unleash, Vault).
 - The first interactive login forces OTP enrolment in the browser (the required action is verified, the UI
   flow is not).
-- `minio-init` creates the buckets with Object Lock, and `up --wait` treats the completed one-shot correctly.
-- Pulls of the MinIO Quay images (see section 6).
 - Cold-start time (section 3).
 
 ## 10. Environment variables
@@ -334,9 +350,10 @@ Verified on a machine with a Docker daemon while wiring the database roles (issu
 `.env.example` documents the dev values for apps (`DATABASE_URL`, `MIGRATE_DATABASE_URL`,
 `APEX_APP_DB_PASSWORD`, `REDIS_URL`, `S3_*`, `AUTH_*`, `VAULT_*`, `UNLEASH_*`, `OTEL_*`,
 `CAMOUFOX_WS_ENDPOINT`, `CRW_BASE_URL`). Copy it to `.env.local`. Compose itself does not read
-`.env.local`: the services in `infra/docker-compose.yml` use hardcoded dev values, except the MinIO
-image variables and `APEX_APP_DB_PASSWORD` (the orchestrator's app-role password), and the browser-stack
-endpoints use compose service names (`camoufox`, `crw`); from the host use ports 13000 and 13001.
+`.env.local`: the services in `infra/docker-compose.yml` use hardcoded dev values, except the RustFS
+credentials and audit retention (`S3_ACCESS_KEY`, `S3_SECRET_KEY`, `RUSTFS_AUDIT_RETENTION_DAYS`) and
+`APEX_APP_DB_PASSWORD` (the orchestrator's app-role password), and the browser-stack endpoints use compose
+service names (`camoufox`, `crw`); from the host use ports 13000 and 13001.
 
 ## 11. Vault (dev secrets bootstrap)
 
