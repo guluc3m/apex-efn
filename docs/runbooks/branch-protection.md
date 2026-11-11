@@ -62,7 +62,7 @@ failed or was cancelled. Adding a gate later means editing one `needs:` list in 
 | `LLM Portability Check`       | Only if listed individually | Criterion 25. Deny-list grep, self-tested with `--self-test`.                                       |
 | `Contracts drift`             | Only if listed individually | Skips until `contracts:check` exists (D2-01).                                                       |
 | `Migration drift`             | Only if listed individually | Skips until `apps/web/prisma/migrations` exists (D2-03).                                            |
-| `E2E (Playwright)`            | Only if listed individually | Skips until e2e specs exist (D6-08).                                                                |
+| `E2E (Playwright)`            | Only if listed individually | Runs the request-based specs against Playwright's `webServer`; no Docker. Browser suite is D6-08.   |
 | `Dependency audit (advisory)` | **No**                      | Non-blocking. See "Current audit findings".                                                         |
 | `Detect changes`              | No                          | Helper job for path filters. Its result is part of `CI OK`.                                         |
 
@@ -88,7 +88,7 @@ GitHub counts a **skipped** job as passing for a required check. Two mechanisms 
 | Integration tests   | Python or TypeScript paths; always on `main`                                                                         | Phase A (Vault) waits for a `mark.vault_integration` test or the browser-worker real-Vault test. Phase B (Testcontainers) waits for a `mark.integration` test. |
 | Contracts drift     | `contracts/**`, `packages/shared-types/**`, generated contract code, TS paths; always on `main`                      | The root `package.json` has no `contracts:check` script (D2-01).                                                                                               |
 | Migration drift     | `apps/web/prisma/**`, `apps/orchestrator/src/apex/db/**`; always on `main`                                           | `apps/web/prisma/migrations` does not exist (D2-03). The Postgres service only starts when this job runs.                                                      |
-| E2E (Playwright)    | `apps/web/**`, `infra/**`, `compose.yaml`; always on `main`                                                          | No `*e2e*.spec.ts` file under `apps/web` (D6-08).                                                                                                              |
+| E2E (Playwright)    | `apps/web/**`, `infra/**`, `compose.yaml`; always on `main`                                                          | Never. `apps/web/e2e` has `request`-based specs; it starts `pnpm dev` via `webServer`, so it needs no Docker. The browser suite is D6-08.                      |
 | Secret scan         | Always                                                                                                               | Never skips.                                                                                                                                                   |
 | LLM Portability     | Always                                                                                                               | Never skips.                                                                                                                                                   |
 | Dependency audit    | Always, advisory                                                                                                     | Never blocks (see below).                                                                                                                                      |
@@ -97,9 +97,10 @@ GitHub counts a **skipped** job as passing for a required check. Two mechanisms 
 
 Measured locally on the D1-04 branch. These are the facts a human needs before enabling enforcement.
 
-- **TypeScript coverage is a ratchet, not the 80% gate yet.** The values in `.github/coverage-baseline.json`
-  are the measured values, rounded down to 2 decimals: `@apex/money` lines/statements 71.73%, branches 84.44%,
-  functions 48.57%; `@apex/scoring` 69.12%, 81.98%, 75.75%; `@apex/crypto-client` 30.99%, 93.33%, 27.77%.
+- **TypeScript coverage is a ratchet.** `.github/coverage-baseline.json` is the source of truth for the current
+  values (rounded down to 2 decimals). At the last raise, `@apex/money` (99.64 / 99.64 / 96.61 / 97.61 for
+  lines / statements / branches / functions) and `@apex/crypto-client` (98.13 / 98.13 / 98.03 / 87.50) had
+  graduated to the hard 80% gate, and `@apex/scoring` (78.11 / 78.11 / 90.47 / 89.74) was still a ratchet.
   The packages belong to DEV-3 (money, scoring) and DEV-2 (crypto-client). Rules, enforced by
   `.github/scripts/ci/ts-coverage.mjs`:
   - A metric may not drop more than 0.01 below its baseline.

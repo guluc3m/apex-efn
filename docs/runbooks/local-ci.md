@@ -21,7 +21,7 @@ full CI: the local run now, and the `CI OK` check on GitHub once Actions is enab
 | `llm-portability`  | `ci/llm-portability.sh`  | Criterion 25: no proprietary LLM endpoints or vendor SDK imports (self-test first)                                                                      | never skips                                                                     |
 | `contracts-drift`  | `ci/contracts-drift.sh`  | root script `contracts:check` (D2-01)                                                                                                                   | `SKIP` until the script exists                                                  |
 | `migration-drift`  | `ci/migration-drift.sh`  | `prisma migrate diff` from migrations to the schema (D2-03)                                                                                             | `SKIP` until `apps/web/prisma/migrations` exists; then Docker is required       |
-| `e2e`              | `ci/e2e.sh`              | Playwright on the compose stack (D6-08)                                                                                                                 | `SKIP` until an e2e spec exists under `apps/web`; then Docker is required       |
+| `e2e`              | `ci/e2e.sh`              | Playwright `request`-based specs (D6-08) against the Next.js `webServer` (`pnpm dev` on port 3000); no compose stack                                    | never skips while specs exist; no Docker required                               |
 
 Results:
 
@@ -46,8 +46,8 @@ A job that needs Docker and finds the target present but no Docker running **fai
   so it needs no manual step.
 - Network access for the first run: `git fetch origin` (the runner tries it and continues offline), the pinned
   security tools (downloaded once, see below), `pnpm audit`, and `pip-audit`.
-- Docker: **only** for `migration-drift`, `e2e`, and phase B (Testcontainers) of `integration`, and only once their
-  targets exist. Phase A of `integration` (real Vault) needs no Docker.
+- Docker: **only** for `migration-drift` and phase B (Testcontainers) of `integration`, and only once their
+  targets exist. Phase A of `integration` (real Vault) and `e2e` need no Docker.
 
 #### The `integration` job
 
