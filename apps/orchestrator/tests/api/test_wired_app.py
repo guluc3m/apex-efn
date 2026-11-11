@@ -215,12 +215,9 @@ class _Objects:
 BUNDLED_SCENARIOS = Path(__file__).resolve().parents[3] / "llm-stub" / "scenarios"
 
 
-def test_onboarding_chat_mapping_and_csv_upload_work_against_the_bundled_stub() -> None:
-    """The demo path: no scenario pinning, the stub picks by role and requested schema."""
-    import asyncio
-
+def _bundled_app(objects: Any = None) -> tuple[Any, FastAPI]:
+    """The wired app against the stub's bundled scenarios, with no scenario pinning (the demo path)."""
     stub = mount_stub(BUNDLED_SCENARIOS)
-    objects = _Objects()
     services = build_app_services(
         Settings(idempotency_backend="memory"),
         clock=FixedClock(NOW),
@@ -228,11 +225,56 @@ def test_onboarding_chat_mapping_and_csv_upload_work_against_the_bundled_stub() 
             transport=stub._transport,  # type: ignore[attr-defined]
             base_url=str(stub.base_url),
         ),
-        objects=objects,
+        objects=objects or _Objects(),
     )
     application = create_app(
         Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore(), services=services
     )
+    return stub, application
+
+
+def test_seller_message_translation_works_against_the_bundled_stub() -> None:
+    """Narrator role, MessageTranslation schema: the stub restates the seller's price as {"text": ...}."""
+    import asyncio
+
+    from apex.api import negotiations as negotiations_api
+    from apex.negotiation.api import NegotiationControlService
+    from apex.negotiation.models import TranscriptMessage
+    from tests.negotiation.fakes import NOW as NEG_NOW
+    from tests.negotiation.fakes import T, cooperative_seller, harness, params
+    from tests.negotiation.fakes import request as open_request
+
+    h = harness(cooperative_seller())
+    session = asyncio.run(h.engine.start(open_request(params()), idempotency_key="n1"))
+    stored = asyncio.run(h.store.get(session.id))
+    assert stored is not None
+    stored.transcript.append(
+        TranscriptMessage(seq=0, role="seller", text="价格 4.20 EUR", at=NEG_NOW)
+    )
+    asyncio.run(h.store.save(stored))
+    control = NegotiationControlService(h.engine)
+
+    stub, application = _bundled_app()
+    application.dependency_overrides[negotiations_api.get_negotiation_control] = lambda: control
+    try:
+        with TestClient(application) as client:
+            response = client.post(
+                f"/v1/negotiations/{session.id}/messages/{session.id}:0/translate",
+                json={"target_language": "en"},
+                headers=_h(T),
+            )
+        assert response.status_code == 200, response.text
+        assert "4.20" in response.json()["text"]
+    finally:
+        asyncio.run(stub.aclose())
+
+
+def test_onboarding_chat_mapping_and_csv_upload_work_against_the_bundled_stub() -> None:
+    """The demo path: no scenario pinning, the stub picks by role and requested schema."""
+    import asyncio
+
+    objects = _Objects()
+    stub, application = _bundled_app(objects)
     try:
         with TestClient(application) as client:
             sid = client.post("/v1/onboarding/sessions", headers=_h()).json()["id"]

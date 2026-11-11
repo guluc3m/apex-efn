@@ -101,6 +101,8 @@ Response kinds:
   broken string (truncated, trailing prose, or ```` ```json ```` fences).
 - `tool_call`: `tool_call: {name, arguments, id}`. `arguments` may be an object (serialized) or a
   raw string (passed through). Returns `finish_reason: tool_calls` and `content: null`.
+- `echo_price`: a sentence repeating the first `CUR 4.10` / `4.10 CUR` price in the prompt.
+  With `json_field: text` it is wrapped as `{"text": "..."}` for structured callers.
 - `error`: `error: {status, message, type, retry_after}` returned as an HTTP error with an
   OpenAI-style body. `retry_after` sets the `Retry-After` header.
 
