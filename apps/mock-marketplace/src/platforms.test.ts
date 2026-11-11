@@ -9,7 +9,7 @@ describe('service', () => {
   it('reports health', async () => {
     const res = await app.inject({ method: 'GET', url: '/healthz' })
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toMatchObject({ status: 'ok', platforms: ['mock-a', 'mock-b'] })
+    expect(res.json()).toMatchObject({ status: 'ok', platforms: ['mock-a', 'mock-b', 'mock-c'] })
   })
 
   it('serves robots.txt that disallows the control surface', async () => {
@@ -174,5 +174,107 @@ describe('criterion 3 data', () => {
     ).body.match(/data-testid="result"/g)?.length
     expect(a).toBeGreaterThanOrEqual(3)
     expect(b).toBeGreaterThanOrEqual(3)
+  })
+})
+
+
+describe('mock-c API-first marketplace', () => {
+  it('searches with integer cents and a supplier block', async () => {
+    const res = await app.inject({ method: 'GET', url: '/mock-c/api/search?q=nitrile%20gloves' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json<{
+      count: number
+      items: Array<{
+        item_id: string
+        unit_price: { cents: number; currency: string }
+        supplier_id: string
+        min_order: number
+      }>
+    }>()
+    expect(body.count).toBeGreaterThanOrEqual(3)
+    const first = body.items[0]
+    expect(first?.item_id).toBe('c-gloves-01')
+    expect(first?.unit_price).toEqual({ cents: 432, currency: 'EUR' })
+    expect(first?.supplier_id).toBe('c-solid-supplier')
+    expect(first?.min_order).toBe(1000)
+  })
+
+  it('serves item detail with tiers and specs as name/value pairs', async () => {
+    const res = await app.inject({ method: 'GET', url: '/mock-c/api/items/c-gloves-03' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json<{
+      tiers: Array<{ from: number; to: number | null; unit_price: { cents: number } }>
+      specs: Array<{ name: string; value: string }>
+      shipping: { cost: { cents: number } } | null
+      incoterm: string | null
+    }>()
+    expect(body.tiers).toHaveLength(2)
+    expect(body.tiers[1]?.unit_price.cents).toBe(421)
+    expect(body.specs).toContainEqual({ name: 'material', value: 'nitrile' })
+    expect(body.shipping?.cost.cents).toBe(1100)
+    expect(body.incoterm).toBe('DAP')
+  })
+
+  it('reports seller metrics in basis points and keeps missing values null', async () => {
+    const solid = await app.inject({ method: 'GET', url: '/mock-c/api/suppliers/c-solid-supplier/metrics' })
+    expect(solid.statusCode).toBe(200)
+    expect(solid.json()).toMatchObject({
+      supplier_id: 'c-solid-supplier',
+      repeat_rate_bp: 5200,
+      response_rate_bp: 9700,
+      reviews: { avg: 4.8, verified_bp: 9000 },
+    })
+
+    const thin = await app.inject({ method: 'GET', url: '/mock-c/api/suppliers/c-new-shop/metrics' })
+    expect(thin.statusCode).toBe(200)
+    expect(thin.json()).toMatchObject({
+      supplier_id: 'c-new-shop',
+      repeat_rate_bp: null,
+      reviews: { avg: null },
+    })
+  })
+
+  it('opens a thread, sends a message and returns the supplier answer', async () => {
+    const open = await app.inject({
+      method: 'POST',
+      url: '/mock-c/api/threads',
+      payload: { item_id: 'c-gloves-01' },
+    })
+    expect(open.statusCode).toBe(201)
+    const { thread_id: threadId } = open.json<{ thread_id: string }>()
+    expect(threadId).toMatch(/^chat-mock-c-/)
+
+    const send = await app.inject({
+      method: 'POST',
+      url: `/mock-c/api/threads/${threadId}/messages`,
+      payload: { body: 'Can you do EUR 4.10 for 5000 boxes?' },
+    })
+    expect(send.statusCode).toBe(201)
+    const sent = send.json<{ sent: { seq: number; author: string }; received: Array<{ author: string }> }>()
+    expect(sent.sent).toMatchObject({ seq: 1, author: 'buyer' })
+    expect(sent.received.length).toBeGreaterThanOrEqual(1)
+    expect(sent.received[0]?.author).toBe('supplier')
+
+    const read = await app.inject({
+      method: 'GET',
+      url: `/mock-c/api/threads/${threadId}/messages?after_seq=1`,
+    })
+    const thread = read.json<{ messages: Array<{ seq: number; author: string }> }>()
+    expect(thread.messages.length).toBeGreaterThanOrEqual(1)
+    expect(thread.messages.every((m) => m.seq > 1)).toBe(true)
+  })
+
+  it('answers closed error codes for an unknown item, supplier or thread', async () => {
+    const item = await app.inject({ method: 'GET', url: '/mock-c/api/items/nope' })
+    expect(item.statusCode).toBe(404)
+    expect(item.json()).toMatchObject({ error: { code: 'unknown_item' } })
+
+    const supplier = await app.inject({ method: 'GET', url: '/mock-c/api/suppliers/nope/metrics' })
+    expect(supplier.statusCode).toBe(404)
+    expect(supplier.json()).toMatchObject({ error: { code: 'unknown_supplier' } })
+
+    const thread = await app.inject({ method: 'GET', url: '/mock-c/api/threads/nope/messages' })
+    expect(thread.statusCode).toBe(404)
+    expect(thread.json()).toMatchObject({ error: { code: 'unknown_thread' } })
   })
 })

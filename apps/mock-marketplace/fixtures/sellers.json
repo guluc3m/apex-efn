@@ -688,6 +688,126 @@
           "verified": false
         }
       ]
+    },
+    {
+      "id": "c-solid-supplier",
+      "platform": "mock-c",
+      "name": "Ningbo Harbour Glove Works (mock)",
+      "country": "CN",
+      "profile": "solid_veteran",
+      "persona": "cooperative",
+      "signals": {
+        "memberSince": "2017-04-11",
+        "firstSaleDate": "2017-05-02",
+        "monthsActiveLast12": 12,
+        "lifetimeTransactions": 14200,
+        "transactions12m": 3100,
+        "gmv12mMinor": 4800000,
+        "gmvCurrency": "EUR",
+        "repeatBuyerShare": 0.52,
+        "publishedProductsCount": 310,
+        "catalogChurn30d": 0.03,
+        "specCompletenessAvg": 0.91,
+        "reviewsTotal": 1240,
+        "reviews12m": 610,
+        "ratingAvg": 4.8,
+        "ratingCount": 1240,
+        "verifiedReviewShare": 0.9,
+        "responseRate": 0.97,
+        "identityVerified": true,
+        "tradeAssurance": true,
+        "escrowAvailable": true,
+        "disputeRate": 0.008,
+        "refundRate": 0.012
+      },
+      "reviews": [
+        {
+          "id": "rv-c-solid-1",
+          "rating": 5,
+          "text": "Consistent quality across three orders. Fast replies.",
+          "date": "2026-09-18",
+          "verified": true
+        },
+        {
+          "id": "rv-c-solid-2",
+          "rating": 5,
+          "text": "Shipped on time, packaging intact.",
+          "date": "2026-07-02",
+          "verified": true
+        },
+        {
+          "id": "rv-c-solid-3",
+          "rating": 4,
+          "text": "Good gloves, invoice took a day longer.",
+          "date": "2026-05-21",
+          "verified": true
+        },
+        {
+          "id": "rv-c-solid-4",
+          "rating": 5,
+          "text": "They matched the tier price quoted in chat.",
+          "date": "2026-03-09",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "c-chinese-trader",
+      "platform": "mock-c",
+      "name": "Guangzhou Trade Bridge (mock)",
+      "country": "CN",
+      "profile": "standard",
+      "persona": "chinese",
+      "signals": {
+        "memberSince": "2021-08-30",
+        "monthsActiveLast12": 11,
+        "lifetimeTransactions": 2300,
+        "transactions12m": 900,
+        "repeatBuyerShare": 0.31,
+        "publishedProductsCount": 140,
+        "specCompletenessAvg": 0.72,
+        "reviewsTotal": 260,
+        "reviews12m": 140,
+        "ratingAvg": 4.4,
+        "ratingCount": 260,
+        "verifiedReviewShare": 0.64,
+        "responseRate": 0.88,
+        "identityVerified": true,
+        "tradeAssurance": false,
+        "escrowAvailable": false,
+        "disputeRate": 0.031,
+        "refundRate": 0.046
+      },
+      "reviews": [
+        {
+          "id": "rv-c-cn-1",
+          "rating": 4,
+          "text": "价格合理，发货及时。",
+          "date": "2026-08-14",
+          "verified": true
+        },
+        {
+          "id": "rv-c-cn-2",
+          "rating": 5,
+          "text": "沟通顺畅，质量不错。",
+          "date": "2026-06-30",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "c-new-shop",
+      "platform": "mock-c",
+      "name": "Valencia Nuevo Suministros (mock)",
+      "country": "ES",
+      "profile": "insufficient_data",
+      "persona": "evasive",
+      "signals": {
+        "memberSince": "2026-09-15",
+        "publishedProductsCount": 6,
+        "identityVerified": false
+      },
+      "reviews": []
     }
   ]
 }

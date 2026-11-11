@@ -2,12 +2,13 @@ import { z } from 'zod'
 
 /**
  * Canonical fixture model of the mock marketplace. Each platform renders it in its own wire format
- * (mock-a: JSON API, mock-b: HTML), so adapters have real mapping work to do.
+ * (mock-a: JSON API, mock-b: HTML, mock-c: API-first with a messaging endpoint), so adapters have real
+ * mapping work to do.
  * Currencies are deliberately NOT restricted to EUR/USD/CNY: the mock must be able to serve offers and
  * quotes that the platform rejects (spec 3.5.1, criterion 24).
  */
 
-export const PLATFORM_IDS = ['mock-a', 'mock-b'] as const
+export const PLATFORM_IDS = ['mock-a', 'mock-b', 'mock-c'] as const
 export const PlatformIdSchema = z.enum(PLATFORM_IDS)
 export type PlatformId = z.infer<typeof PlatformIdSchema>
 
