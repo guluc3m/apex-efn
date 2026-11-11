@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
 {{- $webHost := required "ingress.web.host is required when ingress.enabled=true" .Values.ingress.web.host }}
-{{- $apiHost := required "ingress.api.host is required when ingress.enabled=true" .Values.ingress.api.host }}
+{{- $apiHost := .Values.ingress.api.host }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -19,13 +19,40 @@ spec:
   tls:
     - hosts:
         - {{ $webHost | quote }}
+        {{- if $apiHost }}
         - {{ $apiHost | quote }}
+        {{- end }}
       secretName: {{ required "ingress.tls.secretName is required when ingress.tls.enabled=true" .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
     - host: {{ $webHost | quote }}
       http:
         paths:
+          {{- if .Values.ingress.webhooks.enabled }}
+          - path: /v1/webhooks/platforms
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "apex.componentName" (dict "root" $ "component" "orchestrator") }}
+                port:
+                  name: http
+          {{- end }}
+          {{- if .Values.ingress.keycloak.enabled }}
+          - path: /realms/apex
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.keycloak.serviceName }}
+                port:
+                  number: {{ .Values.ingress.keycloak.servicePort }}
+          - path: /resources
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.keycloak.serviceName }}
+                port:
+                  number: {{ .Values.ingress.keycloak.servicePort }}
+          {{- end }}
           - path: /
             pathType: Prefix
             backend:
@@ -33,6 +60,7 @@ spec:
                 name: {{ include "apex.componentName" (dict "root" $ "component" "web") }}
                 port:
                   name: http
+    {{- if $apiHost }}
     - host: {{ $apiHost | quote }}
       http:
         paths:
@@ -50,4 +78,5 @@ spec:
                 name: {{ include "apex.componentName" (dict "root" $ "component" "orchestrator") }}
                 port:
                   name: http
+    {{- end }}
 {{- end }}
