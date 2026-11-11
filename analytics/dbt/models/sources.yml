@@ -1,0 +1,8 @@
+version: 2
+sources:
+  - name: apex_pg
+    database: apex_pg
+    schema: ''
+    tables:
+      - name: price_history
+      - name: recommendations

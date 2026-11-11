@@ -23,8 +23,33 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+      - ./postgres/analytics-reader.sql:/docker-entrypoint-initdb.d/20-analytics-reader.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U apex -d apex']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # ClickHouse (analytics store, D2-13). dbt project in analytics/dbt.
+  # =============================================================================
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: apex-clickhouse
+    environment:
+      CLICKHOUSE_USER: apex
+      CLICKHOUSE_PASSWORD: apex
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+    ports:
+      - '8123:8123'
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8123/ping || exit 1']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -491,6 +516,7 @@ services:
 
 volumes:
   postgres_data:
+  clickhouse_data:
   redis_data:
   minio_data:
   grafana_data:
