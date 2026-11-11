@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>APEX-EFN · simulated marketplace</title>
+    <style>
+      :root {
+        --ink: #101828;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --wash: #f9fafb;
+        --accent: #0b5fff;
+        --good: #067647;
+        --warn: #b54708;
+        --bad: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background: #fff;
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        padding: 18px 24px;
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      h1 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
+      header p { margin: 0; color: var(--muted); font-size: 13px; }
+      main { padding: 20px 24px 60px; max-width: 1180px; }
+      .toolbar {
+        display: flex; gap: 10px; align-items: end; flex-wrap: wrap;
+        background: var(--wash); border: 1px solid var(--line); border-radius: 10px;
+        padding: 12px; margin-bottom: 18px;
+      }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      .field label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+      input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; min-width: 90px; }
+      input.wide { min-width: 230px; }
+      button {
+        font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+        background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px;
+      }
+      button[disabled] { opacity: .55; cursor: progress; }
+      .status { font-size: 12px; color: var(--muted); margin-left: auto; }
+      .error {
+        border: 1px solid #fda29b; background: #fffbfa; color: var(--bad);
+        border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 16px; white-space: pre-wrap;
+      }
+      h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 26px 0 10px; }
+      .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+      .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+      .card h3 { font-size: 14px; margin: 0 0 6px; line-height: 1.35; }
+      .money { font-variant-numeric: tabular-nums; font-weight: 600; }
+      .meta { font-size: 12px; color: var(--muted); }
+      .badge {
+        display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .03em;
+        text-transform: uppercase; border-radius: 999px; padding: 2px 8px;
+      }
+      .badge.agreed { background: #ecfdf3; color: var(--good); }
+      .badge.escalated { background: #fffaeb; color: var(--warn); }
+      .badge.no_agreement, .badge.error { background: #fef3f2; color: var(--bad); }
+      .badge.running { background: #eff8ff; color: var(--accent); }
+      .buyers { display: grid; gap: 16px; }
+      .buyer { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+      .buyer-head { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--wash); }
+      .buyer-head h3 { margin: 0; font-size: 14px; }
+      .buyer-body { display: grid; grid-template-columns: 300px 1fr; gap: 0; }
+      .steps { border-right: 1px solid var(--line); padding: 12px 14px; font-size: 12px; }
+      .steps li { list-style: none; margin: 0 0 8px; padding-left: 14px; position: relative; }
+      .steps li::before { content: ""; position: absolute; left: 0; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+      .steps li.done::before { background: var(--accent); }
+      .steps .kind { font-weight: 600; }
+      .transcript { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow: auto; }
+      .line { max-width: 78%; padding: 7px 10px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
+      .line.buyer { align-self: flex-end; background: #eef4ff; }
+      .line.seller { align-self: flex-start; background: var(--wash); border: 1px solid var(--line); }
+      .line .who { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
+      .empty { color: var(--muted); font-size: 13px; }
+      footer { margin-top: 34px; color: var(--muted); font-size: 12px; }
+      code { background: var(--wash); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+      @media (max-width: 760px) { .buyer-body { grid-template-columns: 1fr; } .steps { border-right: 0; border-bottom: 1px solid var(--line); } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>APEX-EFN · simulated marketplace</h1>
+      <p>Three AI buyers, one fake marketplace, no real platforms — prices are decided in code, words come from the LLM stub.</p>
+    </header>
+
+    <main>
+      <div class="toolbar">
+        <div class="field">
+          <label for="market">Marketplace</label>
+          <input id="market" class="wide" placeholder="http://127.0.0.1:8002" />
+        </div>
+        <div class="field">
+          <label for="llm">LLM stub</label>
+          <input id="llm" class="wide" placeholder="http://127.0.0.1:8001" />
+        </div>
+        <div class="field">
+          <label for="buyers">AI buyers</label>
+          <input id="buyers" type="number" min="1" max="3" value="3" />
+        </div>
+        <div class="field">
+          <label for="qty">Units per buyer</label>
+          <input id="qty" type="number" min="1" value="5000" />
+        </div>
+        <button id="run">Run scenario</button>
+        <span class="status" id="status"></span>
+      </div>
+
+      <div id="error" class="error" hidden></div>
+
+      <h2>The marketplace</h2>
+      <div id="items" class="grid"><p class="empty">Run the scenario to load the catalogue.</p></div>
+
+      <h2>AI sellers</h2>
+      <div id="sellers" class="grid"></div>
+
+      <h2>The AI buyers</h2>
+      <div id="run-buyers" class="buyers"><p class="empty">No run yet.</p></div>
+
+      <footer>
+        Every request in this page stays on your machine. Start the pieces with
+        <code>pnpm dev</code> in <code>apps/mock-marketplace</code>, <code>python -m llm_stub</code> in
+        <code>apps/llm-stub</code>, and <code>python -m apex.negotiation.sim.server</code> here.
+      </footer>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const money = (m) => {
+        if (!m) return "—";
+        const value = (m.amount_minor / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return `${value} ${m.currency}`;
+      };
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+      async function loadConfig() {
+        const res = await fetch("/api/config");
+        if (!res.ok) return;
+        const cfg = await res.json();
+        $("market").value = cfg.marketplace_url;
+        $("llm").value = cfg.llm_url || "";
+        $("qty").value = cfg.quantity;
+      }
+
+      async function run() {
+        const button = $("run");
+        button.disabled = true;
+        $("error").hidden = true;
+        $("status").textContent = "running the AI buyers against the fake marketplace…";
+        try {
+          const res = await fetch("/api/scenario", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              marketplace_url: $("market").value || null,
+              llm_url: $("llm").value || null,
+              buyer_count: Number($("buyers").value) || null,
+              quantity: Number($("qty").value) || null,
+            }),
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.detail || `HTTP ${res.status}`);
+          render(body);
+          $("status").textContent = `done · ${new Date(body.finished_at).toLocaleTimeString()}`;
+        } catch (error) {
+          $("error").hidden = false;
+          $("error").textContent =
+            `The scenario could not run: ${error.message}\n\n` +
+            `Check that the fake marketplace answers on ${$("market").value || "http://127.0.0.1:8002"}` +
+            ` and the LLM stub on ${$("llm").value || "http://127.0.0.1:8001"}.`;
+          $("status").textContent = "";
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      function render(report) {
+        $("items").innerHTML = (report.items || [])
+          .map(
+            (item) => `
+            <div class="card">
+              <h3>${esc(item.title)}</h3>
+              <div class="money">${money(item.unit_price)}</div>
+              <div class="meta">MOQ ${item.moq} · ${esc(item.supplier_name || item.supplier_id)}</div>
+            </div>`
+          )
+          .join("") || '<p class="empty">The marketplace returned no items.</p>';
+
+        $("sellers").innerHTML = (report.sellers || [])
+          .map(
+            (seller) => `
+            <div class="card">
+              <h3>${esc(seller.name)}</h3>
+              <div class="meta">
+                rating ${seller.rating_avg ?? "—"} · orders ${seller.orders_total ?? "—"}
+                ${seller.persona ? ` · persona ${esc(seller.persona)}` : ""}
+              </div>
+            </div>`
+          )
+          .join("");
+
+        $("run-buyers").innerHTML = (report.buyers || [])
+          .map((buyer) => {
+            const outcome = buyer.outcome || "error";
+            const lines = (buyer.transcript || [])
+              .map(
+                (line) => `
+                <div class="line ${line.role === "buyer" ? "buyer" : "seller"}">
+                  <span class="who">${line.role === "buyer" ? "AI buyer" : "AI seller"}</span>${esc(line.text)}
+                </div>`
+              )
+              .join("") || '<p class="empty">No messages exchanged.</p>';
+            const steps = (buyer.steps || [])
+              .map(
+                (step) => `
+                <li class="done"><span class="kind">${esc(step.kind)}</span> ${esc(step.detail || "")}
+                  ${step.price ? `<span class="money">${money(step.price)}</span>` : ""}</li>`
+              )
+              .join("");
+            return `
+              <div class="buyer">
+                <div class="buyer-head">
+                  <h3>${esc(buyer.name)}</h3>
+                  <span class="badge ${outcome}">${esc(outcome.replaceAll("_", " "))}</span>
+                  <span class="meta">
+                    ${buyer.chosen ? `${esc(buyer.chosen.supplier_name || buyer.chosen.supplier_id)} · asking ${money(buyer.chosen.asking_price)}` : ""}
+                    ${buyer.final_price ? ` · final ${money(buyer.final_price)}` : ""}
+                    ${buyer.reason ? ` · ${esc(buyer.reason)}` : ""}
+                  </span>
+                </div>
+                <div class="buyer-body">
+                  <ul class="steps">${steps}</ul>
+                  <div class="transcript">${lines}</div>
+                </div>
+              </div>`;
+          })
+          .join("") || '<p class="empty">No buyers ran.</p>';
+      }
+
+      $("run").addEventListener("click", run);
+      loadConfig().then(() => { /* first run is manual: the marketplace may not be up yet */ });
+    </script>
+  </body>
+</html>
