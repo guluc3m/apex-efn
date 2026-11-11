@@ -9,7 +9,7 @@ export function generateStaticParams() {
   return locales.flatMap((locale) => STEP_IDS.map((paso) => ({ locale, paso })))
 }
 
-// //todo_#147: guarda de rol (owner, admin, finance) y redirección a /decisiones si el onboarding está completo
+// //todo_#147: redirección a /decisiones si el onboarding está completo (falta un endpoint que lo diga)
 export default async function OnboardingStepPage({ params }: { params: Promise<{ locale: string; paso: string }> }) {
   const { locale, paso } = await params
   setRequestLocale(locale)
