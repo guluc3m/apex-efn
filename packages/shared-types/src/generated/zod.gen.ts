@@ -375,6 +375,13 @@ export const zDerivedFinancials = z.object({
 
 export type derivedFinancialsZodType = z.infer<typeof zDerivedFinancials>
 
+export const zConnectAccountRequest = z.object({
+  platform: z.string().min(1).max(64),
+  username: z.string().min(1).max(256),
+})
+
+export type connectAccountRequestZodType = z.infer<typeof zConnectAccountRequest>
+
 export const zCredentialRef = z.object({
   id: z.string(),
 })
@@ -981,6 +988,13 @@ export const zConnectedAccount = z.object({
 })
 
 export type connectedAccountZodType = z.infer<typeof zConnectedAccount>
+
+export const zConnectedAccountList = z.object({
+  items: z.array(zConnectedAccount),
+  platforms: z.array(z.string()),
+})
+
+export type connectedAccountListZodType = z.infer<typeof zConnectedAccountList>
 
 export const zAggressivenessLevel = z.enum(['conservative', 'balanced', 'aggressive'])
 
@@ -2004,6 +2018,14 @@ export const zConfigChangeRequest = z.object({
 
 export type configChangeRequestZodType = z.infer<typeof zConfigChangeRequest>
 
+export const zConnectAccountRequestWritable = z.object({
+  platform: z.string().min(1).max(64),
+  username: z.string().min(1).max(256),
+  password: z.string().min(1).max(1024),
+})
+
+export type connectAccountRequestWritableZodType = z.infer<typeof zConnectAccountRequestWritable>
+
 export const zPathId = z.string().min(1)
 
 export type pathIdZodType = z.infer<typeof zPathId>
@@ -2434,6 +2456,35 @@ export const zNotifyFinanceOfApprovalPath = z.object({
  * Recorded.
  */
 export const zNotifyFinanceOfApprovalResponse = zApprovalFinanceNotice
+
+/**
+ * The accounts.
+ */
+export const zListConnectedAccountsResponse = zConnectedAccountList
+
+export const zConnectAccountBody = zConnectAccountRequestWritable
+
+export const zConnectAccountHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+/**
+ * The connected account.
+ */
+export const zConnectAccountResponse = zConnectedAccount
+
+export const zDisconnectAccountHeaders = z.object({
+  'Idempotency-Key': z.string().min(16).max(128),
+})
+
+export const zDisconnectAccountPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * The account, now `disabled`. Disconnecting a disabled account is a no-op.
+ */
+export const zDisconnectAccountResponse = zConnectedAccount
 
 export const zGetEffectiveConfigQuery = z.object({
   category: z.string().max(64).optional(),

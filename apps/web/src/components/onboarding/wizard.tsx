@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
-import { platforms } from '@/fixtures/onboarding'
 import { api } from '@/lib/api'
 import { queryKeys, useCurrentOnboarding, useIntakeMessages, useOnboardingSession, useSendIntakeMessage } from '@/lib/api/hooks'
 import { fromProfile, restoreDrafts, toProfilePatch } from '@/lib/onboarding-profile'
@@ -146,7 +145,7 @@ export function OnboardingWizard({ step }: { step: StepId }) {
       )
     })()
   ) : step === 'cuentas' ? (
-    <AccountsStep platforms={platforms} />
+    <AccountsStep />
   ) : (
     <FinanceStep />
   )

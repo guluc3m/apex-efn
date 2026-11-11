@@ -7,7 +7,15 @@ from datetime import date as date_aliased
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, RootModel
+from pydantic import (
+    AnyUrl,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    SecretStr,
+)
 from typing_extensions import TypeAliasType
 
 
@@ -342,6 +350,12 @@ class BudgetEnvelope(BaseModel):
     available: Money
     period_start: date_aliased
     period_end: date_aliased
+
+
+class ConnectAccountRequest(BaseModel):
+    platform: Annotated[str, Field(max_length=64, min_length=1)]
+    username: Annotated[str, Field(max_length=256, min_length=1)]
+    password: Annotated[SecretStr, Field(max_length=1024, min_length=1)]
 
 
 class CredentialRef(BaseModel):
@@ -1288,6 +1302,16 @@ class ConnectedAccount(BaseModel):
     platform: str
     status: ConnectedAccountStatus
     credential_ref: CredentialRef
+
+
+class ConnectedAccountList(BaseModel):
+    items: list[ConnectedAccount]
+    platforms: Annotated[
+        list[str],
+        Field(
+            description="Platform ids that can be connected (those the orchestrator can search)."
+        ),
+    ]
 
 
 class NegotiationParams(BaseModel):

@@ -184,7 +184,10 @@
     "password": "Contraseña",
     "vaultNote": "Se envían directamente al almacén cifrado. Ni el agente ni esta pantalla las vuelven a ver: solo un identificador de cuenta.",
     "save": "Guardar credenciales",
-    "pending": "Pendiente de conectar: las credenciales aún no pueden enviarse al almacén cifrado"
+    "connectFailed": "No se pudo conectar la cuenta.",
+    "vault_unavailable": "El almacén cifrado no está disponible ahora. Inténtalo más tarde.",
+    "forbidden": "Solo owner o admin pueden gestionar las cuentas.",
+    "loading": "Cargando cuentas…"
   },
   "finance": {
     "drop": "Arrastra aquí tu CSV financiero",

@@ -1,7 +1,9 @@
 export {
   api,
   queryKeys,
+  useAccountAction,
   useApproval,
+  useConnectedAccounts,
   useApprovals,
   useAuditEvents,
   useAuditVerification,

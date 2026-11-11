@@ -94,6 +94,10 @@ DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("GET", "/v1/onboarding/sessions/{id}/messages"),
         ("POST", "/v1/onboarding/sessions/{id}/messages"),
         # Approvals inbox over decisions (D6-165-contract).
+        # Marketplace accounts and the vault (issue 154).
+        ("GET", "/v1/connected-accounts"),
+        ("POST", "/v1/connected-accounts"),
+        ("DELETE", "/v1/connected-accounts/{id}"),
         ("GET", "/v1/approvals"),
         ("GET", "/v1/approvals/{id}"),
         ("GET", "/v1/approvals/{id}/documents/{kind}"),

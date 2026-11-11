@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from apex.agents.translation import MessageTranslator
+from apex.api import accounts as accounts_api
 from apex.api import config as config_api
 from apex.api import dashboard as dashboard_api
 from apex.api import gate as gate_api
@@ -27,7 +28,13 @@ from apex.common.idempotency import (
 )
 from apex.config import Settings, settings
 from apex.platform.telemetry import setup_telemetry
-from apex.wiring import AppServices, build_anchor_store, build_app_services, seed_demo_tenants
+from apex.wiring import (
+    DEV_PLATFORMS,
+    AppServices,
+    build_anchor_store,
+    build_app_services,
+    seed_demo_tenants,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -130,6 +137,9 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     application.dependency_overrides[translation_api.get_translator] = lambda: MessageTranslator(
         services.gateway, services.prompts
     )
+    application.dependency_overrides[accounts_api.get_platform_ids] = lambda: [
+        p.platform_id for p in DEV_PLATFORMS
+    ]
     application.state.settings = services.settings
     application.state.anchor_store = build_anchor_store(services.settings)
 

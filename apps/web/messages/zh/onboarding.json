@@ -184,7 +184,10 @@
     "password": "密码",
     "vaultNote": "它们将直接发送到加密保管库。代理和本页面都不会再看到：只保留账户标识。",
     "save": "保存凭据",
-    "pending": "尚未接入：凭据暂时无法发送到加密保管库"
+    "connectFailed": "无法连接该账户。",
+    "vault_unavailable": "加密保险库暂不可用,请稍后重试。",
+    "forbidden": "只有 owner 或 admin 可以管理账户。",
+    "loading": "正在加载账户…"
   },
   "finance": {
     "drop": "将财务 CSV 拖到此处",
