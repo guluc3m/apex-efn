@@ -3,7 +3,8 @@
   "tabsLabel": "Estado de las aprobaciones",
   "tabs": { "sign": "Por firmar", "progress": "En curso", "closed": "Cerradas" },
   "empty": "Sin compras cerradas todavía.",
-  "notes": { "secondMissing": "Falta segunda firma", "highAmount": "Importe alto · pide passkey", "inTransit": "En tránsito" },
+  "signaturesOf": "{done} de {needed} firmas",
+  "docUnavailable": "La generación de documentos aún no está conectada",
   "back": "Volver a aprobaciones",
   "kind": "Seguir y comprar · doble control",
   "pending": "Pendiente de conectar",
@@ -27,14 +28,13 @@
   "colAction": "Acción",
   "download": "Descargar PDF",
   "docs": { "rfq": "Solicitud de oferta (RFQ)", "po": "Orden de compra", "certificate": "Certificado de verificación" },
-  "docPending": { "po": "Se genera con la segunda firma", "certificate": "Se genera con la segunda firma" },
   "trackHeading": "Seguimiento de la compra",
   "trackCaption": "Trazabilidad de la compra",
   "colEvent": "Evento",
   "track": {
-    "signed": "Decisión firmada por Responsable",
-    "poSent": "Orden de compra enviada al vendedor",
-    "confirmed": "El vendedor confirma por escrito el precio y el pago a 60 días",
-    "transit": "En tránsito · llegada prevista 20/11"
+    "signed": "Decisión firmada",
+    "po_sent": "Orden de compra enviada al vendedor",
+    "confirmed": "El vendedor lo confirmó por escrito",
+    "transit": "En tránsito"
   }
 }

@@ -35,7 +35,10 @@ import type {
   ListDealsResponse,
   ListGateQueueData,
   ListGateQueueResponse,
+  GetApprovalResponse,
   GetDecisionResponse,
+  ListApprovalsData,
+  ListApprovalsResponse,
   GetSigningSessionResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
@@ -170,6 +173,12 @@ export function createOperations(client: ApiClient) {
         body,
         signal,
       }),
+
+    listApprovals: (query?: ListApprovalsData['query'], signal?: AbortSignal) =>
+      client.request<ListApprovalsResponse>('/v1/approvals', { path: undefined, query, signal }),
+
+    getApproval: (id: string, signal?: AbortSignal) =>
+      client.request<GetApprovalResponse>('/v1/approvals/{id}', { path: { id }, signal }),
 
     listGateQueue: (query?: ListGateQueueData['query'], signal?: AbortSignal) =>
       client.request<ListGateQueueResponse>('/v1/gate/queue', { path: undefined, query, signal }),

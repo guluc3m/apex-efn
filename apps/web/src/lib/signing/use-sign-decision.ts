@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 
 import { useViewer } from '@/components/viewer-context'
@@ -14,7 +14,9 @@ import { NoSigningSessionError, PayloadMismatchError } from './sign-decision'
 export function useSignDecision() {
   const t = useTranslations('signing.signFlow')
   const { userId } = useViewer()
+  const qc = useQueryClient()
   const mutation = useMutation({
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['approvals'] }),
     mutationFn: (decisionId: string) => {
       if (!userId) throw new NoSigningSessionError()
       return signDecisionFor(userId, decisionId)

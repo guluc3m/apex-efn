@@ -1,22 +1,43 @@
 'use client'
 
-import { Badge, Button, Icon, SignatureStatusBadge, Table, cn, type TableColumn } from '@apex/ui'
-import { ArrowLeft, Download, FileText, PenLine, Send, Truck } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import type { ApprovalDocument, ApprovalInboxStatus, ApprovalView, Signature } from '@apex/shared-types/contracts'
+import { Button, Icon, MoneyDisplay, SignatureStatusBadge, Table, cn, type TableColumn } from '@apex/ui'
+import { ArrowLeft, Download, FileText, Send, Truck } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { AppLink, renderLink } from '@/components/app-link'
-import { APPROVAL_TABS, type ApprovalDocument, type ApprovalFixture, type ApprovalSignature, type ApprovalStatus } from '@/fixtures/approvals'
+import { QueryBoundary } from '@/components/query-boundary'
+import { SignDecisionButton } from '@/components/signing/sign-decision-button'
+import { useApproval, useApprovals } from '@/lib/api'
+
+export const APPROVAL_TABS: readonly ApprovalInboxStatus[] = ['sign', 'progress', 'closed']
+
+function useWhen() {
+  const locale = useLocale()
+  const fmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' })
+  return (iso: string) => fmt.format(new Date(iso))
+}
+
+function Amount({ a }: { a: ApprovalView }) {
+  const locale = useLocale()
+  return a.amount ? <MoneyDisplay amountMinor={a.amount.amount_minor} currency={a.amount.currency} locale={locale} /> : <>—</>
+}
 
 /** Bandeja: el filtro `?estado=` vive en la URL; las pestañas son enlaces. */
-export function ApprovalsList({ rows, status }: { rows: ApprovalFixture[]; status: ApprovalStatus }) {
+export function ApprovalsList({ status }: { status: ApprovalInboxStatus }) {
   const t = useTranslations('approvals')
-  const shown = rows.filter((a) => a.status === status)
+  const query = useApprovals({ status })
 
-  const columns: TableColumn<ApprovalFixture>[] = [
-    { id: 'title', header: t('colDocument'), sortable: false, cell: (a) => a.title },
-    { id: 'seller', header: t('colWho'), sortable: false, cell: (a) => a.seller },
-    { id: 'amount', header: t('colDetail'), sortable: false, num: true, cell: (a) => a.amount },
-    { id: 'note', header: t('colState'), sortable: false, cell: (a) => <Badge tone="plano">{t(`notes.${a.note}`)}</Badge> },
+  const columns: TableColumn<ApprovalView>[] = [
+    { id: 'title', header: t('colDocument'), sortable: false, cell: (a) => a.subject_ref },
+    { id: 'seller', header: t('colWho'), sortable: false, cell: (a) => a.seller_ref ?? '—' },
+    { id: 'amount', header: t('colDetail'), sortable: false, num: true, cell: (a) => <Amount a={a} /> },
+    {
+      id: 'sigs',
+      header: t('colState'),
+      sortable: false,
+      cell: (a) => t('signaturesOf', { done: a.signatures.length, needed: a.required_signers }),
+    },
   ]
 
   return (
@@ -37,30 +58,35 @@ export function ApprovalsList({ rows, status }: { rows: ApprovalFixture[]; statu
           </AppLink>
         ))}
       </nav>
-      <Table
-        columns={columns}
-        rows={shown}
-        getRowId={(a) => a.id}
-        getHref={(a) => `/aprobaciones/${a.id}`}
-        caption={t(`tabs.${status}`)}
-        empty={t('empty')}
-        renderLink={renderLink}
-      />
+      <QueryBoundary query={query}>
+        {(page) => (
+          <Table
+            columns={columns}
+            rows={page.items}
+            getRowId={(a) => a.id}
+            getHref={(a) => `/aprobaciones/${a.id}`}
+            caption={t(`tabs.${status}`)}
+            empty={t('empty')}
+            renderLink={renderLink}
+          />
+        )}
+      </QueryBoundary>
     </div>
   )
 }
 
-function SignatureRow({ s }: { s: ApprovalSignature }) {
+function SignatureRow({ slot, s }: { slot: number; s?: Signature }) {
   const t = useTranslations('approvals')
+  const when = useWhen()
   return (
     <tr>
       <th scope="row" className="py-2 pr-4 text-left font-medium">
-        {t(s.slot)}
+        {t(slot === 0 ? 'first' : 'second')}
       </th>
-      <td className="py-2 pr-4">{s.signed ? s.who : s.slot === 'second' ? t('secondWho') : '—'}</td>
-      <td className="py-2 pr-4">{s.signed ? s.when : '—'}</td>
+      <td className="py-2 pr-4">{s ? s.signer_id : slot === 1 ? t('secondWho') : '—'}</td>
+      <td className="py-2 pr-4">{s ? when(s.signed_at) : '—'}</td>
       <td className="py-2">
-        <SignatureStatusBadge status={s.signed ? 'signed' : 'pending'} label={s.signed ? t('signed') : t('notSigned')} />
+        <SignatureStatusBadge status={s ? 'signed' : 'pending'} label={s ? t('signed') : t('notSigned')} />
       </td>
     </tr>
   )
@@ -73,10 +99,10 @@ function DocRow({ d }: { d: ApprovalDocument }) {
       <th scope="row" className="py-2 pr-4 text-left font-medium">
         {t(`docs.${d.kind}`)}
       </th>
-      <td className="py-2 pr-4 text-ink-muted">{d.hash ?? (d.kind === 'rfq' ? '' : t(`docPending.${d.kind}`))}</td>
+      <td className="py-2 pr-4 text-ink-muted">{d.sha256 ? `sha256 ${d.sha256.slice(0, 8)}…` : ''}</td>
       <td className="py-2 text-right">
-        {/* //todo_#165: descarga del PDF (RFQ, orden de compra, certificado) cuando D2-11 esté conectado */}
-        <Button size="sm" disabledReason={d.available ? t('pending') : t(`docPending.${d.kind === 'rfq' ? 'po' : d.kind}`)}>
+        {/* La descarga solo se habilita cuando D2-11 genere el PDF; la API aún no expone la ruta. */}
+        <Button size="sm" disabledReason={t('docUnavailable')}>
           <Icon icon={Download} />
           {t('download')}
         </Button>
@@ -85,9 +111,10 @@ function DocRow({ d }: { d: ApprovalDocument }) {
   )
 }
 
-export function ApprovalDetail({ a }: { a: ApprovalFixture }) {
+function Detail({ a }: { a: ApprovalView }) {
   const t = useTranslations('approvals')
-  const dual = a.signatures.some((s) => !s.signed) && a.signatures.some((s) => s.signed)
+  const when = useWhen()
+  const missing = a.status === 'sign' && a.signatures.length < a.required_signers
   return (
     <div className="flex max-w-240 flex-col gap-7 px-(--gutter-page) py-6">
       <AppLink href={`/aprobaciones?estado=${a.status}`} className="inline-flex w-fit items-center gap-1.5 text-ink-soft">
@@ -97,7 +124,7 @@ export function ApprovalDetail({ a }: { a: ApprovalFixture }) {
       <div>
         <div className="text-ink-muted">{t('kind')}</div>
         <h1 className="mt-1 mb-0 text-2xl font-semibold">
-          {a.title} · {a.amount}
+          {a.subject_ref} · <Amount a={a} />
         </h1>
       </div>
 
@@ -112,23 +139,20 @@ export function ApprovalDetail({ a }: { a: ApprovalFixture }) {
           </tr>
         </thead>
         <tbody>
-          {a.signatures.map((s) => (
-            <SignatureRow key={s.slot} s={s} />
+          {Array.from({ length: a.required_signers }, (_, i) => (
+            <SignatureRow key={i} slot={i} s={a.signatures[i]} />
           ))}
         </tbody>
       </table>
 
-      {a.status === 'sign' ? (
+      {missing ? (
         <div className="flex flex-col gap-3">
+          {/* El servidor exige otra persona para la segunda firma (409 already_signed_by_signer) y una sesión de firma abierta. */}
+          <SignDecisionButton decisionId={a.id} reasonWithout={t('addSecondReason')}>
+            {t(a.signatures.length === 0 ? 'first' : 'addSecond')}
+          </SignDecisionButton>
           <div>
-            {/* //todo_#165: la segunda firma exige otra persona con rol finance|admin|owner y sesión de firma abierta */}
-            <Button disabledReason={dual ? t('addSecondReason') : t('pending')}>
-              <Icon icon={PenLine} />
-              {t('addSecond')}
-            </Button>
-          </div>
-          <div>
-            {/* //todo_#165: notificar a Finanzas para que firme */}
+            {/* Sin ruta para avisar a Finanzas (issue #302): se queda desactivado con su motivo. */}
             <Button disabledReason={t('pending')}>
               <Icon icon={Send} />
               {t('askFinance')}
@@ -175,8 +199,8 @@ export function ApprovalDetail({ a }: { a: ApprovalFixture }) {
             </thead>
             <tbody>
               {a.tracking.map((e) => (
-                <tr key={e.event}>
-                  <th scope="row" className="w-40 py-2 pr-4 text-left font-medium">{e.when}</th>
+                <tr key={`${e.event}-${e.at}`}>
+                  <th scope="row" className="w-40 py-2 pr-4 text-left font-medium">{when(e.at)}</th>
                   <td className="py-2">{t(`track.${e.event}`)}</td>
                 </tr>
               ))}
@@ -186,4 +210,9 @@ export function ApprovalDetail({ a }: { a: ApprovalFixture }) {
       ) : null}
     </div>
   )
+}
+
+export function ApprovalDetail({ id }: { id: string }) {
+  const query = useApproval(id)
+  return <QueryBoundary query={query}>{(a) => <Detail a={a} />}</QueryBoundary>
 }

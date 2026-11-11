@@ -17,6 +17,8 @@ export const queryKeys = {
   negotiation: (id: string) => ['negotiation', id] as const,
   negotiationMessages: (id: string) => ['negotiation', id, 'messages'] as const,
   deals: (query?: object) => ['deals', query ?? null] as const,
+  approvals: (query?: object) => ['approvals', query ?? null] as const,
+  approval: (id: string) => ['approvals', id] as const,
   gateQueue: (query?: object) => ['gate', 'queue', query ?? null] as const,
   effectiveConfig: (category?: string) => ['config', 'effective', category ?? null] as const,
 }
@@ -134,6 +136,14 @@ export function useNegotiationAction(id: string) {
 
 export function useDeals(query?: Parameters<typeof api.listDeals>[0]) {
   return useQuery({ queryKey: queryKeys.deals(query), queryFn: ({ signal }) => api.listDeals(query, signal) })
+}
+
+export function useApprovals(query?: Parameters<typeof api.listApprovals>[0]) {
+  return useQuery({ queryKey: queryKeys.approvals(query), queryFn: ({ signal }) => api.listApprovals(query, signal) })
+}
+
+export function useApproval(id: string) {
+  return useQuery({ queryKey: queryKeys.approval(id), queryFn: ({ signal }) => api.getApproval(id, signal) })
 }
 
 export function useGateQueue(query?: Parameters<typeof api.listGateQueue>[0]) {

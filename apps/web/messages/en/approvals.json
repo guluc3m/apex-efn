@@ -3,7 +3,8 @@
   "tabsLabel": "Approval status",
   "tabs": { "sign": "To sign", "progress": "In progress", "closed": "Closed" },
   "empty": "No closed purchases yet.",
-  "notes": { "secondMissing": "Second signature missing", "highAmount": "High amount · asks for passkey", "inTransit": "In transit" },
+  "signaturesOf": "{done} of {needed} signatures",
+  "docUnavailable": "Document generation is not connected yet",
   "back": "Back to approvals",
   "kind": "Follow and buy · dual control",
   "pending": "Not connected yet",
@@ -27,14 +28,13 @@
   "colAction": "Action",
   "download": "Download PDF",
   "docs": { "rfq": "Request for quotation (RFQ)", "po": "Purchase order", "certificate": "Verification certificate" },
-  "docPending": { "po": "Generated with the second signature", "certificate": "Generated with the second signature" },
   "trackHeading": "Purchase tracking",
   "trackCaption": "Purchase traceability",
   "colEvent": "Event",
   "track": {
-    "signed": "Decision signed by Manager",
-    "poSent": "Purchase order sent to the seller",
-    "confirmed": "The seller confirms the price and 60-day payment in writing",
-    "transit": "In transit · expected arrival 20/11"
+    "signed": "Decision signed",
+    "po_sent": "Purchase order sent to the seller",
+    "confirmed": "The seller confirmed in writing",
+    "transit": "In transit"
   }
 }
