@@ -543,3 +543,10 @@ def test_a_mission_without_llm_calls_reports_zero_tokens() -> None:
 
     services = build_app_services(Settings(idempotency_backend="memory"), clock=FixedClock(NOW))
     assert services.gateway.tokens_used("mission-that-never-ran") == 0
+
+
+def test_dashboard_summary_and_missing_deal(app: FastAPI) -> None:
+    with TestClient(app) as client:
+        summary = client.get("/v1/dashboard/summary", headers=_h()).json()
+        assert summary["pending_count"] == 0 and summary["nearest_sla_due_at"] is None
+        assert client.get("/v1/dashboard/deals/nope", headers=_h()).status_code == 404
