@@ -27,6 +27,27 @@ tags:
 - {name: config}
 paths:
   /v1/onboarding/sessions:
+    get:
+      tags: [onboarding]
+      operationId: listOnboardingSessions
+      summary: The tenant's onboarding sessions, newest first. Use `status` and `limit=1` to find the current one.
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Only sessions in these states (repeat the parameter for several).
+        schema:
+          type: array
+          items: {$ref: '#/components/schemas/OnboardingStatus'}
+      - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200':
+          description: Sessions of the tenant.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnboardingSessionList'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
     post:
       tags: [onboarding]
       operationId: createOnboardingSession
@@ -50,6 +71,19 @@ paths:
   /v1/onboarding/sessions/{id}:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [onboarding]
+      operationId: getOnboardingSession
+      summary: Read a session back, with per-step progress, so the wizard can restore its saved draft after a reload.
+      responses:
+        '200':
+          description: The session.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnboardingSession'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
     patch:
       tags: [onboarding]
       operationId: updateOnboardingSession
@@ -1544,8 +1578,30 @@ components:
         active_financial_snapshot_id:
           type: [string, 'null']
         effective_config: {$ref: '#/components/schemas/EffectiveConfig'}
+        steps:
+          type: array
+          description: Per-step completion computed by the server from what it holds. Steps the server cannot evaluate (their data is tenant configuration, saved through signed decisions) are absent.
+          items: {$ref: '#/components/schemas/OnboardingStepProgress'}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+    OnboardingStep:
+      type: string
+      enum: [company, sector, accounts, budget, policy, negotiation, finance]
+    OnboardingStepProgress:
+      type: object
+      required: [step, done, warnings, pending]
+      properties:
+        step: {$ref: '#/components/schemas/OnboardingStep'}
+        done: {type: integer, minimum: 0, description: Required items already filled in.}
+        warnings: {type: integer, minimum: 0, description: Items that need a look (for example import warnings).}
+        pending: {type: integer, minimum: 0, description: Required items still missing.}
+    OnboardingSessionList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/OnboardingSession'}
     FinancialCsvUpload:
       type: object
       required: [file]

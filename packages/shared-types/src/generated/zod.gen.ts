@@ -279,6 +279,27 @@ export const zSendIntakeMessageRequest = z.object({
 
 export type sendIntakeMessageRequestZodType = z.infer<typeof zSendIntakeMessageRequest>
 
+export const zOnboardingStep = z.enum([
+  'company',
+  'sector',
+  'accounts',
+  'budget',
+  'policy',
+  'negotiation',
+  'finance',
+])
+
+export type onboardingStepZodType = z.infer<typeof zOnboardingStep>
+
+export const zOnboardingStepProgress = z.object({
+  step: zOnboardingStep,
+  done: z.number().int().gte(0),
+  warnings: z.number().int().gte(0),
+  pending: z.number().int().gte(0),
+})
+
+export type onboardingStepProgressZodType = z.infer<typeof zOnboardingStepProgress>
+
 export const zFinancialCsvUpload = z.object({
   file: z.string(),
   column_mapping: z.string().optional(),
@@ -1921,6 +1942,7 @@ export const zOnboardingSession = z.object({
   company_profile: zCompanyProfile,
   active_financial_snapshot_id: z.string().nullish(),
   effective_config: zEffectiveConfig,
+  steps: z.array(zOnboardingStepProgress).optional(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 })
@@ -1933,6 +1955,12 @@ export const zIntakeTurn = z.object({
 })
 
 export type intakeTurnZodType = z.infer<typeof zIntakeTurn>
+
+export const zOnboardingSessionList = z.object({
+  items: z.array(zOnboardingSession),
+})
+
+export type onboardingSessionListZodType = z.infer<typeof zOnboardingSessionList>
 
 export const zConfigChangeRequest = z.object({
   base_config_version: z.number().int().gte(1),
@@ -1969,6 +1997,16 @@ export const zNegotiationControl = zNegotiationControlRequest
 
 export type negotiationControlZodType = z.infer<typeof zNegotiationControl>
 
+export const zListOnboardingSessionsQuery = z.object({
+  status: z.array(zOnboardingStatus).optional(),
+  limit: z.number().int().gte(1).lte(200).optional().default(50),
+})
+
+/**
+ * Sessions of the tenant.
+ */
+export const zListOnboardingSessionsResponse = zOnboardingSessionList
+
 export const zCreateOnboardingSessionBody = zCreateOnboardingSessionRequest
 
 export const zCreateOnboardingSessionHeaders = z.object({
@@ -1979,6 +2017,15 @@ export const zCreateOnboardingSessionHeaders = z.object({
  * Session created.
  */
 export const zCreateOnboardingSessionResponse = zOnboardingSession
+
+export const zGetOnboardingSessionPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * The session.
+ */
+export const zGetOnboardingSessionResponse = zOnboardingSession
 
 export const zUpdateOnboardingSessionBody = zUpdateOnboardingSessionRequest
 

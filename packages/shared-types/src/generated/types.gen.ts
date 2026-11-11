@@ -262,8 +262,35 @@ export type OnboardingSession = {
   company_profile: CompanyProfile
   active_financial_snapshot_id?: string | null
   effective_config: EffectiveConfig
+  /**
+   * Per-step completion computed by the server from what it holds. Steps the server cannot evaluate (their data is tenant configuration, saved through signed decisions) are absent.
+   */
+  steps?: Array<OnboardingStepProgress>
   created_at: string
   updated_at: string
+}
+
+export type OnboardingStep =
+  'company' | 'sector' | 'accounts' | 'budget' | 'policy' | 'negotiation' | 'finance'
+
+export type OnboardingStepProgress = {
+  step: OnboardingStep
+  /**
+   * Required items already filled in.
+   */
+  done: number
+  /**
+   * Items that need a look (for example import warnings).
+   */
+  warnings: number
+  /**
+   * Required items still missing.
+   */
+  pending: number
+}
+
+export type OnboardingSessionList = {
+  items: Array<OnboardingSession>
 }
 
 export type FinancialCsvUpload = {
@@ -1737,6 +1764,43 @@ export type IdempotencyKey = string
 
 export type NegotiationControl = NegotiationControlRequest
 
+export type ListOnboardingSessionsData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * Only sessions in these states (repeat the parameter for several).
+     */
+    status?: Array<OnboardingStatus>
+    limit?: number
+  }
+  url: '/v1/onboarding/sessions'
+}
+
+export type ListOnboardingSessionsErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+}
+
+export type ListOnboardingSessionsError =
+  ListOnboardingSessionsErrors[keyof ListOnboardingSessionsErrors]
+
+export type ListOnboardingSessionsResponses = {
+  /**
+   * Sessions of the tenant.
+   */
+  200: OnboardingSessionList
+}
+
+export type ListOnboardingSessionsResponse =
+  ListOnboardingSessionsResponses[keyof ListOnboardingSessionsResponses]
+
 export type CreateOnboardingSessionData = {
   body: CreateOnboardingSessionRequest
   headers: {
@@ -1777,6 +1841,42 @@ export type CreateOnboardingSessionResponses = {
 
 export type CreateOnboardingSessionResponse =
   CreateOnboardingSessionResponses[keyof CreateOnboardingSessionResponses]
+
+export type GetOnboardingSessionData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/onboarding/sessions/{id}'
+}
+
+export type GetOnboardingSessionErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type GetOnboardingSessionError = GetOnboardingSessionErrors[keyof GetOnboardingSessionErrors]
+
+export type GetOnboardingSessionResponses = {
+  /**
+   * The session.
+   */
+  200: OnboardingSession
+}
+
+export type GetOnboardingSessionResponse =
+  GetOnboardingSessionResponses[keyof GetOnboardingSessionResponses]
 
 export type UpdateOnboardingSessionData = {
   body: UpdateOnboardingSessionRequest

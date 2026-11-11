@@ -123,6 +123,18 @@ async def create_onboarding_session(
     return SessionOut.of(await service.start_session(tenant_id=tenant_id))
 
 
+@router.get("/sessions", tags=["onboarding"])
+async def list_onboarding_sessions() -> None:
+    """The tenant's sessions (contract route, issue #377). 501 until implemented."""
+    raise not_implemented("listing onboarding sessions is not implemented yet")
+
+
+@router.get("/sessions/{id}", tags=["onboarding"])
+async def get_onboarding_session(id: str) -> None:
+    """One session with per-step progress (contract route, issue #377). 501 until implemented."""
+    raise not_implemented("reading an onboarding session is not implemented yet")
+
+
 def _message_out(m: IntakeMessage) -> dict[str, str]:
     return {"id": m.id, "role": m.role, "text": m.text, "created_at": m.created_at.isoformat()}
 
