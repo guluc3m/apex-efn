@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { SignDecisionButton } from '@/components/signing/sign-decision-button'
-import { ApiError, useEffectiveConfig, useProposeConfigChange } from '@/lib/api'
+import { ApiError, useConfigVersions, useEffectiveConfig, useProposeConfigChange } from '@/lib/api'
 import { parsePatchValue, toRuleRows, type RuleRow } from '@/lib/config-rules'
 
 const th = 'border-b border-line px-3 py-2 text-left text-[13px] font-normal text-ink-muted'
@@ -21,11 +21,13 @@ export function RulesView({ canChange }: { canChange: boolean }) {
   const [applied, setApplied] = useState<string | undefined>(undefined)
   const [selected, setSelected] = useState<RuleRow | null>(null)
   const [value, setValue] = useState('')
+  const [reason, setReason] = useState('')
+  const history = useConfigVersions()
   const config = useEffectiveConfig(applied)
   const propose = useProposeConfigChange()
   const rows = config.data ? toRuleRows(config.data, locale) : []
   const name = (key: string) => (t.has(`names.${key.replace('.', '_')}`) ? t(`names.${key.replace('.', '_')}`) : key)
-  const proposalBlocked = !canChange ? t('noPermission') : !selected || value.trim() === '' ? t('pick') : undefined
+  const proposalBlocked = !canChange ? t('noPermission') : !selected || value.trim() === '' ? t('pick') : reason.trim() === '' ? t('reasonRequired') : undefined
 
   const submit = () => {
     if (!config.data || !selected) return
@@ -33,6 +35,7 @@ export function RulesView({ canChange }: { canChange: boolean }) {
       base_config_version: config.data.config_version,
       category: applied ?? null,
       patch: nest(selected.key, parsePatchValue(value)),
+      reason: reason.trim(),
     })
   }
 
@@ -126,6 +129,10 @@ export function RulesView({ canChange }: { canChange: boolean }) {
                 <Label htmlFor="rules-new-value">{t('newValue')}</Label>
                 <Input id="rules-new-value" value={value} onChange={(e) => setValue(e.target.value)} placeholder={t('newValueHint')} />
               </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="rules-reason">{t('reason')}</Label>
+                <Input id="rules-reason" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} />
+              </div>
             </>
           ) : (
             <p className="m-0 text-ink-muted">{canChange ? t('pick') : t('noPermission')}</p>
@@ -140,8 +147,24 @@ export function RulesView({ canChange }: { canChange: boolean }) {
         </div>
         <section>
           <h2 className="m-0 mb-2 flex items-center gap-2 text-base font-semibold"><Icon icon={History} />{t('history')}</h2>
-          {/* //todo_#167: sin endpoint de historial de configuración en el contrato (ver issue contract-change) */}
-          <p className="m-0 text-ink-muted">{t('historyPending')}</p>
+          {history.isError ? (
+            <p className="m-0 text-ink-muted">{t('historyPending')}</p>
+          ) : history.data && history.data.items.length > 0 ? (
+            <ol className="m-0 flex list-none flex-col gap-2 p-0">
+              {history.data.items.map((v) => (
+                <li key={v.config_version} className="border-b border-line pb-2">
+                  <div className="flex justify-between gap-4">
+                    <span className="font-mono">v{v.config_version}{v.category ? ` · ${v.category}` : ''}</span>
+                    <time dateTime={v.created_at} className="text-[13px] text-ink-muted">{new Date(v.created_at).toLocaleString(locale)}</time>
+                  </div>
+                  {v.reason ? <p className="m-0 text-ink-soft">{v.reason}</p> : null}
+                  {v.summary && v.summary.length > 0 ? <p className="m-0 font-mono text-[13px] text-ink-muted">{v.summary.join(', ')}</p> : null}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="m-0 text-ink-muted">{history.isPending ? t('loading') : t('historyEmpty')}</p>
+          )}
         </section>
       </aside>
     </div>

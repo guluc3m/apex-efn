@@ -129,6 +129,9 @@
     "signNote": "A change is a decision signed with immediate passkey reauthentication.",
     "noPermission": "Only finance, admin or owner can change rules.",
     "history": "History",
+    "reason": "Reason for the change",
+    "reasonRequired": "Give the reason for the change",
+    "historyEmpty": "No versions yet",
     "historyPending": "Pending connection: there is no history endpoint yet"
   },
   "audit": {

@@ -129,6 +129,9 @@
     "signNote": "Un cambio es una decisión firmada con reautenticación inmediata por passkey.",
     "noPermission": "Solo Finanzas, administración o propietario pueden cambiar reglas.",
     "history": "Historial",
+    "reason": "Motivo del cambio",
+    "reasonRequired": "Indica el motivo del cambio",
+    "historyEmpty": "Todavía no hay versiones",
     "historyPending": "Pendiente de conexión: aún no hay endpoint de historial"
   },
   "audit": {

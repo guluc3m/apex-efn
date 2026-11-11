@@ -62,6 +62,7 @@ import type {
   VerifyAuditChainResponse,
   VerifyDecisionResponse,
   GetFinancialImportResponse,
+  ListConfigVersionsResponse,
   ListProfilesResponse,
   UploadFinancialCsvResponse,
   UpdateOnboardingSessionData,
@@ -214,6 +215,10 @@ export function createOperations(client: ApiClient) {
         query,
         signal,
       }),
+
+    /** Configuration history, newest first. */
+    listConfigVersions: (signal?: AbortSignal) =>
+      client.request<ListConfigVersionsResponse>('/v1/config/versions', { path: {}, signal }),
 
     proposeConfigChange: (body: ProposeConfigChangeData['body'], signal?: AbortSignal) =>
       client.request<ProposeConfigChangeResponse>('/v1/config/proposals', {
