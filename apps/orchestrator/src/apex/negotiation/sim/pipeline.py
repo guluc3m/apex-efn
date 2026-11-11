@@ -145,8 +145,17 @@ async def run_scenario(
     can exit 1.
     """
     clock = clock or SystemClock()
-    market = client if client is not None else HttpMarketplace(config.marketplace_url)
-    gateway = build_gateway(config.llm_url)
+    market = (
+        client
+        if client is not None
+        else HttpMarketplace(
+            config.marketplace_url,
+            llm_url=config.llm_url,
+            llm_api_key=config.llm_api_key,
+            llm_model=config.llm_model,
+        )
+    )
+    gateway = build_gateway(config.llm_url, api_key=config.llm_api_key, model=config.llm_model)
     factory = engine_factory or default_engine_factory
     run_id = uuid4().hex[:8]
     ctx = SimContext(market=market, gateway=gateway, clock=clock, config=config, run_id=run_id)

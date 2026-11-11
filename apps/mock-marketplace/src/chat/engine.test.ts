@@ -160,6 +160,75 @@ describe('ChatEngine with an injected phraser', () => {
   })
 })
 
+describe('ChatEngine with a per-call phraser override', () => {
+  it('uses the override for that call and leaves the default phraser untouched', async () => {
+    const defaultCalls: string[] = []
+    const overrideCalls: string[] = []
+    const fallback: ChatPhraser = {
+      phrased: (scripted) => {
+        defaultCalls.push(scripted)
+        return Promise.resolve(scripted)
+      },
+    }
+    const override: ChatPhraser = {
+      phrased: (scripted) => {
+        overrideCalls.push(scripted)
+        return Promise.resolve('Hola, te lo dejo en €4.32 por unidad.')
+      },
+    }
+
+    const market = server(fallback)
+    const chat = market.chats.open('mock-c', 'c-solid-supplier', 'c-gloves-01')
+
+    await market.chats.send(chat.id, BUYER_LINE, override)
+    expect(overrideCalls).toEqual([SCRIPTED_FIRST])
+    expect(defaultCalls).toEqual([])
+    expect(sellerText(market.chats.snapshot(chat.id))).toBe(
+      'Hola, te lo dejo en €4.32 por unidad.'
+    )
+
+    // The next call without an override goes back to the engine's own phraser.
+    await market.chats.send(chat.id, 'Could you improve the price for 5000 units?')
+    expect(defaultCalls).toHaveLength(1)
+    expect(overrideCalls).toHaveLength(1)
+    const sellerLines = market.chats
+      .snapshot(chat.id)
+      .messages.filter((m) => m.role === 'seller')
+      .map((m) => m.text)
+    expect(sellerLines.at(-1)).toBe(defaultCalls[0])
+    await market.app.close()
+  })
+
+  it('never rewords the written confirmation, even with an override', async () => {
+    const calls: string[] = []
+    const override: ChatPhraser = {
+      phrased: (scripted) => {
+        calls.push(scripted)
+        return Promise.resolve(scripted)
+      },
+    }
+    const market = server()
+    const chat = market.chats.open('mock-c', 'c-solid-supplier', 'c-gloves-01')
+    market.chats.setChatPersona(chat.id, 'cooperative')
+    for (const line of [
+      'Hello, we are a distributor in Spain and need 5000 units per month, recurring. What volume tiers do you offer?',
+      'Thanks. With 5000 units and a recurring order, could you do EUR 3.90 per unit?',
+      'Could you meet us at EUR 4.30?',
+      'Please confirm the final price in writing, and quote it in EUR.',
+    ]) {
+      await market.chats.send(chat.id, line, override)
+    }
+
+    const sellerLines = market.chats
+      .snapshot(chat.id)
+      .messages.filter((m) => m.role === 'seller')
+      .map((m) => m.text)
+    expect(sellerLines.at(-1)).toMatch(/Confirmed in writing/)
+    expect(calls.some((line) => /Confirmed in writing/.test(line))).toBe(false)
+    await market.app.close()
+  })
+})
+
 describe('mock-c thread endpoint with a phraser', () => {
   it('returns the awaited seller reply over the async path', async () => {
     const { app } = server({

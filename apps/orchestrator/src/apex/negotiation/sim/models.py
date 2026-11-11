@@ -159,6 +159,9 @@ class ScenarioConfig(BaseModel):
 
     marketplace_url: str = Field(min_length=1)
     llm_url: str | None = None
+    llm_api_key: str | None = Field(default=None, repr=False, exclude=True)
+    """Bearer token for the provider. Hidden from ``repr`` and serialisation: it must never be logged."""
+    llm_model: str | None = None
     quantity: int = Field(default=DEFAULT_QUANTITY, gt=0)
     buyers: list[BuyerProfile] = Field(default_factory=list)
     """Buyer profiles. Empty means the three :func:`default_buyers` for ``quantity``."""

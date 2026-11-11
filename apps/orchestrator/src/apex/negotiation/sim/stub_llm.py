@@ -224,8 +224,16 @@ def _token_count(value: Any) -> int:
     return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
-def build_gateway(llm_url: str | None) -> SimGateway:
+def build_gateway(
+    llm_url: str | None,
+    *,
+    api_key: str | None = None,
+    model: str | None = None,
+) -> SimGateway:
     """A gateway for the scenario: the stub, a self-hosted model or a vendor endpoint; else a null one.
+
+    ``api_key`` and ``model`` come from the session (the web UI can point one run at a provider of its
+    own); when they are not given, the environment is the fallback. Explicit arguments always win.
 
     Environment (all optional, the demo works without any of them):
 
@@ -238,12 +246,13 @@ def build_gateway(llm_url: str | None) -> SimGateway:
     """
     if not llm_url:
         return NullGateway()
-    api_key = os.environ.get("SIM_LLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
-    model = os.environ.get("SIM_LLM_MODEL") or ("deepseek-chat" if api_key else "negotiator")
-    scenario = os.environ.get("SIM_LLM_SCENARIO")
-    if scenario is None:
-        scenario = None if api_key else "sim-negotiation"
+    api_key = api_key or os.environ.get("SIM_LLM_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
+    model = (
+        model or os.environ.get("SIM_LLM_MODEL") or ("deepseek-chat" if api_key else "negotiator")
+    )
+    # A real provider gets no stub header, even if SIM_LLM_SCENARIO is still exported from stub mode.
+    scenario = None if api_key else (os.environ.get("SIM_LLM_SCENARIO") or "sim-negotiation")
     timeout = float(os.environ.get("SIM_LLM_TIMEOUT_MS", "30000")) / 1000
     return OpenAICompatGateway(
-        llm_url, model=model, api_key=api_key or None, scenario=scenario or None, timeout=timeout
+        llm_url, model=model, api_key=api_key or None, scenario=scenario, timeout=timeout
     )

@@ -84,6 +84,10 @@ echo 'DEEPSEEK_API_KEY=sk-...' > .env.local
 No la pongas en `demo.sh`, en `compose.yaml` ni en ningún fichero versionado: `.env.local`, `.env` y
 `.env.*.local` están ignorados por git, y el script no imprime la clave.
 
+También puedes configurarlo desde la página: endpoint, clave y modelo (con sugerencias). La URL y el modelo se
+recuerdan en el navegador; **la clave no se guarda**, vive solo en memoria y se envía únicamente al servidor
+local de la simulación. Si la dejas vacía, se usa el stub local.
+
 Con clave configurada el script **no arranca el stub** y apunta el mercado y el comprador al proveedor. Detalles:
 
 - La clave viaja solo en la cabecera `Authorization`, nunca en el cuerpo ni en los logs.
