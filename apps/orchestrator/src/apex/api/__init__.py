@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from apex.api.approvals import router as approvals_router
 from apex.api.audit import router as audit_router
+from apex.api.categories import router as categories_router
 from apex.api.config import router as config_router
 from apex.api.dashboard import router as dashboard_router
 from apex.api.decisions import router as decisions_router
@@ -39,3 +40,4 @@ router.include_router(keys_router, prefix="/keys", tags=["keys"])
 router.include_router(audit_router, prefix="/audit", tags=["audit"])
 router.include_router(approvals_router, prefix="/approvals", tags=["approvals"])
 router.include_router(profiles_router, prefix="/profiles", tags=["config"])
+router.include_router(categories_router, prefix="/categories", tags=["config"])

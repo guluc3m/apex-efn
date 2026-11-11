@@ -281,6 +281,12 @@ async def get_mission_recommendation(id: str) -> None:
     raise not_implemented("recommendation arrives with D4-12")
 
 
+@router.get("/{id}/recommendation/export")
+async def export_mission_recommendation(id: str) -> None:
+    """Download the recommendation (contract route, issue #379). 501 until implemented."""
+    raise not_implemented("exporting the recommendation is not implemented yet")
+
+
 async def _stream(mission: DomainMission, bus: Any, *, after_seq: int) -> AsyncIterator[bytes]:
     """Replay the mission's log, then follow the bus until the mission reaches a terminal status."""
     last = after_seq

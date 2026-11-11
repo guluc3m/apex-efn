@@ -279,6 +279,16 @@ export const zSendIntakeMessageRequest = z.object({
 
 export type sendIntakeMessageRequestZodType = z.infer<typeof zSendIntakeMessageRequest>
 
+export const zCategoryList = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+    })
+  ),
+})
+
+export type categoryListZodType = z.infer<typeof zCategoryList>
+
 export const zOnboardingStep = z.enum([
   'company',
   'sector',
@@ -1997,6 +2007,11 @@ export const zNegotiationControl = zNegotiationControlRequest
 
 export type negotiationControlZodType = z.infer<typeof zNegotiationControl>
 
+/**
+ * Distinct category ids, sorted.
+ */
+export const zListCategoriesResponse = zCategoryList
+
 export const zListOnboardingSessionsQuery = z.object({
   status: z.array(zOnboardingStatus).optional(),
   limit: z.number().int().gte(1).lte(200).optional().default(50),
@@ -2240,6 +2255,20 @@ export const zGetMissionRecommendationQuery = z.object({
  * Ranking with per-criterion contributions.
  */
 export const zGetMissionRecommendationResponse = zRecommendation
+
+export const zExportMissionRecommendationPath = z.object({
+  id: z.string().min(1),
+})
+
+export const zExportMissionRecommendationQuery = z.object({
+  profile: z.string(),
+  format: z.enum(['pdf', 'csv', 'json']),
+})
+
+/**
+ * The document. `json` is the same `Recommendation` that `getMissionRecommendation` returns.
+ */
+export const zExportMissionRecommendationResponse = zRecommendation
 
 export const zGetSellerConfidencePath = z.object({
   id: z.string().min(1),
