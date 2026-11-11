@@ -297,8 +297,9 @@ def build_offer_graph(
         action = signed.payload.get("action")
         negotiated_price = state.get("negotiation", {}).get("price_minor")
         if action == "unblock" and stage == "post" and negotiated_price is None:
-            # Escalated or stopped negotiations have no agreed price: there is nothing to score. The human
-            # must renegotiate or discard; "unblock" would push a priceless offer to the final decision.
+            # Stopped negotiations and escalations without a quote have no price: there is nothing to score.
+            # The human must renegotiate or discard. A #241 gate quote does carry one, and unblocking it
+            # goes through the sanity recheck like an agreed price.
             raise InvalidSignedDecision(
                 f"decision {signed.id}: unblock is not valid, the negotiation has no agreed price"
             )
