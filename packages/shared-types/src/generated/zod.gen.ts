@@ -785,6 +785,8 @@ export type rowRejectionZodType = z.infer<typeof zRowRejection>
 export const zImportReport = z.object({
   rows_ok: z.number().int().gte(0),
   rows_rejected: z.number().int().gte(0),
+  rows_duplicated: z.number().int().gte(0).optional(),
+  rows_converted: z.number().int().gte(0).optional(),
   rejections: z.array(zRowRejection),
   warnings: z.array(z.string()),
   projection_enabled: z.boolean(),
@@ -1929,6 +1931,16 @@ export const zUploadFinancialCsvPath = z.object({
  * Import parsed. Status is draft until explicitly activated.
  */
 export const zUploadFinancialCsvResponse = zFinancialImport
+
+export const zGetFinancialImportPath = z.object({
+  id: z.string().min(1),
+  import_id: z.string(),
+})
+
+/**
+ * The import.
+ */
+export const zGetFinancialImportResponse = zFinancialImport
 
 export const zActivateFinancialSnapshotBody = zActivateFinancialSnapshotRequest
 

@@ -1592,6 +1592,20 @@ class OnboardingSession(BaseModel):
 class ImportReport(BaseModel):
     rows_ok: Annotated[int, Field(ge=0)]
     rows_rejected: Annotated[int, Field(ge=0)]
+    rows_duplicated: Annotated[
+        int | None,
+        Field(
+            description="Rows rejected as later duplicates (spec 3.1.1). Subset of rows_rejected.",
+            ge=0,
+        ),
+    ] = None
+    rows_converted: Annotated[
+        int | None,
+        Field(
+            description="Rows whose amount was converted to the base currency (converted=true).",
+            ge=0,
+        ),
+    ] = None
     rejections: list[RowRejection]
     warnings: Annotated[
         list[str],

@@ -291,6 +291,14 @@ export type FinancialImport = {
 export type ImportReport = {
   rows_ok: number
   rows_rejected: number
+  /**
+   * Rows rejected as later duplicates (spec 3.1.1). Subset of rows_rejected.
+   */
+  rows_duplicated?: number
+  /**
+   * Rows whose amount was converted to the base currency (converted=true).
+   */
+  rows_converted?: number
   rejections: Array<RowRejection>
   /**
    * Written by the LLM from the structured report only. Never contains numbers the code did not compute.
@@ -1832,6 +1840,43 @@ export type UploadFinancialCsvResponses = {
 
 export type UploadFinancialCsvResponse =
   UploadFinancialCsvResponses[keyof UploadFinancialCsvResponses]
+
+export type GetFinancialImportData = {
+  body?: never
+  path: {
+    id: string
+    import_id: string
+  }
+  query?: never
+  url: '/v1/onboarding/{id}/financial-csv/{import_id}'
+}
+
+export type GetFinancialImportErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type GetFinancialImportError = GetFinancialImportErrors[keyof GetFinancialImportErrors]
+
+export type GetFinancialImportResponses = {
+  /**
+   * The import.
+   */
+  200: FinancialImport
+}
+
+export type GetFinancialImportResponse =
+  GetFinancialImportResponses[keyof GetFinancialImportResponses]
 
 export type ActivateFinancialSnapshotData = {
   body: ActivateFinancialSnapshotRequest
