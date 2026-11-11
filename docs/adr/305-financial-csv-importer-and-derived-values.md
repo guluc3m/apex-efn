@@ -1,6 +1,6 @@
 # ADR-305: Financial CSV importer and derived values
 
-Status: **Proposed** (needs TL approval). Lane DEV-3, task D3-04.
+Status: **Accepted** (TL decision, 2026-11-11). Lane DEV-3, task D3-04.
 
 ## Decisions
 1. `apex.domain.finance.csv_import.parse(content, base_currency, rates, now, cfg) -> ImportResult` is pure. Unreadable
@@ -15,3 +15,10 @@ Status: **Proposed** (needs TL approval). Lane DEV-3, task D3-04.
    `envelopes` is always `[]` until the TL adds one (open question).
 7. **net_buying_capacity (proposal):** at the reference period, `cash_balance + credit_line_available - tax_reserve - cash_balance * safety_buffer_bp / 10000`,
    in the base currency, missing parts counted as 0. `buying_power_score` stays `null` (Q2: informational, formula pending).
+
+## TL decision (2026-11-11)
+- Points 1 to 5 accepted as written.
+- Point 6: accepted. Empty envelopes are the honest result; the offers then get `out_of_budget` / `no_envelope` per ADR-900 Q2.
+  Adding a budget metric to the closed enum is a spec change and stays a follow-up for the product owner, not part of D3-04.
+- Point 7: accepted as the default formula. It is conservative (it subtracts the tax reserve and the safety buffer) and
+  `buying_power_score` stays informational, so it gates nothing. Changing it needs a new ADR.
