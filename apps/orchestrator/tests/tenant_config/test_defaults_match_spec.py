@@ -50,6 +50,12 @@ def _flatten(node: Any, prefix: str = "") -> dict[str, Any]:
 ADR900_ADDED: frozenset[str] = frozenset(
     {
         "sanity.reference_weights",  # Q4
+        "seller.x_sat",  # ADR-304
+        "seller.category_rating_mean",  # ADR-304
+        "seller.category_five_star_share",  # ADR-304
+        "seller.wilson_confidence",  # ADR-304
+        "seller.min_verified_share",  # ADR-304
+        "seller.max_duplicate_text_share",  # ADR-304
         "landed.duty_rate",  # Q5
         "landed.import_vat_rate",  # Q5
         "finance.cost_of_capital_rate",  # Q5
@@ -63,9 +69,13 @@ ADR900_ADDED: frozenset[str] = frozenset(
     }
 )
 # ADR-900 Q7 option B: ``llm.roles`` ships a global default (every role on the LLM stub) instead of unset.
-ADR900_NO_LONGER_UNSET: frozenset[str] = frozenset({"llm.roles"})
+ADR900_NO_LONGER_UNSET: frozenset[str] = frozenset(
+    {"llm.roles", "seller.weights"}
+)  # seller.weights: ADR-304
 # Structured leaves: a value that is an object inside one leaf, not many keys.
-STRUCTURED_LEAVES: frozenset[str] = frozenset({"llm.roles", "sanity.reference_weights"})
+STRUCTURED_LEAVES: frozenset[str] = frozenset(
+    {"llm.roles", "sanity.reference_weights", "seller.weights", "seller.x_sat"}
+)
 
 
 def _leaf_paths(values: Any) -> set[str]:

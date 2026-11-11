@@ -158,7 +158,7 @@ async def test_an_offer_without_a_capture_time_is_refused() -> None:
 
 async def test_unset_seller_config_is_a_loud_error_naming_the_key() -> None:
     """ADR-900 Q7: the engine refuses to run rather than inventing weights."""
-    port = DomainTrustPort(config=await _config(seller=None), clock=FixedClock(NOW))
+    port = DomainTrustPort(config=await _config(seller={"weights": None}), clock=FixedClock(NOW))
     with pytest.raises(TrustUnavailable) as caught:
         await port.score(_offer(account_age_days=1500), tenant_id=TENANT)
     assert caught.value.code == "config_unset"

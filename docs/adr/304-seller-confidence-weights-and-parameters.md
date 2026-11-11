@@ -2,8 +2,8 @@
 
 ## Status
 
-Accepted (D3-06). Approved by the TL on 2026-11-10. Until DEV-4 adds the keys to `/config/defaults`, `seller.weights` stays unset and the trust engine
-refuses to run (`config_unset`), as ADR-900 Q3 intends.
+Accepted (D3-06). Approved by the TL on 2026-11-10 and confirmed on 2026-11-11, when the values below were shipped in
+`/config/defaults/tenant-config.v1.json` (issue #278).
 
 ## Context
 

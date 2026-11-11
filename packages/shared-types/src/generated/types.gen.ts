@@ -483,6 +483,23 @@ export type SellerConfig = {
   max_dispute_rate: number | null
   snapshot_max_age_days: number | null
   escalate_cheap_low_confidence: boolean | null
+  /**
+   * Signal-group weights as decimal strings summing to 1 (ADR-304).
+   */
+  weights?: {
+    [key: string]: string
+  } | null
+  /**
+   * Saturation point per countable signal, decimal strings (ADR-304).
+   */
+  x_sat?: {
+    [key: string]: string
+  } | null
+  category_rating_mean?: string | null
+  category_five_star_share?: string | null
+  wilson_confidence?: string | null
+  min_verified_share?: string | null
+  max_duplicate_text_share?: string | null
 }
 
 export type CreateSourcingRequest = {

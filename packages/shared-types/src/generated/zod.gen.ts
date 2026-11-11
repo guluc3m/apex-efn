@@ -1019,6 +1019,28 @@ export const zSellerConfig = z.object({
   max_dispute_rate: z.number().nullable(),
   snapshot_max_age_days: z.number().int().nullable(),
   escalate_cheap_low_confidence: z.boolean().nullable(),
+  weights: z.record(z.string().regex(/^[0-9]+(\.[0-9]+)?$/)).nullish(),
+  x_sat: z.record(z.string().regex(/^[0-9]+(\.[0-9]+)?$/)).nullish(),
+  category_rating_mean: z
+    .string()
+    .regex(/^[0-9]+(\.[0-9]+)?$/)
+    .nullish(),
+  category_five_star_share: z
+    .string()
+    .regex(/^[0-9]+(\.[0-9]+)?$/)
+    .nullish(),
+  wilson_confidence: z
+    .string()
+    .regex(/^[0-9]+(\.[0-9]+)?$/)
+    .nullish(),
+  min_verified_share: z
+    .string()
+    .regex(/^[0-9]+(\.[0-9]+)?$/)
+    .nullish(),
+  max_duplicate_text_share: z
+    .string()
+    .regex(/^[0-9]+(\.[0-9]+)?$/)
+    .nullish(),
 })
 
 export type sellerConfigZodType = z.infer<typeof zSellerConfig>
