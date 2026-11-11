@@ -159,3 +159,43 @@ async def test_open_close_and_risk_flag(h: Harness) -> None:
     assert (await h.client.delete("/v1/signing-sessions")).status_code == 204
     assert (await h.client.delete("/v1/signing-sessions")).status_code == 204
     assert await _refused(h, "frank", key_id, again) is ReauthReason.SESSION_REVOKED
+
+
+async def test_country_or_asn_jump_kills_the_session(h: Harness) -> None:  # issue #346
+    h.as_user("bob")
+    h.clock.set(T0 + timedelta(minutes=1))
+    mine = (await h.client.get("/v1/keys/me")).json()
+    items = mine["items"] if isinstance(mine, dict) else mine
+    active = [
+        k["id"] for k in items if not k.get("revoked_at")
+    ]  # one active key per user, shared db
+    key_id = active[0] if active else (await h.enroll(Ed25519PrivateKey.generate())).json()["id"]
+    opened = await h.client.post(
+        "/v1/signing-sessions",
+        json={"key_id": key_id, "device_fingerprint_ref": DEVICE},
+        headers={"X-Geo-Country": "ES", "X-ASN": "AS3352"},
+    )
+    session_id = opened.json()["id"]
+
+    async def sign(network_ref: str | None) -> list[str]:
+        async with tenant_session(TENANT, sessionmaker=h.factory) as db:
+            row = await sessions.consume(
+                db,
+                session_id,
+                user_id="user-bob",
+                key_id=key_id,
+                device_fingerprint_ref=DEVICE,
+                decision_id="dec-n",
+                now=h.clock.now(),
+                network_ref=network_ref,
+            )
+            return list(row.decisions_signed or [])
+
+    assert await sign("ES|AS3352") == ["dec-n"]
+    assert await sign(None) == ["dec-n"]  # no header: no signal
+    with pytest.raises(ReauthRequired) as raised:
+        await sign("CN|AS4134")
+    assert raised.value.reason is ReauthReason.NETWORK_ANOMALY
+    with pytest.raises(ReauthRequired) as again:
+        await sign("ES|AS3352")  # stays dead
+    assert again.value.reason is ReauthReason.NETWORK_ANOMALY

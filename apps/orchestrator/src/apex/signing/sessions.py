@@ -67,6 +67,7 @@ async def open_session(
     window: timedelta,
     max_decisions: int,
     now: datetime,
+    network_ref: str | None = None,
 ) -> SigningSession:
     expires_at = auth_at + window
     if now >= expires_at or auth_at > now:
@@ -87,6 +88,7 @@ async def open_session(
         auth_at=auth_at,
         expires_at=expires_at,
         device_fingerprint_ref=device_fingerprint_ref,
+        network_ref=network_ref,
         decisions_signed=[],
         max_decisions=max_decisions,
         status=SigningSessionStatus.ACTIVE,
@@ -122,6 +124,7 @@ async def consume(
     now: datetime,
     fresh_after: datetime | None = None,
     fresh_reason: ReauthReason = ReauthReason.IMMEDIATE_REAUTH_REQUIRED,
+    network_ref: str | None = None,
 ) -> SigningSession:
     """Spend one signature of the window on ``decision_id``, or raise ``ReauthRequired``. For D2-09.
 
@@ -147,6 +150,11 @@ async def consume(
         _end(row, SigningSessionStatus.REVOKED, ReauthReason.DEVICE_MISMATCH, now)
         await session.commit()
         raise ReauthRequired(ReauthReason.DEVICE_MISMATCH)
+    if network_ref is not None and row.network_ref not in (None, network_ref):
+        # country or ASN jump (issue #346). No header at signing time is no signal, not an anomaly.
+        _end(row, SigningSessionStatus.REVOKED, ReauthReason.NETWORK_ANOMALY, now)
+        await session.commit()
+        raise ReauthRequired(ReauthReason.NETWORK_ANOMALY)
     signed = row.decisions_signed or []
     if fresh_after is not None and (row.auth_at < fresh_after or signed):
         raise ReauthRequired(fresh_reason, "this decision needs a new step-up")

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Header, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apex.api.keys import Now, Sessions, Signer, member_id
@@ -28,6 +28,20 @@ from apex.signing import sessions as signing_sessions
 from apex.signing.sessions import ReauthRequired
 
 router = APIRouter()
+
+
+def network_ref_from(
+    country: Annotated[str | None, Header(alias="X-Geo-Country")] = None,
+    asn: Annotated[str | None, Header(alias="X-ASN")] = None,
+) -> str | None:
+    """``"<country>|<asn>"`` from the edge proxy, or None when it sent neither (issue #346, ADR-204).
+
+    The proxy must overwrite both headers on every request: they are only as honest as the edge.
+    """
+    return None if country is None and asn is None else f"{country or ''}|{asn or ''}"
+
+
+NetworkRef = Annotated[str | None, Depends(network_ref_from)]
 
 
 @dataclass(frozen=True)
@@ -88,6 +102,7 @@ async def open_signing_session(
     sessions: Sessions,
     clock: Now,
     limits: Annotated[SigningLimits, Depends(get_signing_limits)],
+    network_ref: NetworkRef,
 ) -> SigningSession:
     if principal.auth_time is None:
         raise reauth_problem(
@@ -109,6 +124,7 @@ async def open_signing_session(
                 window=limits.window,
                 max_decisions=limits.max_decisions,
                 now=now,
+                network_ref=network_ref,
             )
             return _view(row, now)
     except ReauthRequired as error:

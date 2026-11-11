@@ -289,6 +289,7 @@ async def sign_human(
     device_fingerprint_ref: str,
     client_attestation: str | None,
     now: datetime,
+    network_ref: str | None = None,
 ) -> Signature:
     """Verify and store a browser signature. Raises ``DecisionError`` or ``sessions.ReauthRequired``.
 
@@ -314,6 +315,7 @@ async def sign_human(
         user_id=user_id,
         key_id=key_id,
         device_fingerprint_ref=device_fingerprint_ref,
+        network_ref=network_ref,
         decision_id=decision_id,
         now=now,
         fresh_after=decision.created_at if decision.requires_immediate_reauth else None,

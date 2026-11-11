@@ -47,3 +47,10 @@ WebAuthn relying party in the orchestrator or a Keycloak step-up. ADR-900 Q11 al
 
 - Criteria 19, 20 and 22 are tested at the service layer and over HTTP with an injected clock.
 - D2-09 must call `consume()` inside the transaction that stores the signature.
+
+## Addendum (issue #346): network anomaly signal, decided by the TL
+
+The edge proxy sends `X-Geo-Country` and `X-ASN`; the proxy must overwrite both on every request. The API stores
+`"<country>|<asn>"` in `signing_sessions.network_ref` when the window opens. A later signature whose pair differs
+ends the session with `network_anomaly` (428 `reauth_required`). A request without the headers gives no signal and
+is accepted: the device fingerprint remains the main check. No GeoIP database is bundled; the proxy provides it.
