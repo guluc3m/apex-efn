@@ -88,3 +88,32 @@ def test_bundled_header_selection(scenarios_dir: Path, header: str) -> None:
 
     scenarios = load_scenarios(scenarios_dir)
     assert select_scenario(scenarios, header_name=header, model="x", messages=MSGS).name == header
+
+
+def test_schema_beats_role_on_every_ladder_step() -> None:
+    from llm_stub.scenarios import requested_schema
+
+    system = ChatMessage(role="system", content="role: extractor")
+    scenarios = {
+        "default": _s("default"),
+        "by-role": _s("by-role", role="extractor"),
+        "by-schema": _s("by-schema", role="extractor", schema="IntakeTurnDraft"),
+    }
+    fenced = ChatMessage(
+        role="system",
+        content='JSON only.\n```json\n{"$defs": {"X": {"title": "X"}}, "title": "IntakeTurnDraft"}\n```',
+    )
+    names = [
+        requested_schema([system], {"json_schema": {"name": "IntakeTurnDraft"}}),
+        requested_schema([system], None, [{"function": {"name": "IntakeTurnDraft"}}]),
+        requested_schema([system, fenced]),
+    ]
+    assert names == ["IntakeTurnDraft"] * 3
+    pick = select_scenario(
+        scenarios, header_name=None, model="m", messages=[system], schema=names[0]
+    )
+    assert pick.name == "by-schema"
+    other = select_scenario(
+        scenarios, header_name=None, model="m", messages=[system], schema="SourcingRequestDraft"
+    )
+    assert other.name == "by-role"

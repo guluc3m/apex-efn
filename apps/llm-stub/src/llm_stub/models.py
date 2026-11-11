@@ -86,13 +86,15 @@ class Behaviour(BaseModel):
 class Scenario(BaseModel):
     """A named scenario: matching rules, capabilities per model, and responses."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     name: str
     description: str = ""
     # Matching
     models: list[str] = Field(default_factory=list)
     role: Literal["planner", "negotiator", "extractor", "narrator"] | None = None
+    schema_name: str | None = Field(default=None, alias="schema")
+    """Name of the requested structured output (see ``scenarios.requested_schema``)."""
     prompt_sha256: str | None = None
     # Capabilities keyed by model id. ``"*"`` applies to any model not listed.
     capabilities: dict[str, Capabilities] = Field(default_factory=dict)

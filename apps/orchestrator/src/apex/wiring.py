@@ -21,6 +21,7 @@ honest: the alternative would be inventing the numbers those engines own.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,6 +43,7 @@ from apex.agents.missions import InMemoryMissionStore, MissionEventBus
 from apex.agents.offers import InMemoryOfferStore, InMemorySellerConfidenceStore
 from apex.agents.onboarding import (
     InMemoryOnboardingStore,
+    ObjectStore,
     OnboardingDeps,
     OnboardingService,
 )
@@ -200,11 +202,29 @@ class ConfigDecisionPort:
         )
 
 
-class UnwiredObjectStore:
-    """Object storage is DEV-1's (D1-06). Nothing is stored until it exists."""
+class S3ObjectStore:
+    """Original financial CSVs in the ``apex-csv`` bucket (RustFS in dev). Returns ``s3://bucket/key``."""
+
+    def __init__(self, cfg: Settings) -> None:
+        import boto3  # type: ignore[import-untyped]
+
+        self._bucket = cfg.s3_bucket_csv
+        self._client = boto3.client(
+            "s3",
+            endpoint_url=cfg.s3_endpoint,
+            aws_access_key_id=cfg.s3_access_key,
+            aws_secret_access_key=cfg.s3_secret_key,
+        )
 
     async def put(self, key: str, content: bytes, *, content_type: str) -> str:
-        raise NotImplementedError("object storage is not wired yet (owner: DEV-1, D1-06)")
+        await asyncio.to_thread(
+            self._client.put_object,
+            Bucket=self._bucket,
+            Key=key,
+            Body=content,
+            ContentType=content_type,
+        )
+        return f"s3://{self._bucket}/{key}"
 
 
 class UnwiredBrowserWorker:
@@ -375,6 +395,7 @@ def build_app_services(
     flags: FlagProvider | None = None,
     catalogue: StaticCatalogue | None = None,
     fx_rates: Any = None,
+    objects: ObjectStore | None = None,
 ) -> AppServices:
     """Build the service graph. Synchronous on purpose: ``create_app`` is a sync factory."""
     active_clock = clock or SystemClock()
@@ -425,7 +446,7 @@ def build_app_services(
             importer=DomainCsvImporter(
                 rates=fx_rates or InMemoryFxRateReader(), config=tenant_config
             ),
-            objects=UnwiredObjectStore(),
+            objects=objects or S3ObjectStore(cfg),
             decisions=signing_port(tenant_config, active_clock),
             clock=active_clock,
             ids=IdGenerator(active_clock),
@@ -547,7 +568,7 @@ __all__ = [
     "DefaultRoleConfigProvider",
     "UnwiredBrowserWorker",
     "UnwiredFx",
-    "UnwiredObjectStore",
+    "S3ObjectStore",
     "UnwiredDecisionPort",
     "build_app_services",
     "seed_demo_tenants",
@@ -556,7 +577,7 @@ __all__ = [
 
 def build_anchor_store(cfg: Settings) -> Any:
     """S3 Object Lock store for audit anchors (ADR-211). Building the client does not open a connection."""
-    import boto3  # type: ignore[import-untyped]
+    import boto3
 
     from apex.audit.anchor import Boto3AnchorStore
 

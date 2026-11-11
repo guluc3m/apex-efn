@@ -2,7 +2,7 @@
 
 Priority (highest first):
 1. Explicit ``X-Stub-Scenario: <name>`` header.
-2. A scenario whose ``models``/``role``/``prompt_sha256`` match the request (most specific wins).
+2. A scenario whose ``models``/``role``/``schema``/``prompt_sha256`` match the request (most specific wins).
 3. The scenario named ``default``.
 """
 
@@ -50,6 +50,39 @@ def role_marker(messages: Iterable[ChatMessage]) -> str | None:
     return None
 
 
+_FENCED_JSON_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
+
+
+def requested_schema(
+    messages: Iterable[ChatMessage],
+    response_format: dict[str, Any] | None = None,
+    tools: list[dict[str, Any]] | None = None,
+) -> str | None:
+    """Name of the structured output the client asked for, whatever ladder step it used.
+
+    ``response_format.json_schema.name``, else the single tool's function name, else the top-level
+    ``title`` of a JSON schema fenced in a system message (json_object and plain-repair steps).
+    """
+    name = ((response_format or {}).get("json_schema") or {}).get("name")
+    if isinstance(name, str):
+        return name
+    if tools and len(tools) == 1:
+        tool_name = (tools[0].get("function") or {}).get("name")
+        if isinstance(tool_name, str):
+            return tool_name
+    for m in messages:
+        if m.role != "system" or not isinstance(m.content, str):
+            continue
+        for block in _FENCED_JSON_RE.findall(m.content):
+            try:
+                title = json.loads(block).get("title")
+            except (json.JSONDecodeError, AttributeError):
+                continue
+            if isinstance(title, str):
+                return title
+    return None
+
+
 def load_scenarios(directory: Path) -> dict[str, Scenario]:
     """Load every ``*.yaml``, ``*.yml`` and ``*.json`` file in ``directory``."""
     if not directory.is_dir():
@@ -79,7 +112,9 @@ def load_scenarios(directory: Path) -> dict[str, Scenario]:
     return scenarios
 
 
-def _specificity(s: Scenario, model: str, role: str | None, digest: str) -> int | None:
+def _specificity(
+    s: Scenario, model: str, role: str | None, digest: str, schema: str | None
+) -> int | None:
     """Return a specificity score if ``s`` matches the request, else None."""
     score = 0
     if s.models:
@@ -90,6 +125,10 @@ def _specificity(s: Scenario, model: str, role: str | None, digest: str) -> int 
         if role != s.role:
             return None
         score += 2
+    if s.schema_name is not None:
+        if schema != s.schema_name:
+            return None
+        score += 3
     if s.prompt_sha256 is not None:
         if s.prompt_sha256.lower() != digest:
             return None
@@ -105,6 +144,7 @@ def select_scenario(
     header_name: str | None,
     model: str,
     messages: list[ChatMessage],
+    schema: str | None = None,
 ) -> Scenario:
     """Resolve the scenario for a chat request. Raises ``ScenarioError`` if unknown name."""
     if header_name:
@@ -116,7 +156,7 @@ def select_scenario(
     best: Scenario | None = None
     best_score = -1
     for s in scenarios.values():
-        score = _specificity(s, model, role, digest)
+        score = _specificity(s, model, role, digest, schema)
         if score is not None and score > best_score:
             best, best_score = s, score
     if best is not None:

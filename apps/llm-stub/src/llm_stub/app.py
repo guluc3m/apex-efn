@@ -37,6 +37,7 @@ from llm_stub.render import (
 from llm_stub.scenarios import (
     ScenarioError,
     load_scenarios,
+    requested_schema,
     select_embedding_scenario,
     select_scenario,
 )
@@ -230,7 +231,11 @@ def _sse_lines(body: dict[str, Any]) -> list[str]:
 def _resolve(state: StubState, header: str | None, req: ChatRequest) -> Scenario | None:
     try:
         return select_scenario(
-            state.scenarios, header_name=header, model=req.model, messages=req.messages
+            state.scenarios,
+            header_name=header,
+            model=req.model,
+            messages=req.messages,
+            schema=requested_schema(req.messages, req.response_format, req.tools),
         )
     except ScenarioError:
         return None
@@ -387,6 +392,7 @@ def create_app(scenarios_dir: str | Path | None = None) -> FastAPI:
                     "description": s.description,
                     "models": s.models,
                     "role": s.role,
+                    "schema": s.schema_name,
                     "prompt_sha256": s.prompt_sha256,
                     "capabilities": {k: v.model_dump() for k, v in s.capabilities.items()},
                     "calls": state.counters.get(s.name, 0),

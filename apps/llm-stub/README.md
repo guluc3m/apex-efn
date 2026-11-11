@@ -44,10 +44,12 @@ Priority, highest first:
 
 1. Header `X-Stub-Scenario: <name>` — explicit, always wins.
 2. A scenario whose criteria match the request. Criteria are AND-ed; the most specific match wins
-   (score: `models` = 1, `role` = 2, `prompt_sha256` = 4):
+   (score: `models` = 1, `role` = 2, `schema` = 3, `prompt_sha256` = 4):
    - `models: [model-id, ...]` — the request `model` is in the list.
    - `role: planner|negotiator|extractor|narrator` — the **system** message contains
      `role: <name>` (case-insensitive).
+   - `schema: <Name>` — the structured output requested: `response_format.json_schema.name`, the single
+     tool's function name, or the top-level `title` of a JSON schema fenced in a system message.
    - `prompt_sha256: <hex>` — sha256 of the canonical JSON of the messages
      (`[{role, content}, ...]`, sorted keys, compact separators). Useful to pin one exact prompt.
 3. The scenario named `default`. A scenario with no match criteria is never selected by rule 2.
@@ -64,6 +66,7 @@ scenarios:
     description: "free text"        # optional
     models: [stub-model]            # optional match criteria
     role: negotiator                # optional match criteria
+    schema: IntakeTurnDraft         # optional match criteria
     prompt_sha256: "abc…"           # optional match criteria
     capabilities:                   # per model id; "*" = any model not listed
       "*":
