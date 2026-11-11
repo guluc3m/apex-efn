@@ -189,6 +189,10 @@ export function createOperations(client: ApiClient) {
         signal,
       }),
 
+    /** The server builds the document (ranking, contributions, trade-offs, versions); the UI never does. */
+    exportMissionRecommendation: (id: string, profile: string, format: 'pdf' | 'csv' | 'json', signal?: AbortSignal) =>
+      client.blob('/v1/missions/{id}/recommendation/export', { path: { id }, query: { profile, format }, signal }),
+
     listMissions: (query?: ListMissionsData['query'], signal?: AbortSignal) =>
       client.request<ListMissionsResponse>('/v1/missions', { path: undefined, query, signal }),
 

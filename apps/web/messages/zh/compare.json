@@ -3,6 +3,8 @@
   "context": "任务 {code}",
   "profile": "偏好方案",
   "export": "导出对比",
+  "exportFormat": "格式",
+  "exportFailed": "无法导出：{reason}",
   "decide": "就 {name} 做决定",
   "pending": "尚未连接",
   "tableCaption": "入围供应商对比",

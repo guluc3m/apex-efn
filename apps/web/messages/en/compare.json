@@ -3,6 +3,8 @@
   "context": "Mission {code}",
   "profile": "Profile",
   "export": "Export comparison",
+  "exportFormat": "Format",
+  "exportFailed": "Could not export: {reason}",
   "decide": "Decide on {name}",
   "pending": "Not connected yet",
   "tableCaption": "Comparison of the finalists",

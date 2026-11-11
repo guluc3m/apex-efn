@@ -2,7 +2,7 @@
 
 import type { Offer, Recommendation } from '@apex/shared-types/contracts'
 import { Button, EmptyState, FinancialVerdictBadge, Icon, Input, Label, MoneyDisplay, PriceBandBadge, Select } from '@apex/ui'
-import { ArrowDown, ArrowLeft, ArrowUp, Download, PiggyBank, Scale, SlidersHorizontal } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, PiggyBank, Scale, SlidersHorizontal } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 
@@ -12,6 +12,7 @@ import { OfferConfidence } from '@/components/sellers/offer-confidence'
 import { useMissionOffers, useMissionRecommendation, useProfiles } from '@/lib/api'
 import { buildCompareModel } from '@/lib/compare'
 
+import { ExportButton } from './export-button'
 import { PriceDistribution } from './price-distribution'
 import { ScoreChart } from './score-chart'
 
@@ -101,10 +102,7 @@ function Comparison({ rec, offers }: { rec: Recommendation; offers: readonly Off
           <p className="m-0 text-[13px] text-ink-muted">{t('versions', { config: rec.config_version, model: rec.model_version })}</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* //todo_#379: exportar la comparativa cuando exista el endpoint */}
-          <Button variant="sec" disabledReason={t('pending')}>
-            <Icon icon={Download} label="" /> {t('export')}
-          </Button>
+          <ExportButton missionId={rec.mission_id} profile={rec.profile_id} />
           <Button variant="pri" asChild>
             <AppLink href={`/decisiones/${first.offer.id}`}>
               <Icon icon={Scale} label="" /> {t('decide', { name: first.offer.seller_name })}
