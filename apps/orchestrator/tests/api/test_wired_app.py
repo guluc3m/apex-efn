@@ -379,7 +379,9 @@ def test_autorun_runs_in_the_background_and_streams_until_the_mission_closes() -
             ) as response:
                 body = "".join(response.iter_text())
             fetched = client.get(f"/v1/missions/{mission['id']}", headers=_h()).json()
-        events = [line.split(": ", 1)[1] for line in body.splitlines() if line.startswith("event: ")]
+        events = [
+            line.split(": ", 1)[1] for line in body.splitlines() if line.startswith("event: ")
+        ]
         assert events[-1] == "error"  # the stream stayed open past `planned` and saw the failure
         assert fetched["state"] == "failed"
         assert "D5-01" in fetched["error"]["detail"]  # no BROWSER_WORKER_URL: the owner is named

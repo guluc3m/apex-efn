@@ -32,6 +32,24 @@ log = logging.getLogger("apex.tenant_config.load_defaults")
 
 TENANT_ENV = "APEX_TENANT_IDS"
 
+
+def _demo_negotiation(aggressiveness: str, tone: str, counterparts: list[str]) -> dict[str, object]:
+    return {
+        "aggressiveness": aggressiveness,
+        "tone": tone,
+        "language": "es",
+        "accepts_counterparts": counterparts,
+    }
+
+
+_DEMO_HARD_CONSTRAINTS: dict[str, object] = {
+    "banned_platforms": [],
+    "banned_countries": [],
+    "required_certifications": [],
+    "min_accepted_seller_band": "medium",
+}
+
+
 DEMO_VALUES: dict[str, object] = {
     "neg": {"target_discount": "0.08", "max_discount": "0.15"},
     "approval": {
@@ -49,10 +67,16 @@ DEMO_VALUES: dict[str, object] = {
                     "seller_confidence": "0.3",
                     "financial_fit": "0.2",
                 },
+                "negotiation": _demo_negotiation("aggressive", "friendly", ["higher_volume"]),
+                "hard_constraints": _DEMO_HARD_CONSTRAINTS,
             },
             "buyer": {
                 "name": "Operational buyer",
                 "weights": {"lead_time": "0.4", "seller_confidence": "0.4", "landed_cost": "0.2"},
+                "negotiation": _demo_negotiation(
+                    "balanced", "formal", ["higher_volume", "framework_contract"]
+                ),
+                "hard_constraints": _DEMO_HARD_CONSTRAINTS,
             },
             "cfo": {
                 "name": "CFO",
@@ -61,6 +85,8 @@ DEMO_VALUES: dict[str, object] = {
                     "landed_cost": "0.3",
                     "seller_confidence": "0.2",
                 },
+                "negotiation": _demo_negotiation("conservative", "formal", []),
+                "hard_constraints": _DEMO_HARD_CONSTRAINTS,
             },
         }
     },

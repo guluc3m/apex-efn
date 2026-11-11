@@ -167,4 +167,22 @@ def test_categories_and_profiles_are_honestly_empty_without_data() -> None:
     )
     with TestClient(app) as client:
         assert client.get("/categories", headers=_h()).json() == {"items": []}
-        assert client.get("/profiles").json() == {"items": []}
+        assert client.get("/profiles", headers=_h()).json() == {"items": []}
+
+
+async def test_profiles_list_the_seeded_demo_profiles() -> None:
+    from apex.api import profiles as profiles_api
+    from apex.tenant_config.load_defaults import seed
+
+    repo = InMemoryConfigRepository()
+    await seed(["tenant-a"], repo, demo_values=True)
+    app = FastAPI()
+    app.include_router(profiles_api.router, prefix="/profiles")
+    app.dependency_overrides[config_api.get_config_service] = lambda: TenantConfigService(
+        repo, FakeDecisionPort(), FixedClock(datetime(2026, 11, 8, tzinfo=UTC))
+    )
+    with TestClient(app) as client:
+        items = client.get("/profiles", headers={"X-Tenant-Id": "tenant-a"}).json()["items"]
+    assert [p["id"] for p in items] == ["buyer", "cfo", "founder"]
+    assert items[2]["weights"]["landed_cost"] == 0.5
+    assert items[2]["hard_constraints"]["min_accepted_seller_band"] == "medium"
