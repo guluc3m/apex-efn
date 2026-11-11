@@ -1,0 +1,8 @@
+period,metric,value_minor,value_bp,currency,notes
+2026-08,cash_balance,5000000,,EUR,
+2026-09,cash_balance,5200000,,EUR,
+2026-10,cash_balance,5400000,,EUR,
+2026-10,credit_line_available,1000000,,EUR,
+2026-10,tax_reserve,200000,,EUR,
+2026-10,safety_buffer_pct,,1500,,
+2026-10,payment_term_days,60,,,

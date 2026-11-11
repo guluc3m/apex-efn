@@ -1,0 +1,8 @@
+period;metric;value_minor;value_bp;currency;notes
+2026-10;cash_balance;5400000;;EUR;
+2026-10;revenue;12.5;;EUR;
+2026-13;cogs;100;;EUR;
+2026-10;nope;100;;EUR;
+2026-10;payroll;100;;GBP;
+2026-10;cash_balance;1;;EUR;dup
+2026-10;capex;;;EUR;
