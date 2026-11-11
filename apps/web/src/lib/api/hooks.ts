@@ -14,6 +14,7 @@ export const queryKeys = {
   missionOffers: (id: string) => ['mission', id, 'offers'] as const,
   recommendation: (id: string, profile: string) => ['mission', id, 'recommendation', profile] as const,
   profiles: ['profiles'] as const,
+  configVersions: ['config', 'versions'] as const,
   sellerConfidence: (id: string) => ['seller', id, 'confidence'] as const,
   negotiation: (id: string) => ['negotiation', id] as const,
   negotiationMessages: (id: string) => ['negotiation', id, 'messages'] as const,
@@ -58,6 +59,15 @@ export function useMissionRecommendation(id: string, profile: string | undefined
     queryKey: queryKeys.recommendation(id, profile ?? ''),
     queryFn: ({ signal }) => api.getMissionRecommendation(id, profile!, signal),
     enabled: !!profile,
+  })
+}
+
+/** No retry: until the server serves the history it answers 501 and the screen says so. */
+export function useConfigVersions() {
+  return useQuery({
+    queryKey: queryKeys.configVersions,
+    queryFn: ({ signal }) => api.listConfigVersions(signal),
+    retry: false,
   })
 }
 

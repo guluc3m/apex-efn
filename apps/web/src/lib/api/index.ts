@@ -5,6 +5,7 @@ export {
   useApprovals,
   useAuditEvents,
   useAuditVerification,
+  useConfigVersions,
   useCreateMission,
   useCreateSourcingRequest,
   useDealAction,

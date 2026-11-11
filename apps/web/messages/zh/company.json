@@ -129,6 +129,9 @@
     "signNote": "更改是一项决定，需要立即通过通行密钥重新验证后签名。",
     "noPermission": "只有财务、管理员或所有者可以更改规则。",
     "history": "历史",
+    "reason": "变更原因",
+    "reasonRequired": "请填写变更原因",
+    "historyEmpty": "暂无版本",
     "historyPending": "待连接：尚无历史记录接口"
   },
   "audit": {
