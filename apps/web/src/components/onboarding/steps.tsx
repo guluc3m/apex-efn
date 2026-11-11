@@ -1,6 +1,7 @@
 'use client'
 
-import { Button, Checkbox, Icon } from '@apex/ui'
+import type { HeaderMappingSuggestion } from '@apex/shared-types/contracts'
+import { Button, Checkbox, Icon, Select } from '@apex/ui'
 import { FileText, FolderOpen, Download, Plus, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -210,6 +211,8 @@ export function NegotiationStep() {
 
 const formatSize = (bytes: number) => (bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`)
 
+const NO_COLUMN = '__none'
+
 /** Solo se guardan nombre y tamaño; el archivo no se lee. */
 export function FinanceStep() {
   const t = useTranslations('onboarding.finance')
@@ -222,17 +225,40 @@ export function FinanceStep() {
   const [failed, setFailed] = useState(false)
   const result = useOnboarding((s) => s.financialImport)
   const setResult = useOnboarding((s) => s.setFinancialImport)
-  const upload = async () => {
+  // Headers the server could not recognise, with its suggestion. Shown for confirmation before the upload.
+  const [suggestion, setSuggestion] = useState<HeaderMappingSuggestion | null>(null)
+  const [mapping, setMapping] = useState<Record<string, string>>({})
+  const send = async (columnMapping?: Record<string, string>) => {
     if (!file) return
     setBusy(true)
     setFailed(false)
     try {
-      setResult(await api.uploadFinancialCsv(await ensureSession(), file))
+      setResult(await api.uploadFinancialCsv(await ensureSession(), file, columnMapping))
+      setSuggestion(null)
     } catch {
       setFailed(true)
     } finally {
       setBusy(false)
     }
+  }
+  // Ask for a mapping first. If the server cannot suggest (or all headers are canonical), upload as is.
+  const upload = async () => {
+    if (!file) return
+    setBusy(true)
+    setFailed(false)
+    try {
+      const found = await api.suggestFinancialCsvMapping(await ensureSession(), file)
+      if (found.mappings.length > 0) {
+        setSuggestion(found)
+        setMapping(Object.fromEntries(found.mappings.map((m) => [m.source, m.target ?? NO_COLUMN])))
+        setBusy(false)
+        return
+      }
+    } catch {
+      // No suggestion available: the plain upload still validates every row.
+    }
+    setBusy(false)
+    await send()
   }
   return (
     <>
@@ -275,6 +301,36 @@ export function FinanceStep() {
             </Button>
           </div>
         </div>
+      )}
+      {suggestion && (
+        <section className="flex max-w-[760px] flex-col gap-3 border border-line bg-panel p-4" aria-label={t('mappingTitle')}>
+          <strong className="font-semibold">{t('mappingTitle')}</strong>
+          <p className="m-0 text-[13px] text-ink-muted">{t('mappingHint')}</p>
+          {suggestion.mappings.map((m) => (
+            <div key={m.source} className="flex flex-col gap-1">
+              <Select
+                label={t('mappingColumn', { name: m.source })}
+                value={mapping[m.source] ?? NO_COLUMN}
+                onValueChange={(v) => setMapping((cur) => ({ ...cur, [m.source]: v }))}
+                options={[
+                  { value: NO_COLUMN, label: t('mappingNone') },
+                  ...suggestion.canonical_columns.map((c) => ({ value: c, label: c })),
+                ]}
+              />
+              <span className="text-[13px] text-ink-muted">{m.reason}</span>
+            </div>
+          ))}
+          <div>
+            <Button
+              variant="pri"
+              disabled={busy}
+              onClick={() => void send(Object.fromEntries(Object.entries(mapping).filter(([, v]) => v !== NO_COLUMN)))}
+            >
+              <Icon icon={Upload} />
+              {t('mappingConfirm')}
+            </Button>
+          </div>
+        </section>
       )}
       {failed && (
         <p role="alert" className="m-0 text-bad">

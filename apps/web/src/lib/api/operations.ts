@@ -63,6 +63,7 @@ import type {
   VerifyDecisionResponse,
   GetFinancialImportResponse,
   ListConfigVersionsResponse,
+  SuggestFinancialCsvMappingResponse,
   PauseMissionResponse,
   ResumeMissionResponse,
   CancelMissionResponse,
@@ -115,10 +116,23 @@ export function createOperations(client: ApiClient) {
         signal,
       }),
 
-    /** Multipart upload; the server parses it and returns a draft import. Nothing is activated. */
-    uploadFinancialCsv: (onboardingId: string, file: File, signal?: AbortSignal) => {
+    /** Header row only reaches the model. A suggestion: the buyer confirms it before the upload. */
+    suggestFinancialCsvMapping: (onboardingId: string, file: File, signal?: AbortSignal) => {
       const body = new FormData()
       body.append('file', file)
+      return client.request<SuggestFinancialCsvMappingResponse>('/v1/onboarding/{id}/financial-csv/mapping', {
+        method: 'POST',
+        path: { id: onboardingId },
+        body,
+        signal,
+      })
+    },
+
+    /** Multipart upload; the server parses it and returns a draft import. Nothing is activated. */
+    uploadFinancialCsv: (onboardingId: string, file: File, columnMapping?: Record<string, string>, signal?: AbortSignal) => {
+      const body = new FormData()
+      body.append('file', file)
+      if (columnMapping && Object.keys(columnMapping).length > 0) body.append('column_mapping', JSON.stringify(columnMapping))
       return client.request<UploadFinancialCsvResponse>('/v1/onboarding/{id}/financial-csv', {
         method: 'POST',
         path: { id: onboardingId },
