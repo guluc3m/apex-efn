@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Deployment override for every ``llm.roles.*.base_url`` of the config defaults. The defaults point at
     # http://localhost:8001/v1 (the stub seen from the host); a container reaches it at http://llm-stub:8001/v1.
     llm_base_url_override: str = Field(default="")
+    # One model for every role, overriding ``llm.roles.*`` in /config/defaults. Needed by a provider that
+    # names its models differently (DeepSeek: ``deepseek-chat``); empty keeps each role's own model.
+    llm_model_override: str = Field(default="")
 
     # Browser worker internal API (D5-01). Empty means "not wired": a mission that needs to scrape fails
     # with the owner named instead of calling a service that is not there.

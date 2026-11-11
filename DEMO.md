@@ -227,6 +227,25 @@ El script también:
   `platform_disabled`;
 - se niega a arrancar si otro proceso ocupa 8000/8001/8002/3000/4010 y dice cuál es.
 
+### Modelo real para el intérprete (y para los vendedores)
+
+Por defecto el intérprete de la petición y los vendedores del mercado usan el stub, que siempre contesta lo
+mismo. Con una clave de DeepSeek dejan de ser un stub:
+
+```bash
+# .env.local en la raíz (está en .gitignore) o variable de entorno
+echo 'DEEPSEEK_API_KEY=sk-...' >> .env.local
+pnpm demo:app
+```
+
+El script lee `.env.local`, y si hay clave arranca el orquestador con
+`LLM_GATEWAY_URL=https://api.deepseek.com/v1`, `LLM_MODEL_OVERRIDE=deepseek-chat` y la clave resuelta por
+referencia (nunca entra en la config del rol, ni en un log, ni en un prompt), y el mercado simulado con
+`SIM_LLM_*` para que los vendedores contesten con el mismo modelo. El banner dice qué modelo está en uso.
+
+Lo que **no** cambia: los precios, los escalones de negociación, los límites y las bandas los sigue
+decidiendo el código; el modelo solo escribe texto.
+
 ### Qué hace `DEMO_MODE=1`
 
 El orchestrator arranca con `DEMO_MODE=1`, `MISSION_AUTORUN=1`, `MOCK_MARKETPLACE_URL` (negociación real

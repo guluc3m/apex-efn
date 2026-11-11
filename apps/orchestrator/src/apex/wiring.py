@@ -370,15 +370,36 @@ class DefaultRoleConfigProvider:
     have to be applied here explicitly rather than silently ignored.
     """
 
-    def __init__(self, defaults_path: Path | None = None, *, base_url_override: str = "") -> None:
+    def __init__(
+        self,
+        defaults_path: Path | None = None,
+        *,
+        base_url_override: str = "",
+        model_override: str = "",
+        api_key_ref: str | None = None,
+        capabilities: tuple[str, ...] = (),
+    ) -> None:
         self._version, values = load_global_layer(defaults_path or DEFAULT_PATH)
-        self._roles = _roles_from(values, base_url_override=base_url_override)
+        self._roles = _roles_from(
+            values,
+            base_url_override=base_url_override,
+            model_override=model_override,
+            api_key_ref=api_key_ref,
+            capabilities=capabilities,
+        )
 
     def llm_roles(self, tenant_id: str) -> LLMRolesConfig:
         return self._roles
 
 
-def _roles_from(values: dict[str, Any], *, base_url_override: str = "") -> LLMRolesConfig:
+def _roles_from(
+    values: dict[str, Any],
+    *,
+    base_url_override: str = "",
+    model_override: str = "",
+    api_key_ref: str | None = None,
+    capabilities: tuple[str, ...] = (),
+) -> LLMRolesConfig:
     """Build the gateway's role configuration from the ``llm.roles`` block. Loud on anything unknown."""
     raw = values.get("llm", {}).get("roles")
     if not raw:
@@ -395,8 +416,11 @@ def _roles_from(values: dict[str, Any], *, base_url_override: str = "") -> LLMRo
         endpoint = RoleEndpointConfig(
             endpoint_id=f"default-{name}",
             base_url=base_url_override or str(role["base_url"]),
-            model=str(role["model"]),
-            capabilities=_capabilities(tuple(role.get("capabilities", ()))),
+            api_key_ref=api_key_ref,
+            model=model_override or str(role["model"]),
+            capabilities=_capabilities(
+                tuple(capabilities) or tuple(role.get("capabilities", ()))
+            ),
         )
         endpoints[endpoint.endpoint_id] = endpoint
         by_role[llm_role] = endpoint
@@ -464,9 +488,26 @@ def build_app_services(
         config_repository, ConfigDecisionPort(signing), active_clock
     )
     signing._config = tenant_config
+    # A real provider is opt-in: with LLM_GATEWAY_API_KEY set (plus LLM_GATEWAY_URL and
+    # LLM_MODEL_OVERRIDE), every role talks to that endpoint with its bearer token instead of the stub.
+    # The key is resolved through a ref, so it never enters the role config, a log or an LLM prompt.
+    llm_api_key = cfg.llm_gateway_api_key
+    llm_api_key_ref = "env:llm-gateway-api-key" if llm_api_key else None
     gateway = LLMGateway(
-        config_provider=DefaultRoleConfigProvider(base_url_override=cfg.llm_base_url_override),
-        secrets=StaticSecretResolver({}),
+        config_provider=DefaultRoleConfigProvider(
+            base_url_override=(
+                cfg.llm_base_url_override
+                or (cfg.llm_gateway_url if llm_api_key else "")
+            ),
+            model_override=cfg.llm_model_override,
+            api_key_ref=llm_api_key_ref,
+            # DeepSeek and the rest of the OpenAI-compatible providers answer JSON objects; the gateway
+            # only uses a capability that is declared, so say it out loud here.
+            capabilities=("json_object",) if llm_api_key else (),
+        ),
+        secrets=StaticSecretResolver(
+            {llm_api_key_ref: llm_api_key} if llm_api_key_ref else {}
+        ),
         budget=TokenBudget(InMemoryBudgetStore(), mission_limit=cfg.llm_mission_token_budget),
         sink=InMemorySink(),
         clock=active_clock,

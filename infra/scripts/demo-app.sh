@@ -590,7 +590,7 @@ print_banner() {
  Mock marketplace ....... http://127.0.0.1:8002
  Browser worker ......... http://127.0.0.1:4010/internal/v1/health
  Keycloak ............... http://localhost:8080 (realm "apex")
- LLM stub (Docker) ...... http://127.0.0.1:8001
+ Modelo ................. ${LLM_MODEL:-stub local (Docker :8001)}
 
  Usuario demo ........... owner-a@apex.local  /  $password
  Tenant ................. tenant-a   (también existe tenant-b)
@@ -620,6 +620,27 @@ if [ "$MODE" = "stop" ]; then
 fi
 
 log "raíz del repo: $ROOT_DIR"
+
+# Optional real model. `DEEPSEEK_API_KEY` (or `LLM_GATEWAY_API_KEY`) in the environment or in the
+# gitignored `.env.local` at the repo root switches every role from the stub to an OpenAI-compatible
+# endpoint, and the mock marketplace's sellers to the same model, so both sides write real prose.
+# The prices are still decided in code: the model only writes text.
+if [ -f "$ROOT_DIR/.env.local" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$ROOT_DIR/.env.local"
+  set +a
+fi
+LLM_API_KEY="${DEEPSEEK_API_KEY:-${LLM_GATEWAY_API_KEY:-}}"
+if [ -n "$LLM_API_KEY" ]; then
+  LLM_BASE_URL="${LLM_GATEWAY_URL:-https://api.deepseek.com/v1}"
+  LLM_MODEL="${LLM_MODEL_OVERRIDE:-deepseek-chat}"
+  log "modelo real: $LLM_MODEL en $LLM_BASE_URL (intérprete, negociador y vendedores)"
+else
+  LLM_BASE_URL="http://127.0.0.1:$LLM_STUB_PORT/v1"
+  LLM_MODEL=""
+  log "modelo: stub local en :$LLM_STUB_PORT (exporta DEEPSEEK_API_KEY para usar el modelo real)"
+fi
 require_cmd docker "Instala Docker Engine + el plugin 'docker compose'."
 require_cmd pnpm "Instala pnpm >= 9 (corepack enable)."
 require_cmd curl "Instala curl."
@@ -690,8 +711,14 @@ fi
 # Sin `tsx watch`: el modo vigilancia necesita una TTY (renderiza una barra de estado y lee de stdin) y
 # muere en silencio en cuanto la salida va a un log, que es justo lo que hace este script. Para una demo el
 # recargado automático no aporta nada; si tocas el código, relanza.
+if [ -n "$LLM_API_KEY" ]; then
+  MARKETPLACE_SIM_ENV=(SIM_LLM_URL="$LLM_BASE_URL" SIM_LLM_MODEL="$LLM_MODEL" SIM_LLM_API_KEY="$LLM_API_KEY")
+else
+  MARKETPLACE_SIM_ENV=()
+fi
+
 start_service marketplace "$MARKETPLACE_PORT" \
-  /usr/bin/env PORT="$MARKETPLACE_PORT" HOST=127.0.0.1 \
+  /usr/bin/env PORT="$MARKETPLACE_PORT" HOST=127.0.0.1 "${MARKETPLACE_SIM_ENV[@]}" \
   bash -c 'cd "$1" && exec ./node_modules/.bin/tsx src/index.ts' \
   _ "$ROOT_DIR/apps/mock-marketplace"
 
@@ -724,7 +751,9 @@ start_service orchestrator "$ORCHESTRATOR_PORT" \
   S3_SECRET_KEY="apex-dev-secret" \
   BROWSER_WORKER_URL="http://127.0.0.1:$WORKER_PORT" \
   BROWSER_WORKER_TOKEN="$BROWSER_WORKER_TOKEN" \
-  LLM_GATEWAY_URL="http://127.0.0.1:$LLM_STUB_PORT/v1" \
+  LLM_GATEWAY_URL="$LLM_BASE_URL" \
+  LLM_GATEWAY_API_KEY="$LLM_API_KEY" \
+  LLM_MODEL_OVERRIDE="$LLM_MODEL" \
   MISSION_AUTORUN=1 \
   APEX_AUTH_ISSUER="http://localhost:8080/realms/apex" \
   APEX_AUTH_AUDIENCE="apex-orchestrator" \
