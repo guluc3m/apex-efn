@@ -1017,6 +1017,19 @@ export type NegotiationHumanMessage = {
   content: string
 }
 
+export type NegotiationMessageTranslateRequest = {
+  target_language: 'es' | 'en' | 'zh' | 'he'
+}
+
+export type NegotiationMessageTranslation = {
+  message_id: string
+  target_language: 'es' | 'en' | 'zh' | 'he'
+  /**
+   * Translation of the message; the original stays untouched in the transcript.
+   */
+  text: string
+}
+
 export type NegotiationMessagePage = {
   items: Array<NegotiationMessage>
   next_cursor: string | null
@@ -3541,6 +3554,52 @@ export type SendHumanNegotiationMessageResponses = {
 
 export type SendHumanNegotiationMessageResponse =
   SendHumanNegotiationMessageResponses[keyof SendHumanNegotiationMessageResponses]
+
+export type TranslateNegotiationMessageData = {
+  body: NegotiationMessageTranslateRequest
+  path: {
+    id: string
+    message_id: string
+  }
+  query?: never
+  url: '/v1/negotiations/{id}/messages/{message_id}/translate'
+}
+
+export type TranslateNegotiationMessageErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+  /**
+   * Request failed validation.
+   */
+  422: ValidationProblem
+  /**
+   * RFC 9457 problem.
+   */
+  502: Problem
+}
+
+export type TranslateNegotiationMessageError =
+  TranslateNegotiationMessageErrors[keyof TranslateNegotiationMessageErrors]
+
+export type TranslateNegotiationMessageResponses = {
+  /**
+   * The translated text.
+   */
+  200: NegotiationMessageTranslation
+}
+
+export type TranslateNegotiationMessageResponse =
+  TranslateNegotiationMessageResponses[keyof TranslateNegotiationMessageResponses]
 
 export type ApproveNegotiationDraftData = {
   body: NegotiationDraftRef

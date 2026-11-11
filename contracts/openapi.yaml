@@ -970,6 +970,34 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
         '422': {$ref: '#/components/responses/ValidationProblem'}
+  /v1/negotiations/{id}/messages/{message_id}/translate:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    - {name: message_id, in: path, required: true, schema: {type: string}}
+    post:
+      tags: [negotiations]
+      operationId: translateNegotiationMessage
+      summary: Translate one transcript message for the person reading it (issue 161).
+      description: 'Read-only helper: the translation is returned, never stored in the transcript and never sent to
+        the seller. It goes through the `narrator` LLM role; messages that carry credentials or bank data are
+        refused with 422 reason `sensitive_content` and the text is not sent to the model. When the model is
+        unavailable the answer is 502 with reason `translation_unavailable`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NegotiationMessageTranslateRequest'}
+      responses:
+        '200':
+          description: The translated text.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NegotiationMessageTranslation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+        '502': {$ref: '#/components/responses/Problem'}
   /v1/negotiations/{id}/approve:
     parameters:
     - {$ref: '#/components/parameters/PathId'}
@@ -2547,6 +2575,18 @@ components:
           description: 'Text to send, as written. It must respect the negotiation''s configured message length
 
             limit; a longer message is rejected rather than truncated.'
+    NegotiationMessageTranslateRequest:
+      type: object
+      required: [target_language]
+      properties:
+        target_language: {type: string, enum: [es, en, zh, he]}
+    NegotiationMessageTranslation:
+      type: object
+      required: [message_id, target_language, text]
+      properties:
+        message_id: {type: string}
+        target_language: {type: string, enum: [es, en, zh, he]}
+        text: {type: string, description: Translation of the message; the original stays untouched in the transcript.}
     NegotiationMessagePage:
       type: object
       required: [items, next_cursor]

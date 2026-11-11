@@ -87,6 +87,13 @@
     "human_in_control": "Una persona tiene el chat. Devuélvelo antes al agente.",
     "not_in_human_control": "Toma el control del chat antes de escribir al vendedor.",
     "seller_busy": "Ese vendedor está ahora en otra negociación.",
-    "not_aborted": "Solo se puede reabrir una negociación abortada."
+    "not_aborted": "Solo se puede reabrir una negociación abortada.",
+    "translation_unavailable": "No se pudo traducir el mensaje.",
+    "sensitive_content": "El mensaje contiene datos sensibles y no se envía al modelo de traducción."
+  },
+  "translate": {
+    "action": "Traducir",
+    "hide": "Ocultar traducción",
+    "label": "Traducción"
   }
 }

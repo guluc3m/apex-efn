@@ -631,6 +631,22 @@ export const zNegotiationHumanMessage = z.object({
 
 export type negotiationHumanMessageZodType = z.infer<typeof zNegotiationHumanMessage>
 
+export const zNegotiationMessageTranslateRequest = z.object({
+  target_language: z.enum(['es', 'en', 'zh', 'he']),
+})
+
+export type negotiationMessageTranslateRequestZodType = z.infer<
+  typeof zNegotiationMessageTranslateRequest
+>
+
+export const zNegotiationMessageTranslation = z.object({
+  message_id: z.string(),
+  target_language: z.enum(['es', 'en', 'zh', 'he']),
+  text: z.string(),
+})
+
+export type negotiationMessageTranslationZodType = z.infer<typeof zNegotiationMessageTranslation>
+
 export const zNegotiationControlRequest = z.object({
   reason: z.string().max(500).nullish(),
 })
@@ -2521,6 +2537,18 @@ export const zSendHumanNegotiationMessagePath = z.object({
  * Message sent and recorded in the transcript.
  */
 export const zSendHumanNegotiationMessageResponse = zNegotiationMessage
+
+export const zTranslateNegotiationMessageBody = zNegotiationMessageTranslateRequest
+
+export const zTranslateNegotiationMessagePath = z.object({
+  id: z.string().min(1),
+  message_id: z.string(),
+})
+
+/**
+ * The translated text.
+ */
+export const zTranslateNegotiationMessageResponse = zNegotiationMessageTranslation
 
 export const zApproveNegotiationDraftBody = zNegotiationDraftRef
 

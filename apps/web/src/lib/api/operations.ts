@@ -60,6 +60,8 @@ import type {
   SendHumanNegotiationMessageData,
   SendHumanNegotiationMessageResponse,
   TakeoverNegotiationResponse,
+  TranslateNegotiationMessageData,
+  TranslateNegotiationMessageResponse,
   RevokeSigningKeyData,
   RevokeSigningKeyResponse,
   SignDecisionData,
@@ -321,6 +323,13 @@ export function createOperations(client: ApiClient) {
         method: 'POST',
         path: { id },
         body,
+      }),
+
+    translateNegotiationMessage: (id: string, messageId: string, targetLanguage: TranslateNegotiationMessageData['body']['target_language']) =>
+      client.request<TranslateNegotiationMessageResponse>('/v1/negotiations/{id}/messages/{message_id}/translate', {
+        method: 'POST',
+        path: { id, message_id: messageId },
+        body: { target_language: targetLanguage },
       }),
 
     approveNegotiationDraft: (id: string, body: ApproveNegotiationDraftData['body']) =>

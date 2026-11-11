@@ -54,6 +54,10 @@ class ImportWarnings(_Draft):
     warnings: list[str]
 
 
+class MessageTranslation(_Draft):
+    text: str = Field(min_length=1)
+
+
 class RecommendationNarrative(_Draft):
     top_offer_id: str = Field(min_length=1)
     narrative: str = Field(min_length=1)
@@ -80,6 +84,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "SourcingPlanDraft": SourcingPlanDraft,
     "HeaderMappingSuggestion": HeaderMappingSuggestion,
     "ImportWarnings": ImportWarnings,
+    "MessageTranslation": MessageTranslation,
     "RecommendationNarrative": RecommendationNarrative,
 }
 
@@ -90,6 +95,7 @@ __all__ = [
     "ImportWarnings",
     "IntakeProfileDraft",
     "IntakeTurnDraft",
+    "MessageTranslation",
     "PlanStepDraft",
     "RecommendationNarrative",
     "SourcingPlanDraft",

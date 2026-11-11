@@ -87,6 +87,13 @@
     "human_in_control": "A human holds the chat. Hand it back to the agent first.",
     "not_in_human_control": "Take control of the chat before writing to the seller.",
     "seller_busy": "That seller is in another negotiation now.",
-    "not_aborted": "Only an aborted negotiation can be reopened."
+    "not_aborted": "Only an aborted negotiation can be reopened.",
+    "translation_unavailable": "The message could not be translated.",
+    "sensitive_content": "The message contains sensitive data and is not sent to the translation model."
+  },
+  "translate": {
+    "action": "Translate",
+    "hide": "Hide translation",
+    "label": "Translation"
   }
 }

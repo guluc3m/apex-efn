@@ -21,6 +21,7 @@ from apex.api.profiles import router as profiles_router
 from apex.api.sellers import router as sellers_router
 from apex.api.signing import router as signing_router
 from apex.api.sourcing import router as sourcing_router
+from apex.api.translation import router as translation_router
 from apex.api.webhooks import router as webhooks_router
 
 router = APIRouter()
@@ -33,6 +34,7 @@ router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 router.include_router(gate_router, prefix="/gate", tags=["gate"])
 router.include_router(config_router, prefix="/config", tags=["config"])
 router.include_router(negotiations_router, prefix="/negotiations", tags=["negotiations"])
+router.include_router(translation_router, prefix="/negotiations", tags=["negotiations"])
 router.include_router(webhooks_router, prefix="/webhooks", tags=["webhooks"])
 router.include_router(signing_router, prefix="/signing-sessions", tags=["signing"])
 router.include_router(decisions_router, prefix="/decisions", tags=["decisions"])

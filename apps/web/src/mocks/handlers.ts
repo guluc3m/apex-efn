@@ -2,6 +2,7 @@ import type {
   EffectiveConfig,
   Mission,
   MissionEvent,
+  NegotiationMessageTranslation,
   OnboardingSession,
   Problem,
   SigningSession,
@@ -103,6 +104,12 @@ export const signingSessionFixture: SigningSession = {
   server_time: NOW,
 }
 
+export const translationFixture: NegotiationMessageTranslation = {
+  message_id: 'neg_mock_1:1',
+  target_language: 'es',
+  text: 'Texto traducido (simulado).',
+}
+
 const API = '*/api/v1'
 
 export const handlers = [
@@ -128,5 +135,9 @@ export const handlers = [
   http.delete(`${API}/signing-sessions/:id`, ({ params }) =>
     HttpResponse.json({ ...signingSessionFixture, id: String(params.id), status: 'closed' }),
   ),
+  http.post(`${API}/negotiations/:id/messages/:messageId/translate`, async ({ params, request }) => {
+    const { target_language } = (await request.json()) as { target_language: NegotiationMessageTranslation['target_language'] }
+    return HttpResponse.json({ ...translationFixture, message_id: String(params.messageId), target_language })
+  }),
   http.get(`${API}/config/effective`, () => HttpResponse.json(effectiveConfigFixture)),
 ]

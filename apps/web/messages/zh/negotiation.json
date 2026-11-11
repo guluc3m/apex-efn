@@ -87,6 +87,13 @@
     "human_in_control": "聊天由人工控制。请先交还给代理。",
     "not_in_human_control": "请先接管聊天，再给卖家写消息。",
     "seller_busy": "该卖家目前正在另一场谈判中。",
-    "not_aborted": "只有已中止的谈判才能重新开启。"
+    "not_aborted": "只有已中止的谈判才能重新开启。",
+    "translation_unavailable": "无法翻译该消息。",
+    "sensitive_content": "该消息包含敏感数据,不会发送给翻译模型。"
+  },
+  "translate": {
+    "action": "翻译",
+    "hide": "隐藏译文",
+    "label": "译文"
   }
 }

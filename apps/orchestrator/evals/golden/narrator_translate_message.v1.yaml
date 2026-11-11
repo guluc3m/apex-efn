@@ -1,0 +1,12 @@
+prompt: narrator_translate_message
+version: 1
+schema: MessageTranslation
+cases:
+  - id: keeps-numbers
+    variables:
+      target_language: Spanish
+      message_text: "我们可以给您每件 4.20 EUR 的价格,最低起订量 500 件。"
+    expect:
+      - numbers_in_input: [text]
+    stub_response:
+      text: "Podemos ofrecerle 4.20 EUR por pieza, con un pedido mínimo de 500 piezas."
