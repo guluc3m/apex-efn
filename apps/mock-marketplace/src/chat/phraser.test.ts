@@ -156,7 +156,7 @@ describe('provider configuration', () => {
     const headers = calls[0]?.init.headers as Record<string, string>
     expect(headers['x-stub-scenario']).toBe('sim-negotiation')
     expect(headers.authorization).toBeUndefined()
-    const body = JSON.parse(String(calls[0]?.init.body)) as { model: string }
+    const body = JSON.parse(calls[0]?.init.body as string) as { model: string }
     expect(body.model).toBe('seller')
   })
 
@@ -178,7 +178,7 @@ describe('provider configuration', () => {
     const headers = calls[0]?.init.headers as Record<string, string>
     expect(headers.authorization).toBe('Bearer sk-test-key')
     expect(headers['x-stub-scenario']).toBeUndefined()
-    const body = JSON.parse(String(calls[0]?.init.body)) as { model: string }
+    const body = JSON.parse(calls[0]?.init.body as string) as { model: string }
     expect(body.model).toBe('deepseek-chat')
   })
 
