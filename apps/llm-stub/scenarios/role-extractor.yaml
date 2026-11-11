@@ -2,8 +2,8 @@ scenarios:
   - name: role-extractor
     description: >-
       Matched by the 'role: extractor' marker in the system message. Returns a valid SourcingRequestDraft,
-      which is what the intake prompt (D4-05) asks for. The header-mapping prompt shares this role and gets
-      the same document; that endpoint is not wired yet, and the eval suite pins its own scenarios by hash.
+      which is what the intake prompt (D4-05) asks for. The onboarding prompts share this role and are
+      matched by schema in onboarding.yaml; the eval suite pins its own scenarios by hash.
     role: extractor
     capabilities:
       "*":

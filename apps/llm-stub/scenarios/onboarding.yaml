@@ -1,0 +1,49 @@
+# Onboarding prompts share the extractor role with sourcing intake, so they are matched by the structured
+# output they request (`schema`), which beats `role` (see README: matching order).
+scenarios:
+  - name: onboarding-intake-chat
+    description: >-
+      IntakeAgent chat turn (IntakeTurnDraft). A fixed, polite reply that proposes no profile field, so
+      replaying it never overwrites what the buyer typed in the form.
+    role: extractor
+    schema: IntakeTurnDraft
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+    response:
+      kind: json
+      content:
+        reply: "Gracias. ¿Cuál es la razón social y el país de la empresa? Los importes van en el formulario o en el CSV financiero."
+        profile: {legal_name: null, sector: null, country: null, base_currency: null}
+
+  - name: onboarding-csv-header-mapping
+    description: >-
+      CSV header mapping (HeaderMappingSuggestion). Covers common Spanish and English headers; the
+      orchestrator keeps only entries whose source is an unknown header of the uploaded file.
+    role: extractor
+    schema: HeaderMappingSuggestion
+    capabilities:
+      "*":
+        supports_json_schema: true
+        supports_json_object: true
+    response:
+      kind: json
+      content:
+        mappings:
+          - {source: "periodo", target: "period", reason: "periodo = period"}
+          - {source: "Periodo", target: "period", reason: "periodo = period"}
+          - {source: "month", target: "period", reason: "month = period"}
+          - {source: "metrica", target: "metric", reason: "métrica = metric"}
+          - {source: "métrica", target: "metric", reason: "métrica = metric"}
+          - {source: "Metrica", target: "metric", reason: "métrica = metric"}
+          - {source: "concepto", target: "metric", reason: "concepto = metric"}
+          - {source: "importe", target: "value_minor", reason: "importe en céntimos = value_minor"}
+          - {source: "Importe", target: "value_minor", reason: "importe en céntimos = value_minor"}
+          - {source: "valor", target: "value_minor", reason: "valor = value_minor"}
+          - {source: "amount", target: "value_minor", reason: "amount = value_minor"}
+          - {source: "moneda", target: "currency", reason: "moneda = currency"}
+          - {source: "Moneda", target: "currency", reason: "moneda = currency"}
+          - {source: "divisa", target: "currency", reason: "divisa = currency"}
+          - {source: "notas", target: "notes", reason: "notas = notes"}
+          - {source: "comentarios", target: "notes", reason: "comentarios = notes"}

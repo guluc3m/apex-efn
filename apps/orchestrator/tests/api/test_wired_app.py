@@ -203,19 +203,73 @@ def test_an_onboarding_session_can_be_started_and_profiled(app: FastAPI) -> None
     assert updated.json()["company_profile"]["legal_name"] == "ACME"
 
 
-def test_a_csv_upload_says_the_importer_is_not_wired(app: FastAPI) -> None:
-    with TestClient(app) as client:
-        session = client.post("/v1/onboarding/sessions", headers=_h()).json()
-        response = client.post(
-            f"/v1/onboarding/{session['id']}/financial-csv",
-            files={"file": ("fin.csv", b"period,metric,value_minor\n", "text/csv")},
-            headers=_h(),
-        )
-    assert response.status_code == 501, response.text
-    # The original is stored before it is parsed, so the first missing piece is object storage (D1-06);
-    # once that lands the importer (D3-04) is next. Either way the answer names the owning lane.
-    assert "not wired yet" in response.json()["detail"]
-    assert "owner: DEV-" in response.json()["detail"]
+class _Objects:
+    def __init__(self) -> None:
+        self.stored: dict[str, bytes] = {}
+
+    async def put(self, key: str, content: bytes, *, content_type: str) -> str:
+        self.stored[key] = content
+        return f"s3://apex-csv/{key}"
+
+
+BUNDLED_SCENARIOS = Path(__file__).resolve().parents[3] / "llm-stub" / "scenarios"
+
+
+def test_onboarding_chat_mapping_and_csv_upload_work_against_the_bundled_stub() -> None:
+    """The demo path: no scenario pinning, the stub picks by role and requested schema."""
+    import asyncio
+
+    stub = mount_stub(BUNDLED_SCENARIOS)
+    objects = _Objects()
+    services = build_app_services(
+        Settings(idempotency_backend="memory"),
+        clock=FixedClock(NOW),
+        http_client_factory=lambda cfg: httpx.AsyncClient(
+            transport=stub._transport,  # type: ignore[attr-defined]
+            base_url=str(stub.base_url),
+        ),
+        objects=objects,
+    )
+    application = create_app(
+        Settings(idempotency_backend="memory"), store=InMemoryIdempotencyStore(), services=services
+    )
+    try:
+        with TestClient(application) as client:
+            sid = client.post("/v1/onboarding/sessions", headers=_h()).json()["id"]
+            turn = client.post(
+                f"/v1/onboarding/sessions/{sid}/messages", json={"text": "hola"}, headers=_h()
+            )
+            assert turn.status_code == 200, turn.text
+            assert [m["role"] for m in turn.json()["messages"]] == ["user", "agent"]
+
+            csv = b"periodo,metrica,importe,moneda\n2026-09,cash_balance,5000000,EUR\n"
+            mapping = client.post(
+                f"/v1/onboarding/{sid}/financial-csv/mapping",
+                files={"file": ("fin.csv", csv, "text/csv")},
+                headers=_h(),
+            )
+            assert mapping.status_code == 200, mapping.text
+            confirmed = {m["source"]: m["target"] for m in mapping.json()["mappings"]}
+            assert confirmed == {
+                "periodo": "period",
+                "metrica": "metric",
+                "importe": "value_minor",
+                "moneda": "currency",
+            }
+
+            import json as _json
+
+            upload = client.post(
+                f"/v1/onboarding/{sid}/financial-csv",
+                files={"file": ("fin.csv", csv, "text/csv")},
+                data={"column_mapping": _json.dumps(confirmed)},
+                headers=_h(),
+            )
+            assert upload.status_code == 201, upload.text
+            assert upload.json()["stored_object"].startswith("s3://apex-csv/financial-csv/")
+            assert list(objects.stored.values()) == [csv]  # the original, not the remapped copy
+    finally:
+        asyncio.run(stub.aclose())
 
 
 # ----- the app boots even when the config defaults are not there ----------------------------------
