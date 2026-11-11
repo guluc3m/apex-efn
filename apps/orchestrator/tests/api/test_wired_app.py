@@ -151,11 +151,19 @@ def test_missions_are_isolated_per_tenant(app: FastAPI) -> None:
     assert other.status_code == 404
 
 
-def test_routes_whose_engines_are_missing_still_answer_501(app: FastAPI) -> None:
-    """Honest failure: the DEV-3 engines are not merged, so analysis endpoints say so."""
+def test_read_routes_are_wired_and_empty_before_any_mission(app: FastAPI) -> None:
     with TestClient(app) as client:
-        assert client.get("/v1/sellers/s-1/confidence", headers=_h()).status_code == 501
-        assert client.get("/v1/dashboard/deals", headers=_h()).status_code == 501
+        seller = client.get("/v1/sellers/s-1/confidence", headers=_h())
+        assert seller.status_code == 200 and seller.json()["history"] == []
+        assert client.get("/v1/dashboard/deals", headers=_h()).json() == {"deals": []}
+        assert client.get("/v1/gate/queue", headers=_h()).status_code == 200
+
+
+def test_signed_actions_still_answer_501_while_signing_is_unwired(app: FastAPI) -> None:
+    """Honest failure: no decision port is wired, so recomputing (audited) says so instead of faking it."""
+    with TestClient(app) as client:
+        response = client.post("/v1/sellers/s-1/confidence/recompute", headers=_h())
+    assert response.status_code == 501
 
 
 # ----- config and onboarding are wired too -------------------------------------------------------

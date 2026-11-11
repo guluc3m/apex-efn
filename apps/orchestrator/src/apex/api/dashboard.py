@@ -140,6 +140,8 @@ async def deal_action(
         raise _blocked(exc) from exc
     except LookupError as exc:
         raise Problem(404, "Deal not found", detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        raise not_implemented(str(exc)) from exc
     return DecisionAcceptedOut(decision_id=decision.id)
 
 
