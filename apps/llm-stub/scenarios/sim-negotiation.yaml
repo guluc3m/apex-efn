@@ -1,0 +1,8 @@
+# Demo scenario (D5-11 simulation): the "model" repeats the price the prompt pins, so both the buyer
+# drafter and the seller phraser get usable wording while every number stays decided in code.
+scenarios:
+  - name: sim-negotiation
+    description: Echoes the unit price stated in the prompt; no price in the prompt -> neutral sentence.
+    models: ["negotiator", "seller"]
+    response:
+      kind: echo_price

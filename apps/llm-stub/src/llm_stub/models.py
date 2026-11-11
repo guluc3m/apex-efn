@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-ResponseKind = Literal["json", "text", "tool_call", "error"]
+ResponseKind = Literal["json", "text", "tool_call", "error", "echo_price"]
 ErrorStatus = Literal[400, 401, 403, 404, 408, 409, 422, 429, 500, 502, 503, 504]
 
 
