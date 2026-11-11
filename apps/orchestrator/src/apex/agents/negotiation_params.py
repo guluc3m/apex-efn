@@ -50,6 +50,23 @@ class UnwiredAccountResolver:
         raise NotImplementedError("no account resolver is wired; a negotiation cannot start")
 
 
+class DevPlatformAccountResolver:
+    """Dev platforms (the mock marketplace) have no login: their account is a fixed opaque label.
+
+    Every other platform goes to ``fallback`` (the tenant's ``ConnectedAccount``), so a real platform still
+    needs a connected account before it can be negotiated on.
+    """
+
+    def __init__(self, platforms: frozenset[str], fallback: AccountResolver) -> None:
+        self._platforms = platforms
+        self._fallback = fallback
+
+    async def account_for(self, *, tenant_id: str, platform: str) -> str:
+        if platform in self._platforms:
+            return f"dev-account:{platform}"
+        return await self._fallback.account_for(tenant_id=tenant_id, platform=platform)
+
+
 class NegotiationNotConfigured(Exception):
     """The tenant's config cannot produce a negotiation. The message names the key that is missing."""
 
@@ -153,6 +170,7 @@ class NegotiationParamsResolver:
 __all__ = [
     "AccountResolver",
     "DbAccountResolver",
+    "DevPlatformAccountResolver",
     "NegotiationNotConfigured",
     "NegotiationParamsResolver",
     "ParamsResolver",

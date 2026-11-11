@@ -695,3 +695,30 @@ def test_recommendation_offers_and_export_against_the_wired_app(app: FastAPI) ->
 
         assert client.get(f"{base}/recommendation?profile=nope", headers=_h()).status_code == 404
         assert client.get("/v1/missions/nope/offers", headers=_h()).status_code == 404
+
+
+# ----- negotiation: the HTTP routes and the runner share one engine ---------------------------------
+
+
+def test_the_negotiation_routes_use_the_shared_engine(app: FastAPI) -> None:
+    from apex.agents.negotiation_wiring import LiveNegotiationControl
+    from apex.api import negotiations as negotiations_api
+
+    control = app.dependency_overrides[negotiations_api.get_negotiation_control]()
+    assert isinstance(control, LiveNegotiationControl)
+    assert control is app.state.app_services.negotiation.control
+    with TestClient(app) as client:
+        response = client.get("/v1/negotiations/unknown", headers=_h())
+    assert response.status_code == 404
+    assert response.json()["reason"] == "not_found"
+
+
+def test_the_runner_starts_negotiations_through_the_shared_starter() -> None:
+    from apex.agents.negotiation_wiring import WorkerChatTransport
+    from apex.wiring import UnwiredChatTransport
+
+    services = build_app_services(Settings())
+    assert services.runner._deps.negotiate == services.negotiation.starter.start  # type: ignore[attr-defined]
+    assert isinstance(services.negotiation.engine._transport, UnwiredChatTransport)  # type: ignore[attr-defined]
+    wired = build_app_services(Settings(browser_worker_url="http://worker.test"))
+    assert isinstance(wired.negotiation.engine._transport, WorkerChatTransport)  # type: ignore[attr-defined]
