@@ -70,7 +70,7 @@ describe('fixtures', () => {
   it('give at least 3 offers from at least 2 platforms for the main query (criterion 3)', () => {
     const gloves = catalog.products.filter((p) => p.productKey === 'nitrile-gloves-m-box100')
     expect(new Set(gloves.map((p) => p.platform)).size).toBeGreaterThanOrEqual(2)
-    for (const platform of ['mock-a', 'mock-b'] as const) {
+    for (const platform of ['mock-a', 'mock-b', 'mock-c'] as const) {
       expect(gloves.filter((p) => p.platform === platform).length).toBeGreaterThanOrEqual(3)
     }
   })

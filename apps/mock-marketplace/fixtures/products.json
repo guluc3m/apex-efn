@@ -521,6 +521,211 @@
       "incoterm": "DAP",
       "leadTimeDays": 10,
       "tags": []
+    },
+    {
+      "id": "c-gloves-01",
+      "platform": "mock-c",
+      "sellerId": "c-solid-supplier",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Examination Gloves M, 100/box, Export Grade",
+      "description": "Nitrile examination gloves, size M, box of 100, export grade. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "powder": "powder-free",
+        "pieces_per_box": "100",
+        "thickness": "4 mil"
+      },
+      "certifications": [
+        "EN 455",
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/c-gloves-01.png"
+      ],
+      "unitPriceMinor": 432,
+      "currency": "EUR",
+      "moq": 1000,
+      "priceTiers": [
+        {
+          "minQuantity": 1000,
+          "maxQuantity": 4999,
+          "unitPriceMinor": 432
+        },
+        {
+          "minQuantity": 5000,
+          "maxQuantity": null,
+          "unitPriceMinor": 402
+        }
+      ],
+      "shipping": {
+        "costMinor": 900,
+        "minDays": 7,
+        "maxDays": 12
+      },
+      "incoterm": "FOB",
+      "leadTimeDays": 12,
+      "tags": []
+    },
+    {
+      "id": "c-gloves-02",
+      "platform": "mock-c",
+      "sellerId": "c-chinese-trader",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves M 100 pcs/box Wholesale",
+      "description": "Wholesale nitrile gloves, size M, box of 100. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "powder": "powder-free",
+        "pieces_per_box": "100",
+        "thickness": "3.5 mil"
+      },
+      "certifications": [
+        "CE"
+      ],
+      "imageUrls": [
+        "/static/img/c-gloves-02.png"
+      ],
+      "unitPriceMinor": 3080,
+      "currency": "CNY",
+      "moq": 5000,
+      "priceTiers": [
+        {
+          "minQuantity": 5000,
+          "maxQuantity": 19999,
+          "unitPriceMinor": 3080
+        },
+        {
+          "minQuantity": 20000,
+          "maxQuantity": null,
+          "unitPriceMinor": 2950
+        }
+      ],
+      "shipping": {
+        "costMinor": 22000,
+        "minDays": 18,
+        "maxDays": 30
+      },
+      "incoterm": "FOB",
+      "leadTimeDays": 25,
+      "tags": []
+    },
+    {
+      "id": "c-gloves-03",
+      "platform": "mock-c",
+      "sellerId": "c-solid-supplier",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves M, 100/box, Medical Grade (mock)",
+      "description": "Medical grade nitrile gloves, size M. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M",
+        "powder": "powder-free",
+        "pieces_per_box": "100",
+        "thickness": "4.5 mil"
+      },
+      "certifications": [
+        "EN 455",
+        "CE",
+        "ISO 13485"
+      ],
+      "imageUrls": [
+        "/static/img/c-gloves-03.png"
+      ],
+      "unitPriceMinor": 448,
+      "currency": "EUR",
+      "moq": 500,
+      "priceTiers": [
+        {
+          "minQuantity": 500,
+          "maxQuantity": 2499,
+          "unitPriceMinor": 448
+        },
+        {
+          "minQuantity": 2500,
+          "maxQuantity": null,
+          "unitPriceMinor": 421
+        }
+      ],
+      "shipping": {
+        "costMinor": 1100,
+        "minDays": 8,
+        "maxDays": 14
+      },
+      "incoterm": "DAP",
+      "leadTimeDays": 14,
+      "tags": []
+    },
+    {
+      "id": "c-gloves-04",
+      "platform": "mock-c",
+      "sellerId": "c-new-shop",
+      "productKey": "nitrile-gloves-m-box100",
+      "title": "Nitrile Gloves Box of 100 (new supplier)",
+      "description": "New supplier listing, nitrile gloves size M. Synthetic fixture data.",
+      "specifications": {
+        "material": "nitrile",
+        "size": "M"
+      },
+      "certifications": [],
+      "imageUrls": [],
+      "unitPriceMinor": 410,
+      "currency": "EUR",
+      "moq": 200,
+      "priceTiers": [
+        {
+          "minQuantity": 200,
+          "maxQuantity": null,
+          "unitPriceMinor": 410
+        }
+      ],
+      "shipping": null,
+      "incoterm": null,
+      "leadTimeDays": null,
+      "tags": []
+    },
+    {
+      "id": "c-kraft-01",
+      "platform": "mock-c",
+      "sellerId": "c-solid-supplier",
+      "productKey": "kraft-box-30x20x15",
+      "title": "Corrugated Kraft Box 30x20x15 cm, 25-pack",
+      "description": "Corrugated kraft boxes, 25 per bundle. Synthetic fixture data.",
+      "specifications": {
+        "material": "kraft",
+        "size": "30x20x15",
+        "per_bundle": "25"
+      },
+      "certifications": [
+        "FSC"
+      ],
+      "imageUrls": [
+        "/static/img/c-kraft-01.png"
+      ],
+      "unitPriceMinor": 62,
+      "currency": "EUR",
+      "moq": 2000,
+      "priceTiers": [
+        {
+          "minQuantity": 2000,
+          "maxQuantity": 9999,
+          "unitPriceMinor": 62
+        },
+        {
+          "minQuantity": 10000,
+          "maxQuantity": null,
+          "unitPriceMinor": 57
+        }
+      ],
+      "shipping": {
+        "costMinor": 700,
+        "minDays": 5,
+        "maxDays": 9
+      },
+      "incoterm": "FOB",
+      "leadTimeDays": 9,
+      "tags": []
     }
   ]
 }

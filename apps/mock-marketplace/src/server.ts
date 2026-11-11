@@ -7,6 +7,7 @@ import { loadCatalog } from './fixtures/load.js'
 import { PERSONA_IDS, PLATFORM_IDS, type Catalog } from './fixtures/schema.js'
 import { registerMockA } from './platforms/mock-a.js'
 import { registerMockB } from './platforms/mock-b.js'
+import { registerMockC } from './platforms/mock-c.js'
 
 export interface BuildOptions {
   catalog?: Catalog
@@ -51,6 +52,7 @@ export function buildServer(options: BuildOptions = {}): MockMarketplace {
 
   registerMockA(app, catalog, chats)
   registerMockB(app, catalog, chats)
+  registerMockC(app, catalog, chats)
   registerControl(app, chats)
 
   return { app, chats, catalog }

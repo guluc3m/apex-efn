@@ -42,6 +42,7 @@ const envSchema = z.object({
   ADAPTER_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   MOCK_A_BASE_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
   MOCK_B_BASE_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
+  MOCK_C_BASE_URL: z.preprocess(emptyAsUndefined, z.string().url().optional()),
 })
 
 export interface WorkerConfig {
@@ -74,6 +75,8 @@ export interface WorkerConfig {
   mockABaseUrl: string | undefined
   /** Origin of the mock marketplace HTML site (`mock-b`). Unset means the adapter is not registered. */
   mockBBaseUrl: string | undefined
+  /** Origin of the mock marketplace API-first platform (`mock-c`). Unset means the adapter is not registered. */
+  mockCBaseUrl: string | undefined
 }
 
 /** Throws with the names of the invalid keys only. Values (the token, proxy credentials) never appear in the message. */
@@ -108,5 +111,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): WorkerConfig {
     adapterTimeoutMs: values.ADAPTER_TIMEOUT_MS,
     mockABaseUrl: values.MOCK_A_BASE_URL,
     mockBBaseUrl: values.MOCK_B_BASE_URL,
+    mockCBaseUrl: values.MOCK_C_BASE_URL,
   }
 }
