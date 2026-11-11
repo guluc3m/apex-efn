@@ -11,6 +11,7 @@ from apex.api.keys import Now, Sessions
 from apex.audit import anchor, chain
 from apex.auth.deps import require_role
 from apex.auth.models import Principal
+from apex.common.errors import Problem
 from apex.common.pagination import Cursor
 from apex.contracts.generated.models import (
     Actor,
@@ -84,7 +85,17 @@ async def verify_audit_chain(
 ) -> ChainVerification:
     async with tenant_session(principal.tenant_id, sessionmaker=sessions) as session:
         check = await chain.verify(session, principal.tenant_id)
-        anchored = anchor.read_anchor(store, principal.tenant_id) if store else None
+        try:
+            anchored = anchor.read_anchor(store, principal.tenant_id) if store else None
+        except (
+            Exception
+        ) as exc:  # botocore/network errors: never report "valid" without the WORM check
+            raise Problem(
+                503,
+                "Anchor store unavailable",
+                detail="the WORM anchor could not be read, so the chain cannot be fully verified",
+                reason="anchor_store_unavailable",
+            ) from exc
         valid, broken = check.valid, check.first_broken_seq
         if (
             valid

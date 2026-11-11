@@ -15,6 +15,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from apex.api import audit as audit_api
 from apex.api import keys as keys_api
 from apex.auth.deps import current_principal
 from apex.auth.models import Principal
@@ -150,6 +151,7 @@ async def h(seeded: str) -> AsyncIterator[Harness]:
     app.dependency_overrides[keys_api.get_sessionmaker] = lambda: factory
     app.dependency_overrides[get_clock] = lambda: h_clock
     app.dependency_overrides[keys_api.get_decision_verifier] = lambda: decisions
+    app.dependency_overrides[audit_api.get_anchor_store] = lambda: None  # never reach S3 in tests
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://t"
     ) as client:

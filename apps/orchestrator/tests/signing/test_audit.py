@@ -199,3 +199,15 @@ async def test_app_role_lists_every_tenant_but_reads_only_its_own(h: Harness) ->
     async with tenant_session(TENANT, sessionmaker=h.factory) as session:
         rows = await session.execute(text("SELECT id FROM tenants"))
         assert [r[0] for r in rows] == [TENANT]  # RLS is untouched by the function
+
+
+async def test_verify_answers_503_when_the_anchor_store_is_down(h: Harness) -> None:
+    class _Down:
+        def latest(self, *a: object, **k: object) -> object:
+            raise ConnectionError("s3 down")
+
+    h.app.dependency_overrides[audit_api.get_anchor_store] = lambda: _Down()
+    h.as_user("erin", tenant=OTHER, roles=("owner",))
+    response = await h.client.get("/v1/audit/verify")
+    assert response.status_code == 503
+    assert response.json()["reason"] == "anchor_store_unavailable"

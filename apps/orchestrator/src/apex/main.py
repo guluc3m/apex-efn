@@ -22,7 +22,7 @@ from apex.common.idempotency import (
 )
 from apex.config import Settings, settings
 from apex.platform.telemetry import setup_telemetry
-from apex.wiring import AppServices, build_app_services, seed_demo_tenants
+from apex.wiring import AppServices, build_anchor_store, build_app_services, seed_demo_tenants
 
 logger = structlog.get_logger(__name__)
 
@@ -120,6 +120,7 @@ def _wire_services(application: FastAPI, services: AppServices) -> None:
     application.dependency_overrides[config_api.get_config_service] = lambda: services.tenant_config
     application.dependency_overrides[onboarding_api.get_onboarding] = lambda: services.onboarding
     application.state.settings = services.settings
+    application.state.anchor_store = build_anchor_store(services.settings)
 
 
 app: FastAPI = create_app()

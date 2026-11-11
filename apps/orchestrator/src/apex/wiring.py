@@ -65,6 +65,7 @@ from apex.tenant_config.load_defaults import DEMO_TENANTS, seed
 from apex.tenant_config.repository import InMemoryConfigRepository
 from apex.tenant_config.resolver import content_hash
 from apex.tenant_config.service import TenantConfigService
+from apex.workers.ports import WorkerPorts
 
 DEV_PLATFORMS: tuple[PlatformInfo, ...] = (
     PlatformInfo(platform_id="mock-a", transport="http", regions=("EU", "CN")),
@@ -441,3 +442,29 @@ __all__ = [
     "build_app_services",
     "seed_demo_tenants",
 ]
+
+
+def build_anchor_store(cfg: Settings) -> Any:
+    """S3 Object Lock store for audit anchors (ADR-211). Building the client does not open a connection."""
+    import boto3  # type: ignore[import-untyped]
+
+    from apex.audit.anchor import Boto3AnchorStore
+
+    client = boto3.client(
+        "s3",
+        endpoint_url=cfg.s3_endpoint,
+        aws_access_key_id=cfg.s3_access_key,
+        aws_secret_access_key=cfg.s3_secret_key,
+    )
+    return Boto3AnchorStore(client, cfg.s3_bucket_audit)
+
+
+def build_worker_ports(cfg: Settings, clock: Clock | None = None) -> WorkerPorts:
+    """Worker ports with the audit job wired. The other ports stay unwired until their owners land."""
+    from dataclasses import replace
+
+    from apex.audit.service import build_audit_chain_service
+
+    return replace(
+        WorkerPorts.unwired(), audit=build_audit_chain_service(cfg, clock or SystemClock())
+    )
