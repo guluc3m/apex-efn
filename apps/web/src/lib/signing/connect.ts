@@ -43,7 +43,7 @@ export const revokeKeyFor = (userId: string, keyId: string) =>
     isSupported: () => SigningClient.isSupported(),
     hash: payloadHash,
     createDecision: (body) => api.createDecision(body),
-    signDecision: (id, body) => api.signDecision(id, body),
+    signDecision: (id, body) => api.signDecision(id, { ...body, device_fingerprint_ref: deviceFingerprintRef() }),
     revokeKey: (id, body) => api.revokeSigningKey(id, body),
     getSession: (id) => api.getSigningSession(id),
     nowMs: () => Date.now(),

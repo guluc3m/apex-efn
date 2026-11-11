@@ -1669,14 +1669,6 @@ class NegotiationMessagePage(BaseModel):
     next_cursor: str | None
 
 
-class IntakeTurn(BaseModel):
-    messages: Annotated[
-        list[IntakeMessage],
-        Field(description="The user message followed by the agent reply."),
-    ]
-    session: OnboardingSession
-
-
 class Decision(BaseModel):
     id: str
     type: DecisionType
@@ -1703,6 +1695,14 @@ class Decision(BaseModel):
     decided_by: Actor | None = None
     created_at: AwareDatetime
     signed_at: AwareDatetime | None = None
+
+
+class IntakeTurn(BaseModel):
+    messages: Annotated[
+        list[IntakeMessage],
+        Field(description="The user message followed by the agent reply."),
+    ]
+    session: OnboardingSession
 
 
 class FinancialImport(BaseModel):
