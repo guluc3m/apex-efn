@@ -75,6 +75,9 @@ DEV4_EXTRA_ROUTES: frozenset[tuple[str, str]] = frozenset(
         # IntakeAgent chat (D6-04-contract): declared in contracts/openapi.yaml, 501 until the agent turn is wired.
         ("GET", "/v1/onboarding/sessions/{id}/messages"),
         ("POST", "/v1/onboarding/sessions/{id}/messages"),
+        # Approvals inbox over decisions (D6-165-contract).
+        ("GET", "/v1/approvals"),
+        ("GET", "/v1/approvals/{id}"),
     }
 )
 

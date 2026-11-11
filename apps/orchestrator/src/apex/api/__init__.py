@@ -6,6 +6,7 @@ Routes that are not implemented yet answer 501 problem+json.
 
 from fastapi import APIRouter
 
+from apex.api.approvals import router as approvals_router
 from apex.api.audit import router as audit_router
 from apex.api.config import router as config_router
 from apex.api.dashboard import router as dashboard_router
@@ -35,3 +36,4 @@ router.include_router(signing_router, prefix="/signing-sessions", tags=["signing
 router.include_router(decisions_router, prefix="/decisions", tags=["decisions"])
 router.include_router(keys_router, prefix="/keys", tags=["keys"])
 router.include_router(audit_router, prefix="/audit", tags=["audit"])
+router.include_router(approvals_router, prefix="/approvals", tags=["approvals"])

@@ -622,6 +622,32 @@ export const zGateStatus = z.enum(['open', 'resolved'])
 export type gateStatusZodType = z.infer<typeof zGateStatus>
 
 /**
+ * `sign` waits for signatures, `progress` is fully signed, `closed` was rejected or expired.
+ */
+export const zApprovalInboxStatus = z.enum(['sign', 'progress', 'closed'])
+
+export type approvalInboxStatusZodType = z.infer<typeof zApprovalInboxStatus>
+
+export const zApprovalDocumentKind = z.enum(['rfq', 'po', 'certificate'])
+
+export type approvalDocumentKindZodType = z.infer<typeof zApprovalDocumentKind>
+
+export const zApprovalDocument = z.object({
+  kind: zApprovalDocumentKind,
+  sha256: z.string().nullish(),
+  available: z.boolean(),
+})
+
+export type approvalDocumentZodType = z.infer<typeof zApprovalDocument>
+
+export const zApprovalTrackingEvent = z.object({
+  at: z.string().datetime(),
+  event: z.enum(['signed', 'po_sent', 'confirmed', 'transit']),
+})
+
+export type approvalTrackingEventZodType = z.infer<typeof zApprovalTrackingEvent>
+
+/**
  * Score of one offer for one profile and configuration.
  */
 export const zScore = z.object({
@@ -1380,6 +1406,31 @@ export const zSignature = z.object({
 
 export type signatureZodType = z.infer<typeof zSignature>
 
+/**
+ * Inbox view of an approval decision. Amount and seller come from the signed payload.
+ */
+export const zApprovalView = z.object({
+  id: z.string(),
+  status: zApprovalInboxStatus,
+  subject_ref: z.string(),
+  amount: zNullableMoney.optional(),
+  seller_ref: z.string().nullish(),
+  required_signers: z.number().int().gte(1).lte(2),
+  signatures: z.array(zSignature),
+  documents: z.array(zApprovalDocument),
+  tracking: z.array(zApprovalTrackingEvent),
+  created_at: z.string().datetime(),
+})
+
+export type approvalViewZodType = z.infer<typeof zApprovalView>
+
+export const zApprovalViewPage = z.object({
+  items: z.array(zApprovalView),
+  next_cursor: z.string().nullable(),
+})
+
+export type approvalViewPageZodType = z.infer<typeof zApprovalViewPage>
+
 export const zDecision = z.object({
   id: z.string(),
   type: zDecisionType,
@@ -2052,6 +2103,26 @@ export const zApplyGateQueueActionPath = z.object({
  * Decision created, waiting for its signature.
  */
 export const zApplyGateQueueActionResponse = zDecisionAccepted
+
+export const zListApprovalsQuery = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().gte(1).lte(200).optional().default(50),
+  status: zApprovalInboxStatus.optional(),
+})
+
+/**
+ * Page of approvals, newest first.
+ */
+export const zListApprovalsResponse = zApprovalViewPage
+
+export const zGetApprovalPath = z.object({
+  id: z.string().min(1),
+})
+
+/**
+ * The approval.
+ */
+export const zGetApprovalResponse = zApprovalView
 
 export const zGetEffectiveConfigQuery = z.object({
   category: z.string().max(64).optional(),

@@ -20,6 +20,7 @@ tags:
 - {name: negotiations}
 - {name: signing}
 - {name: decisions}
+- {name: approvals}
 - {name: keys}
 - {name: audit}
 - {name: webhooks}
@@ -463,6 +464,46 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
         '409': {$ref: '#/components/responses/Conflict'}
         '422': {$ref: '#/components/responses/ValidationProblem'}
+  /v1/approvals:
+    get:
+      tags: [approvals]
+      operationId: listApprovals
+      summary: Approvals inbox, built from `approve_purchase` decisions. Read-only.
+      description: 'The second signature of a dual-control approval is `GET /v1/decisions/{id}` plus
+        `POST /v1/decisions/{id}/sign` by a different signer. Documents are listed with `available: false`
+        until D2-11 generates them.
+        '
+      parameters:
+      - {$ref: '#/components/parameters/Cursor'}
+      - {$ref: '#/components/parameters/Limit'}
+      - name: status
+        in: query
+        required: false
+        schema: {$ref: '#/components/schemas/ApprovalInboxStatus'}
+      responses:
+        '200':
+          description: Page of approvals, newest first.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ApprovalViewPage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /v1/approvals/{id}:
+    parameters:
+    - {$ref: '#/components/parameters/PathId'}
+    get:
+      tags: [approvals]
+      operationId: getApproval
+      summary: One approval with its signatures and documents. `id` is the decision id.
+      responses:
+        '200':
+          description: The approval.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ApprovalView'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /v1/config/effective:
     get:
       tags: [config]
@@ -2256,6 +2297,58 @@ components:
         items:
           type: array
           items: {$ref: '#/components/schemas/GateQueueItem'}
+        next_cursor:
+          type: [string, 'null']
+    ApprovalInboxStatus:
+      type: string
+      description: '`sign` waits for signatures, `progress` is fully signed, `closed` was rejected or expired.'
+      enum: [sign, progress, closed]
+    ApprovalDocumentKind:
+      type: string
+      enum: [rfq, po, certificate]
+    ApprovalDocument:
+      type: object
+      required: [kind, available]
+      properties:
+        kind: {$ref: '#/components/schemas/ApprovalDocumentKind'}
+        sha256:
+          type: [string, 'null']
+        available: {type: boolean}
+    ApprovalTrackingEvent:
+      type: object
+      required: [at, event]
+      properties:
+        at: {type: string, format: date-time}
+        event: {type: string, enum: [signed, po_sent, confirmed, transit]}
+    ApprovalView:
+      type: object
+      description: Inbox view of an approval decision. Amount and seller come from the signed payload.
+      required: [id, status, subject_ref, required_signers, signatures, documents, tracking, created_at]
+      properties:
+        id: {type: string, description: The decision id.}
+        status: {$ref: '#/components/schemas/ApprovalInboxStatus'}
+        subject_ref: {type: string}
+        amount: {$ref: '#/components/schemas/NullableMoney'}
+        seller_ref:
+          type: [string, 'null']
+        required_signers: {type: integer, minimum: 1, maximum: 2}
+        signatures:
+          type: array
+          items: {$ref: '#/components/schemas/Signature'}
+        documents:
+          type: array
+          items: {$ref: '#/components/schemas/ApprovalDocument'}
+        tracking:
+          type: array
+          items: {$ref: '#/components/schemas/ApprovalTrackingEvent'}
+        created_at: {type: string, format: date-time}
+    ApprovalViewPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ApprovalView'}
         next_cursor:
           type: [string, 'null']
     Approval:

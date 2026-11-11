@@ -585,6 +585,40 @@ class GateStatus(StrEnum):
     resolved = "resolved"
 
 
+class ApprovalInboxStatus(StrEnum):
+    """
+    `sign` waits for signatures, `progress` is fully signed, `closed` was rejected or expired.
+    """
+
+    sign = "sign"
+    progress = "progress"
+    closed = "closed"
+
+
+class ApprovalDocumentKind(StrEnum):
+    rfq = "rfq"
+    po = "po"
+    certificate = "certificate"
+
+
+class ApprovalDocument(BaseModel):
+    kind: ApprovalDocumentKind
+    sha256: str | None = None
+    available: bool
+
+
+class Event(StrEnum):
+    signed = "signed"
+    po_sent = "po_sent"
+    confirmed = "confirmed"
+    transit = "transit"
+
+
+class ApprovalTrackingEvent(BaseModel):
+    at: AwareDatetime
+    event: Event
+
+
 class Score(BaseModel):
     """
     Score of one offer for one profile and configuration.
@@ -1666,6 +1700,28 @@ class Negotiation(BaseModel):
 
 class NegotiationMessagePage(BaseModel):
     items: list[NegotiationMessage]
+    next_cursor: str | None
+
+
+class ApprovalView(BaseModel):
+    """
+    Inbox view of an approval decision. Amount and seller come from the signed payload.
+    """
+
+    id: Annotated[str, Field(description="The decision id.")]
+    status: ApprovalInboxStatus
+    subject_ref: str
+    amount: NullableMoney | None = None
+    seller_ref: str | None = None
+    required_signers: Annotated[int, Field(ge=1, le=2)]
+    signatures: list[Signature]
+    documents: list[ApprovalDocument]
+    tracking: list[ApprovalTrackingEvent]
+    created_at: AwareDatetime
+
+
+class ApprovalViewPage(BaseModel):
+    items: list[ApprovalView]
     next_cursor: str | None
 
 
