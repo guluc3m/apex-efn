@@ -44,5 +44,13 @@
   "stepUpFailed": "Passkey re-authentication could not start. Nothing was signed.",
   "errorGeneric": "Something went wrong. Nothing was signed.",
   "keysError": "Could not load your keys.",
-  "sealedTitle": "Key revoked with a signed decision"
+  "sealedTitle": "Key revoked with a signed decision",
+  "signFlow": {
+    "noSession": "Open a signing session first (signing indicator in the header).",
+    "unsupported": "This browser cannot hold a non-exportable Ed25519 key, so it cannot sign.",
+    "mismatch": "The server payload does not match its hash. Nothing was signed.",
+    "failed": "The decision could not be signed.",
+    "signed": "Signed.",
+    "signing": "Signing…"
+  }
 }

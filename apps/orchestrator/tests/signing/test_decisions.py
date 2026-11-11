@@ -140,6 +140,14 @@ async def test_dual_control_needs_two_different_signers_and_chains(desk: Desk) -
     assert created.status_code == 201, created.text
     decision = created.json()
     assert decision["status"] == "pending_signature" and decision["required_signers"] == 2
+    fetched = await desk.h.client.get(
+        f"/v1/decisions/{decision['id']}"
+    )  # the signer reads the payload
+    assert (
+        fetched.status_code == 200
+        and fetched.json()["payload_canonical"] == decision["payload_canonical"]
+    )
+    assert (await desk.h.client.get("/v1/decisions/nope")).status_code == 404
     assert decision["requires_immediate_reauth"]  # above EUR 10,000 too
     assert decision["payload_canonical"] == jcs.canonicalize(gate(2_500_000))
     with pytest.raises(PendingSignature):

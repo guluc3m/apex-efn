@@ -3004,6 +3004,41 @@ export type CreateDecisionResponses = {
 
 export type CreateDecisionResponse = CreateDecisionResponses[keyof CreateDecisionResponses]
 
+export type GetDecisionData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: never
+  url: '/v1/decisions/{id}'
+}
+
+export type GetDecisionErrors = {
+  /**
+   * Missing or invalid token.
+   */
+  401: Problem
+  /**
+   * The role of the principal is not allowed (spec 5.9, RBAC).
+   */
+  403: Problem
+  /**
+   * Resource not found in the tenant.
+   */
+  404: Problem
+}
+
+export type GetDecisionError = GetDecisionErrors[keyof GetDecisionErrors]
+
+export type GetDecisionResponses = {
+  /**
+   * The decision.
+   */
+  200: Decision
+}
+
+export type GetDecisionResponse = GetDecisionResponses[keyof GetDecisionResponses]
+
 export type SignDecisionData = {
   body: SignDecisionRequest
   headers: {

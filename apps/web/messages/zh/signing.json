@@ -44,5 +44,13 @@
   "stepUpFailed": "无法启动通行密钥重新认证。未签署任何内容。",
   "errorGeneric": "出错了。未签署任何内容。",
   "keysError": "无法加载你的密钥。",
-  "sealedTitle": "密钥已通过已签名的决定撤销"
+  "sealedTitle": "密钥已通过已签名的决定撤销",
+  "signFlow": {
+    "noSession": "请先通过页眉中的签名指示器开启签名会话。",
+    "unsupported": "此浏览器不支持不可导出的 Ed25519 密钥，无法签名。",
+    "mismatch": "服务器载荷与其哈希不一致，未签名。",
+    "failed": "无法签署该决定。",
+    "signed": "已签名。",
+    "signing": "正在签名…"
+  }
 }

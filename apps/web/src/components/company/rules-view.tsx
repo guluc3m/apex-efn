@@ -1,10 +1,11 @@
 'use client'
 
 import { Badge, Button, Icon, Input, Label } from '@apex/ui'
-import { FilePen, History, Pencil, PenLine, Send } from 'lucide-react'
+import { FilePen, History, Pencil, Send } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 
+import { SignDecisionButton } from '@/components/signing/sign-decision-button'
 import { ApiError, useEffectiveConfig, useProposeConfigChange } from '@/lib/api'
 import { parsePatchValue, toRuleRows, type RuleRow } from '@/lib/config-rules'
 
@@ -134,8 +135,7 @@ export function RulesView({ canChange }: { canChange: boolean }) {
           </Button>
           {propose.isSuccess ? <p role="status" className="m-0">{t('proposed', { id: propose.data.decision_id })}</p> : null}
           {propose.isError ? <p role="alert" className="m-0 text-danger">{propose.error instanceof ApiError && propose.error.status === 409 ? t('stale') : t('proposeFailed')}</p> : null}
-          {/* //todo_#151: ceremonia de passkey y POST /v1/decisions/{id}/sign cuando D2-09 (#281) esté fusionado */}
-          <Button variant="pri" disabledReason={t('signDisabled')}><Icon icon={PenLine} />{t('sign')}</Button>
+          <SignDecisionButton {...(propose.data ? { decisionId: propose.data.decision_id } : {})} reasonWithout={t('signDisabled')}>{t('sign')}</SignDecisionButton>
           <p className="m-0 text-[13px] text-ink-muted">{t('signNote')}</p>
         </div>
         <section>

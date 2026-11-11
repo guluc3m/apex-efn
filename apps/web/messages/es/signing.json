@@ -44,5 +44,13 @@
   "stepUpFailed": "No se pudo iniciar la reautenticación con passkey. No se firmó nada.",
   "errorGeneric": "Algo ha fallado. No se firmó nada.",
   "keysError": "No se pudieron cargar tus claves.",
-  "sealedTitle": "Clave revocada con una decisión firmada"
+  "sealedTitle": "Clave revocada con una decisión firmada",
+  "signFlow": {
+    "noSession": "Abre antes una sesión de firma (indicador de firma en la cabecera).",
+    "unsupported": "Este navegador no admite una clave Ed25519 no exportable, así que no puede firmar.",
+    "mismatch": "El payload del servidor no coincide con su hash. No se firmó nada.",
+    "failed": "No se pudo firmar la decisión.",
+    "signed": "Firmada.",
+    "signing": "Firmando…"
+  }
 }

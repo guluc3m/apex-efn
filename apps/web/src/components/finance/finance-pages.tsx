@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { AppLink } from '@/components/app-link'
+import { SignDecisionButton } from '@/components/signing/sign-decision-button'
 import { api } from '@/lib/api'
 import { useOnboarding } from '@/stores/onboarding'
 
@@ -99,8 +100,7 @@ export function ActivatePage({ importId }: { importId: string }) {
           {decisionId ? (
             <>
               <p role="status" className="m-0">{t('requested')}</p>
-              {/* La firma depende de D2-09 (decisiones firmadas); nunca se simula. */}
-              <Button variant="pri" disabledReason={t('signPending')}><PenLine size={16} aria-hidden="true" />{t('activate')}</Button>
+              <SignDecisionButton decisionId={decisionId} reasonWithout={t('signPending')}>{t('activate')}</SignDecisionButton>
             </>
           ) : (
             <Button variant="pri" onClick={() => void activate()} disabled={busy} disabledReason={sessionId ? undefined : t('noSession')}>

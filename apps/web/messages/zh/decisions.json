@@ -136,7 +136,7 @@
     "create": "创建决定",
     "creating": "正在创建…",
     "created": "决定 {id} 已创建，等待签名。",
-    "signUnavailable": "暂时无法签名：签名流程仍在接入中。",
+    "signUnavailable": "请先创建决定，然后用您的密钥签名。",
     "incomplete": "请填写必填项。",
     "error": "无法创建决定。"
   },

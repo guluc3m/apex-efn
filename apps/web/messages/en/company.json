@@ -59,7 +59,7 @@
       "request": "Request activation",
       "requesting": "Requesting…",
       "requested": "Activation requested. It is waiting for your signature.",
-      "signPending": "Signing is not available yet: it depends on the signed decisions backend",
+      "signPending": "Create the decision first, then sign it with your key.",
       "noSession": "Open the import from the company setup first",
       "requestError": "The activation could not be requested. Try again."
     },
@@ -123,7 +123,7 @@
     "proposeFailed": "The change could not be proposed.",
     "stale": "The rules changed meanwhile. Reload and propose again.",
     "sign": "Sign with passkey",
-    "signDisabled": "Pending connection: signing decisions is not connected yet",
+    "signDisabled": "Create the decision first, then sign it with your key.",
     "signNote": "A change is a decision signed with immediate passkey reauthentication.",
     "noPermission": "Only finance, admin or owner can change rules.",
     "history": "History",

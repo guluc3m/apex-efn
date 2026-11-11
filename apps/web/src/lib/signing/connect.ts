@@ -1,9 +1,11 @@
 import { payloadHash, SigningClient } from '@apex/crypto-client'
 
 import { api } from '@/lib/api'
+import { useSigningSession } from '@/stores/signing-session'
 
 import { enrollKey, openSigningSession } from './open-session'
 import { revokeKey } from './revoke-key'
+import { signLoadedDecision, type SignDeps } from './sign-decision'
 
 const client = new SigningClient()
 
@@ -35,6 +37,23 @@ export const enrollKeyFor = (userId: string) =>
     isSupported: () => SigningClient.isSupported(),
     registerKey: (body) => api.registerMySigningKey(body),
   })
+
+const signDeps = (): SignDeps => ({
+  keys: client,
+  isSupported: () => SigningClient.isSupported(),
+  hash: payloadHash,
+  signDecision: (id, body) => api.signDecision(id, { ...body, device_fingerprint_ref: deviceFingerprintRef() }),
+})
+
+/**
+ * Signs a decision the API already created (actions, activation, rule proposals answer only its id):
+ * reads it, checks the payload hash, signs in the browser, attaches the signature, then refreshes the window.
+ */
+export async function signDecisionFor(userId: string, decisionId: string): Promise<void> {
+  const decision = await api.getDecision(decisionId)
+  const { sessionId } = await signLoadedDecision(userId, decision, signDeps())
+  useSigningSession.getState().setSession(await api.getSigningSession(sessionId), Date.now())
+}
 
 /** Signed `revoke_key` decision, then revocation. Needs an open window; a 428 triggers the step-up. */
 export const revokeKeyFor = (userId: string, keyId: string) =>

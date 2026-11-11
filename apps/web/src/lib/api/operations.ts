@@ -32,6 +32,7 @@ import type {
   ListDealsResponse,
   ListGateQueueData,
   ListGateQueueResponse,
+  GetDecisionResponse,
   GetSigningSessionResponse,
   ListMySigningKeysResponse,
   OpenSigningSessionData,
@@ -259,6 +260,9 @@ export function createOperations(client: ApiClient) {
 
     createDecision: (body: CreateDecisionData['body'], signal?: AbortSignal) =>
       client.request<CreateDecisionResponse>('/v1/decisions', { method: 'POST', path: undefined, body, signal }),
+
+    getDecision: (id: string, signal?: AbortSignal) =>
+      client.request<GetDecisionResponse>('/v1/decisions/{id}', { path: { id }, signal }),
 
     signDecision: (id: string, body: SignDecisionData['body'], signal?: AbortSignal) =>
       client.request<SignDecisionResponse>('/v1/decisions/{id}/sign', { method: 'POST', path: { id }, body, signal }),

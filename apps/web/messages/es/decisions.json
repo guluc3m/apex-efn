@@ -136,7 +136,7 @@
     "create": "Crear decisión",
     "creating": "Creando…",
     "created": "Decisión {id} creada, pendiente de firma.",
-    "signUnavailable": "La firma aún no está disponible: el flujo de firma se está conectando.",
+    "signUnavailable": "Crea antes la decisión y fírmala después con tu clave.",
     "incomplete": "Completa los campos obligatorios.",
     "error": "No se ha podido crear la decisión."
   },
