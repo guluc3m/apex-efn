@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from apex.agents.analysis import AnalysisNodes
+from apex.agents.finance_port import FinanceUnavailable
+from apex.agents.fx import FxUnavailable
 from apex.agents.gate import GateAgent, GateRules
 from apex.agents.missions import (
     Mission,
@@ -30,8 +32,10 @@ from apex.agents.missions import (
     apply_event,
     transition,
 )
+from apex.agents.sanity_port import SanityUnavailable
 from apex.agents.scraping import ScrapingService
 from apex.agents.sourcing import SourcingPlan
+from apex.agents.trust_port import TrustUnavailable
 from apex.common.clock import Clock
 from apex.common.metrics import get_metrics
 
@@ -58,6 +62,9 @@ class MissionRunnerDeps:
     mission_cost_minor: Callable[[str], int | None] = lambda _mission_id: None
     """``mission_id -> cost in minor units``, or ``None`` when nothing is priced. Injected: the runner must
     not know about the gateway."""
+
+
+_ENGINE_REFUSALS = (TrustUnavailable, SanityUnavailable, FinanceUnavailable, FxUnavailable)
 
 
 @dataclass(frozen=True)
@@ -94,6 +101,9 @@ class MissionRunner:
         except NotImplementedError as exc:
             # A port is not wired: fail loudly with the owner, never leave the mission stuck.
             return await self._fail(mission, f"not_wired: {exc}")
+        except _ENGINE_REFUSALS as exc:
+            # An engine refused to run (unset config, no snapshot, no rate): the mission fails with the reason.
+            return await self._fail(mission, str(exc))
 
     async def _run(self, mission: Mission, plan: SourcingPlan) -> MissionRunResult:
         scrape = await self._deps.scraping.scrape(
