@@ -15,7 +15,7 @@
     "./nextjs.js": "./nextjs.js"
   },
   "dependencies": {
-    "globals": "^14.0.0"
+    "globals": "^17.14.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
